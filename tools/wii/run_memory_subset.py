@@ -28,7 +28,7 @@ HARNESS = Path("port/wii/abi/memory_subset")
 
 
 def extract(text, name):
-    pattern = (rf"(?m)^(?:static[ \t]+)?(?:void|boolean|byte|short|long|__int64|char)"
+    pattern = (rf"(?m)^(?:static[ \t]+)?(?:void|boolean|byte|short|long|__int64|char(?:[ \t]+const)?)"
                rf"[ \t]+(?:\*[ \t]*)?{re.escape(name)}\s*\([^;{{}}]*\)\s*(?={{)")
     starts = list(re.finditer(pattern, text))
     if len(starts) != 1:
@@ -63,10 +63,14 @@ def main():
                         help="add bounded flat-schema verifier policy and retain all earlier diagnostics")
     parser.add_argument("--packet-arrays", action="store_true",
                         help="add bounded recursive schema and paired array codec diagnostic")
+    parser.add_argument("--packet-groups", action="store_true",
+                        help="add actual group boundary reference and bounded paired-codec wrapper")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--compile-only", action="store_true", help="compile objects without execution")
     mode.add_argument("--wii-devkitpro", type=Path, help="link an asset-free Wii ELF/DOL using this official SDK")
     args = parser.parse_args()
+    if args.packet_groups:
+        args.packet_arrays = True
     if args.packet_arrays:
         args.packet_verifier = True
     if args.packet_verifier:
@@ -113,6 +117,11 @@ def main():
         inputs += [str(HARNESS / name) for name in
                    ("packet_array_policy.c", "packet_array_policy.h",
                     "packet_array_fixture.c", "packet_array_fixture.h")]
+    if args.packet_groups:
+        inputs += ["source/memory/data_packet_groups.c", "tools/wii/group_subset.py"]
+        inputs += [str(HARNESS / name) for name in
+                   ("packet_group_policy.c", "packet_group_policy.h", "packet_group_services.c",
+                    "packet_group_fixture.c", "packet_group_fixture.h")]
     sdk = None
     inventory = None
     sdk_identity = {}
@@ -217,6 +226,10 @@ def main():
                 array_include = '#include "packet_array_fixture.h"\n' if args.packet_arrays else ''
                 array_call = ' int arrays = wii_packet_array_fixture(stdout, 1);\n' if args.packet_arrays else ''
                 array_result = ' || arrays' if args.packet_arrays else ''
+                if args.packet_groups:
+                    array_include += '#include "packet_group_fixture.h"\n'
+                    array_call += ' int groups = wii_packet_group_fixture(stdout, 1);\n'
+                    array_result += ' || groups'
                 driver.write_text(array_include + '#include "candidate.h"\n#include "fixture.h"\n'
                     '#include "packet_fixture.h"\n#include "packet_version_edges.h"\n'
                     '#include "packet_verifier_fixture.h"\n'
@@ -238,6 +251,12 @@ def main():
         if args.packet_arrays:
             sources += [HARNESS / "packet_array_policy.c", HARNESS / "packet_array_fixture.c"]
             flags += ["-DWII_MEMORY_PACKET_ARRAYS"]
+        if args.packet_groups:
+            from group_subset import generate_groups
+            group_sources, group_record = generate_groups(args.output, extract)
+            sources += [*group_sources, HARNESS / "packet_group_policy.c",
+                        HARNESS / "packet_group_services.c", HARNESS / "packet_group_fixture.c"]
+            flags += ["-DWII_MEMORY_PACKET_GROUPS"]
     build_id = None
     if sdk is not None:
         build_id = hashlib.sha256(json.dumps({"source_commit": source_commit, "source_dirty": source_dirty,
@@ -268,6 +287,10 @@ def main():
                        if args.packets else {})
     if args.packet_policy:
         flag_exceptions["packet_policy.c"] = ["-Wno-error=maybe-uninitialized"]
+    if args.packet_groups:
+        flag_exceptions["group_reference.c"] = ["-Wno-error=sign-compare", "-Wno-error=char-subscripts"]
+        if target == "powerpc-eabi":
+            flag_exceptions["group_reference.c"].append("-Wno-error=type-limits")
     if args.compile_only or sdk is not None or args.packets:
         objects = []
         for source in sources:
@@ -371,6 +394,21 @@ def main():
                 "trailing_bytes": "accepted_and_unconsumed",
                 "original_metadata_and_bodies_preserved": True,
                 "limits": "candidate compatibility policy; no group integration or physical Wii qualification"}
+        if args.packet_groups:
+            record["scope"] = "actual_group_boundary_and_bounded_wrapper_comparison"
+            record["candidate"]["aggregate_result_scope"] = "all_prior_sections_and_group_boundaries"
+            record["groups"] = group_record
+            record["group_policy"] = {
+                "scope": "isolated_borrowed_array_plans_with_actual_capacity_checks",
+                "production_integrated": False, "portable_type_count": "1_to_128",
+                "schema_bound": "truthful_accessible_entry_table_and_live_immutable_compiled_plans",
+                "maximum_sizes": "explicit_nonnegative_signed_short_bounds_no_narrowing",
+                "append": "payload_plus_trailer_strictly_below_configured_max_and_within_actual_capacity",
+                "decode_length": "valid_type_class_remove_trailer_before_payload_even_on_failure",
+                "consumed_size": "separate_from_supplied_payload_length_trailing_bytes_accepted",
+                "null_definition": "type_only_decode_success_encode_reject",
+                "error": "per_call_result_original_shared_error_preserved_separately",
+                "limits": "original safe byte schemas; real table shapes authored; no production callers or peer sessions"}
     if sdk is not None:
         # Native SDK paths stay local; publishable records use root-relative paths.
         record["flags"] = [flag.replace(str(sdk), "<DEVKITPRO>") for flag in flags]
