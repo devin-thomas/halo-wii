@@ -1,18 +1,21 @@
 {
   "schema_version": 1,
   "prepared": "2026-10-05",
-  "kind": "source_bringup",
+  "kind": "probe_bringup",
   "upstream_commit": "4e8ed2f196e0edd1f2830a4de9841686aabbf466",
-  "public_commit": null,
-  "binary_sha256": null,
+  "public_commit": "3bca2e612cc118df5c5aa354ec7deb61aeb31ae6",
+  "binary_sha256": "9dddaa796a0207bc60d9a260ffa6e4680a116e9b23a410dd2b5ebddbf50da4d5",
   "scopes": [
     {
       "id": "probe",
       "environments": {
         "compile": {
-          "state": "blocked",
-          "reason": "Official devkitPPC/libogc toolchain is not installed in the development environment; Wii generator and native probe are not implemented. Host preflight tests do not prove a compile pass.",
-          "evidence": []
+          "state": "passed",
+          "reason": "Asset-free native probe clean/incremental builds and source checkout with spaces passed. Full desktop/game compilation is not qualified.",
+          "evidence": [
+            "evidence/2026-10-07-probe-build.md",
+            "evidence/2026-10-07-probe-build.json"
+          ]
         },
         "dolphin": {
           "state": "untested",

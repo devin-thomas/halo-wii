@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "scope": "asset_free_probe",
+  "source_commit": "3bca2e612cc118df5c5aa354ec7deb61aeb31ae6",
+  "source_dirty": false,
+  "inputs_sha256": {
+    "configure.py": "cbb299d7b90655bccb856f2bf28cff1f0343ce611a12fba4d8eb84ea46c6e01c",
+    "tools/wii_build.py": "3d2a4963d3f30a48a2085c99d89e85d62f08fad5fef7e380ff65838f57edbe23",
+    "tools/wii/build.py": "dc426a9068782e9f4d593fa4d5b241c966a61caad6860e766b8dbd4ddee9d48a",
+    "tools/wii/check_toolchain.py": "24303b4249b2aad639fc65e4a638218335bd08401eff1405db033b7307693a2b",
+    "port/wii/probe/main.c": "7f92f133517ccac17edad4951e34fd92e21ebadfe52000005870210702f2912d"
+  },
+  "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+  "compiler_target": "powerpc-eabi",
+  "binutils": "GNU ld (GNU Binutils) 2.46.0.20260210",
+  "compile_flags": [
+    "-std=c11",
+    "-O2",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-ffp-contract=off",
+    "-DGEKKO",
+    "-mrvl",
+    "-mcpu=750",
+    "-meabi",
+    "-mhard-float"
+  ],
+  "probe_auto_exit_frames": 300,
+  "wii_rules_sha256": "67d76ea672fa26110f25bae945ca25786d5218f5f017c9f92e0c836e7b0fc710",
+  "libogc_sha256": "fb0c956ee3b5d08fede5240472205102ebe1fde94197d36705cf2b44f3eeb906",
+  "libraries_sha256": {
+    "libfat.a": "683dd7d75d557820b260d2998d4e6c9c1ff4f1382830b137777392046ecaae90",
+    "libwiiuse.a": "5adbaaf3246ca265cec9bf2a4227cc7241fc2e3a44b96d659ff0e73d4fbd93db",
+    "libbte.a": "ecae1939433b2ce86e525b1f2185b61b27eaa1334bc27c5e4731cae0ac37efe1",
+    "libogc.a": "fb0c956ee3b5d08fede5240472205102ebe1fde94197d36705cf2b44f3eeb906"
+  },
+  "runtime_verified": false,
+  "toolchain_sha256": "d0ca79f317d44426f5563ff60121b344cb3a1148e5ec7a901ad5739b73ba6441",
+  "build_id": "0f01e11c08c44932",
+  "elf": {
+    "class": "ELF32",
+    "endian": "big",
+    "machine": "PowerPC",
+    "entry_point": "0x80003f00"
+  },
+  "artifacts": {
+    "probe.elf": {
+      "sha256": "221bc7cfd405f110fc051d523c2583d99a0d46f0967e2d507075857cb3e97176",
+      "bytes": 2270224
+    },
+    "probe.dol": {
+      "sha256": "9dddaa796a0207bc60d9a260ffa6e4680a116e9b23a410dd2b5ebddbf50da4d5",
+      "bytes": 451872
+    },
+    "probe.map": {
+      "sha256": "aa7673c63bc9fdfd8b23c85d6254897483c8a874bbc9c208867f9fd1716f686f",
+      "bytes": 759756
+    }
+  }
+}
