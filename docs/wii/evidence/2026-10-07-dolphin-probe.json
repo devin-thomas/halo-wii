@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "scope": "asset_free_dolphin_probe",
+  "result": "blocked",
+  "dolphin_version": "2609",
+  "official_download": "https://dl.dolphin-emu.org/releases/2609/dolphin-2609-x64.7z",
+  "archive_sha256": "1aa25785b7d4cb76259754c5fbcdd8856857b8e7bb4e523c57a8ac56665fba75",
+  "executable_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+  "profile": "new isolated local profile; no existing user profile or NAND used",
+  "settings": {
+    "CPUThread": false,
+    "EnableCheats": false,
+    "OverclockEnable": false,
+    "VIOverclockEnable": false,
+    "RAMOverrideEnable": false,
+    "EmulationSpeed": 1.0,
+    "InternalResolution": 1,
+    "SIDevice0": 6,
+    "SIDevice1": 0,
+    "SIDevice2": 0,
+    "SIDevice3": 0,
+    "WiiSDCard": true,
+    "WiiSDCardAllowWrites": true,
+    "WiiSDCardEnableFolderSync": false
+  },
+  "baseline_build_id": "0f01e11c08c44932",
+  "baseline_dol_sha256": "9dddaa796a0207bc60d9a260ffa6e4680a116e9b23a410dd2b5ebddbf50da4d5",
+  "guest_observations": {
+    "screen_build_id_matches_manifest": true,
+    "video": "640x480 mode=0",
+    "timer": "300 frames about 4.99s; elapsed-derived nominal 30Hz counter 149/150; not gameplay simulation",
+    "mem1_arena_after_sd_bytes": 23310336,
+    "mem2_arena_after_sd_bytes": 54284128,
+    "sentinel_after_process_restarts": "halo-wii-probe-v1 8",
+    "pad_movie": "authored DTM neutral then A/analog/trigger then Start; native PAD scan recorded connected=1 activity=1 exit=pad_start",
+    "pad_movie_exit_frames": 113
+  },
+  "host_exit": {
+    "decimal": -1073740791,
+    "hex": "0xc0000409",
+    "wer_module": "ucrtbase.dll",
+    "wer_fast_fail_subcode": 7,
+    "interpretation": "fatal application exit; this code does not by itself prove a stack overwrite"
+  },
+  "comparisons": [
+    "OGL and D3D both reproduce",
+    "frame dumping on/off both reproduce",
+    "SDL DirectInput hint disabled: still fails",
+    "child LANG/LC_ALL/LC_CTYPE=C: still fails",
+    "Wii remote sources disabled: still fails",
+    "stock 2603a separate profile: same exit code",
+    "non-batch GUI remained after guest END, no visible main-window handle; owned process stopped after bounded diagnostic"
+  ],
+  "unexecuted_comparison": "Official development 2609-69 combined download-and-launch rejected by automatic approval review: blocked by policy; no detailed reason returned",
+  "abi_source_commit": "87a6c1b2a812460a262713069c32c49253fb89e8",
+  "abi_build_id": "ef3cae24af674f90",
+  "abi_dol_sha256": "5107247a7210f5ba407bf83e471e56823bc0b028def5c2ebb85f02ad083c87b6",
+  "physical_wii": "untested",
+  "gameplay": "untested",
+  "clean_emulator_exit": "failed"
+}

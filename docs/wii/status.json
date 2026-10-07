@@ -10,7 +10,7 @@
       "id": "probe",
       "environments": {
         "compile": {
-          "state": "passed",
+          "state": "pass",
           "reason": "Asset-free native probe clean/incremental builds and source checkout with spaces passed. Full desktop/game compilation is not qualified.",
           "evidence": [
             "evidence/2026-10-07-probe-build.md",
@@ -18,9 +18,12 @@
           ]
         },
         "dolphin": {
-          "state": "untested",
-          "reason": "No implementation/execution evidence supplied in the planning overlay.",
-          "evidence": []
+          "state": "blocked",
+          "reason": "Guest screen/input/timer/SD restart checks observed, but stock Dolphin2609 host teardown exits0xc0000409; clean runtime acceptance is incomplete.",
+          "evidence": [
+            "evidence/2026-10-07-dolphin-probe.md",
+            "evidence/2026-10-07-dolphin-probe.json"
+          ]
         },
         "hardware": {
           "state": "untested",
