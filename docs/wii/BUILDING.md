@@ -103,6 +103,15 @@ union-operation excerpts and bounded numeric-size/identity/framing bridge. Use
 checks and records actual endian-dependent reference values. Full caller,
 native struct, socket and peer integration remain open.
 
+Add `--packet-native-abi` to measure actual owner layouts/catalogs with guarded
+identity/size binding while retaining all prior sections. Use separate outputs
+`.local/wii-native-packet-abi-host` / `build/wii-native-packet-abi`; Wii writes
+`sd:/halo-wii-memory/nativeabi.log`. The
+[native diagnostic](evidence/2026-10-07-native-packet-abi.md) has zero predicate
+failures but explicitly BLOCKED compatibility qualification. Only nine new
+layout/catalog units use short-wchar; a separate default-width unit and all
+prior/production flags remain unchanged. No actual engine cache/startup runs.
+
 ## Installation and provenance
 
 Use the [official installer](https://github.com/devkitPro/installer) and [official Wii examples](https://github.com/devkitPro/wii-examples). Verify the current Windows installation instructions and Wii development package group when installing. Record package/compiler versions, Python/Ninja versions, source commit, environment variables and the exact successful commands. Do not mix an unrelated MSYS installation with the devkitPro shell without proving path compatibility.

@@ -84,3 +84,12 @@ of this DOL finish the guest report then exit with host fault 0xc0000409;
 general recovery remains unqualified.
 HWI-005/006 stay blocked. Actual native ABI layouts, dispatch association,
 snapshot/cache lifetime and peer wire identity precede production integration.
+
+The [actual native ABI diagnostic](evidence/2026-10-07-native-packet-abi.md)
+completes 420 cases / 3387 predicates on host/PPC with zero diagnostic failures,
+but compatibility qualification remains BLOCKED (seven host / nine PPC gaps).
+Actual catalog identity, receiver size, unsupported raw owner, default wchar
+and plain-char semantics gaps are preserved. Every prior report stays exact.
+One native-DOL run exits naturally host0; earlier faults remain and general
+recovery is unqualified. HWI-005/006 remain blocked. Owned data intake is the
+next separate gate; no production, peer, hardware or gameplay pass follows.
