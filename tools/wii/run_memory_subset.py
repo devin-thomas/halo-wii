@@ -67,10 +67,14 @@ def main():
                         help="add actual group boundary reference and bounded paired-codec wrapper")
     parser.add_argument("--packet-callers", action="store_true",
                         help="add actual header/union excerpts and bounded caller framing diagnostic")
+    parser.add_argument("--packet-native-abi", action="store_true",
+                        help="measure actual native layouts/catalogs and bounded identity binding")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--compile-only", action="store_true", help="compile objects without execution")
     mode.add_argument("--wii-devkitpro", type=Path, help="link an asset-free Wii ELF/DOL using this official SDK")
     args = parser.parse_args()
+    if args.packet_native_abi:
+        args.packet_callers = True
     if args.packet_callers:
         args.packet_groups = True
     if args.packet_groups:
@@ -133,6 +137,16 @@ def main():
         inputs += [str(HARNESS / name) for name in
                    ("packet_caller_policy.c", "packet_caller_policy.h", "caller_reference.h",
                     "caller_services.c", "packet_caller_fixture.c", "packet_caller_fixture.h")]
+    if args.packet_native_abi:
+        inputs += ["tools/wii/native_subset.py", "source/networking/network_messages.h",
+                   "source/networking/network_client_message_handler.c",
+                   "source/networking/network_server_message_handler.c",
+                   "source/networking/network_client_manager.c", "source/networking/network_server_manager.c",
+                   "source/game/players.h", "source/math/real_math.h",
+                   "source/bungie_net/common/public_key_crypt.h", "port/linux/include/halo_port_capacity.h"]
+        inputs += [str(HARNESS / name) for name in
+                   ("native_packet_abi.h", "native_packet_binding.c", "native_packet_binding.h",
+                    "native_packet_fixture.c", "native_packet_fixture.h")]
     sdk = None
     inventory = None
     sdk_identity = {}
@@ -245,6 +259,10 @@ def main():
                     array_include += '#include "packet_caller_fixture.h"\n'
                     array_call += ' int callers = wii_packet_caller_fixture(stdout, 1);\n'
                     array_result += ' || callers'
+                if args.packet_native_abi:
+                    array_include += '#include "native_packet_fixture.h"\n'
+                    array_call += ' int native_abi = wii_native_packet_fixture(stdout, 1);\n'
+                    array_result += ' || native_abi'
                 driver.write_text(array_include + '#include "candidate.h"\n#include "fixture.h"\n'
                     '#include "packet_fixture.h"\n#include "packet_version_edges.h"\n'
                     '#include "packet_verifier_fixture.h"\n'
@@ -278,6 +296,11 @@ def main():
             sources += [*caller_sources, HARNESS / "packet_caller_policy.c",
                         HARNESS / "caller_services.c", HARNESS / "packet_caller_fixture.c"]
             flags += ["-DWII_MEMORY_PACKET_CALLERS"]
+        if args.packet_native_abi:
+            from native_subset import generate_native
+            native_sources, native_record = generate_native(args.output, extract)
+            sources += [*native_sources, HARNESS / "native_packet_binding.c", HARNESS / "native_packet_fixture.c"]
+            flags += ["-DWII_MEMORY_PACKET_NATIVE_ABI"]
     build_id = None
     if sdk is not None:
         build_id = hashlib.sha256(json.dumps({"source_commit": source_commit, "source_dirty": source_dirty,
@@ -314,11 +337,17 @@ def main():
             flag_exceptions["group_reference.c"].append("-Wno-error=type-limits")
     if args.packet_callers:
         flag_exceptions["caller_reference.c"] = ["-Wno-error=type-limits"]
+    abi_overrides = {}
+    if args.packet_native_abi:
+        abi_overrides = {source.name: ["-I", ".", "-fshort-wchar"] for source in native_sources
+                         if source.name != "native_abi_default_widths.c"}
+        abi_overrides["native_abi_default_widths.c"] = ["-I", "."]
     if args.compile_only or sdk is not None or args.packets:
         objects = []
         for source in sources:
             obj = args.output / (source.stem + ".o")
             compile_checked([str(compiler), *flags, *flag_exceptions.get(source.name, []),
+                             *abi_overrides.get(source.name, []),
                              "-c", str(source), "-o", str(obj)])
             data = obj.read_bytes()
             if target == "powerpc-eabi" and (data[:6] != b"\x7fELF\x01\x02" or
@@ -447,6 +476,21 @@ def main():
                 "inner_consumption": "group_supplied_payload_vs_consumed_preserved_no_global_exact_rule",
                 "overlap": "native_workspace_frame_pairs_checked_including_outer_header",
                 "limits": "authored_payloads_and_excerpt_wrappers_not_whole_engine_callers_socket_or_peer_integration"}
+        if args.packet_native_abi:
+            record["scope"] = "actual_native_packet_layout_catalog_and_binding_diagnostic"
+            record["candidate"]["aggregate_result_scope"] = "all_prior_sections_and_native_packet_abi"
+            record["native_abi"] = native_record
+            record["native_abi"]["compile_abi_overrides"] = abi_overrides
+            record["native_binding_policy"] = {
+                "scope": "isolated_identity_and_measured_native_size_guard_owning_schema_snapshot",
+                "production_integrated": False,
+                "identity": "actual_enum_and_table_name_must_agree_before_schema_io",
+                "native_size": "actual_owner_sizeof_must_equal_declared_definition_size_and_compiled_reserve",
+                "metadata_commit": "only_after_full_identity_layout_and_schema_validation",
+                "source_lifetime": "immutable_during_bind_owned_plan_independent_after_bind",
+                "borrowed_plan_lifetime": "live_immutable_control_until_group_use_finishes",
+                "peer": "source_declared_versions_only_no_deployed_peer_acceptance",
+                "limits": "default_wchar_width_separate_new_layout_units_explicit_short_wchar_no_whole_caller_or_cache_startup"}
     if sdk is not None:
         # Native SDK paths stay local; publishable records use root-relative paths.
         record["flags"] = [flag.replace(str(sdk), "<DEVKITPRO>") for flag in flags]

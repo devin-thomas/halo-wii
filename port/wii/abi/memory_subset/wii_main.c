@@ -28,6 +28,9 @@
 #ifdef WII_MEMORY_PACKET_CALLERS
 #include "packet_caller_fixture.h"
 #endif
+#ifdef WII_MEMORY_PACKET_NATIVE_ABI
+#include "native_packet_fixture.h"
+#endif
 
 int main(void)
 {
@@ -60,7 +63,9 @@ int main(void)
         fprintf(stderr, "MEMORY directory failed: %s\n", strerror(errno));
         return 2;
     }
-#if defined(WII_MEMORY_PACKET_CALLERS)
+#if defined(WII_MEMORY_PACKET_NATIVE_ABI)
+    FILE *report = fopen("sd:/halo-wii-memory/nativeabi.log", "a");
+#elif defined(WII_MEMORY_PACKET_CALLERS)
     FILE *report = fopen("sd:/halo-wii-memory/callers.log", "a");
 #elif defined(WII_MEMORY_PACKET_GROUPS)
     FILE *report = fopen("sd:/halo-wii-memory/groups.log", "a");
@@ -105,6 +110,7 @@ int main(void)
     int arrays = 0;
     int groups = 0;
     int callers = 0;
+    int native_abi = 0;
 #ifdef WII_MEMORY_PACKET_ARRAYS
     arrays = wii_packet_array_fixture(report, 1);
 #endif
@@ -114,7 +120,10 @@ int main(void)
 #ifdef WII_MEMORY_PACKET_CALLERS
     callers = wii_packet_caller_fixture(report, 1);
 #endif
-    int result = scalar_reference || scalar_candidate || scalar_edges || original || policy || edges || verifier || arrays || groups || callers;
+#ifdef WII_MEMORY_PACKET_NATIVE_ABI
+    native_abi = wii_native_packet_fixture(report, 1);
+#endif
+    int result = scalar_reference || scalar_candidate || scalar_edges || original || policy || edges || verifier || arrays || groups || callers || native_abi;
 #elif defined(WII_MEMORY_PACKET_POLICY)
     int original = wii_packet_compare(report, 1);
     int policy = wii_packet_policy_subset(report, 1);
