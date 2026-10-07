@@ -1,14 +1,13 @@
 # Wii port status
 
-**Source bring-up (2026-10-07):** repository setup, pinned upstream inventory and
-read-only toolchain preflight are available. The preflight's three synthetic
-failure tests pass. These host checks do not establish a Wii compilation pass.
-The current development environment lacks devkitPPC/libogc; the native probe
-and Wii generator remain unimplemented. See [build setup](BUILDING.md).
+**Probe compile pass (2026-10-07):** the asset-free native probe builds with
+configure.py/Ninja and official devkitPPC/libogc. Clean, incremental and checkout
+paths containing spaces passed. See [compile evidence](evidence/2026-10-07-probe-build.md)
+and [build setup](BUILDING.md). Dolphin and physical Wii remain separate gates.
 
 | Scope | Compile | Dolphin | Physical Wii |
 |---|---|---|---|
-| Asset-free Wii diagnostic | Blocked: missing toolchain and implementation | Untested | Untested |
+| Asset-free Wii diagnostic | Passed: asset-free probe | Untested | Untested |
 | Halo combat slice | Untested | Untested | Untested |
 | Complete campaign | Untested | Untested | Untested |
 | IR / motion | Untested | Untested | Untested |
