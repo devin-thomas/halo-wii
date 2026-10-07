@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "prepared": "2026-10-05",
-  "kind": "planning_baseline",
-  "upstream_commit": "2b0327bc80ca38c90894cb56b19652cbe85733ff",
+  "kind": "source_bringup",
+  "upstream_commit": "4e8ed2f196e0edd1f2830a4de9841686aabbf466",
   "public_commit": null,
   "binary_sha256": null,
   "scopes": [
@@ -10,8 +10,8 @@
       "id": "probe",
       "environments": {
         "compile": {
-          "state": "untested",
-          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "state": "blocked",
+          "reason": "Official devkitPPC/libogc toolchain is not installed in the development environment; Wii generator and native probe are not implemented. Host preflight tests do not prove a compile pass.",
           "evidence": []
         },
         "dolphin": {
@@ -166,5 +166,7 @@
         }
       }
     }
-  ]
+  ],
+  "updated": "2026-10-07",
+  "research_upstream_commit": "2b0327bc80ca38c90894cb56b19652cbe85733ff"
 }

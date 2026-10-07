@@ -2,7 +2,10 @@
 
 ## Current versus planned commands
 
-This file is a build contract, not a claim that Wii targets already exist. The audited upstream configure.py at `2b0327bc80ca38c90894cb56b19652cbe85733ff` generates desktop/Android targets only. Implement the Wii generator before running any command labelled **planned** below.
+This file is a build contract, not a claim that Wii targets already exist. The
+[pinned upstream baseline](UPSTREAM.md), `4e8ed2f196e0edd1f2830a4de9841686aabbf466`,
+generates desktop/Android targets only. Implement the Wii generator before running
+any command labelled **planned** below.
 
 The intended native pipeline is:
 
@@ -17,6 +20,18 @@ Use official devkitPro/devkitPPC, libogc and the Wii dependencies distributed th
 Use the [official installer](https://github.com/devkitPro/installer) and [official Wii examples](https://github.com/devkitPro/wii-examples). Verify the current Windows installation instructions and Wii development package group when installing. Record package/compiler versions, Python/Ninja versions, source commit, environment variables and the exact successful commands. Do not mix an unrelated MSYS installation with the devkitPro shell without proving path compatibility.
 
 Do not copy ancient SDK archives, proprietary Nintendo headers, unknown patched IOS bundles, or desktop build flags. Pin package versions after a known-good probe builds. A reproducibility manifest must describe the actual installed environment, not just say 'latest'.
+
+The implemented read-only inventory command is:
+
+```powershell
+python tools/wii/check_toolchain.py --devkitpro C:\devkitPro
+```
+
+Replace the path with your actual native installation root. Missing tools return
+nonzero with checked paths. A successful inventory still needs an unmodified
+official example build before the project's probe. The current official Make
+template is `templates/makefile/application` in the Wii examples repository;
+locate its installed copy rather than assuming the older `templates/application` path.
 
 ## Implemented-target contract (future)
 

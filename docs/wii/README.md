@@ -1,12 +1,14 @@
 # Halo CE · Wii port
 
-**State: planning / bring-up not yet implemented.** No Wii game binary is included in this documentation overlay, and no Dolphin or physical-Wii pass is claimed.
+**State: source workspace established; toolchain qualification in progress.**
+The read-only toolchain preflight is implemented. No Wii game binary is available,
+and no Dolphin or physical-Wii pass is claimed.
 
 This public fork is intended to port OpenCE to Wii using native devkitPPC/libogc/GX backends. Original Halo gameplay and content remain the target. A public alpha can be incomplete; the roadmap cannot silently remove missing systems to claim completion.
 
 ## Navigation
 
-[Build](BUILDING.md) · [Run](RUNNING.md) · [Test](TESTING.md) · [Compatibility](COMPATIBILITY.md) · [Status](STATUS.md) · [Data and licenses](DATA-AND-LICENSES.md)
+[Build](BUILDING.md) · [Run](RUNNING.md) · [Test](TESTING.md) · [Compatibility](COMPATIBILITY.md) · [Status](STATUS.md) · [Data and licenses](DATA-AND-LICENSES.md) · [Upstream baseline](UPSTREAM.md)
 
 ## Delivery sequence
 
@@ -29,6 +31,10 @@ Display modes separate actual video output from the rendered view: Auto, 4:3, 5:
 
 ## Source reference
 
-The planning audit inspected upstream commit `2b0327bc80ca38c90894cb56b19652cbe85733ff`. At that commit, configure.py has Linux/Windows/Android generators, **not a Wii generator**. See [upstream configure.py](https://github.com/OpenCommunityEdition/OpenCE/blob/2b0327bc80ca38c90894cb56b19652cbe85733ff/configure.py). This is a baseline to integrate, not evidence of a working port.
+The initial planning audit inspected `2b0327bc80ca38c90894cb56b19652cbe85733ff`.
+The [current pinned integration baseline](UPSTREAM.md) is
+`4e8ed2f196e0edd1f2830a4de9841686aabbf466`; configure.py still has
+Linux/Windows/Android generators, **not a Wii generator**. Source inspection is
+not evidence of a working port.
 
 Contributors must be able to build and test documented public capabilities without access to any private planning repository. Preserve upstream documentation and license notices. Do not place proprietary game data, Nintendo SDK code, console keys or personal device information in the fork.

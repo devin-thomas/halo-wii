@@ -1,10 +1,14 @@
 # Wii port status
 
-**Planning baseline — no game implementation or runtime validation supplied by this overlay.**
+**Source bring-up (2026-10-07):** repository setup, pinned upstream inventory and
+read-only toolchain preflight are available. The preflight's three synthetic
+failure tests pass. These host checks do not establish a Wii compilation pass.
+The current development environment lacks devkitPPC/libogc; the native probe
+and Wii generator remain unimplemented. See [build setup](BUILDING.md).
 
 | Scope | Compile | Dolphin | Physical Wii |
 |---|---|---|---|
-| Asset-free Wii diagnostic | Untested | Untested | Untested |
+| Asset-free Wii diagnostic | Blocked: missing toolchain and implementation | Untested | Untested |
 | Halo combat slice | Untested | Untested | Untested |
 | Complete campaign | Untested | Untested | Untested |
 | IR / motion | Untested | Untested | Untested |

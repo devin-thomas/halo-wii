@@ -1,5 +1,22 @@
 # Wii development helper
 
+## Toolchain preflight
+
+Run the read-only preflight from the repository root:
+
+```powershell
+python tools/wii/check_toolchain.py --devkitpro C:\devkitPro
+python tools/wii/test_check_toolchain.py
+```
+
+Use your actual native installation path. The preflight reports missing compiler,
+binutils, ELF-to-DOL converter, Wii rules, libogc and Ninja, and rejects a compiler
+with a non-PPC target. It exits nonzero if a dependency check fails. It installs
+nothing, changes no environment variables and does not compile or run code on Wii.
+`--json` prints local tool paths; review the output before publishing it.
+
+## Binary sender
+
 `Send-WiiBuild.ps1` sends an **already-built** DOL/ELF with an installed wiiload executable to an explicitly selected private IPv4 address. It is convenience tooling, not game implementation or an automatic Wii installer.
 
 ## Example (replace every example path/address)

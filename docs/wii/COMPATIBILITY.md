@@ -2,7 +2,11 @@
 
 ## Current evidence
 
-There are **no locally verified Wii game, Dolphin gameplay, physical-Wii, or mixed-port results** in this overlay. The planning audit observed OpenCE commit `2b0327bc80ca38c90894cb56b19652cbe85733ff` and network version 17. Versions will change; record the exact tested peer builds instead of saying 'works with the latest OpenCE'.
+There are **no locally verified Wii game, Dolphin gameplay, physical-Wii, or
+mixed-port results**. The [current source audit](UPSTREAM.md) pins OpenCE
+`4e8ed2f196e0edd1f2830a4de9841686aabbf466` and network version 22. The initial
+planning snapshot used version 17. Record exact tested peer builds instead of
+saying 'works with the latest OpenCE'.
 
 ## Compatibility matrix to qualify
 
@@ -22,7 +26,7 @@ Original competitive LAN capacity is the floor: 16 players across four machines,
 
 ## The capacity problem is explicit
 
-The pinned [network limits](https://github.com/OpenCommunityEdition/OpenCE/blob/2b0327bc80ca38c90894cb56b19652cbe85733ff/port/linux/include/halo_port_limits.h) and [capacity header](https://github.com/OpenCommunityEdition/OpenCE/blob/2b0327bc80ca38c90894cb56b19652cbe85733ff/port/linux/include/halo_port_capacity.h) define expanded player, actor and object limits. The latter explicitly requires matching capacities across peers because shared datum identities depend on them. Simply reducing constants to fit memory while retaining the protocol version is not compatibility.
+The pinned [network limits](https://github.com/OpenCommunityEdition/OpenCE/blob/4e8ed2f196e0edd1f2830a4de9841686aabbf466/port/linux/include/halo_port_limits.h) and [capacity header](https://github.com/OpenCommunityEdition/OpenCE/blob/4e8ed2f196e0edd1f2830a4de9841686aabbf466/port/linux/include/halo_port_capacity.h) define expanded player, actor and object limits. The latter explicitly requires matching capacities across peers because shared datum identities depend on them. Simply reducing constants to fit memory while retaining the protocol version is not compatibility.
 
 The implementation must prove one compatible strategy: fit necessary upstream state, safely represent/sparsely allocate it without semantic changes, or coordinate an upstream-compatible capability/representation change. A private incompatible fork required for all desktop opponents does not meet the stated cross-port objective. Unsupported capacities require clear refusal and a tracked solution, not false advertising.
 
