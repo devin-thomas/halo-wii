@@ -9,7 +9,7 @@ import subprocess
 from .wii.check_toolchain import inspect_toolchain
 
 BUILD = Path("build/wii")
-SOURCES = [Path("port/wii/probe/main.c")]
+SOURCES = [Path("port/wii/probe/main.c"), Path("port/wii/abi/boundary.c"), Path("port/wii/abi/fixture.c")]
 MACHINE_FLAGS = ["-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float"]
 CFLAGS = ["-std=c11", "-O2", "-g", "-Wall", "-Wextra", "-Werror", "-ffp-contract=off", *MACHINE_FLAGS]
 LIBRARIES = ("libfat.a", "libwiiuse.a", "libbte.a", "libogc.a")
@@ -17,7 +17,7 @@ LIBRARIES = ("libfat.a", "libwiiuse.a", "libbte.a", "libogc.a")
 
 def source_inputs():
     return [Path("tools/wii_build.py"), Path("tools/wii/build.py"),
-            Path("tools/wii/check_toolchain.py"), *SOURCES]
+            Path("tools/wii/check_toolchain.py"), *SOURCES, *sorted(Path("port/wii/abi").glob("*.h"))]
 
 
 def toolchain_inputs(root):

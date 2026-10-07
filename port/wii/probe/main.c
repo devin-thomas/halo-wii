@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "build_id.h"
+#include "../abi/fixture.h"
 
 _Static_assert(sizeof(void *) == 4, "The probe requires PPC32 pointers");
 _Static_assert(sizeof(int) == 4, "The probe requires 32-bit int");
@@ -128,6 +129,8 @@ int main(void)
         }
     }
     started = gettime();
+    int abi_result = wii_abi_report(stdout);
+    if (record != NULL && wii_abi_report(record) != 0) abi_result = 1;
     while (SYS_MainLoop()) {
         unsigned int present = PAD_ScanPads();
         WPAD_ScanPads();
@@ -162,13 +165,13 @@ int main(void)
     printf("\nEXIT %s; no gameplay/hardware qualification implied\n", exit_reason);
     if (record != NULL) {
         int write_result = fprintf(record, "END build=%s frames=%u ticks=%" PRIu64
-                                   " connected=%x activity=%x exit=%s storage=%d\n",
-                                   WII_BUILD_ID, frames, ticks, connected, activity, exit_reason, storage);
+                                   " connected=%x activity=%x exit=%s storage=%d abi=%d\n",
+                                   WII_BUILD_ID, frames, ticks, connected, activity, exit_reason, storage, abi_result);
         int close_result = fclose(record);
         if (write_result < 0 || close_result != 0 || log_failed) {
             printf("Log write/close failed\n");
             return 1;
         }
     }
-    return storage < 0 ? 1 : 0;
+    return storage < 0 || abi_result != 0 ? 1 : 0;
 }
