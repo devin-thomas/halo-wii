@@ -65,10 +65,14 @@ def main():
                         help="add bounded recursive schema and paired array codec diagnostic")
     parser.add_argument("--packet-groups", action="store_true",
                         help="add actual group boundary reference and bounded paired-codec wrapper")
+    parser.add_argument("--packet-callers", action="store_true",
+                        help="add actual header/union excerpts and bounded caller framing diagnostic")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--compile-only", action="store_true", help="compile objects without execution")
     mode.add_argument("--wii-devkitpro", type=Path, help="link an asset-free Wii ELF/DOL using this official SDK")
     args = parser.parse_args()
+    if args.packet_callers:
+        args.packet_groups = True
     if args.packet_groups:
         args.packet_arrays = True
     if args.packet_arrays:
@@ -122,6 +126,13 @@ def main():
         inputs += [str(HARNESS / name) for name in
                    ("packet_group_policy.c", "packet_group_policy.h", "packet_group_services.c",
                     "packet_group_fixture.c", "packet_group_fixture.h")]
+    if args.packet_callers:
+        inputs += ["source/bungie_net/common/message_header.c", "source/bungie_net/common/message_header.h",
+                   "source/networking/network_messages.c", "source/bungie_net/common/key_agreement.c",
+                   "port/linux/include/halo_port_limits.h", "tools/wii/caller_subset.py"]
+        inputs += [str(HARNESS / name) for name in
+                   ("packet_caller_policy.c", "packet_caller_policy.h", "caller_reference.h",
+                    "caller_services.c", "packet_caller_fixture.c", "packet_caller_fixture.h")]
     sdk = None
     inventory = None
     sdk_identity = {}
@@ -230,6 +241,10 @@ def main():
                     array_include += '#include "packet_group_fixture.h"\n'
                     array_call += ' int groups = wii_packet_group_fixture(stdout, 1);\n'
                     array_result += ' || groups'
+                if args.packet_callers:
+                    array_include += '#include "packet_caller_fixture.h"\n'
+                    array_call += ' int callers = wii_packet_caller_fixture(stdout, 1);\n'
+                    array_result += ' || callers'
                 driver.write_text(array_include + '#include "candidate.h"\n#include "fixture.h"\n'
                     '#include "packet_fixture.h"\n#include "packet_version_edges.h"\n'
                     '#include "packet_verifier_fixture.h"\n'
@@ -257,6 +272,12 @@ def main():
             sources += [*group_sources, HARNESS / "packet_group_policy.c",
                         HARNESS / "packet_group_services.c", HARNESS / "packet_group_fixture.c"]
             flags += ["-DWII_MEMORY_PACKET_GROUPS"]
+        if args.packet_callers:
+            from caller_subset import generate_callers
+            caller_sources, caller_record = generate_callers(args.output, extract)
+            sources += [*caller_sources, HARNESS / "packet_caller_policy.c",
+                        HARNESS / "caller_services.c", HARNESS / "packet_caller_fixture.c"]
+            flags += ["-DWII_MEMORY_PACKET_CALLERS"]
     build_id = None
     if sdk is not None:
         build_id = hashlib.sha256(json.dumps({"source_commit": source_commit, "source_dirty": source_dirty,
@@ -291,6 +312,8 @@ def main():
         flag_exceptions["group_reference.c"] = ["-Wno-error=sign-compare", "-Wno-error=char-subscripts"]
         if target == "powerpc-eabi":
             flag_exceptions["group_reference.c"].append("-Wno-error=type-limits")
+    if args.packet_callers:
+        flag_exceptions["caller_reference.c"] = ["-Wno-error=type-limits"]
     if args.compile_only or sdk is not None or args.packets:
         objects = []
         for source in sources:
@@ -409,6 +432,21 @@ def main():
                 "null_definition": "type_only_decode_success_encode_reject",
                 "error": "per_call_result_original_shared_error_preserved_separately",
                 "limits": "original safe byte schemas; real table shapes authored; no production callers or peer sessions"}
+        if args.packet_callers:
+            record["scope"] = "actual_header_union_excerpts_and_bounded_caller_comparison"
+            record["candidate"]["aggregate_result_scope"] = "all_prior_sections_and_caller_framing"
+            record["callers"] = caller_record
+            record["caller_policy"] = {
+                "scope": "isolated_numeric_size_dispatch_identity_and_packet_framing",
+                "production_integrated": False,
+                "header": "explicit_be_two_bytes_type3_flags0_to3",
+                "total_frame_size": "3_to4095_including_outer_header",
+                "size_conversion": "checked_separate_short_group_output_numerically_widened",
+                "encode": "group_workspace_partial_effects_retained_frame_written_after_complete_checks",
+                "dispatch": "actual_trailer_must_equal_expected_native_destination_type_before_payload_io",
+                "inner_consumption": "group_supplied_payload_vs_consumed_preserved_no_global_exact_rule",
+                "overlap": "native_workspace_frame_pairs_checked_including_outer_header",
+                "limits": "authored_payloads_and_excerpt_wrappers_not_whole_engine_callers_socket_or_peer_integration"}
     if sdk is not None:
         # Native SDK paths stay local; publishable records use root-relative paths.
         record["flags"] = [flag.replace(str(sdk), "<DEVKITPRO>") for flag in flags]
