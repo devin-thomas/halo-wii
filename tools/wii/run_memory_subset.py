@@ -1,4 +1,4 @@
-"""Compile actual engine scalar functions in an isolated authored test harness.
+"""Compile actual engine scalar/packet functions in an isolated authored harness.
 
 Function bodies/actual memory headers are retained; the generated translation
 unit replaces only MSVC ui64 literal suffixes with C ULL. No game code is edited.
@@ -28,7 +28,8 @@ HARNESS = Path("port/wii/abi/memory_subset")
 
 
 def extract(text, name):
-    pattern = rf"(?m)^(?:void|boolean|byte|short|long|__int64)[ \t]+(?:\*[ \t]*)?{re.escape(name)}\s*\("
+    pattern = (rf"(?m)^(?:static[ \t]+)?(?:void|boolean|byte|short|long|__int64|char)"
+               rf"[ \t]+(?:\*[ \t]*)?{re.escape(name)}\s*\([^;{{}}]*\)\s*(?={{)")
     starts = list(re.finditer(pattern, text))
     if len(starts) != 1:
         raise ValueError(f"Expected one definition of {name}, found {len(starts)}")
@@ -54,10 +55,14 @@ def main():
     parser.add_argument("--output", type=Path, default=Path(".local/wii-memory-subset"))
     parser.add_argument("--candidate", action="store_true",
                         help="compare the preserved reference with a diagnostic endian/alignment adapter")
+    parser.add_argument("--packets", action="store_true",
+                        help="exercise actual packet dispatch with reference and candidate scalar services")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--compile-only", action="store_true", help="compile objects without execution")
     mode.add_argument("--wii-devkitpro", type=Path, help="link an asset-free Wii ELF/DOL using this official SDK")
     args = parser.parse_args()
+    if args.packets:
+        args.candidate = True
     compiler = args.cc.resolve(strict=True)
     args.output.mkdir(parents=True, exist_ok=True)
     record_path = args.output / "subset-info.json"
@@ -79,6 +84,12 @@ def main():
               str(HARNESS / "fixture.h"), Path(__file__).resolve().relative_to(Path.cwd()).as_posix()]
     if args.candidate:
         inputs += [str(HARNESS / name) for name in ("candidate.h", "candidate.c", "candidate_edges.c")]
+    if args.packets:
+        inputs += ["source/memory/data_packets.c", "source/memory/data_packets.h",
+                   "source/memory/data_packet_groups.h", "source/cseries/cseries.c",
+                   "tools/wii/packet_subset.py"]
+        inputs += [str(HARNESS / name) for name in
+                   ("packet_fixture.c", "packet_fixture.h", "packet_shim.h", "cseries.h")]
     sdk = None
     inventory = None
     sdk_identity = {}
@@ -132,6 +143,7 @@ def main():
     sources = [generated, HARNESS / "fixture.c"]
     candidate_generated = None
     driver = None
+    packet_record = None
     if args.candidate:
         # Recompile the unchanged fixture through opt-in adapter names; the
         # original fixture and extracted functions stay linked independently.
@@ -157,6 +169,14 @@ def main():
                 ' printf("CANDIDATE END result=%d\\n", candidate || edges);\n'
                 ' return reference || candidate || edges;\n}\n', encoding="utf-8")
             sources.append(driver)
+    if args.packets:
+        from packet_subset import generate_packets
+        packet_sources, packet_record = generate_packets(args.output, extract)
+        sources += [*packet_sources, HARNESS / "packet_fixture.c"]
+        flags += ["-DWII_MEMORY_PACKETS"]
+        if driver is not None:
+            driver.write_text('#include "packet_fixture.h"\n'
+                              'int main(void) { return wii_packet_compare(stdout, 1); }\n', encoding="utf-8")
     build_id = None
     if sdk is not None:
         build_id = hashlib.sha256(json.dumps({"source_commit": source_commit, "source_dirty": source_dirty,
@@ -180,11 +200,17 @@ def main():
 
     elf_record = None
     link_flags = []
-    if args.compile_only or sdk is not None:
+    executable = None
+    flag_exceptions = ({"packet_reference.c": ["-Wno-error=maybe-uninitialized"],
+                        "packet_candidate.c": ["-Wno-error=maybe-uninitialized"],
+                        "packet_strings.c": ["-Wno-error=type-limits", "-Wno-error=pointer-sign"]}
+                       if args.packets else {})
+    if args.compile_only or sdk is not None or args.packets:
         objects = []
         for source in sources:
             obj = args.output / (source.stem + ".o")
-            compile_checked([str(compiler), *flags, "-c", str(source), "-o", str(obj)])
+            compile_checked([str(compiler), *flags, *flag_exceptions.get(source.name, []),
+                             "-c", str(source), "-o", str(obj)])
             data = obj.read_bytes()
             if target == "powerpc-eabi" and (data[:6] != b"\x7fELF\x01\x02" or
                                              int.from_bytes(data[18:20], "big") != 20):
@@ -204,15 +230,19 @@ def main():
             verify_dol(dol)
             for artifact in (elf, dol, map_path):
                 artifacts[artifact.name] = hashlib.sha256(artifact.read_bytes()).hexdigest()
+        elif not args.compile_only:
+            executable = (args.output / ("fixture.exe" if os.name == "nt" else "fixture")).resolve()
+            compile_checked([str(compiler), *objects, "-o", str(executable)])
     else:
         executable = (args.output / ("fixture.exe" if os.name == "nt" else "fixture")).resolve()
         compile_checked([str(compiler), *flags, *map(str, sources), "-o", str(executable)])
+    if executable is not None:
         artifacts[executable.name] = hashlib.sha256(executable.read_bytes()).hexdigest()
         result = subprocess.run([str(executable)], env=environment, text=True, capture_output=True)
         report = (result.stdout + result.stderr).splitlines()
         print("\n".join(report))
         (args.output / "report.txt").write_text("\n".join(report) + "\n", encoding="utf-8")
-        if result.returncode != 0:
+        if result.returncode != 0 and not args.packets:
             record_path.write_text(json.dumps({"scope": "actual_scalar_subset", "state": "execution_failed",
                                                "exit_code": result.returncode, "report": report}) + "\n", encoding="utf-8")
             raise SystemExit(result.returncode)
@@ -237,6 +267,18 @@ def main():
                                "limits": "truthful buffer extents and nonoverlapping encode input/output; structure/packet integration unqualified"}
         if driver is not None:
             record["candidate"]["driver_sha256"] = hashlib.sha256(driver.read_bytes()).hexdigest()
+    if args.packets:
+        record["scope"] = "actual_packet_dispatch_comparison"
+        record["limits"] = ("authored schemas and assertion/memory/format services; "
+                            "aligned native count prefixes; original scalar typed wire access retained; "
+                            "no production integration or physical Wii qualification")
+        record["packets"] = packet_record
+        record["packets"]["compile_flag_exceptions"] = flag_exceptions
+        record["compiler_sha256"] = hashlib.sha256(compiler.read_bytes()).hexdigest()
+        record["candidate"]["aggregate_result_scope"] = "packet_reference_and_candidate"
+        if sdk is None and not args.compile_only:
+            record["exit_code"] = result.returncode
+            record["state"] = "execution_pass" if result.returncode == 0 else "execution_failed"
     if sdk is not None:
         # Native SDK paths stay local; publishable records use root-relative paths.
         record["flags"] = [flag.replace(str(sdk), "<DEVKITPRO>") for flag in flags]
@@ -244,6 +286,8 @@ def main():
         record.update({"build_id": build_id, "sdk_inputs_sha256": sdk_identity,
                        "elf": elf_record, "runtime_verified": False, "collect_failures": True})
     record_path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    if args.packets and sdk is None and not args.compile_only:
+        raise SystemExit(result.returncode)
 
 
 if __name__ == "__main__":

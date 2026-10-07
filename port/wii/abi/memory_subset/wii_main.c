@@ -10,6 +10,9 @@
 #ifdef WII_MEMORY_CANDIDATE
 #include "candidate.h"
 #endif
+#ifdef WII_MEMORY_PACKETS
+#include "packet_fixture.h"
+#endif
 
 int main(void)
 {
@@ -42,7 +45,9 @@ int main(void)
         fprintf(stderr, "MEMORY directory failed: %s\n", strerror(errno));
         return 2;
     }
-#ifdef WII_MEMORY_CANDIDATE
+#if defined(WII_MEMORY_PACKETS)
+    FILE *report = fopen("sd:/halo-wii-memory/packets.log", "a");
+#elif defined(WII_MEMORY_CANDIDATE)
     FILE *report = fopen("sd:/halo-wii-memory/compare.log", "a");
 #else
     FILE *report = fopen("sd:/halo-wii-memory/subset.log", "a");
@@ -57,7 +62,9 @@ int main(void)
         return 2;
     }
     /* Continue independent valid-input checks to expose all endian mismatches. */
-#ifdef WII_MEMORY_CANDIDATE
+#if defined(WII_MEMORY_PACKETS)
+    int result = wii_packet_compare(report, 1);
+#elif defined(WII_MEMORY_CANDIDATE)
     if (fprintf(report, "REFERENCE BEGIN\n") < 0 || fflush(report) != 0) {
         fclose(report); return 2;
     }
