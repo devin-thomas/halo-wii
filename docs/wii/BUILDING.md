@@ -1,19 +1,32 @@
 # Building the Wii target
 
-## Current versus planned commands
+## Implemented probe
 
-This file is a build contract, not a claim that Wii targets already exist. The
-[pinned upstream baseline](UPSTREAM.md), `4e8ed2f196e0edd1f2830a4de9841686aabbf466`,
-generates desktop/Android targets only. Implement the Wii generator before running
-any command labelled **planned** below.
+The asset-free probe is implemented. It does not load Halo assets or run gameplay.
+Use the native root of your existing official devkitPro installation:
 
-The intended native pipeline is:
-
-```text
-configure.py → Ninja → devkitPPC compilation/link → halo.elf → elf2dol → boot.dol
+```powershell
+python configure.py --wii --wii-devkitpro C:/dev/resources/toolchains/devkitpro
+ninja wii_probe
 ```
 
-Use official devkitPro/devkitPPC, libogc and the Wii dependencies distributed through devkitPro. Start from the installed official Wii example/rules for flags, linker script, alignment and libraries. Windows is a first-class development host; WSL is not mandatory. Existing desktop reference builds have their own dependencies and do not replace the Wii toolchain.
+`--wii` generates only Wii rules, without desktop SDL/LLVM setup. Without it,
+the existing native configuration behavior is preserved. `DEVKITPRO` can supply
+the root when invoking from the official shell. `--wii-probe-frames 300` selects
+a bounded diagnostic run; the default 0 waits for PAD Start, Remote Home or a
+system event. Do not use this timer as a gameplay simulation qualification.
+
+Outputs are `build/wii/probe.elf`, `probe.dol`, `probe.map` and `build-info.json`.
+The manifest records input hashes, compiler identity, SDK fingerprint, build ID
+and artifact hashes. The same ID is embedded in the probe. SDK headers, tools,
+libraries, startup files and Git identity trigger reconfiguration. Generated
+files and machine paths stay outside Git.
+
+The native pipeline uses official Wii machine flags and libogc libraries:
+
+```text
+configure.py -> Ninja -> devkitPPC compile/link -> probe.elf -> elf2dol -> probe.dol
+```
 
 ## Installation and provenance
 
@@ -33,26 +46,13 @@ official example build before the project's probe. The current official Make
 template is `templates/makefile/application` in the Wii examples repository;
 locate its installed copy rather than assuming the older `templates/application` path.
 
-## Implemented-target contract (future)
+## Future game and packaging targets
 
-The following interface is **proposed and absent from the audited baseline**:
-
-```sh
-python configure.py --wii
-ninja wii_probe
-ninja wii
-ninja wii_package
-```
-
-The implementation must add these rules, their dependencies and clear help/error output before documenting them as usable. The generator must not require desktop-only dependencies merely to build the Wii probe. Wii compilation must not inherit x86 flags, desktop PGO profiles, Clang-only options, SDL3 or GLES dependencies by accident.
-
-| Planned target | Artifact contract |
-|---|---|
-| `wii_probe` | `build/wii/probe.elf` and `build/wii/probe.dol`; asset-free diagnostic |
-| `wii` | `build/wii/halo.elf` and `build/wii/halo.dol`; symbols retained in ELF |
-| `wii_package` | Staging tree `build/wii/package/apps/halo-wii/` plus reviewed release archive |
-
-These paths must match the implementation and tests; revise this contract with the generator if a justified path changes. A package includes authored metadata/icon when available, public documentation and a build manifest. It does not include game assets, saves or local configuration.
+`ninja wii` and `ninja wii_package` remain **future and unimplemented**.
+Their proposed artifacts are `build/wii/halo.elf`, `build/wii/halo.dol` and a
+reviewed `build/wii/package/apps/halo-wii/` staging tree. No package currently
+claims gameplay support. Packages must exclude game assets, saves and local
+configuration.
 
 ## Required checks
 

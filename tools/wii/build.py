@@ -1,0 +1,123 @@
+"""Native argument-vector build steps, keeping Windows and space-containing paths safe."""
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import struct
+import subprocess
+import sys
+
+
+def verify_elf(path: Path) -> dict:
+    data = path.read_bytes()
+    if len(data) < 52 or data[:7] != b"\x7fELF\x01\x02\x01":
+        raise ValueError("Expected a 32-bit big-endian ELF")
+    kind, machine = struct.unpack_from(">HH", data, 16)
+    if kind != 2 or machine != 20:
+        raise ValueError("Expected an executable PowerPC ELF")
+    entry, phoff = struct.unpack_from(">II", data, 24)
+    phsize, phcount = struct.unpack_from(">HH", data, 42)
+    if phsize != 32 or not phcount or phoff < 52 or phoff + phsize * phcount > len(data):
+        raise ValueError("Invalid ELF program header table")
+    executable_entry = False
+    for index in range(phcount):
+        kind, offset, address, _, filesz, memsz, flags, _ = struct.unpack_from(">8I", data, phoff + index * phsize)
+        if kind != 1:
+            continue
+        if filesz > memsz or offset + filesz > len(data) or address + memsz > 0x100000000:
+            raise ValueError("Invalid ELF load segment")
+        if flags & 1 and filesz and address <= entry < address + filesz:
+            executable_entry = True
+    if not executable_entry:
+        raise ValueError("ELF entry is outside executable load segments")
+    return {"class": "ELF32", "endian": "big", "machine": "PowerPC",
+            "entry_point": f"0x{struct.unpack_from('>I', data, 24)[0]:08x}"}
+
+
+def verify_dol(path: Path) -> None:
+    data = path.read_bytes()
+    if len(data) < 0x100:
+        raise ValueError("Truncated DOL header")
+    offsets = struct.unpack_from(">18I", data, 0)
+    addresses = struct.unpack_from(">18I", data, 0x48)
+    sizes = struct.unpack_from(">18I", data, 0x90)
+    spans = []
+    memory_spans = []
+    for offset, address, size in zip(offsets, addresses, sizes):
+        if not size:
+            continue
+        if offset < 0x100 or offset + size > len(data):
+            raise ValueError("DOL section falls outside the file")
+        if not 0x80000000 <= address < address + size <= 0x81800000:
+            raise ValueError("Probe DOL section is outside MEM1")
+        if any(offset < end and start < offset + size for start, end in spans):
+            raise ValueError("Overlapping DOL sections")
+        if any(address < end and start < address + size for start, end in memory_spans):
+            raise ValueError("Overlapping DOL memory sections")
+        spans.append((offset, offset + size))
+        memory_spans.append((address, address + size))
+    bss, bss_size = struct.unpack_from(">II", data, 0xD8)
+    if bss_size and not 0x80000000 <= bss < bss + bss_size <= 0x81800000:
+        raise ValueError("Probe DOL BSS is outside MEM1")
+    entry = struct.unpack_from(">I", data, 0xE0)[0]
+    if not spans or not any(address <= entry < address + size for address, size in zip(addresses[:7], sizes[:7])):
+        raise ValueError("DOL entry is outside its text sections")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("step", choices=["compile", "link", "convert", "manifest"])
+    parser.add_argument("--config", type=Path, required=True)
+    parser.add_argument("--source", type=Path)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("objects", nargs="*")
+    args = parser.parse_args()
+    try:
+        config = json.loads(args.config.read_text(encoding="utf-8"))
+        root = Path(config["devkitpro"])
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        compiler = config["tools"]["powerpc-eabi-gcc"]["path"]
+        machine = ["-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float"]
+        if args.step == "compile":
+            if args.source is None:
+                parser.error("compile needs --source")
+            subprocess.run([compiler, *config["public"]["compile_flags"],
+                            "-I", str(root / "libogc/include"), "-I", "build/wii",
+                            "-MMD", "-MF", str(args.output) + ".d", "-MT", args.output.as_posix(),
+                            "-c", str(args.source), "-o", str(args.output)], check=True)
+        elif args.step == "link":
+            if not args.objects:
+                parser.error("link needs object files")
+            subprocess.run([compiler, *machine, "-g", "-Wl,-Map," + str(args.output.with_suffix(".map")),
+                            *args.objects, "-L", str(root / "libogc/lib/wii"),
+                            "-lfat", "-lwiiuse", "-lbte", "-logc", "-lm", "-o", str(args.output)], check=True)
+            verify_elf(args.output)
+        elif args.step == "convert":
+            if args.source is None:
+                parser.error("convert needs --source")
+            verify_elf(args.source)
+            subprocess.run([config["tools"]["elf2dol"]["path"], str(args.source), str(args.output)], check=True)
+            verify_dol(args.output)
+        else:
+            build = args.output.parent
+            record = dict(config["public"])
+            record["elf"] = verify_elf(build / "probe.elf")
+            verify_dol(build / "probe.dol")
+            record["artifacts"] = {
+                name: {"sha256": hashlib.sha256((build / name).read_bytes()).hexdigest(),
+                       "bytes": (build / name).stat().st_size}
+                for name in ("probe.elf", "probe.dol", "probe.map")
+            }
+            text = json.dumps(record, indent=2) + "\n"
+            temporary = args.output.with_suffix(".json.tmp")
+            temporary.write_text(text, encoding="utf-8")
+            temporary.replace(args.output)
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        print(f"Wii {args.step} failed: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

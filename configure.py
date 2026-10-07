@@ -14,9 +14,13 @@ from tools import ninja_syntax
 from tools.android_build import android_configure_inputs, generate_android_build
 from tools.linux_build import generate_linux_build, linux_configure_inputs
 from tools.windows_build import generate_windows_build, windows_configure_inputs
+from tools.wii_build import generate_wii_build, wii_configure_inputs
 
 # arguments
 parser = argparse.ArgumentParser()
+parser.add_argument("--wii", action="store_true", help="generate only the asset-free native Wii probe")
+parser.add_argument("--wii-devkitpro", type=Path, help="native root of the official devkitPro installation")
+parser.add_argument("--wii-probe-frames", type=int, default=0, help="diagnostic auto-exit after this many video frames (0: controller exit)")
 parser.add_argument(
     "--linux-cc",
     metavar="BINARY",
@@ -87,6 +91,8 @@ sln = SimpleNamespace(
     port_pgo_profile=args.pgo_profile,
     android_ndk=args.android_ndk,
     android_guest_cc=args.android_guest_cc,
+    wii_devkitpro=args.wii_devkitpro,
+    wii_probe_frames=args.wii_probe_frames,
 )
 
 
@@ -109,9 +115,19 @@ n.variable(
 n.variable("python", f'"{sys.executable}"')
 n.newline()
 
-generate_linux_build(n, sln)
-generate_android_build(n, sln)
-generate_windows_build(n, sln)
+if args.wii:
+    try:
+        generate_wii_build(n, sln)
+    except (ValueError, OSError) as error:
+        parser.error(str(error))
+    configure_inputs = wii_configure_inputs(args.wii_devkitpro or os.environ.get("DEVKITPRO"))
+else:
+    if args.wii_devkitpro is not None or args.wii_probe_frames:
+        parser.error("--wii-* options require --wii")
+    generate_linux_build(n, sln)
+    generate_android_build(n, sln)
+    generate_windows_build(n, sln)
+    configure_inputs = [*linux_configure_inputs(), *android_configure_inputs(), *windows_configure_inputs()]
 
 n.comment("Reconfigure on change")
 n.rule(
@@ -126,16 +142,14 @@ n.build(
     implicit=[
         configure_script,
         Path("tools/ninja_syntax.py"),
-        *linux_configure_inputs(),
-        *android_configure_inputs(),
-        *windows_configure_inputs(),
+        *configure_inputs,
     ],
 )
 n.newline()
 
 # the build for this computer, where it could be generated (the Windows
 # build is left out when SDL cannot be fetched, for instance)
-default = "windows" if is_windows() else "linux"
+default = "wii_probe" if args.wii else ("windows" if is_windows() else "linux")
 if f"\nbuild {default}: " in out.getvalue():
     n.comment("Default rule: the build for this computer")
     n.default(default)
