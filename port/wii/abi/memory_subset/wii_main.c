@@ -16,6 +16,9 @@
 #ifdef WII_MEMORY_PACKET_POLICY
 #include "packet_version_edges.h"
 #endif
+#ifdef WII_MEMORY_PACKET_VERIFIER
+#include "packet_verifier_fixture.h"
+#endif
 
 int main(void)
 {
@@ -48,7 +51,9 @@ int main(void)
         fprintf(stderr, "MEMORY directory failed: %s\n", strerror(errno));
         return 2;
     }
-#if defined(WII_MEMORY_PACKET_POLICY)
+#if defined(WII_MEMORY_PACKET_VERIFIER)
+    FILE *report = fopen("sd:/halo-wii-memory/verifier.log", "a");
+#elif defined(WII_MEMORY_PACKET_POLICY)
     FILE *report = fopen("sd:/halo-wii-memory/version.log", "a");
 #elif defined(WII_MEMORY_PACKETS)
     FILE *report = fopen("sd:/halo-wii-memory/packets.log", "a");
@@ -67,7 +72,23 @@ int main(void)
         return 2;
     }
     /* Continue independent valid-input checks to expose all endian mismatches. */
-#if defined(WII_MEMORY_PACKET_POLICY)
+#if defined(WII_MEMORY_PACKET_VERIFIER)
+    if (fprintf(report, "SCALAR REFERENCE BEGIN\n") < 0 || fflush(report) != 0) {
+        fclose(report); return 2;
+    }
+    int scalar_reference = wii_memory_subset(report, 1);
+    if (fprintf(report, "SCALAR REFERENCE END result=%d\nSCALAR CANDIDATE BEGIN\n", scalar_reference) < 0 ||
+        fflush(report) != 0) { fclose(report); return 2; }
+    int scalar_candidate = wii_memory_candidate_subset(report, 1);
+    int scalar_edges = wii_memory_candidate_edges(report, 1);
+    if (fprintf(report, "SCALAR CANDIDATE END result=%d\n", scalar_candidate || scalar_edges) < 0 ||
+        fflush(report) != 0) { fclose(report); return 2; }
+    int original = wii_packet_compare(report, 1);
+    int policy = wii_packet_policy_subset(report, 1);
+    int edges = wii_packet_version_edges(report, 1);
+    int verifier = wii_packet_verifier_fixture(report, 1);
+    int result = scalar_reference || scalar_candidate || scalar_edges || original || policy || edges || verifier;
+#elif defined(WII_MEMORY_PACKET_POLICY)
     int original = wii_packet_compare(report, 1);
     int policy = wii_packet_policy_subset(report, 1);
     int edges = wii_packet_version_edges(report, 1);

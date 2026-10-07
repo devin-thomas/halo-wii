@@ -59,10 +59,14 @@ def main():
                         help="exercise actual packet dispatch with reference and candidate scalar services")
     parser.add_argument("--packet-policy", action="store_true",
                         help="add a third diagnostic decoder for legacy excluded-field placeholders")
+    parser.add_argument("--packet-verifier", action="store_true",
+                        help="add bounded flat-schema verifier policy and retain all earlier diagnostics")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--compile-only", action="store_true", help="compile objects without execution")
     mode.add_argument("--wii-devkitpro", type=Path, help="link an asset-free Wii ELF/DOL using this official SDK")
     args = parser.parse_args()
+    if args.packet_verifier:
+        args.packet_policy = True
     if args.packet_policy:
         args.packets = True
     if args.packets:
@@ -97,6 +101,10 @@ def main():
     if args.packet_policy:
         inputs += [str(HARNESS / name) for name in
                    ("packet_version_policy.c", "packet_version_edges.c", "packet_version_edges.h")]
+    if args.packet_verifier:
+        inputs += [str(HARNESS / name) for name in
+                   ("packet_verifier_policy.c", "packet_verifier_policy.h",
+                    "packet_verifier_fixture.c", "packet_verifier_fixture.h")]
     sdk = None
     inventory = None
     sdk_identity = {}
@@ -194,6 +202,27 @@ def main():
                     ' int policy = wii_packet_policy_subset(stdout, 1);\n'
                     ' int edges = wii_packet_version_edges(stdout, 1);\n'
                     ' return original || policy || edges;\n}\n', encoding="utf-8")
+        if args.packet_verifier:
+            sources += [HARNESS / "packet_verifier_policy.c", HARNESS / "packet_verifier_fixture.c"]
+            flags += ["-DWII_MEMORY_PACKET_VERIFIER"]
+            if driver is not None:
+                driver.write_text('#include "candidate.h"\n#include "fixture.h"\n'
+                    '#include "packet_fixture.h"\n#include "packet_version_edges.h"\n'
+                    '#include "packet_verifier_fixture.h"\n'
+                    'int main(void) {\n'
+                    ' puts("SCALAR REFERENCE BEGIN");\n'
+                    ' int scalar_reference = wii_memory_subset(stdout, 1);\n'
+                    ' printf("SCALAR REFERENCE END result=%d\\n", scalar_reference);\n'
+                    ' puts("SCALAR CANDIDATE BEGIN");\n'
+                    ' int scalar_candidate = wii_memory_candidate_subset(stdout, 1);\n'
+                    ' int scalar_edges = wii_memory_candidate_edges(stdout, 1);\n'
+                    ' printf("SCALAR CANDIDATE END result=%d\\n", scalar_candidate || scalar_edges);\n'
+                    ' int original = wii_packet_compare(stdout, 1);\n'
+                    ' int policy = wii_packet_policy_subset(stdout, 1);\n'
+                    ' int edges = wii_packet_version_edges(stdout, 1);\n'
+                    ' int verifier = wii_packet_verifier_fixture(stdout, 1);\n'
+                    ' return scalar_reference || scalar_candidate || scalar_edges || original || policy || edges || verifier;\n'
+                    '}\n', encoding="utf-8")
     build_id = None
     if sdk is not None:
         build_id = hashlib.sha256(json.dumps({"source_commit": source_commit, "source_dirty": source_dirty,
@@ -301,6 +330,15 @@ def main():
         if args.packet_policy:
             record["scope"] = "actual_packet_excluded_decode_policy_comparison"
             record["candidate"]["aggregate_result_scope"] = "packet_reference_candidate_policy_and_policy_edges"
+        if args.packet_verifier:
+            record["scope"] = "bounded_packet_verifier_policy_comparison"
+            record["candidate"]["aggregate_result_scope"] = "scalar_packet_placeholder_and_bounded_verifier_sections"
+            record["verifier_policy"] = {
+                "scope": "standalone_bounded_flat_native_metadata_only", "production_integrated": False,
+                "arrays": "rejected_without_child_traversal",
+                "own_version_excluded_field_size": 0, "revalidate_cached_definitions": True,
+                "metadata_commit": "only_after_complete_validation", "original_verifier_preserved": True,
+                "limits": "truthful schema bound and no concurrent mutation; runtime-version native layout unqualified"}
     if sdk is not None:
         # Native SDK paths stay local; publishable records use root-relative paths.
         record["flags"] = [flag.replace(str(sdk), "<DEVKITPRO>") for flag in flags]
