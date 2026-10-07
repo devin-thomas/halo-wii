@@ -65,3 +65,10 @@ Selected state buffer arithmetic uses actual byte pointers. Wider engine GNU
 void-pointer arithmetic, packets/structure arrays, saves, cache relocation,
 intrinsics, atomics and gameplay math remain outside this subset. HWI-005 and
 HWI-006 remain open; no Halo data, gameplay or physical Wii pass is implied.
+
+## Subsequent standalone execution
+
+The [Wii executable follow-up](2026-10-07-scalar-wii.md) supersedes the
+PPC-untested statement above. All 128 checks executed in stock Dolphin:
+16 wire-byte checks fail at offsets 0-7 and 112 other predicates pass.
+The host passes all 128. Alignment safety and clean shutdown remain open.

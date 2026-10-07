@@ -28,5 +28,8 @@ execution in a [scoped follow-up](evidence/2026-10-07-hs-cell-runtime.json);
 engine integration and clean runtime acceptance remain open.
 
 An isolated [actual scalar engine subset](evidence/2026-10-07-scalar-subset.md)
-passes 128 host checks at offsets0-7 and compiles as PPC objects. Its PPC
-execution, endian agreement and alignment safety remain unqualified.
+passes 128 host checks at offsets 0-7. Its standalone Wii executable
+[ran all 128 checks](evidence/2026-10-07-scalar-wii.md) in stock Dolphin;
+16 wire-byte checks fail, measuring the endian incompatibility. The other
+112 predicates pass, while alignment safety and physical Wii remain unqualified.
+The separate host shutdown failure persists.
