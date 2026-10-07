@@ -55,6 +55,27 @@ static boolean eligible(short version, const struct data_packet_field *field)
            (field->maximum_version == 0 || version <= field->maximum_version);
 }
 
+boolean packet_verifier_flat_extent(const struct data_packet_field *field, uint32_t *extent,
+                                    enum packet_verifier_error *error)
+{
+    match_assert(__FILE__, __LINE__, field && extent && error);
+    *extent = 0;
+    *error = PACKET_VERIFY_OK;
+    if (field->type < 0 || field->type >= _data_packet_field_type_count ||
+        field->type == _data_packet_field_end) *error = PACKET_VERIFY_FIELD_TYPE;
+    else if (field->count <= 0) *error = PACKET_VERIFY_FIELD_COUNT;
+    else if (field->minimum_version < 0 || field->minimum_version > UNSIGNED_CHAR_MAX ||
+             field->maximum_version < 0 || field->maximum_version > UNSIGNED_CHAR_MAX ||
+             (field->maximum_version != 0 && field->minimum_version > field->maximum_version))
+        *error = PACKET_VERIFY_FIELD_GATE;
+    else if (field->type == _data_packet_field_array) *error = PACKET_VERIFY_UNSUPPORTED_ARRAY;
+    else {
+        *extent = native_field_extent(field);
+        if (*extent > (uint32_t)SHRT_MAX) *error = PACKET_VERIFY_FIELD_EXTENT;
+    }
+    return *error == PACKET_VERIFY_OK;
+}
+
 boolean packet_verifier_diagnostic(struct data_packet_definition *definition, size_t field_bound,
                                    struct packet_verifier_result *result)
 {

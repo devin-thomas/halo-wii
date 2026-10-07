@@ -61,10 +61,14 @@ def main():
                         help="add a third diagnostic decoder for legacy excluded-field placeholders")
     parser.add_argument("--packet-verifier", action="store_true",
                         help="add bounded flat-schema verifier policy and retain all earlier diagnostics")
+    parser.add_argument("--packet-arrays", action="store_true",
+                        help="add bounded recursive schema and paired array codec diagnostic")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--compile-only", action="store_true", help="compile objects without execution")
     mode.add_argument("--wii-devkitpro", type=Path, help="link an asset-free Wii ELF/DOL using this official SDK")
     args = parser.parse_args()
+    if args.packet_arrays:
+        args.packet_verifier = True
     if args.packet_verifier:
         args.packet_policy = True
     if args.packet_policy:
@@ -105,6 +109,10 @@ def main():
         inputs += [str(HARNESS / name) for name in
                    ("packet_verifier_policy.c", "packet_verifier_policy.h",
                     "packet_verifier_fixture.c", "packet_verifier_fixture.h")]
+    if args.packet_arrays:
+        inputs += [str(HARNESS / name) for name in
+                   ("packet_array_policy.c", "packet_array_policy.h",
+                    "packet_array_fixture.c", "packet_array_fixture.h")]
     sdk = None
     inventory = None
     sdk_identity = {}
@@ -206,7 +214,10 @@ def main():
             sources += [HARNESS / "packet_verifier_policy.c", HARNESS / "packet_verifier_fixture.c"]
             flags += ["-DWII_MEMORY_PACKET_VERIFIER"]
             if driver is not None:
-                driver.write_text('#include "candidate.h"\n#include "fixture.h"\n'
+                array_include = '#include "packet_array_fixture.h"\n' if args.packet_arrays else ''
+                array_call = ' int arrays = wii_packet_array_fixture(stdout, 1);\n' if args.packet_arrays else ''
+                array_result = ' || arrays' if args.packet_arrays else ''
+                driver.write_text(array_include + '#include "candidate.h"\n#include "fixture.h"\n'
                     '#include "packet_fixture.h"\n#include "packet_version_edges.h"\n'
                     '#include "packet_verifier_fixture.h"\n'
                     'int main(void) {\n'
@@ -221,8 +232,12 @@ def main():
                     ' int policy = wii_packet_policy_subset(stdout, 1);\n'
                     ' int edges = wii_packet_version_edges(stdout, 1);\n'
                     ' int verifier = wii_packet_verifier_fixture(stdout, 1);\n'
-                    ' return scalar_reference || scalar_candidate || scalar_edges || original || policy || edges || verifier;\n'
+                    + array_call +
+                    ' return scalar_reference || scalar_candidate || scalar_edges || original || policy || edges || verifier' + array_result + ';\n'
                     '}\n', encoding="utf-8")
+        if args.packet_arrays:
+            sources += [HARNESS / "packet_array_policy.c", HARNESS / "packet_array_fixture.c"]
+            flags += ["-DWII_MEMORY_PACKET_ARRAYS"]
     build_id = None
     if sdk is not None:
         build_id = hashlib.sha256(json.dumps({"source_commit": source_commit, "source_dirty": source_dirty,
@@ -339,6 +354,23 @@ def main():
                 "own_version_excluded_field_size": 0, "revalidate_cached_definitions": True,
                 "metadata_commit": "only_after_complete_validation", "original_verifier_preserved": True,
                 "limits": "truthful schema bound and no concurrent mutation; runtime-version native layout unqualified"}
+        if args.packet_arrays:
+            record["scope"] = "bounded_packet_array_policy_comparison"
+            record["candidate"]["aggregate_result_scope"] = "all_prior_sections_and_paired_array_codec"
+            record["array_policy"] = {
+                "scope": "isolated_snapshot_schema_and_paired_codec", "production_integrated": False,
+                "native_capacity": "stable_all_version_latent_reserves_checked_before_io",
+                "schema_bound": "truthful_accessible_1_to_32767_fields",
+                "stack": "explicit_heap_frames_no_c_recursion",
+                "visit_budget": "non_end_fields_at_most_full_native_extent_32767",
+                "array_reserve": "2_plus_maximum_count_times_full_child_stride",
+                "runtime_version": "0_to_definition_version_only_none_encodes_own",
+                "wire_bound": "nonnegative_signed_short_capacity_or_length",
+                "excluded_arrays": "raw_count_placeholder_then_zero_reserve_and_skip_child_schema",
+                "invalid_counts": "reject_before_current_native_field_write_retain_prior_wire_mutation",
+                "trailing_bytes": "accepted_and_unconsumed",
+                "original_metadata_and_bodies_preserved": True,
+                "limits": "candidate compatibility policy; no group integration or physical Wii qualification"}
     if sdk is not None:
         # Native SDK paths stay local; publishable records use root-relative paths.
         record["flags"] = [flag.replace(str(sdk), "<DEVKITPRO>") for flag in flags]

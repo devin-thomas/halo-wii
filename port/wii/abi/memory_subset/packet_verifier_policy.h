@@ -30,4 +30,7 @@ struct packet_verifier_result {
 boolean packet_verifier_diagnostic(struct data_packet_definition *, size_t field_bound,
                                    struct packet_verifier_result *);
 const char *packet_verifier_error_name(enum packet_verifier_error);
+/* Nonmutating latent extent for the separate all-version array reserve policy. */
+boolean packet_verifier_flat_extent(const struct data_packet_field *, uint32_t *,
+                                    enum packet_verifier_error *);
 #endif
