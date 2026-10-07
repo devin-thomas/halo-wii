@@ -1,0 +1,96 @@
+{
+  "scope": "actual_scalar_subset",
+  "state": "compile_pass",
+  "source_commit": "6b3701b09cfa6de7bd9a2fa94aa5feab5d072c78",
+  "source_dirty": false,
+  "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+  "target": "powerpc-eabi",
+  "flags": [
+    "-std=gnu11",
+    "-O2",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-Wno-multichar",
+    "-fno-strict-aliasing",
+    "-fwrapv",
+    "-ffp-contract=off",
+    "-I",
+    "port\\wii\\abi\\memory_subset",
+    "-I",
+    "source",
+    "-DGEKKO",
+    "-mrvl",
+    "-mcpu=750",
+    "-meabi",
+    "-mhard-float"
+  ],
+  "functions": {
+    "byte_swap_memory": {
+      "source": "source/memory/byte_swapping.c",
+      "body_sha256": "ed8a2f5bc8964f1d194bf44bb709f2a7576d99df7a22f51faaf89ddfcbb966ba"
+    },
+    "data_encode_new": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "585e01c989c579a9e184478647976095042ea95736b3f517bd2076d18724c787"
+    },
+    "data_encode_memory": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "12161bb5fc892bd87628e7f26f09d458e93e1494a63ea6dac235a19261d13f7d"
+    },
+    "data_encode_integer": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "70ea0401ce82b1b65fbb6c0a5388e5196da5340ef77a56f2ab1d6aa44ef39ceb"
+    },
+    "data_decode_new": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "08ebe890b49a6bc3b9bfbb6f3c36747d966dac7dc8d5bb5d120705e5b04b8f3d"
+    },
+    "data_decode_memory": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "40f97ca4bf0df144b6c150b58c17113b7eb5eba709b35fdc57b1aa53d5edb0be"
+    },
+    "data_decode_byte": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "6d2f9b4bfa04836cb9dd742a11bbbcfda65c51d850fccf1ea8c493650dde0f1b"
+    },
+    "data_decode_short": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "312578ca48d00c79d07b0f90efa77aac908ddbfdecc6af0e6ac90a9d00d2f1b7"
+    },
+    "data_decode_long": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "cd004a9aa539061692fdbb5ab4ed30ed109114527bd6c29137b87981f9fdc516"
+    },
+    "data_decode_int64": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "8a827c5ecd99134c09824ad875bdcfd444602aac28e07a914b68b19c38432fbb"
+    },
+    "data_decode_integer": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "0467f24aac94503bcf2246901abab1e93651c00e33783d43ea4f7592254c3580"
+    }
+  },
+  "macros": {
+    "SWAP8": "14add77b5edf4b25ae340b25484be513af373278a72bf558d1890ac5e0d43f33"
+  },
+  "inputs_sha256": {
+    "source/memory/byte_swapping.c": "5fb49cfcd5678fe7b6a5fd7ae4bb4b54fb55432c6fc03414104734e724b934cb",
+    "source/memory/data_encoding.c": "667d528667d6aa73872aa688d616150547ae472945ec391bb474fc5ab46d45e6",
+    "source/memory/byte_swapping.h": "2651249ee2d4bf3c0b6678e4a9bedf89fba04bb6abe32100fcf7955203569a3a",
+    "source/memory/data_encoding.h": "bc497545fef9d6544d7e45130daef5fff9f46719ecddc79f26519f52776fade5",
+    "source/cseries/cseries.h": "515e6fe3922e5d4d6bc0516bc3b78af8de2aa345873cb7db0c9c0a3aa43e54ef",
+    "port/wii/abi/memory_subset/shim.h": "a1190c3468ca0d98aed98b8756ffe3220c859df49cfa61809a22ffc1819159ea",
+    "port/wii/abi/memory_subset/fixture.c": "da809708cd4deff5d5cbf9fa51fdb72a3438231ba7d7b728e123e24b55c01275",
+    "tools/wii/run_memory_subset.py": "570d7cf9cb477e78434bf788e7e4d8cd95fe23e6edae0ee54c071607861ea7e3"
+  },
+  "generated_sha256": "03236010a23aa12c1b144ae8b862f8579988dd6902ecc02e800a6927f807f13b",
+  "object_format": "ELF32 big-endian PowerPC",
+  "artifacts_sha256": {
+    "engine_scalars.o": "a61c372c40375d32cbdef780cd5c90d5cba1298155a7e010d18acd876f7abe05",
+    "fixture.o": "e8a81b01c925a750f2f18f8cd88daff5e75cadf50229d3eb381a0185446f95c9"
+  },
+  "report": [],
+  "compile_diagnostics": [],
+  "limits": "scalar subset with authored assertion/memory services; no engine integration or alignment safety proof"
+}

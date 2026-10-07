@@ -23,6 +23,10 @@ Physical Wii validation gates 1.0, not source publication or alpha development. 
 Further [shutdown diagnosis](evidence/2026-10-07-dolphin-shutdown.md) catches
 `ucrtbase!terminate` during CRT exit handling; normal GUI application close also
 fails. The exact static object remains unidentified. The [engine ABI audit](evidence/2026-10-07-engine-abi-audit.md)
-adds 24-check host execution and PPC compilation evidence, including a script-cell
-endian failure model. The expanded checks have not run on PPC; engine integration
-and clean runtime acceptance remain open.
+adds a script-cell endian failure model. All 24 checks now match host and PPC
+execution in a [scoped follow-up](evidence/2026-10-07-hs-cell-runtime.json);
+engine integration and clean runtime acceptance remain open.
+
+An isolated [actual scalar engine subset](evidence/2026-10-07-scalar-subset.md)
+passes 128 host checks at offsets0-7 and compiles as PPC objects. Its PPC
+execution, endian agreement and alignment safety remain unqualified.

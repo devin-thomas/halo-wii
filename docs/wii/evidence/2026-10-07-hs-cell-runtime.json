@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "scope": "synthetic_abi_only",
+  "execution": "pass",
+  "clean_dolphin_shutdown": "fail",
+  "source_commit": "449b12c1a3096dceeea79bf21a39aaa735df320e",
+  "build_id": "c19fa4f497c4d06f",
+  "dol_sha256": "c59fb6adf6b6ed40afb6dad764e80cfa966636e9591f58dba398f35549a21e9f",
+  "dolphin_version": "2609",
+  "dolphin_executable_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+  "launch_arguments_sanitized": [
+    "--user",
+    "<isolated-profile>",
+    "--batch",
+    "--video_backend",
+    "D3D",
+    "--exec",
+    "probe.dol"
+  ],
+  "guest_report": [
+    "BEGIN build=c19fa4f497c4d06f previous_runs=11 video=640x480 mode=0",
+    "ARENAS mem1=0x801c6000..0x81800000 bytes=23306240 mem2=0x90002000..0x933c6f60 bytes=54284128",
+    "ABI CANONICAL checks=24 address=803a6010 offset=16 float=3fc00000 layout=0,4,8/12 varargs=ok datum=abcd,1234 cells=a1b2c301,a1b2fffe",
+    "ABI ARITHMETIC separate=00000000 sum1000=43a6aac4",
+    "ABI TARGET pointer_bytes=4 int_bytes=4 double_bytes=8",
+    "END build=c19fa4f497c4d06f frames=300 ticks=150 connected=1 activity=0 exit=auto_exit storage=1 abi=0",
+    ""
+  ],
+  "guest_report_sha256": "43247c5809c4c256dbb7452738610d0d5c1369034bedc33e5c29115be67277d4",
+  "host_exit_decimal": -1073740791,
+  "host_exit_hex": "0xc0000409",
+  "host_comparison": "matching canonical/arithmetic records; same C input hashes",
+  "host_comparison_source_commit": "58580dc97fddbae87498e44ee9a9acb0efd2ec1c",
+  "limits": [
+    "synthetic fixtures only",
+    "physical Wii untested",
+    "gameplay untested",
+    "clean host teardown still failed"
+  ]
+}

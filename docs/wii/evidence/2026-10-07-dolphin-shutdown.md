@@ -96,3 +96,37 @@ Read-only stock source inspection continued separately.
 Guest clean return, emulator stop and host process termination remain distinct.
 Physical Wii and Halo gameplay are untested. The expanded 24-check fixture was
 compiled afterward and was not run in Dolphin during this diagnosis.
+
+## Coordinator execution and exact symbol identity follow-up
+
+A later coordinator launch of the same installed stock2609 official example
+succeeded. The attempted native UI full-close action then failed on desktop
+access: `CreateForMonitor 0x80070057`, followed by
+`GetCursorPos AccessDenied 0x80070005`. The owned process was cleaned up.
+This adds a successful launch, not a clean application-close result. An
+accessible desktop is still required for that GUI comparison.
+
+The coordinator also executed the expanded probe in stock batch D3D. Its
+[24-check guest report](2026-10-07-hs-cell-runtime.json) matches the host
+canonical/arithmetic records; the process still exits `0xc0000409`.
+
+Read-only PE inspection now verifies the call through import RVA `0x00f97c50`
+is CRT `terminate`; this is stronger attribution than nearest exported labels.
+CodeView identity for this exact executable:
+
+```text
+PDB name: Dolphin.pdb
+RSDS GUID: FFAA1DB7-B44E-6BFF-14B0-9F60EDB3BE84
+Age: 1
+Symbol-store key: FFAA1DB7B44E6BFF14B09F60EDB3BE841
+```
+
+No matching PDB was found in checked local tool/staging locations. The checked
+[official release page](https://dolphin-emu.org/download/release/2609/) and
+[release assets](https://github.com/dolphin-emu/dolphin/releases/expanded_assets/2609)
+expose no PDB link; symbol availability remains unresolved. Obtain a matching
+PDB/map, verify GUID/age, then resolve callback RVA `0x00f8e570` and globals
+around `0x01f50140`. The terminate check matches the shape of a
+[joinable std::thread destructor](https://github.com/microsoft/STL/blob/main/stl/inc/thread),
+but exact component ownership remains unproven. Stock Dolphin was not forked
+or patched.

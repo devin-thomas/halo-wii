@@ -3,8 +3,10 @@
 Source audit base: `b5239daeb318343c9cf83695dbeaec940fe2e911`. This is source
 inspection, not engine compilation or behavioral qualification. The Wii target
 currently builds the probe and synthetic C fixtures only. The [earlier 17 checks](2026-10-07-abi-fixtures.md)
-matched host/PPC execution; the expanded 24 checks below passed host execution
-and PPC compilation only. No new PPC runtime comparison was performed.
+matched host/PPC execution. The expanded 24 checks initially passed host execution
+and PPC compilation; a subsequent coordinator run now confirms matching PPC
+canonical/arithmetic output. See the [scoped runtime record](2026-10-07-hs-cell-runtime.json).
+Clean Dolphin shutdown and actual engine qualification remain open.
 
 ## Source-backed gaps
 
@@ -75,4 +77,7 @@ read-only review found no actionable defects in the three-file C change.
 The new canonical line differs from the 17-check report, so an old PPC report
 cannot be used to certify these checks. HWI-005 remains blocked on host teardown;
 HWI-006 remains incomplete on that prerequisite and the actual engine proofs
-listed above. Compilation does not establish PPC execution or save compatibility.
+listed above. The subsequent 24-check guest report ends `storage=1 abi=0`, with
+300 frames/150 nominal ticks; host shutdown still exits `0xc0000409`. The host
+runner's [exact comparison](2026-10-07-hs-cell-host-comparison.json) passes for
+the same C input hashes. This synthetic agreement does not establish save compatibility.
