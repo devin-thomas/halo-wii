@@ -101,3 +101,10 @@ build lookup is NTSC. No assets were extracted. Compressed bodies, tags/BSPs,
 conversion, canonical dump authenticity and gameplay remain unqualified.
 The next gate prepares a 32-bit Linux validator and private staging; HWI-005/006
 remain blocked and HWI-007/008 remain incomplete.
+
+The [existing Linux cache validator](evidence/2026-10-07-owned-cache-validation.md)
+now passes strict checks on all 24 owned maps with zero corrections/refusals.
+Private staging/read-back hashes and decompression/tag/BSP checks are recorded.
+Canonical checksums/authenticity, full conversion, Wii address/memory/endian
+loading, runtime and gameplay remain unqualified. Earlier ABI gaps/shutdown
+faults stay preserved; HWI-005/006 remain blocked and HWI-007/008 incomplete.

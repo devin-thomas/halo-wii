@@ -1,0 +1,821 @@
+{
+  "schema_version": 1,
+  "scope": "existing_linux_validator_strict_owned_maps_not_conversion_or_gameplay",
+  "source_commit": "de8768ab7d7fd854e6c66a59948336285d2444a8",
+  "source_snapshot_archive_sha256": "7da94684c6a642807e3d75d79bdc782af3acf4d054d352ef9f2c14ba9f6e0e70",
+  "distro": "WSL Debian13 trixie x86_64",
+  "validator_elf": {
+    "binary_sha256": "305f5b39a074ba05a1d5ff60e2fdca760763faed779c15819baa4e2cd5a08934",
+    "elf_class": 32,
+    "elf_endianness": "little",
+    "elf_machine": "i386"
+  },
+  "dependencies": [
+    {
+      "label": "update",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--",
+        "apt-get",
+        "update"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.61
+    },
+    {
+      "label": "simulate",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--",
+        "apt-get",
+        "-s",
+        "--no-install-recommends",
+        "install",
+        "clang",
+        "lld",
+        "python3",
+        "ninja-build",
+        "gcc-multilib",
+        "libc6-dev-i386"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.727
+    },
+    {
+      "label": "install",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--",
+        "env",
+        "DEBIAN_FRONTEND=noninteractive",
+        "apt-get",
+        "-y",
+        "--no-install-recommends",
+        "install",
+        "clang",
+        "lld",
+        "python3",
+        "ninja-build",
+        "gcc-multilib",
+        "libc6-dev-i386"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 57.019
+    }
+  ],
+  "build_steps": [
+    {
+      "label": "mkdir",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--",
+        "mkdir",
+        "-p",
+        "<SOURCE-SNAPSHOT>"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.378
+    },
+    {
+      "label": "snapshot-empty",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--",
+        "test",
+        "!",
+        "-e",
+        "<SOURCE-SNAPSHOT>/configure.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.09
+    },
+    {
+      "label": "extract-source",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--",
+        "tar",
+        "-xf",
+        "<PRIVATE-DATA>/tools/source-de8768ab.tar",
+        "-C",
+        "<SOURCE-SNAPSHOT>"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.567
+    },
+    {
+      "label": "versions",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--cd",
+        "<SOURCE-SNAPSHOT>",
+        "--",
+        "clang-19",
+        "--version"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.178
+    },
+    {
+      "label": "configure",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--cd",
+        "<SOURCE-SNAPSHOT>",
+        "--",
+        "python3",
+        "configure.py",
+        "--linux-cc=clang-19",
+        "--pgo=off",
+        "--lto=off",
+        "--portable",
+        "--android-ndk=/dev/null"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.222
+    },
+    {
+      "label": "dry-run",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--cd",
+        "<SOURCE-SNAPSHOT>",
+        "--",
+        "ninja",
+        "-n",
+        "-j1",
+        "build/linux/map_validate"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.09
+    },
+    {
+      "label": "build",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--cd",
+        "<SOURCE-SNAPSHOT>",
+        "--",
+        "ninja",
+        "-j1",
+        "build/linux/map_validate"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.079
+    }
+  ],
+  "build_tool_identity": [
+    {
+      "label": "packages",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--",
+        "dpkg-query",
+        "-W",
+        "clang",
+        "clang-19",
+        "lld",
+        "lld-19",
+        "python3",
+        "ninja-build",
+        "gcc-multilib",
+        "libc6-dev-i386"
+      ],
+      "exit_code": 0,
+      "stdout": [
+        "clang\t1:19.0-63",
+        "clang-19\t1:19.1.7-3+b1",
+        "gcc-multilib\t4:14.2.0-1",
+        "libc6-dev-i386\t2.41-12+deb13u4",
+        "lld:amd64\t1:19.0-63",
+        "lld-19\t1:19.1.7-3+b1",
+        "ninja-build\t1.12.1-1",
+        "python3\t3.13.5-1"
+      ],
+      "stderr": []
+    },
+    {
+      "label": "python",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--",
+        "python3",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": [
+        "Python 3.13.5"
+      ],
+      "stderr": []
+    },
+    {
+      "label": "ninja",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--",
+        "ninja",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": [
+        "1.12.1"
+      ],
+      "stderr": []
+    },
+    {
+      "label": "compiler",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--",
+        "clang-19",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": [
+        "Debian clang version 19.1.7 (3+b1)",
+        "Target: x86_64-pc-linux-gnu",
+        "Thread model: posix",
+        "InstalledDir: /usr/lib/llvm-19/bin"
+      ],
+      "stderr": []
+    },
+    {
+      "label": "compiler-hash",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--",
+        "sha256sum",
+        "/usr/bin/clang-19"
+      ],
+      "exit_code": 0,
+      "stdout": [
+        "0a3c55936ac43954fbe4914e6e73b577ca9e35e75d89ef13d3e28c187f41ca1a  /usr/bin/clang-19"
+      ],
+      "stderr": []
+    },
+    {
+      "label": "ninja-commands",
+      "arguments": [
+        "wsl",
+        "-d",
+        "Debian",
+        "--cd",
+        "<SOURCE-SNAPSHOT>",
+        "--",
+        "ninja",
+        "-t",
+        "commands",
+        "build/linux/map_validate"
+      ],
+      "exit_code": 0,
+      "stdout": [
+        "clang-19 -MMD -MF build/linux/obj/tools/map_validate.o.d --target=i686-linux-gnu -m32 -std=gnu11 -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -fno-pic -O2 -g -Wall -march=x86-64 -Iport/linux/src -Iport/third_party/zlib -DZ_PREFIX -Dz_errmsg=z_port_errmsg  -c tools/map_validate.c -o build/linux/obj/tools/map_validate.o",
+        "\"/usr/bin/python3\" tools/linux_msvc_semantics.py --output build/linux/halo_msvc_semantics.h --all-inlines --tags source --inlines source --inlines port/include/xdk",
+        "\"/usr/bin/python3\" tools/linux_msvc_semantics.py --output build/linux/platform_msvc_semantics.h --inlines port/include/xdk",
+        "clang-19 -MMD -MF build/linux/obj/port/linux/game/tag_validate.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu89 -D__STRICT_ANSI__ -w -Wno-error=incompatible-pointer-types -Wno-error=incompatible-function-pointer-types -Wno-error=int-conversion -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=return-type -include port/linux/include/halo_linux_prefix.h -include build/linux/halo_msvc_semantics.h -Iport/linux/include -iquote port/linux/game -DDEBUG -Dxbox -Isource -Isource/main -Isource/cseries -Isource/sound -Isource/bink -I\"source/saved films\" -I\"source/saved games\" -Isource/cache -Isource/units -Isource/text -Isource/tag_files -Isource/structures -Isource/shell -Isource/shaders -Isource/scenario -Isource/render -Isource/rasterizer -Isource/physics -Isource/objects -Isource/objects/widgets -Isource/networking -Isource/models -Isource/memory -Isource/memory/zlib -Isource/math -Isource/tool -Isource/items -Isource/interface -Isource/input -Isource/hs -Isource/game -Isource/effects -Isource/editor -Isource/dialogs -Isource/devices -Isource/cutscene -Isource/camera -Isource/bungie_net -Isource/bitmaps -Isource/ai -idirafter port/include/xdk  -c port/linux/game/tag_validate.c -o build/linux/obj/port/linux/game/tag_validate.o",
+        "clang-19 -MMD -MF build/linux/obj/port/linux/game/cache_file_formats.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu89 -D__STRICT_ANSI__ -w -Wno-error=incompatible-pointer-types -Wno-error=incompatible-function-pointer-types -Wno-error=int-conversion -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=return-type -include port/linux/include/halo_linux_prefix.h -include build/linux/halo_msvc_semantics.h -Iport/linux/include -iquote port/linux/game -DDEBUG -Dxbox -Isource -Isource/main -Isource/cseries -Isource/sound -Isource/bink -I\"source/saved films\" -I\"source/saved games\" -Isource/cache -Isource/units -Isource/text -Isource/tag_files -Isource/structures -Isource/shell -Isource/shaders -Isource/scenario -Isource/render -Isource/rasterizer -Isource/physics -Isource/objects -Isource/objects/widgets -Isource/networking -Isource/models -Isource/memory -Isource/memory/zlib -Isource/math -Isource/tool -Isource/items -Isource/interface -Isource/input -Isource/hs -Isource/game -Isource/effects -Isource/editor -Isource/dialogs -Isource/devices -Isource/cutscene -Isource/camera -Isource/bungie_net -Isource/bitmaps -Isource/ai -idirafter port/include/xdk  -c port/linux/game/cache_file_formats.c -o build/linux/obj/port/linux/game/cache_file_formats.o",
+        "clang-19 -MMD -MF build/linux/obj/port/linux/game/tag_schema_collision.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu89 -D__STRICT_ANSI__ -w -Wno-error=incompatible-pointer-types -Wno-error=incompatible-function-pointer-types -Wno-error=int-conversion -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=return-type -include port/linux/include/halo_linux_prefix.h -include build/linux/halo_msvc_semantics.h -Iport/linux/include -iquote port/linux/game -DDEBUG -Dxbox -Isource -Isource/main -Isource/cseries -Isource/sound -Isource/bink -I\"source/saved films\" -I\"source/saved games\" -Isource/cache -Isource/units -Isource/text -Isource/tag_files -Isource/structures -Isource/shell -Isource/shaders -Isource/scenario -Isource/render -Isource/rasterizer -Isource/physics -Isource/objects -Isource/objects/widgets -Isource/networking -Isource/models -Isource/memory -Isource/memory/zlib -Isource/math -Isource/tool -Isource/items -Isource/interface -Isource/input -Isource/hs -Isource/game -Isource/effects -Isource/editor -Isource/dialogs -Isource/devices -Isource/cutscene -Isource/camera -Isource/bungie_net -Isource/bitmaps -Isource/ai -idirafter port/include/xdk  -c port/linux/game/tag_schema_collision.c -o build/linux/obj/port/linux/game/tag_schema_collision.o",
+        "clang-19 -MMD -MF build/linux/obj/port/linux/game/tag_schema_effects.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu89 -D__STRICT_ANSI__ -w -Wno-error=incompatible-pointer-types -Wno-error=incompatible-function-pointer-types -Wno-error=int-conversion -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=return-type -include port/linux/include/halo_linux_prefix.h -include build/linux/halo_msvc_semantics.h -Iport/linux/include -iquote port/linux/game -DDEBUG -Dxbox -Isource -Isource/main -Isource/cseries -Isource/sound -Isource/bink -I\"source/saved films\" -I\"source/saved games\" -Isource/cache -Isource/units -Isource/text -Isource/tag_files -Isource/structures -Isource/shell -Isource/shaders -Isource/scenario -Isource/render -Isource/rasterizer -Isource/physics -Isource/objects -Isource/objects/widgets -Isource/networking -Isource/models -Isource/memory -Isource/memory/zlib -Isource/math -Isource/tool -Isource/items -Isource/interface -Isource/input -Isource/hs -Isource/game -Isource/effects -Isource/editor -Isource/dialogs -Isource/devices -Isource/cutscene -Isource/camera -Isource/bungie_net -Isource/bitmaps -Isource/ai -idirafter port/include/xdk  -c port/linux/game/tag_schema_effects.c -o build/linux/obj/port/linux/game/tag_schema_effects.o",
+        "clang-19 -MMD -MF build/linux/obj/port/linux/game/tag_schema_groups.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu89 -D__STRICT_ANSI__ -w -Wno-error=incompatible-pointer-types -Wno-error=incompatible-function-pointer-types -Wno-error=int-conversion -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=return-type -include port/linux/include/halo_linux_prefix.h -include build/linux/halo_msvc_semantics.h -Iport/linux/include -iquote port/linux/game -DDEBUG -Dxbox -Isource -Isource/main -Isource/cseries -Isource/sound -Isource/bink -I\"source/saved films\" -I\"source/saved games\" -Isource/cache -Isource/units -Isource/text -Isource/tag_files -Isource/structures -Isource/shell -Isource/shaders -Isource/scenario -Isource/render -Isource/rasterizer -Isource/physics -Isource/objects -Isource/objects/widgets -Isource/networking -Isource/models -Isource/memory -Isource/memory/zlib -Isource/math -Isource/tool -Isource/items -Isource/interface -Isource/input -Isource/hs -Isource/game -Isource/effects -Isource/editor -Isource/dialogs -Isource/devices -Isource/cutscene -Isource/camera -Isource/bungie_net -Isource/bitmaps -Isource/ai -idirafter port/include/xdk  -c port/linux/game/tag_schema_groups.c -o build/linux/obj/port/linux/game/tag_schema_groups.o",
+        "clang-19 -MMD -MF build/linux/obj/port/linux/game/tag_schema_models.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu89 -D__STRICT_ANSI__ -w -Wno-error=incompatible-pointer-types -Wno-error=incompatible-function-pointer-types -Wno-error=int-conversion -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=return-type -include port/linux/include/halo_linux_prefix.h -include build/linux/halo_msvc_semantics.h -Iport/linux/include -iquote port/linux/game -DDEBUG -Dxbox -Isource -Isource/main -Isource/cseries -Isource/sound -Isource/bink -I\"source/saved films\" -I\"source/saved games\" -Isource/cache -Isource/units -Isource/text -Isource/tag_files -Isource/structures -Isource/shell -Isource/shaders -Isource/scenario -Isource/render -Isource/rasterizer -Isource/physics -Isource/objects -Isource/objects/widgets -Isource/networking -Isource/models -Isource/memory -Isource/memory/zlib -Isource/math -Isource/tool -Isource/items -Isource/interface -Isource/input -Isource/hs -Isource/game -Isource/effects -Isource/editor -Isource/dialogs -Isource/devices -Isource/cutscene -Isource/camera -Isource/bungie_net -Isource/bitmaps -Isource/ai -idirafter port/include/xdk  -c port/linux/game/tag_schema_models.c -o build/linux/obj/port/linux/game/tag_schema_models.o",
+        "clang-19 -MMD -MF build/linux/obj/port/linux/game/tag_schema_objects.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu89 -D__STRICT_ANSI__ -w -Wno-error=incompatible-pointer-types -Wno-error=incompatible-function-pointer-types -Wno-error=int-conversion -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=return-type -include port/linux/include/halo_linux_prefix.h -include build/linux/halo_msvc_semantics.h -Iport/linux/include -iquote port/linux/game -DDEBUG -Dxbox -Isource -Isource/main -Isource/cseries -Isource/sound -Isource/bink -I\"source/saved films\" -I\"source/saved games\" -Isource/cache -Isource/units -Isource/text -Isource/tag_files -Isource/structures -Isource/shell -Isource/shaders -Isource/scenario -Isource/render -Isource/rasterizer -Isource/physics -Isource/objects -Isource/objects/widgets -Isource/networking -Isource/models -Isource/memory -Isource/memory/zlib -Isource/math -Isource/tool -Isource/items -Isource/interface -Isource/input -Isource/hs -Isource/game -Isource/effects -Isource/editor -Isource/dialogs -Isource/devices -Isource/cutscene -Isource/camera -Isource/bungie_net -Isource/bitmaps -Isource/ai -idirafter port/include/xdk  -c port/linux/game/tag_schema_objects.c -o build/linux/obj/port/linux/game/tag_schema_objects.o",
+        "clang-19 -MMD -MF build/linux/obj/port/linux/game/tag_schema_render.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu89 -D__STRICT_ANSI__ -w -Wno-error=incompatible-pointer-types -Wno-error=incompatible-function-pointer-types -Wno-error=int-conversion -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=return-type -include port/linux/include/halo_linux_prefix.h -include build/linux/halo_msvc_semantics.h -Iport/linux/include -iquote port/linux/game -DDEBUG -Dxbox -Isource -Isource/main -Isource/cseries -Isource/sound -Isource/bink -I\"source/saved films\" -I\"source/saved games\" -Isource/cache -Isource/units -Isource/text -Isource/tag_files -Isource/structures -Isource/shell -Isource/shaders -Isource/scenario -Isource/render -Isource/rasterizer -Isource/physics -Isource/objects -Isource/objects/widgets -Isource/networking -Isource/models -Isource/memory -Isource/memory/zlib -Isource/math -Isource/tool -Isource/items -Isource/interface -Isource/input -Isource/hs -Isource/game -Isource/effects -Isource/editor -Isource/dialogs -Isource/devices -Isource/cutscene -Isource/camera -Isource/bungie_net -Isource/bitmaps -Isource/ai -idirafter port/include/xdk  -c port/linux/game/tag_schema_render.c -o build/linux/obj/port/linux/game/tag_schema_render.o",
+        "clang-19 -MMD -MF build/linux/obj/port/linux/game/tag_schema_scenario.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu89 -D__STRICT_ANSI__ -w -Wno-error=incompatible-pointer-types -Wno-error=incompatible-function-pointer-types -Wno-error=int-conversion -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=return-type -include port/linux/include/halo_linux_prefix.h -include build/linux/halo_msvc_semantics.h -Iport/linux/include -iquote port/linux/game -DDEBUG -Dxbox -Isource -Isource/main -Isource/cseries -Isource/sound -Isource/bink -I\"source/saved films\" -I\"source/saved games\" -Isource/cache -Isource/units -Isource/text -Isource/tag_files -Isource/structures -Isource/shell -Isource/shaders -Isource/scenario -Isource/render -Isource/rasterizer -Isource/physics -Isource/objects -Isource/objects/widgets -Isource/networking -Isource/models -Isource/memory -Isource/memory/zlib -Isource/math -Isource/tool -Isource/items -Isource/interface -Isource/input -Isource/hs -Isource/game -Isource/effects -Isource/editor -Isource/dialogs -Isource/devices -Isource/cutscene -Isource/camera -Isource/bungie_net -Isource/bitmaps -Isource/ai -idirafter port/include/xdk  -c port/linux/game/tag_schema_scenario.c -o build/linux/obj/port/linux/game/tag_schema_scenario.o",
+        "clang-19 -MMD -MF build/linux/obj/port/third_party/zlib/adler32.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu11 -DZ_PREFIX -Dz_errmsg=z_port_errmsg -w  -c port/third_party/zlib/adler32.c -o build/linux/obj/port/third_party/zlib/adler32.o",
+        "clang-19 -MMD -MF build/linux/obj/port/third_party/zlib/crc32.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu11 -DZ_PREFIX -Dz_errmsg=z_port_errmsg -w  -c port/third_party/zlib/crc32.c -o build/linux/obj/port/third_party/zlib/crc32.o",
+        "clang-19 -MMD -MF build/linux/obj/port/third_party/zlib/inffast.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu11 -DZ_PREFIX -Dz_errmsg=z_port_errmsg -w  -c port/third_party/zlib/inffast.c -o build/linux/obj/port/third_party/zlib/inffast.o",
+        "clang-19 -MMD -MF build/linux/obj/port/third_party/zlib/inflate.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu11 -DZ_PREFIX -Dz_errmsg=z_port_errmsg -w  -c port/third_party/zlib/inflate.c -o build/linux/obj/port/third_party/zlib/inflate.o",
+        "clang-19 -MMD -MF build/linux/obj/port/third_party/zlib/inftrees.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu11 -DZ_PREFIX -Dz_errmsg=z_port_errmsg -w  -c port/third_party/zlib/inftrees.c -o build/linux/obj/port/third_party/zlib/inftrees.o",
+        "clang-19 -MMD -MF build/linux/obj/port/third_party/zlib/uncompr.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu11 -DZ_PREFIX -Dz_errmsg=z_port_errmsg -w  -c port/third_party/zlib/uncompr.c -o build/linux/obj/port/third_party/zlib/uncompr.o",
+        "clang-19 -MMD -MF build/linux/obj/port/third_party/zlib/zutil.o.d --target=i686-linux-gnu -m32 -fms-extensions -fshort-wchar -malign-double -fcommon -fno-pic -fno-strict-aliasing -fwrapv -fno-delete-null-pointer-checks -freg-struct-return -fno-omit-frame-pointer -ffp-contract=off -O2 -g -fno-builtin-wcslen -fno-builtin-wcsnlen -fno-builtin-wcschr -fno-builtin-wcsrchr -fno-builtin-wcscmp -fno-builtin-wcsncmp -fno-builtin-wcscpy -fno-builtin-wcsncpy -fno-builtin-wcscat -fno-builtin-wcsncat -fno-builtin-wmemchr -fno-builtin-wmemcmp -fno-builtin-wmemcpy -fno-builtin-wmemmove -fno-builtin-wmemset -march=x86-64 -fstack-protector-strong -std=gnu11 -DZ_PREFIX -Dz_errmsg=z_port_errmsg -w  -c port/third_party/zlib/zutil.c -o build/linux/obj/port/third_party/zlib/zutil.o",
+        "clang-19 --target=i686-linux-gnu -m32 -no-pie -g -o build/linux/map_validate @build/linux/map_validate.rsp"
+      ],
+      "stderr": []
+    }
+  ],
+  "build_ninja_steps": 20,
+  "compiled_units": 17,
+  "parallel_compile_jobs": 1,
+  "PGO": "off",
+  "LTO": "off",
+  "production_source_changed": false,
+  "image_sha256": "43ec0813edadd592b7b489a930f108d289db9313ac337611110ffca8be0a7258",
+  "private_staging": {
+    "files": 24,
+    "copied_bytes": 1860638720,
+    "elapsed_seconds": 7.262,
+    "source_read_only": true,
+    "atomic_directory_commit": true,
+    "all_read_back_hashes_exact": true
+  },
+  "strict_summary": {
+    "maps": 24,
+    "passed": 24,
+    "corrections": 0,
+    "refusals": 0,
+    "timeouts": 0,
+    "total_validator_seconds": 17.48
+  },
+  "strict_runs": [
+    {
+      "ordinal": 1,
+      "exit_code": 0,
+      "elapsed_seconds": 1.624,
+      "timeout": false,
+      "input_size": 173903872,
+      "input_sha256": "f7461e5b6eaf0314c4f03a1c6e43752b06ae3e4782b70b240a8c15e5f634b3ce",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-01>"
+      ]
+    },
+    {
+      "ordinal": 2,
+      "exit_code": 0,
+      "elapsed_seconds": 1.222,
+      "timeout": false,
+      "input_size": 152610816,
+      "input_sha256": "4875fa105e6c517589a796cfdcc7fcaa07e98df13d14e601bfc9eb1eab7e30b5",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-02>"
+      ]
+    },
+    {
+      "ordinal": 3,
+      "exit_code": 0,
+      "elapsed_seconds": 1.531,
+      "timeout": false,
+      "input_size": 176224256,
+      "input_sha256": "f8ec33c0130191cf944ef7b4a3f210bb680cfd1341cdf3a6ef3447391049abe7",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-03>"
+      ]
+    },
+    {
+      "ordinal": 4,
+      "exit_code": 0,
+      "elapsed_seconds": 1.483,
+      "timeout": false,
+      "input_size": 162877440,
+      "input_sha256": "a6e2ae628f96b666922d6429541068c3e117e8aa5031d00d187b3c853630be0f",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-04>"
+      ]
+    },
+    {
+      "ordinal": 5,
+      "exit_code": 0,
+      "elapsed_seconds": 1.625,
+      "timeout": false,
+      "input_size": 186873856,
+      "input_sha256": "0a7b26d6d828e7b773d36d9d5c798b9bf4b143332301a0c0e7a3d685782eab48",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-05>"
+      ]
+    },
+    {
+      "ordinal": 6,
+      "exit_code": 0,
+      "elapsed_seconds": 0.28,
+      "timeout": false,
+      "input_size": 22122496,
+      "input_sha256": "c65ac17d830552cdebfc173c1e8aa17f1f009149138c2c8e72afda1f79f88a60",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-06>"
+      ]
+    },
+    {
+      "ordinal": 7,
+      "exit_code": 0,
+      "elapsed_seconds": 0.289,
+      "timeout": false,
+      "input_size": 22571008,
+      "input_sha256": "50fe52406f075d975e24100a65b26ff696458023dd3509878953052ab0ef858f",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-07>"
+      ]
+    },
+    {
+      "ordinal": 8,
+      "exit_code": 0,
+      "elapsed_seconds": 0.221,
+      "timeout": false,
+      "input_size": 22075392,
+      "input_sha256": "e14cebccd63f7780e1f5da7a1687a37bdaa3f0821701095075336ef548889efb",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-08>"
+      ]
+    },
+    {
+      "ordinal": 9,
+      "exit_code": 0,
+      "elapsed_seconds": 1.584,
+      "timeout": false,
+      "input_size": 166926336,
+      "input_sha256": "d65683f92e2f78cf8ba4d31c26b212869652b5d5ec037add480865a49e18434e",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-09>"
+      ]
+    },
+    {
+      "ordinal": 10,
+      "exit_code": 0,
+      "elapsed_seconds": 0.721,
+      "timeout": false,
+      "input_size": 76980224,
+      "input_sha256": "6560cd88af4c5b4e2f02f14017085a7b47e9a9622198c30f36b03d3d3943d6b8",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-10>"
+      ]
+    },
+    {
+      "ordinal": 11,
+      "exit_code": 0,
+      "elapsed_seconds": 1.475,
+      "timeout": false,
+      "input_size": 166295552,
+      "input_sha256": "b5fb3db5b111280e8494c5ec7612604d7facd1e0a511987afa38a228a115a896",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-11>"
+      ]
+    },
+    {
+      "ordinal": 12,
+      "exit_code": 0,
+      "elapsed_seconds": 0.272,
+      "timeout": false,
+      "input_size": 20215808,
+      "input_sha256": "1c6353df6e4530437841b09775e62fa067caa46bb0e40f4579bbf2276991a38e",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-12>"
+      ]
+    },
+    {
+      "ordinal": 13,
+      "exit_code": 0,
+      "elapsed_seconds": 0.221,
+      "timeout": false,
+      "input_size": 20336640,
+      "input_sha256": "81819e9d7037a6b6c4e9a7472a431ebb53ed25ea00d8af634ac8384f1fe13d8b",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-13>"
+      ]
+    },
+    {
+      "ordinal": 14,
+      "exit_code": 0,
+      "elapsed_seconds": 1.173,
+      "timeout": false,
+      "input_size": 131012608,
+      "input_sha256": "6b38b4776f4be1e9e12063db202e5809245aae0ded3d9cef56602d7fd69c96be",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-14>"
+      ]
+    },
+    {
+      "ordinal": 15,
+      "exit_code": 0,
+      "elapsed_seconds": 1.59,
+      "timeout": false,
+      "input_size": 170405888,
+      "input_sha256": "7c6dccc9f928f4a44db992c4d6f5fa6191e9cfd331bb0d0b631540f0fc9bc796",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-15>"
+      ]
+    },
+    {
+      "ordinal": 16,
+      "exit_code": 0,
+      "elapsed_seconds": 0.279,
+      "timeout": false,
+      "input_size": 23756800,
+      "input_sha256": "8b97ca7d73a4b720ba1b88deeb5a250b02a3f6886ffd2ddaa789cc9ad05e47b8",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-16>"
+      ]
+    },
+    {
+      "ordinal": 17,
+      "exit_code": 0,
+      "elapsed_seconds": 0.221,
+      "timeout": false,
+      "input_size": 21338112,
+      "input_sha256": "932a3a13a69fff5dd6e69c9b2c896c1bf3942c54a2a207975c4d0da4df07ed30",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-17>"
+      ]
+    },
+    {
+      "ordinal": 18,
+      "exit_code": 0,
+      "elapsed_seconds": 0.221,
+      "timeout": false,
+      "input_size": 20512768,
+      "input_sha256": "12977a4042ecb960cbe48ef936046a35c6754c18829ad2d17206b66ddd03864e",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-18>"
+      ]
+    },
+    {
+      "ordinal": 19,
+      "exit_code": 0,
+      "elapsed_seconds": 0.281,
+      "timeout": false,
+      "input_size": 21323776,
+      "input_sha256": "50740d89600b7fa53613ced764fa6e688434a8132948224658bf1ed07662aa3d",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-19>"
+      ]
+    },
+    {
+      "ordinal": 20,
+      "exit_code": 0,
+      "elapsed_seconds": 0.22,
+      "timeout": false,
+      "input_size": 19777536,
+      "input_sha256": "7f5d13335d44982b0fbf7aad6b767d035aa64b32bf5c38d6d29bf20916fce5d4",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-20>"
+      ]
+    },
+    {
+      "ordinal": 21,
+      "exit_code": 0,
+      "elapsed_seconds": 0.271,
+      "timeout": false,
+      "input_size": 23840768,
+      "input_sha256": "ad83896842b2303d145b944f644e4ddfe8d0dd80feda7efcb058a0f567a6bdec",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-21>"
+      ]
+    },
+    {
+      "ordinal": 22,
+      "exit_code": 0,
+      "elapsed_seconds": 0.275,
+      "timeout": false,
+      "input_size": 24823808,
+      "input_sha256": "210f7a01bac7b4c242483b1a640e0bc32fb0a2b4f97f56e69668720563b34912",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-22>"
+      ]
+    },
+    {
+      "ordinal": 23,
+      "exit_code": 0,
+      "elapsed_seconds": 0.181,
+      "timeout": false,
+      "input_size": 14145536,
+      "input_sha256": "35e3e560478d85178749be310ad13d6d6ecde618d32675261a3554592333a833",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-23>"
+      ]
+    },
+    {
+      "ordinal": 24,
+      "exit_code": 0,
+      "elapsed_seconds": 0.22,
+      "timeout": false,
+      "input_size": 19687424,
+      "input_sha256": "e782ad19071efa1c73f30be44feb6b7e073e15f00337e23d877a8e9776f2f3ad",
+      "staging_read_back_exact": true,
+      "input_metadata_unchanged": true,
+      "corrections": 0,
+      "command": [
+        "<VALIDATOR>",
+        "--strict",
+        "<private-map-24>"
+      ]
+    }
+  ],
+  "validated_declared_sizes": {
+    "maximum_map_bytes": 279763456,
+    "maximum_tag_data_bytes": 16995988,
+    "total_map_bytes": 2978974720
+  },
+  "raw_staging_record_sha256": "acc4e9d1ab2da3d659c0508b67358d9b742bc924bd4754f28c5e0af4ad0061ca",
+  "raw_strict_record_sha256": "e420bdb8d68a64486364c92d7330a96de03d20905f26c2e542e39b2fa1b01869",
+  "qualification": {
+    "existing_linux_inflate_tag_BSP_checker": "pass",
+    "canonical_Xbox_map_checksum": "unverified",
+    "canonical_disc_authenticity": "unverified",
+    "asset_conversion": "unimplemented",
+    "Wii_memory_and_PPC_asset_loading": "unqualified",
+    "gameplay": "untested"
+  },
+  "limits": [
+    "existing_checker_scope_only_not_exhaustive_content_authenticity",
+    "no_fuzz_or_corrected_output_export",
+    "no_scripts_geometry_audio_movie_conversion_or_runtime",
+    "whole_map_desktop_inflation_not_Wii_memory_viability",
+    "original_native_ABI_gaps_shutdown_faults_and_HWI005_HWI006_blocked_preserved",
+    "HWI007_HWI008_not_completed_by_this_preparatory_owned_data_gate",
+    "BSP_loop_cap32_schema_count_limit16_strict_rejects_count_corrections"
+  ],
+  "independent_review": {
+    "unresolved_findings": 0,
+    "source_snapshot_regular_files_matched": 2338,
+    "source_snapshot_full_archive_match": true,
+    "staged_file_hashes_recomputed": 24,
+    "staged_bytes_rehashed": 1860638720,
+    "all_strict_log_files_exact_match": true,
+    "sample_count": 2,
+    "sample_selection": [
+      "maximum_declared_map",
+      "ui_map"
+    ],
+    "sample_exit_codes": [
+      0,
+      0
+    ],
+    "sample_corrections": [
+      0,
+      0
+    ],
+    "sample_elapsed_seconds": [
+      1.695,
+      0.151
+    ],
+    "sample_input_hashes_and_metadata_unchanged": true,
+    "raw_review_sha256": "9e4a2dd0fdd007519398e74304b2e06c96fa1bf08acfe5ec8bddcdd3ae6d64c7",
+    "whole_image_hash_repeated_by_reviewer": false
+  },
+  "compiled_source_hashes_verified": {
+    "configure.py": "cbb299d7b90655bccb856f2bf28cff1f0343ce611a12fba4d8eb84ea46c6e01c",
+    "port/linux/game/cache_file_formats.c": "5358af0e0ee7af59956a831a4348ac5a538a67392cecb4c08e1829b3d534bad4",
+    "port/linux/game/tag_schema.h": "12d34048d66f9e864b27811b9ced451660f745f6c6999a47d71efc5f1a738d31",
+    "port/linux/game/tag_schema_collision.c": "8083856c54b2798b7ac8855b4ff68e5db7582506fb63cc3560f1b4fc059e07ed",
+    "port/linux/game/tag_schema_effects.c": "8ac81ee1aad291fb7fb929fa9f7f42558b7c4f2ce0834730981e7b14dddac41b",
+    "port/linux/game/tag_schema_groups.c": "e35c227ba1ded0ba1026c64540f19df2948688928b6dff5a44d15a84fc26cc0e",
+    "port/linux/game/tag_schema_models.c": "902d379378da2c29f533e3bf6dab1bfa2dc04e7bf08e61393ff9a0e8edf95345",
+    "port/linux/game/tag_schema_objects.c": "835fe681dec2ead496ab581ea421b0c3adf275e1fab09e1cb3fbc1e1ecddf0a9",
+    "port/linux/game/tag_schema_render.c": "fe1cd144db42a0f650e54c10f003381c2ba3624cd7255b034a320b2190492ed3",
+    "port/linux/game/tag_schema_scenario.c": "b0480e21315e303d91ca8b9df1f78e139c3a1c226f66bbd81abf52f71cf47612",
+    "port/linux/game/tag_validate.c": "8e13cdb4157a9750f08e5bf851bc3ea3c665565301285090c9595778ab86a70f",
+    "port/third_party/zlib/LICENSE": "439c75ab12b340c5362b9d4b08ff05ec3a4d0eb7667a6fff49a9b16d8795c78e",
+    "port/third_party/zlib/README": "37797df3d16eae42cd9c0d1d315b758e1b5deb573f60b471fc5da2c006c4ecd8",
+    "port/third_party/zlib/adler32.c": "1e14078fc631f6b5691b7dc42fde83dc913213ec6ede54cdf68e612d3eaaf385",
+    "port/third_party/zlib/crc32.c": "d8c069d1887197d14e5120c1325ced7d831145ef056dfc2ef7ea3344a6480d23",
+    "port/third_party/zlib/crc32.h": "5729f6816e505b456a743aa57c25d13dc070ee932e81aca4fc613f286f85317b",
+    "port/third_party/zlib/gzguts.h": "3f5bdbd0f9ff6c41d40218322f6db855c61130e835a4724dd3b26abfb5781049",
+    "port/third_party/zlib/inffast.c": "09c508af21e4f537de990edcb8609f291de47bb0850d6b3494172cfc7d28cb0a",
+    "port/third_party/zlib/inffast.h": "c9d1f9ee7bd78f9590065dc93eb14b5cfcbfbb28eaf3a990836512446e1a17cd",
+    "port/third_party/zlib/inffixed.h": "b763c7f8a2613d85827e65bec8a9f650c51c3a71603be7e5ff0e2c1837ca7ffa",
+    "port/third_party/zlib/inflate.c": "ee560bd794eb89c35100f975337b81129a8c3cd731c6791658bb79d793e0c894",
+    "port/third_party/zlib/inflate.h": "ab17e127af7cb2355cc8adb8fef6b1a360bf6b5f5dabb9aeb258b7f761c63fce",
+    "port/third_party/zlib/inftrees.c": "bcd5a429031f3218ad3236153f86893b60ff70b69fa19113a7d8decb00afd7f8",
+    "port/third_party/zlib/inftrees.h": "2e997c7c87f7aa901ba8b4472137ba5a12ea3423af2a6e4ec4f8ea30f90a460c",
+    "port/third_party/zlib/uncompr.c": "e25b8656e95fb94961f14a5f0fc45669f35f024c2437ba23f12bde0aef50ddbd",
+    "port/third_party/zlib/zconf.h": "c67a074a7930587fd2a4a16361e3890e9ac691187e57dd5b7a137f3e1a55b8e3",
+    "port/third_party/zlib/zlib.h": "aa5d046fe1c26c0fce240ebfe014d2110a447a49e59ad5ff83975143d17a46ad",
+    "port/third_party/zlib/zlib_prefixed.h": "89d5a24c23896e5ac49ca716822a87c7345aaf567caf6bf04a6a4ff1210189c0",
+    "port/third_party/zlib/zutil.c": "ab83ecebd49525f8a15aa751d058d57dcad7f101682e69b233a62afeefc35c5b",
+    "port/third_party/zlib/zutil.h": "13ce7e0e5a67f5066947d7aaf54e6a33f2f3b3f4059de6081337d50ecb43da99",
+    "tools/linux_build.py": "a55f863dc9f6d1c5546a219a89c849e285c27c391be14f6d87afb9bfec29bd34",
+    "tools/map_validate.c": "0bb8e1a7a8e9b39570c1ddb0a4b8dcefeb7bb92f5581bfb34ad03a63b59dc7a5"
+  }
+}
