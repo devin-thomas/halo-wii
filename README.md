@@ -1,5 +1,10 @@
 # Halo: Combat Evolved for Linux, Windows and Android
 
+## Wii development
+
+This fork is beginning a native Wii port. See the [Wii development guide](docs/wii/README.md)
+and [validation status](docs/wii/STATUS.md). No Wii executable or runtime pass is available yet.
+
 [![Join our Discord](https://invidget.switchblade.xyz/9gqcHyr5km)](https://discord.gg/9gqcHyr5km)
 
 This project is a port of the Halo: Combat Evolved decompilation to Linux,

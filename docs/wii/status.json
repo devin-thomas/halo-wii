@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "prepared": "2026-10-05",
+  "kind": "planning_baseline",
+  "upstream_commit": "2b0327bc80ca38c90894cb56b19652cbe85733ff",
+  "public_commit": null,
+  "binary_sha256": null,
+  "scopes": [
+    {
+      "id": "probe",
+      "environments": {
+        "compile": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "dolphin": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "hardware": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        }
+      }
+    },
+    {
+      "id": "combat_slice",
+      "environments": {
+        "compile": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "dolphin": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "hardware": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        }
+      }
+    },
+    {
+      "id": "campaign",
+      "environments": {
+        "compile": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "dolphin": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "hardware": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        }
+      }
+    },
+    {
+      "id": "ir_motion",
+      "environments": {
+        "compile": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "dolphin": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "hardware": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        }
+      }
+    },
+    {
+      "id": "campaign_coop_2p",
+      "environments": {
+        "compile": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "dolphin": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "hardware": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        }
+      }
+    },
+    {
+      "id": "competitive_split_4p",
+      "environments": {
+        "compile": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "dolphin": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "hardware": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        }
+      }
+    },
+    {
+      "id": "wii_lan",
+      "environments": {
+        "compile": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "dolphin": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "hardware": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        }
+      }
+    },
+    {
+      "id": "opence_cross_port",
+      "environments": {
+        "compile": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "dolphin": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        },
+        "hardware": {
+          "state": "untested",
+          "reason": "No implementation/execution evidence supplied in the planning overlay.",
+          "evidence": []
+        }
+      }
+    }
+  ]
+}
