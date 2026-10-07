@@ -14,5 +14,14 @@ void packet_reference_dispatch_decode(struct data_packet_definition *,
                                      struct data_encoding_state *, short, void *);
 void packet_candidate_dispatch_decode(struct data_packet_definition *,
                                      struct data_encoding_state *, short, void *);
+void policy_packet_verify(struct data_packet_definition *);
+boolean policy_packet_encode(struct data_packet_definition *, long, const void *,
+                             void *, short *, short);
+boolean policy_packet_decode(struct data_packet_definition *, const void *, short,
+                             void *, short *, short *);
+void packet_policy_dispatch_decode(struct data_packet_definition *,
+                                  struct data_encoding_state *, short, void *);
+boolean packet_policy_excluded(struct data_encoding_state *,
+                               const struct data_packet_field *, void *);
 _Static_assert(sizeof(struct data_packet_field) == 10, "Actual five-short schema layout");
 #endif

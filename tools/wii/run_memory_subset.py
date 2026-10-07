@@ -57,10 +57,14 @@ def main():
                         help="compare the preserved reference with a diagnostic endian/alignment adapter")
     parser.add_argument("--packets", action="store_true",
                         help="exercise actual packet dispatch with reference and candidate scalar services")
+    parser.add_argument("--packet-policy", action="store_true",
+                        help="add a third diagnostic decoder for legacy excluded-field placeholders")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--compile-only", action="store_true", help="compile objects without execution")
     mode.add_argument("--wii-devkitpro", type=Path, help="link an asset-free Wii ELF/DOL using this official SDK")
     args = parser.parse_args()
+    if args.packet_policy:
+        args.packets = True
     if args.packets:
         args.candidate = True
     compiler = args.cc.resolve(strict=True)
@@ -90,6 +94,9 @@ def main():
                    "tools/wii/packet_subset.py"]
         inputs += [str(HARNESS / name) for name in
                    ("packet_fixture.c", "packet_fixture.h", "packet_shim.h", "cseries.h")]
+    if args.packet_policy:
+        inputs += [str(HARNESS / name) for name in
+                   ("packet_version_policy.c", "packet_version_edges.c", "packet_version_edges.h")]
     sdk = None
     inventory = None
     sdk_identity = {}
@@ -171,12 +178,22 @@ def main():
             sources.append(driver)
     if args.packets:
         from packet_subset import generate_packets
-        packet_sources, packet_record = generate_packets(args.output, extract)
+        packet_sources, packet_record = generate_packets(args.output, extract, args.packet_policy)
         sources += [*packet_sources, HARNESS / "packet_fixture.c"]
         flags += ["-DWII_MEMORY_PACKETS"]
         if driver is not None:
             driver.write_text('#include "packet_fixture.h"\n'
                               'int main(void) { return wii_packet_compare(stdout, 1); }\n', encoding="utf-8")
+        if args.packet_policy:
+            sources += [HARNESS / "packet_version_policy.c", HARNESS / "packet_version_edges.c"]
+            flags += ["-DWII_MEMORY_PACKET_POLICY"]
+            if driver is not None:
+                driver.write_text('#include "packet_fixture.h"\n#include "packet_version_edges.h"\n'
+                    'int main(void) {\n'
+                    ' int original = wii_packet_compare(stdout, 1);\n'
+                    ' int policy = wii_packet_policy_subset(stdout, 1);\n'
+                    ' int edges = wii_packet_version_edges(stdout, 1);\n'
+                    ' return original || policy || edges;\n}\n', encoding="utf-8")
     build_id = None
     if sdk is not None:
         build_id = hashlib.sha256(json.dumps({"source_commit": source_commit, "source_dirty": source_dirty,
@@ -205,6 +222,8 @@ def main():
                         "packet_candidate.c": ["-Wno-error=maybe-uninitialized"],
                         "packet_strings.c": ["-Wno-error=type-limits", "-Wno-error=pointer-sign"]}
                        if args.packets else {})
+    if args.packet_policy:
+        flag_exceptions["packet_policy.c"] = ["-Wno-error=maybe-uninitialized"]
     if args.compile_only or sdk is not None or args.packets:
         objects = []
         for source in sources:
@@ -279,6 +298,9 @@ def main():
         if sdk is None and not args.compile_only:
             record["exit_code"] = result.returncode
             record["state"] = "execution_pass" if result.returncode == 0 else "execution_failed"
+        if args.packet_policy:
+            record["scope"] = "actual_packet_excluded_decode_policy_comparison"
+            record["candidate"]["aggregate_result_scope"] = "packet_reference_candidate_policy_and_policy_edges"
     if sdk is not None:
         # Native SDK paths stay local; publishable records use root-relative paths.
         record["flags"] = [flag.replace(str(sdk), "<DEVKITPRO>") for flag in flags]
