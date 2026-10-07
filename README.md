@@ -3,7 +3,8 @@
 ## Wii development
 
 This fork is beginning a native Wii port. See the [Wii development guide](docs/wii/README.md)
-and [validation status](docs/wii/STATUS.md). No Wii executable or runtime pass is available yet.
+and [validation status](docs/wii/STATUS.md). An asset-free native probe compiles;
+clean Dolphin execution, physical Wii and Halo gameplay remain unqualified.
 
 [![Join our Discord](https://invidget.switchblade.xyz/9gqcHyr5km)](https://discord.gg/9gqcHyr5km)
 

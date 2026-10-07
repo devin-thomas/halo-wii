@@ -19,10 +19,11 @@
         },
         "dolphin": {
           "state": "blocked",
-          "reason": "Guest screen/input/timer/SD restart checks observed, but stock Dolphin2609 host teardown exits0xc0000409; clean runtime acceptance is incomplete.",
+          "reason": "Guest screen/input/timer/SD restart checks observed; stock Dolphin2609 terminates in CRT exit handlers and normal GUI application close also fails. Exact static owner unresolved.",
           "evidence": [
             "evidence/2026-10-07-dolphin-probe.md",
-            "evidence/2026-10-07-dolphin-probe.json"
+            "evidence/2026-10-07-dolphin-probe.json",
+            "evidence/2026-10-07-dolphin-shutdown.md"
           ]
         },
         "hardware": {

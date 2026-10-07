@@ -1,0 +1,29 @@
+{
+  "scope": "synthetic_abi_only",
+  "state": "pass",
+  "compiler": "gcc.exe (Rev3, Built by MSYS2 project) 16.2.0",
+  "target": "x86_64-w64-mingw32",
+  "flags": [
+    "-std=c11",
+    "-O2",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-ffp-contract=off",
+    "-DWII_ABI_HOST"
+  ],
+  "binary_sha256": "44038f0f2b6045694ad3f210a53f86f542a9d3ca638c04ed2e778e280178c378",
+  "report": [
+    "ABI CANONICAL checks=24 address=803a6010 offset=16 float=3fc00000 layout=0,4,8/12 varargs=ok datum=abcd,1234 cells=a1b2c301,a1b2fffe",
+    "ABI ARITHMETIC separate=00000000 sum1000=43a6aac4",
+    "ABI TARGET pointer_bytes=8 int_bytes=4 double_bytes=8"
+  ],
+  "source_commit": "449b12c1a3096dceeea79bf21a39aaa735df320e",
+  "inputs_sha256": {
+    "port/wii/abi/boundary.c": "76fb89886e95af956d1bda0baa181b149987b09481572f35d9bfc8d963a87f03",
+    "port/wii/abi/fixture.c": "427cfcefc1916ed973899cdccf0f6bb5210aa8787294a91557c9111897674179",
+    "port/wii/abi/boundary.h": "3b52285710123a8326a57feb7ae543b02f168d94d08e138aba1f497956596d2b",
+    "port/wii/abi/fixture.h": "cb1d008b4f799f832c352989cbc4a53bff68e5e614688185dabc643334ab0c02",
+    "tools/wii/run_abi_host.py": "71ac55cef41d5c606faf0eb43d3247965a5d3c8c9b32a54ecbddc4a39573700f"
+  }
+}

@@ -57,5 +57,9 @@
   "abi_dol_sha256": "5107247a7210f5ba407bf83e471e56823bc0b028def5c2ebb85f02ad083c87b6",
   "physical_wii": "untested",
   "gameplay": "untested",
-  "clean_emulator_exit": "failed"
+  "clean_emulator_exit": "failed",
+  "followup_evidence": [
+    "2026-10-07-dolphin-shutdown.md",
+    "2026-10-07-engine-abi-audit.md"
+  ]
 }

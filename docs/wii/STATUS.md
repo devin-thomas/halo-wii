@@ -19,3 +19,10 @@ and [build setup](BUILDING.md). Dolphin and physical Wii remain separate gates.
 No clean Dolphin or physical Wii pass exists. Guest observations and the host-teardown failure are recorded in [Dolphin evidence](evidence/2026-10-07-dolphin-probe.md). Synthetic C host/PPC results are [separate](evidence/2026-10-07-abi-fixtures.md). `Dolphin: ✅ | Hardware: ❌` is an acceptable **future** compact status once a specified build/scenario really passes Dolphin and has no current hardware pass. Underlying records distinguish untested, failed and blocked.
 
 Physical Wii validation gates 1.0, not source publication or alpha development. Wii 1.0 does not close the later required cross-port milestone. See [test policy](TESTING.md) and machine-readable [status](status.json).
+
+Further [shutdown diagnosis](evidence/2026-10-07-dolphin-shutdown.md) catches
+`ucrtbase!terminate` during CRT exit handling; normal GUI application close also
+fails. The exact static object remains unidentified. The [engine ABI audit](evidence/2026-10-07-engine-abi-audit.md)
+adds 24-check host execution and PPC compilation evidence, including a script-cell
+endian failure model. The expanded checks have not run on PPC; engine integration
+and clean runtime acceptance remain open.
