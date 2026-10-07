@@ -1,0 +1,329 @@
+{
+  "scope": "bounded_packet_verifier_policy_comparison",
+  "state": "compile_pass",
+  "source_commit": "8deb5cbcee6d0a064e7ed0c2005d38ef757d0327",
+  "source_dirty": false,
+  "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+  "target": "powerpc-eabi",
+  "flags": [
+    "-std=gnu11",
+    "-O2",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-Wno-multichar",
+    "-fno-strict-aliasing",
+    "-fwrapv",
+    "-ffp-contract=off",
+    "-I",
+    "port\\wii\\abi\\memory_subset",
+    "-I",
+    "source",
+    "-DGEKKO",
+    "-mrvl",
+    "-mcpu=750",
+    "-meabi",
+    "-mhard-float",
+    "-DWII_MEMORY_CANDIDATE",
+    "-DWII_MEMORY_PACKETS",
+    "-DWII_MEMORY_PACKET_POLICY",
+    "-DWII_MEMORY_PACKET_VERIFIER",
+    "-DWII_MEMORY_PPC",
+    "-I",
+    "<DEVKITPRO>\\libogc\\include",
+    "-I",
+    "build\\wii-packet-verifier"
+  ],
+  "functions": {
+    "byte_swap_memory": {
+      "source": "source/memory/byte_swapping.c",
+      "body_sha256": "ed8a2f5bc8964f1d194bf44bb709f2a7576d99df7a22f51faaf89ddfcbb966ba"
+    },
+    "data_encode_new": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "585e01c989c579a9e184478647976095042ea95736b3f517bd2076d18724c787"
+    },
+    "data_encode_memory": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "12161bb5fc892bd87628e7f26f09d458e93e1494a63ea6dac235a19261d13f7d"
+    },
+    "data_encode_integer": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "70ea0401ce82b1b65fbb6c0a5388e5196da5340ef77a56f2ab1d6aa44ef39ceb"
+    },
+    "data_decode_new": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "08ebe890b49a6bc3b9bfbb6f3c36747d966dac7dc8d5bb5d120705e5b04b8f3d"
+    },
+    "data_decode_memory": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "40f97ca4bf0df144b6c150b58c17113b7eb5eba709b35fdc57b1aa53d5edb0be"
+    },
+    "data_decode_byte": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "6d2f9b4bfa04836cb9dd742a11bbbcfda65c51d850fccf1ea8c493650dde0f1b"
+    },
+    "data_decode_short": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "312578ca48d00c79d07b0f90efa77aac908ddbfdecc6af0e6ac90a9d00d2f1b7"
+    },
+    "data_decode_long": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "cd004a9aa539061692fdbb5ab4ed30ed109114527bd6c29137b87981f9fdc516"
+    },
+    "data_decode_int64": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "8a827c5ecd99134c09824ad875bdcfd444602aac28e07a914b68b19c38432fbb"
+    },
+    "data_decode_integer": {
+      "source": "source/memory/data_encoding.c",
+      "body_sha256": "0467f24aac94503bcf2246901abab1e93651c00e33783d43ea4f7592254c3580"
+    }
+  },
+  "macros": {
+    "SWAP8": "14add77b5edf4b25ae340b25484be513af373278a72bf558d1890ac5e0d43f33"
+  },
+  "cleared_child_environment_overrides": [
+    "GCC_EXEC_PREFIX",
+    "COMPILER_PATH",
+    "LIBRARY_PATH",
+    "CPATH",
+    "C_INCLUDE_PATH",
+    "CPLUS_INCLUDE_PATH",
+    "OBJC_INCLUDE_PATH",
+    "DEPENDENCIES_OUTPUT",
+    "SUNPRO_DEPENDENCIES"
+  ],
+  "inputs_sha256": {
+    "source/memory/byte_swapping.c": "5fb49cfcd5678fe7b6a5fd7ae4bb4b54fb55432c6fc03414104734e724b934cb",
+    "source/memory/data_encoding.c": "667d528667d6aa73872aa688d616150547ae472945ec391bb474fc5ab46d45e6",
+    "source/memory/byte_swapping.h": "2651249ee2d4bf3c0b6678e4a9bedf89fba04bb6abe32100fcf7955203569a3a",
+    "source/memory/data_encoding.h": "bc497545fef9d6544d7e45130daef5fff9f46719ecddc79f26519f52776fade5",
+    "source/cseries/cseries.h": "515e6fe3922e5d4d6bc0516bc3b78af8de2aa345873cb7db0c9c0a3aa43e54ef",
+    "port/wii/abi/memory_subset/shim.h": "a1190c3468ca0d98aed98b8756ffe3220c859df49cfa61809a22ffc1819159ea",
+    "port/wii/abi/memory_subset/fixture.c": "eeaa5650f7a7d5824c73e582856e9f1f649e1c8dda8e806113bd0b7adc62fbb7",
+    "port/wii/abi/memory_subset/fixture.h": "fb11ff46c7433fc893be1b44d12aa482477159464ae2c1f666d5afc951444677",
+    "tools/wii/run_memory_subset.py": "05c0c8bb53558ac9722bcc9f37c329a0a49ce4dd10065aecc713d2f026953a6b",
+    "port/wii/abi/memory_subset/candidate.h": "265c57fc2b822728a47fcb12b72e049366ead769fd3863e0c5fcdbb08ca5281d",
+    "port/wii/abi/memory_subset/candidate.c": "a31bf219980c96f120c45598413545ec3c7e358481d4b146fd7f2f149fd9231d",
+    "port/wii/abi/memory_subset/candidate_edges.c": "2733ce091c038403e62e7de49a2d27f4aa1b62426da52d2bf173a8c61812318f",
+    "source/memory/data_packets.c": "ce5835d616c01f061b083244a9d913bc7f03bf55d100f5c1dc4489727bdcef41",
+    "source/memory/data_packets.h": "32631dfcca20d6a46e11faaebfed9ae2813ee2bfb04e9d76b629babab99e9b3b",
+    "source/memory/data_packet_groups.h": "53a78a3f8f94b32e8530cd64a05dfa9d8f8dee33bb9c687854243c7a14a8f962",
+    "source/cseries/cseries.c": "60bd66dc3d9c55c36ab7a9d44e4e966ef1d047322ff0c1d12d7d64e4bdd45026",
+    "tools/wii/packet_subset.py": "f0e5fd9cf3a58b6d623bb03be470cb0d9a5a7527cb2e1499ff9900206dbb6800",
+    "port/wii/abi/memory_subset/packet_fixture.c": "80e67dbb81921908a8a47daa0d7ee7ccf32358ec5892053d341cb29f93f9ffb2",
+    "port/wii/abi/memory_subset/packet_fixture.h": "2385b560447b132f3700db7ec44e735e736811b6773b545ab52eff326fa27297",
+    "port/wii/abi/memory_subset/packet_shim.h": "9c80edf6bce787d35e082910c27a62332435d8ca51f36eaecb20bac9f5410667",
+    "port/wii/abi/memory_subset/cseries.h": "5182d58cd95fae7ff97c0ec8bf198758b90c4f885e3f814db84321fa596e5ecf",
+    "port/wii/abi/memory_subset/packet_version_policy.c": "9b05f35f37779b5cb9e475a79a967373ad9c1fa63a6f6ed345b5c83487ff15c1",
+    "port/wii/abi/memory_subset/packet_version_edges.c": "17bb2d559025821015f94b711543f7c3bc32fe6cb4b75c160b376cd231220c7b",
+    "port/wii/abi/memory_subset/packet_version_edges.h": "cfc5d21cf17c04bb08022e84800bb7ea90e1f0fab5c1dfa26fb7c0f5bb721aa7",
+    "port/wii/abi/memory_subset/packet_verifier_policy.c": "efa0e7e3741855f8b7c543a260f23c5971a957e1226b791269ef5e2dea4ccd90",
+    "port/wii/abi/memory_subset/packet_verifier_policy.h": "dadb46e82439fd6db036321c2a81795370680d339835625f4790b6ca231b3010",
+    "port/wii/abi/memory_subset/packet_verifier_fixture.c": "bc3f90a10c66f3c01af3fa7b55b35918ee70860da3c782dc1095b8afcfe034f4",
+    "port/wii/abi/memory_subset/packet_verifier_fixture.h": "fb15d52ab9f0471ad4ce983ae2ba0d769da7c8afb78f9fb22b05fb6a7856c6bd",
+    "port/wii/abi/memory_subset/wii_main.c": "d4a47c3acd14e9af904b89f8f5b01b53664fee22a96131bf0f6f792117d43fd8",
+    "tools/wii/build.py": "dc426a9068782e9f4d593fa4d5b241c966a61caad6860e766b8dbd4ddee9d48a",
+    "tools/wii/check_toolchain.py": "04b53c1e4f6bc534430062d57ef2fa12f508c43489a4228c5dffb49cdbd8a50c"
+  },
+  "generated_sha256": "03236010a23aa12c1b144ae8b862f8579988dd6902ecc02e800a6927f807f13b",
+  "object_format": "ELF32 big-endian PowerPC",
+  "artifacts_sha256": {
+    "engine_scalars.o": "a61c372c40375d32cbdef780cd5c90d5cba1298155a7e010d18acd876f7abe05",
+    "fixture.o": "b005fac0723dfc646504e7db6d2f490ce2d3d5a5943074c619550829fef8f509",
+    "candidate.o": "659287b3d3d6c5650f4d7cba91fb5962f741dd7dfa465b2bc1321e4d1bb49d1a",
+    "candidate_edges.o": "8da6f6b9ff5427b3f2e6e999f479953ef6e266d485995a909743d970c5364818",
+    "candidate_fixture.o": "44b50a372f5ef291c990cd4bff333c443946449b044951ef04c3b91b87e157fb",
+    "packet_reference.o": "059f203cd05fdd0e8c45e232a984989816d1474a6e3dfcfb667a8bf7f98d8812",
+    "packet_candidate.o": "caea5de0c251e73066542146c9c8a4e5d0f0aa1c964697300bb6674ea274ad17",
+    "packet_policy.o": "49111da6f2a2bf3715dbf251b5f1864f76285b1b276f3fe8fea785c66f2c9214",
+    "packet_strings.o": "fbca7f6a63fbc506932e10cb766cee78e7a5c65206bb311e1b3dc4ec1e43be79",
+    "packet_policy_fixture.o": "60da3c7cdf02b206978d050a40ff58168132878b2f3cdbb183e7944e9078d042",
+    "packet_fixture.o": "05e9189ed254b81b33fd0ce51f60f47b1483ddf338f0af402f73a2aa6f6b5918",
+    "packet_version_policy.o": "e3e8f68e7c12adf3e165ad7aeb63819a0772658821ddcbf0fb28d17fde0949e2",
+    "packet_version_edges.o": "fa02c6c946fbfd97d364be6524fe526a507b8bb7a57b93cb0cb4715e2944c07c",
+    "packet_verifier_policy.o": "7e4bea8c42567aa9da6d15a73a8dce0777e6fa073db993f3b863572dbb903362",
+    "packet_verifier_fixture.o": "fee31bedafc57b5cd62bf6345e6363b643e758658f7d811a9d404dba66b160eb",
+    "wii_main.o": "de0f05f50d627dbc1e915f3f6cc260328af6283b2910b9b865bb1092cf93d7da",
+    "memory_subset.elf": "3394439b7251b10d1facd603ad6ae636b5500d85918f8da09ac9d46799d62f3e",
+    "memory_subset.dol": "aae815251c279353568055f934a22074b4d01446287fe33bc6b40b14d77e45eb",
+    "memory_subset.map": "b2d8e736d3651730ae267d13d31d24f718c0c74efc33731a4173236d5e2f2a03"
+  },
+  "report": [],
+  "compile_diagnostics": [
+    "build\\wii-packet-verifier\\packet_reference.c: In function '_data_packet_verify':",
+    "build\\wii-packet-verifier\\packet_reference.c:96:28: warning: 'field_size' may be used uninitialized [-Wmaybe-uninitialized]",
+    "   96 |                 total_size += field_size;",
+    "      |                 ~~~~~~~~~~~^~~~~~~~~~~~~",
+    "build\\wii-packet-verifier\\packet_reference.c:15:15: note: 'field_size' was declared here",
+    "   15 |         short field_size;",
+    "      |               ^~~~~~~~~~",
+    "build\\wii-packet-verifier\\packet_candidate.c: In function '_data_packet_verify':",
+    "build\\wii-packet-verifier\\packet_candidate.c:103:28: warning: 'field_size' may be used uninitialized [-Wmaybe-uninitialized]",
+    "  103 |                 total_size += field_size;",
+    "      |                 ~~~~~~~~~~~^~~~~~~~~~~~~",
+    "build\\wii-packet-verifier\\packet_candidate.c:22:15: note: 'field_size' was declared here",
+    "   22 |         short field_size;",
+    "      |               ^~~~~~~~~~",
+    "build\\wii-packet-verifier\\packet_policy.c: In function '_data_packet_verify':",
+    "build\\wii-packet-verifier\\packet_policy.c:103:28: warning: 'field_size' may be used uninitialized [-Wmaybe-uninitialized]",
+    "  103 |                 total_size += field_size;",
+    "      |                 ~~~~~~~~~~~^~~~~~~~~~~~~",
+    "build\\wii-packet-verifier\\packet_policy.c:22:15: note: 'field_size' was declared here",
+    "   22 |         short field_size;",
+    "      |               ^~~~~~~~~~",
+    "In file included from port\\wii\\abi\\memory_subset/cseries.h:4,",
+    "                 from port\\wii\\abi\\memory_subset/packet_shim.h:3,",
+    "                 from build\\wii-packet-verifier\\packet_strings.c:1:",
+    "build\\wii-packet-verifier\\packet_strings.c: In function 'csstrncpy':",
+    "build\\wii-packet-verifier\\packet_strings.c:33:79: warning: comparison of unsigned expression in '>= 0' is always true [-Wtype-limits]",
+    "   33 |         cseries_match_assert(\"c:\\\\halo\\\\SOURCE\\\\cseries\\\\cseries.c\", 336, size>=0 && size<MAXIMUM_STRING_SIZE);",
+    "      |                                                                               ^~",
+    "port\\wii\\abi\\memory_subset/shim.h:19:56: note: in definition of macro 'match_assert'",
+    "   19 | #define match_assert(file, line, condition) do { if (!(condition)) { \\",
+    "      |                                                        ^~~~~~~~~",
+    "build\\wii-packet-verifier\\packet_strings.c:33:9: note: in expansion of macro 'cseries_match_assert'",
+    "   33 |         cseries_match_assert(\"c:\\\\halo\\\\SOURCE\\\\cseries\\\\cseries.c\", 336, size>=0 && size<MAXIMUM_STRING_SIZE);",
+    "      |         ^~~~~~~~~~~~~~~~~~~~",
+    "build\\wii-packet-verifier\\packet_strings.c: In function 'data_encode_string':",
+    "build\\wii-packet-verifier\\packet_strings.c:65:29: warning: pointer targets in initialization of 'char *' from 'byte *' {aka 'unsigned char *'} differ in signedness [-Wpointer-sign]",
+    "   65 |         char *destination = state->buffer + state->offset;",
+    "      |                             ^~~~~",
+    "build\\wii-packet-verifier\\packet_strings.c: In function 'data_decode_string':",
+    "build\\wii-packet-verifier\\packet_strings.c:87:24: warning: pointer targets in initialization of 'char *' from 'byte *' {aka 'unsigned char *'} differ in signedness [-Wpointer-sign]",
+    "   87 |         char *string = state->buffer + state->offset;",
+    "      |                        ^~~~~"
+  ],
+  "limits": "authored schemas and assertion/memory/format services; aligned native count prefixes; original scalar typed wire access retained; no production integration or physical Wii qualification",
+  "candidate": {
+    "scope": "diagnostic_adapter_only",
+    "fixture_sha256": "8a388a074387c788e68f5fb2242dc18bc2ebe5f2050b255c1036396ecd095948",
+    "reference_fixture_unchanged": true,
+    "production_integrated": false,
+    "aggregate_result_scope": "scalar_packet_placeholder_and_bounded_verifier_sections",
+    "limits": "truthful buffer extents and nonoverlapping encode input/output; structure/packet integration unqualified"
+  },
+  "packets": {
+    "functions": {
+      "_data_packet_verify": {
+        "source": "source/memory/data_packets.c",
+        "body_sha256": "78bec80444033b3234eb10cda21c0a500c8ea7f61c1dc7dd0c286d5100278910"
+      },
+      "_data_packet_encode": {
+        "source": "source/memory/data_packets.c",
+        "body_sha256": "863484bb9cb60c7d8bbab4bfa08d24f81e1fce7a393c73fb8c3c7edccbaf1e4d"
+      },
+      "_data_packet_decode": {
+        "source": "source/memory/data_packets.c",
+        "body_sha256": "e1974b5933973099d75cb62cb0d1d92a37fd85ec76ae6d78b21e35deb8c94610"
+      },
+      "data_packet_verify": {
+        "source": "source/memory/data_packets.c",
+        "body_sha256": "3113692812aa91862b23e664540fe2d3137490d5117b95d4bac0ea3d4694a1c2"
+      },
+      "data_packet_encode": {
+        "source": "source/memory/data_packets.c",
+        "body_sha256": "4e446c29403b6534d98686448bb025b27907f9832b8ec53efddec5b5e3c4857a"
+      },
+      "data_packet_decode": {
+        "source": "source/memory/data_packets.c",
+        "body_sha256": "1edec6f2f2ae5659e85dcd2f8010e4137a0da6e107afa8f7b753c3ddce5d9eaf"
+      },
+      "strnlen": {
+        "source": "source/cseries/cseries.c",
+        "body_sha256": "d9aa8d4ea7c13ea7b5300e063e02ba2f273b782064f5868194bb422d604dec48"
+      },
+      "csstrncpy": {
+        "source": "source/cseries/cseries.c",
+        "body_sha256": "0eb62f03043486249ed0d9f9f1670025146e7396f68ec05ad78f3aedd81d6a0b"
+      },
+      "csstrcpy": {
+        "source": "source/cseries/cseries.c",
+        "body_sha256": "40fa01e956898e2b08d41cca0b7ab8beb813f161cfa3133fa79fc4fe61e1b4ee"
+      },
+      "data_encode_string": {
+        "source": "source/memory/data_encoding.c",
+        "body_sha256": "174e0757afa0808cee152cd7f09a4ba788973cb3cdd8d24343fa20093ea2f3f3"
+      },
+      "data_decode_string": {
+        "source": "source/memory/data_encoding.c",
+        "body_sha256": "a78a383db65c3c9fd28ecff4dbe444e221a0ca34c0654daed7b30980eb7f415c"
+      }
+    },
+    "generated_sha256": {
+      "packet_reference.c": "f9c8f43a4beb8d133a49669a9a98ff300240110d674ab6eb30655b0999713337",
+      "packet_candidate.c": "d8376b1769e6521e58678036fe64b0bcda2fe2d08d731e88607a5d1f7333ad5d",
+      "packet_policy.c": "3ddffdfea229c951dc6d24c421f8c5281fbfcbccbf7ccbefba9dbf5b7c1c2883",
+      "packet_strings.c": "8cac312ca6e4a9a4b08bc3b87e55b674e07f4a41a66c3d5094f047e7b5f20d44",
+      "packet_policy_fixture.c": "e44a978da0e7ceb0a2945f75939b09af16bf90a0620e6024f17f7d4aff41ca09"
+    },
+    "production_integrated": false,
+    "limits": "authored schemas and assertion/memory/format services; actual packet branches/native count casts retained",
+    "policy": {
+      "scope": "diagnostic_excluded_decode_only",
+      "original_body_sha256": "e1974b5933973099d75cb62cb0d1d92a37fd85ec76ae6d78b21e35deb8c94610",
+      "transformed_body_sha256": "ed50dfd9afef02a18ab39547744a51f3491b1704f7a70c828433c2d0da5afb2f",
+      "replacement_count": 1,
+      "nonzero_placeholders": "accepted_without_interpreting_contents",
+      "excluded_arrays": "unsupported_overflow_and_stop_not_qualified",
+      "production_integrated": false
+    },
+    "compile_flag_exceptions": {
+      "packet_reference.c": [
+        "-Wno-error=maybe-uninitialized"
+      ],
+      "packet_candidate.c": [
+        "-Wno-error=maybe-uninitialized"
+      ],
+      "packet_strings.c": [
+        "-Wno-error=type-limits",
+        "-Wno-error=pointer-sign"
+      ],
+      "packet_policy.c": [
+        "-Wno-error=maybe-uninitialized"
+      ]
+    }
+  },
+  "compiler_sha256": "692e3f84b35b7622f90d9fa2eae47c21cab88d3d95f857fc2381c4593765e814",
+  "verifier_policy": {
+    "scope": "standalone_bounded_flat_native_metadata_only",
+    "production_integrated": false,
+    "arrays": "rejected_without_child_traversal",
+    "own_version_excluded_field_size": 0,
+    "revalidate_cached_definitions": true,
+    "metadata_commit": "only_after_complete_validation",
+    "original_verifier_preserved": true,
+    "limits": "truthful schema bound and no concurrent mutation; runtime-version native layout unqualified"
+  },
+  "link_flags": [
+    "-DGEKKO",
+    "-mrvl",
+    "-mcpu=750",
+    "-meabi",
+    "-mhard-float",
+    "-Wl,-Map,build\\wii-packet-verifier\\memory_subset.map",
+    "-L",
+    "<DEVKITPRO>\\libogc\\lib\\wii",
+    "-lfat",
+    "-logc",
+    "-lm"
+  ],
+  "build_id": "f0222efaee6171c4",
+  "sdk_inputs_sha256": {
+    "devkitPPC/wii_rules": "67d76ea672fa26110f25bae945ca25786d5218f5f017c9f92e0c836e7b0fc710",
+    "devkitPPC/bin/powerpc-eabi-gcc.exe": "692e3f84b35b7622f90d9fa2eae47c21cab88d3d95f857fc2381c4593765e814",
+    "tools/bin/elf2dol.exe": "70435870e2af845fd7fcf4cb8dbecc84bdc1788c557f73dd0f1a5ee3d1a0069d",
+    "libogc/lib/wii/libfat.a": "683dd7d75d557820b260d2998d4e6c9c1ff4f1382830b137777392046ecaae90",
+    "libogc/lib/wii/libogc.a": "fb0c956ee3b5d08fede5240472205102ebe1fde94197d36705cf2b44f3eeb906",
+    "toolchain_tree_sha256": "d0ca79f317d44426f5563ff60121b344cb3a1148e5ec7a901ad5739b73ba6441"
+  },
+  "elf": {
+    "class": "ELF32",
+    "endian": "big",
+    "machine": "PowerPC",
+    "entry_point": "0x80003f00"
+  },
+  "runtime_verified": false,
+  "collect_failures": true
+}

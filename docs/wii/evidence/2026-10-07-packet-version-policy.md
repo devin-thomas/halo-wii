@@ -116,3 +116,9 @@ no deployed version-gated contract. Truthful destination capacity is assumed;
 original reference typed unaligned wire access and physical Wii remain unqualified.
 HWI-005/006 stay open. No Dolphin fork, profile/security/console change or
 production integration was performed.
+
+The subsequent [bounded verifier comparison](2026-10-07-packet-verifier.md)
+qualifies a separate flat-schema native metadata policy with 73 cases / 383
+host/PPC predicates. This decoder, its original verifier and all reports above
+remain unchanged. Recursive arrays, runtime-version layouts and production
+integration are still separate gates.

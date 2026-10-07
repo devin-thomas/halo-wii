@@ -71,6 +71,14 @@ preserved failing sections; the third passes 4,416 host/PPC predicates in the
 [policy comparison](evidence/2026-10-07-packet-version-policy.md). This flag
 does not integrate the policy into the engine.
 
+Add `--packet-verifier` to execute the earlier scalar, packet and placeholder
+sections alongside a standalone bounded flat-schema verifier. Use
+`--output .local/wii-packet-verifier-host` or `--output build/wii-packet-verifier`.
+It writes `sd:/halo-wii-memory/verifier.log`. The
+[verifier comparison](evidence/2026-10-07-packet-verifier.md) passes 73 cases /
+383 host/PPC predicates, preserving previous failed sections in the aggregate.
+Arrays reject; runtime-version layouts and production integration remain open.
+
 ## Installation and provenance
 
 Use the [official installer](https://github.com/devkitPro/installer) and [official Wii examples](https://github.com/devkitPro/wii-examples). Verify the current Windows installation instructions and Wii development package group when installing. Record package/compiler versions, Python/Ninja versions, source commit, environment variables and the exact successful commands. Do not mix an unrelated MSYS installation with the devkitPro shell without proving path compatibility.

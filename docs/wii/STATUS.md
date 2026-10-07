@@ -52,3 +52,11 @@ passes 4,416 host/PPC checks while preserving the previous implementations and
 their failed assertions. This proves the listed diagnostic version policy;
 excluded arrays, verifier safety, production compatibility, clean host shutdown
 and physical Wii remain unqualified.
+
+A separately named [bounded verifier diagnostic](evidence/2026-10-07-packet-verifier.md)
+passes 73 cases / 383 host/PPC predicates, with exact report equality. It
+revalidates cached flat definitions, checks signed native extents, assigns zero
+to own-version excluded fields and commits metadata only after full success.
+The original verifier and earlier results are preserved. Arrays reject without
+child traversal; recursive schema/reserve handling, runtime-version native
+capacity, production integration and clean host shutdown remain open.
