@@ -7,6 +7,9 @@
 #include <sys/stat.h>
 #include "fixture.h"
 #include "subset_build_id.h"
+#ifdef WII_MEMORY_CANDIDATE
+#include "candidate.h"
+#endif
 
 int main(void)
 {
@@ -39,7 +42,11 @@ int main(void)
         fprintf(stderr, "MEMORY directory failed: %s\n", strerror(errno));
         return 2;
     }
+#ifdef WII_MEMORY_CANDIDATE
+    FILE *report = fopen("sd:/halo-wii-memory/compare.log", "a");
+#else
     FILE *report = fopen("sd:/halo-wii-memory/subset.log", "a");
+#endif
     if (report == NULL) {
         fprintf(stderr, "MEMORY log open failed: %s\n", strerror(errno));
         return 2;
@@ -50,7 +57,22 @@ int main(void)
         return 2;
     }
     /* Continue independent valid-input checks to expose all endian mismatches. */
+#ifdef WII_MEMORY_CANDIDATE
+    if (fprintf(report, "REFERENCE BEGIN\n") < 0 || fflush(report) != 0) {
+        fclose(report); return 2;
+    }
+    int reference = wii_memory_subset(report, 1);
+    if (fprintf(report, "REFERENCE END result=%d\nCANDIDATE BEGIN\n", reference) < 0 ||
+        fflush(report) != 0) { fclose(report); return 2; }
+    int candidate = wii_memory_candidate_subset(report, 1);
+    int edges = wii_memory_candidate_edges(report, 1);
+    int result = candidate || edges;
+    if (fprintf(report, "CANDIDATE END result=%d\n", result) < 0 || fflush(report) != 0) {
+        fclose(report); return 2;
+    }
+#else
     int result = wii_memory_subset(report, 1);
+#endif
     int write_result = fprintf(report, "END MEMORY build=%s result=%d\n", WII_MEMORY_BUILD_ID, result);
     int flush_result = fflush(report);
     int close_result = fclose(report);

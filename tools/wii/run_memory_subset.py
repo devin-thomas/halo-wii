@@ -52,6 +52,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cc", type=Path, required=True)
     parser.add_argument("--output", type=Path, default=Path(".local/wii-memory-subset"))
+    parser.add_argument("--candidate", action="store_true",
+                        help="compare the preserved reference with a diagnostic endian/alignment adapter")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--compile-only", action="store_true", help="compile objects without execution")
     mode.add_argument("--wii-devkitpro", type=Path, help="link an asset-free Wii ELF/DOL using this official SDK")
@@ -75,6 +77,8 @@ def main():
     inputs = [*SELECTED, "source/memory/byte_swapping.h", "source/memory/data_encoding.h",
               "source/cseries/cseries.h", str(HARNESS / "shim.h"), str(HARNESS / "fixture.c"),
               str(HARNESS / "fixture.h"), Path(__file__).resolve().relative_to(Path.cwd()).as_posix()]
+    if args.candidate:
+        inputs += [str(HARNESS / name) for name in ("candidate.h", "candidate.c", "candidate_edges.c")]
     sdk = None
     inventory = None
     sdk_identity = {}
@@ -126,6 +130,33 @@ def main():
     generated = args.output / "engine_scalars.c"
     generated.write_text("\n\n".join(pieces) + "\n", encoding="utf-8")
     sources = [generated, HARNESS / "fixture.c"]
+    candidate_generated = None
+    driver = None
+    if args.candidate:
+        # Recompile the unchanged fixture through opt-in adapter names; the
+        # original fixture and extracted functions stay linked independently.
+        candidate_generated = args.output / "candidate_fixture.c"
+        remap = {name: "candidate_" + name.removeprefix("data_")
+                 for name in SELECTED["source/memory/data_encoding.c"]
+                 if name not in ("data_encode_new", "data_decode_new")}
+        candidate_generated.write_text('#include "candidate.h"\n' +
+            '\n'.join(f'#define {name} {adapter}' for name, adapter in remap.items()) +
+            '\n#define wii_memory_subset wii_memory_candidate_subset\n'
+            '#define main wii_memory_candidate_unused_main\n#include "fixture.c"\n', encoding="utf-8")
+        sources += [HARNESS / "candidate.c", HARNESS / "candidate_edges.c", candidate_generated]
+        flags += ["-DWII_MEMORY_CANDIDATE"]
+        if sdk is None and not args.compile_only:
+            flags += ["-DWII_MEMORY_PPC"]  # Disable only the fixture's native main.
+            driver = args.output / "candidate_driver.c"
+            driver.write_text('#include "candidate.h"\n#include "fixture.h"\n'
+                'int main(void) {\n'
+                ' puts("REFERENCE BEGIN"); int reference = wii_memory_subset(stdout, 1);\n'
+                ' printf("REFERENCE END result=%d\\n", reference);\n'
+                ' puts("CANDIDATE BEGIN"); int candidate = wii_memory_candidate_subset(stdout, 1);\n'
+                ' int edges = wii_memory_candidate_edges(stdout, 1);\n'
+                ' printf("CANDIDATE END result=%d\\n", candidate || edges);\n'
+                ' return reference || candidate || edges;\n}\n', encoding="utf-8")
+            sources.append(driver)
     build_id = None
     if sdk is not None:
         build_id = hashlib.sha256(json.dumps({"source_commit": source_commit, "source_dirty": source_dirty,
@@ -197,6 +228,15 @@ def main():
         "artifacts_sha256": artifacts, "report": report, "compile_diagnostics": diagnostics,
         "limits": "scalar subset with authored assertion/memory services; no engine integration or alignment safety proof",
     }
+    if args.candidate:
+        record["candidate"] = {"scope": "diagnostic_adapter_only",
+                               "fixture_sha256": hashlib.sha256(candidate_generated.read_bytes()).hexdigest(),
+                               "reference_fixture_unchanged": True,
+                               "production_integrated": False,
+                               "aggregate_result_scope": "candidate_and_edges" if sdk else "reference_candidate_and_edges",
+                               "limits": "truthful buffer extents and nonoverlapping encode input/output; structure/packet integration unqualified"}
+        if driver is not None:
+            record["candidate"]["driver_sha256"] = hashlib.sha256(driver.read_bytes()).hexdigest()
     if sdk is not None:
         # Native SDK paths stay local; publishable records use root-relative paths.
         record["flags"] = [flag.replace(str(sdk), "<DEVKITPRO>") for flag in flags]
