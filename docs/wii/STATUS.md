@@ -67,3 +67,11 @@ representable schema depth, child skipping and stable native-capacity policy.
 Original bodies, metadata and all earlier reports/failures remain intact.
 Production integration, actual group boundaries, broader ABI, host teardown and
 physical Wii remain open; no gameplay or network-session pass is established.
+
+The isolated [actual group comparison](evidence/2026-10-07-packet-groups.md)
+passes 1688 host / 1682 PPC predicates, with candidate report agreement and
+measured original char-signedness differences. All prior reports remain intact.
+Two runs of this DOL exit naturally with host status 0; earlier shutdown faults
+remain preserved and general recovery is unqualified. HWI-005/006 stay blocked.
+Next gate covers caller size unions, dispatch identity/native capacity and outer
+framing before any production proposal.
