@@ -93,3 +93,11 @@ and plain-char semantics gaps are preserved. Every prior report stays exact.
 One native-DOL run exits naturally host0; earlier faults remain and general
 recovery is unqualified. HWI-005/006 remain blocked. Owned data intake is the
 next separate gate; no production, peer, hardware or gameplay pass follows.
+
+The [owned-image inventory](evidence/2026-10-07-owned-xiso-intake.md) now passes
+read-only filesystem and 24 Xbox version-5 header checks. It finds 50 files,
+five directories and eight movies (including three Xbox demo videos); source
+build lookup is NTSC. No assets were extracted. Compressed bodies, tags/BSPs,
+conversion, canonical dump authenticity and gameplay remain unqualified.
+The next gate prepares a 32-bit Linux validator and private staging; HWI-005/006
+remain blocked and HWI-007/008 remain incomplete.

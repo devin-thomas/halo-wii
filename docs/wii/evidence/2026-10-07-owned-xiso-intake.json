@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "scope": "owned_read_only_reachable_filesystem_and_cache_header_identity",
+  "source_commit": "05b41cf43e50d58f129e61b98357b8f4b42e8f8a",
+  "source_dirty": false,
+  "inputs_sha256": {
+    "tools/wii/xiso_inventory.py": "31b5ac7130dd94af758d93f416aa3f6fabe429d8ab1b4dc454151a7d5ecefd0c",
+    "tools/wii/test_xiso_inventory.py": "2cfd1c6ee5213c07c7db5d12b03ce9f66bf5647c05db34f82e7198d7327de160"
+  },
+  "command_sanitized": [
+    "python",
+    "tools/wii/xiso_inventory.py",
+    "<owned-image>.iso",
+    "--output",
+    "<external-private-folder>/inventory.json"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 3.115,
+  "python_version": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:15:03) [MSC v.1944 64 bit (AMD64)]",
+  "image": {
+    "size": 3625713664,
+    "sha256": "43ec0813edadd592b7b489a930f108d289db9313ac337611110ffca8be0a7258",
+    "coordinator_identity_exact_match": true,
+    "canonical_dump_authenticity_verified": false
+  },
+  "volume": {
+    "partition_offset": 0,
+    "descriptor_offset": 65536,
+    "root_sector": 264,
+    "root_size": 88,
+    "descriptor_sha256": "81aa143b0dcf3b152398817e8cc2d7c2a1bbf6dd6de082b5141caca0d3683e4c"
+  },
+  "counts": {
+    "files": 50,
+    "directories": 5,
+    "map_files": 24,
+    "movies": 8,
+    "file_bytes": 3625127222
+  },
+  "filesystem_inventory": "pass",
+  "map_header_identity": "pass",
+  "ui_map_present": true,
+  "map_metadata": {
+    "versions": [
+      5
+    ],
+    "builds": [
+      "01.10.12.2276"
+    ],
+    "build_regions_source_lookup": [
+      "NTSC"
+    ],
+    "scenario_type_values_observed": {
+      "0": 10,
+      "1": 13,
+      "2": 1
+    },
+    "header_issue_count": 0,
+    "stored_equals_declared_count": 0,
+    "decompression_or_body_validation_performed": false
+  },
+  "movie_path_categories_observed": {
+    "bink": 5,
+    "bundled_xbox_demo_videos": 3
+  },
+  "raw_inventory_json_sha256": "cfbf19d0eac58f04b167a0a289f4a2ced131493bd77d0aa2b3e33c35ca0c9046",
+  "asset_bytes_extracted": 0,
+  "production_integrated": false,
+  "synthetic_tests": {
+    "command": [
+      "python",
+      "tools/wii/test_xiso_inventory.py",
+      "-v"
+    ],
+    "methods": 45,
+    "exit_code": 0,
+    "report": [
+      "test_aggregate_path_byte_budget_exact_and_one_over (__main__.InventoryTests.test_aggregate_path_byte_budget_exact_and_one_over) ... ok",
+      "test_all_ff_empty_table (__main__.InventoryTests.test_all_ff_empty_table) ... ok",
+      "test_ambiguous_valid_descriptors_rejected (__main__.InventoryTests.test_ambiguous_valid_descriptors_rejected) ... ok",
+      "test_cli_exclusive_output_preserves_input_and_existing_report (__main__.InventoryTests.test_cli_exclusive_output_preserves_input_and_existing_report) ... ok",
+      "test_cli_no_maps_and_unsupported_maps_are_blocked_exit_two (__main__.InventoryTests.test_cli_no_maps_and_unsupported_maps_are_blocked_exit_two) ... ok",
+      "test_cli_stdout_json_metadata_no_raw_payload_or_latin1_bytes (__main__.InventoryTests.test_cli_stdout_json_metadata_no_raw_payload_or_latin1_bytes) ... ok",
+      "test_cli_structural_error_has_no_partial_json (__main__.InventoryTests.test_cli_structural_error_has_no_partial_json) ... ok",
+      "test_descriptor_magic_requires_both_signatures (__main__.InventoryTests.test_descriptor_magic_requires_both_signatures) ... ok",
+      "test_directory_depth_exact_limit_and_one_over (__main__.InventoryTests.test_directory_depth_exact_limit_and_one_over) ... ok",
+      "test_directory_table_over_four_megabytes_rejected (__main__.InventoryTests.test_directory_table_over_four_megabytes_rejected) ... ok",
+      "test_duplicate_casefold_paths_rejected (__main__.InventoryTests.test_duplicate_casefold_paths_rejected) ... ok",
+      "test_duplicate_directory_paths_rejected (__main__.InventoryTests.test_duplicate_directory_paths_rejected) ... ok",
+      "test_empty_child_directory_and_zero_files_share_zero_sector (__main__.InventoryTests.test_empty_child_directory_and_zero_files_share_zero_sector) ... ok",
+      "test_empty_root_zero_size (__main__.InventoryTests.test_empty_root_zero_size) ... ok",
+      "test_file_directory_storage_overlap (__main__.InventoryTests.test_file_directory_storage_overlap) ... ok",
+      "test_file_span_outside_image (__main__.InventoryTests.test_file_span_outside_image) ... ok",
+      "test_invalid_component_names (__main__.InventoryTests.test_invalid_component_names) ... ok",
+      "test_inventory_hash_and_read_only_file (__main__.InventoryTests.test_inventory_hash_and_read_only_file) ... ok",
+      "test_inventory_rejects_changed_source_metadata (__main__.InventoryTests.test_inventory_rejects_changed_source_metadata) ... ok",
+      "test_map_bad_signatures_version_and_unterminated_strings (__main__.InventoryTests.test_map_bad_signatures_version_and_unterminated_strings) ... ok",
+      "test_map_declared_stored_length_difference_observed_not_rejected (__main__.InventoryTests.test_map_declared_stored_length_difference_observed_not_rejected) ... ok",
+      "test_map_latin1_name_build_and_unconstrained_reserved_words (__main__.InventoryTests.test_map_latin1_name_build_and_unconstrained_reserved_words) ... ok",
+      "test_map_short_header_reports_unsupported_without_structural_error (__main__.InventoryTests.test_map_short_header_reports_unsupported_without_structural_error) ... ok",
+      "test_map_signed_lengths_and_tag_region_bounds (__main__.InventoryTests.test_map_signed_lengths_and_tag_region_bounds) ... ok",
+      "test_map_string_last_byte_terminator_empty_and_unknown_build (__main__.InventoryTests.test_map_string_last_byte_terminator_empty_and_unknown_build) ... ok",
+      "test_map_tag_region_exact_end_and_zero_size (__main__.InventoryTests.test_map_tag_region_exact_end_and_zero_size) ... ok",
+      "test_missing_and_short_descriptor (__main__.InventoryTests.test_missing_and_short_descriptor) ... ok",
+      "test_mixed_ffff_marker_not_empty_padding (__main__.InventoryTests.test_mixed_ffff_marker_not_empty_padding) ... ok",
+      "test_nonempty_file_overlap_rejected_and_touching_spans_accepted (__main__.InventoryTests.test_nonempty_file_overlap_rejected_and_touching_spans_accepted) ... ok",
+      "test_overlapping_directory_records_rejected (__main__.InventoryTests.test_overlapping_directory_records_rejected) ... ok",
+      "test_partially_overlapping_directory_tables (__main__.InventoryTests.test_partially_overlapping_directory_tables) ... ok",
+      "test_path_byte_budget_exact_and_one_over (__main__.InventoryTests.test_path_byte_budget_exact_and_one_over) ... ok",
+      "test_reader_span_bounds_and_exact_end_empty_read (__main__.InventoryTests.test_reader_span_bounds_and_exact_end_empty_read) ... ok",
+      "test_reused_and_cyclic_directory_spans (__main__.InventoryTests.test_reused_and_cyclic_directory_spans) ... ok",
+      "test_root_span_outside_image (__main__.InventoryTests.test_root_span_outside_image) ... ok",
+      "test_stream_truncation_despite_claimed_size (__main__.InventoryTests.test_stream_truncation_despite_claimed_size) ... ok",
+      "test_subtree_cycle_and_repeated_node (__main__.InventoryTests.test_subtree_cycle_and_repeated_node) ... ok",
+      "test_subtree_pointer_outside_table (__main__.InventoryTests.test_subtree_pointer_outside_table) ... ok",
+      "test_supported_partition_offsets_without_large_allocation (__main__.InventoryTests.test_supported_partition_offsets_without_large_allocation) ... ok",
+      "test_total_directory_byte_budget_exact_and_one_over (__main__.InventoryTests.test_total_directory_byte_budget_exact_and_one_over) ... ok",
+      "test_total_entry_budget_across_directories_exact_and_one_over (__main__.InventoryTests.test_total_entry_budget_across_directories_exact_and_one_over) ... ok",
+      "test_truncated_entry_record_and_name (__main__.InventoryTests.test_truncated_entry_record_and_name) ... ok",
+      "test_valid_left_and_right_subtrees_and_read_only_stream (__main__.InventoryTests.test_valid_left_and_right_subtrees_and_read_only_stream) ... ok",
+      "test_valid_map_header_identity_only (__main__.InventoryTests.test_valid_map_header_identity_only) ... ok",
+      "test_valid_nested_listing_sorted_independent_offsets_counts (__main__.InventoryTests.test_valid_nested_listing_sorted_independent_offsets_counts) ... ok",
+      "",
+      "----------------------------------------------------------------------",
+      "Ran 45 tests in 0.081s",
+      "",
+      "OK"
+    ]
+  },
+  "independent_source_review": {
+    "unresolved_findings": 0,
+    "header_rules_reconciled_with_existing_source": true
+  },
+  "limits": [
+    "reachable_entries_only_not_disc_provenance_or_unallocated_sectors",
+    "printable_ascii_single_component_xdvdfs_names_only",
+    "allocation_aliases_rejected_no_silent_entry_skips",
+    "source_image_must_be_immutable_during_read",
+    "headers_only_no_body_inflate_checksum_tag_geometry_script_endian_or_gameplay_acceptance",
+    "scenario_field_is_observed_metadata_not_validated_campaign_multiplayer_content",
+    "eight_movies_include_three_demo_videos_not_eight_game_cinematics",
+    "region_build_lookup_not_filename_revision_or_dump_authenticity_proof",
+    "HWI005_HWI006_blocked_HWI007_HWI008_not_completed"
+  ],
+  "independent_actual_header_inventory_review": {
+    "unresolved_findings": 0,
+    "implementation_imported": false,
+    "independent_directory_rows_exact_match": 55,
+    "independent_map_headers_exact_match": 24,
+    "descriptor_and_allocation_spans_exact_match": true,
+    "image_bytes_read": 67672,
+    "body_inflation_or_extraction_performed": false,
+    "whole_image_sha256_repeated_by_reviewer": false,
+    "whole_image_sha256_recomputed_by_root_inventory": true
+  }
+}
