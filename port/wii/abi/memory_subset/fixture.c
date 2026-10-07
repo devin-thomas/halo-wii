@@ -1,11 +1,13 @@
 #include "shim.h"
+#include "fixture.h"
 
-int main(void)
+int wii_memory_subset(FILE *report, int collect_failures)
 {
-    unsigned int checks = 0;
+    unsigned int checks = 0, failures = 0;
 #define REQUIRE(condition, name) do { ++checks; if (!(condition)) { \
-    fprintf(stderr, "MEMORY FAIL %s offset=%u check=%u\n", name, start, checks); \
-    return 1; } } while (0)
+    ++failures; \
+    if (fprintf(report, "MEMORY FAIL %s offset=%u check=%u\n", name, start, checks) < 0 || \
+        fflush(report) != 0 || !collect_failures) return 1; } } while (0)
     const byte expected[] = {0x5a, 0x12, 0x34, 0x12, 0x34, 0x56, 0x78,
                              0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
     const byte one = 0x5a;
@@ -22,6 +24,10 @@ int main(void)
                 data_encode_memory(&state, &four, 1, -4) &&
                 data_encode_memory(&state, &eight, 1, -8), "encode_scalars");
         REQUIRE(state.offset == 15 && !state.overflow, "encode_state");
+        if (fprintf(report, "MEMORY WIRE offset=%u actual=", start) < 0) return 1;
+        for (unsigned int i = 0; i < sizeof(expected); ++i)
+            if (fprintf(report, "%02x", storage.bytes[start + i]) < 0) return 1;
+        if (fprintf(report, "\n") < 0 || fflush(report) != 0) return 1;
         /* Exact Xbox/x86 wire bytes, not just a same-target round trip. */
         REQUIRE(memcmp(storage.bytes + start, expected, sizeof(expected)) == 0, "wire_big_endian_golden");
         REQUIRE(storage.bytes[start + 15] == 0xcc &&
@@ -67,8 +73,12 @@ int main(void)
                 data_decode_integer(&state, 0x7fffffff) == four, "integer_decode_dispatch");
         REQUIRE(state.offset == 7 && !state.overflow, "integer_decode_state");
     }
-    if (printf("MEMORY SUBSET checks=%u offsets=8 wire=5a1234123456781122334455667788 mutation=native\n", checks) < 0 ||
-        fflush(stdout) != 0) return 1;
-    return 0;
+    if (fprintf(report, "MEMORY SUBSET checks=%u offsets=8 failures=%u golden=5a1234123456781122334455667788\n",
+                checks, failures) < 0 || fflush(report) != 0) return 1;
+    return failures != 0;
 #undef REQUIRE
 }
+
+#ifndef WII_MEMORY_PPC
+int main(void) { return wii_memory_subset(stdout, 0); }
+#endif

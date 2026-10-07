@@ -11,6 +11,8 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+from build import verify_dol, verify_elf
+from check_toolchain import inspect_toolchain, toolchain_inputs
 
 
 SELECTED = {
@@ -50,17 +52,53 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cc", type=Path, required=True)
     parser.add_argument("--output", type=Path, default=Path(".local/wii-memory-subset"))
-    parser.add_argument("--compile-only", action="store_true", help="compile objects without execution")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--compile-only", action="store_true", help="compile objects without execution")
+    mode.add_argument("--wii-devkitpro", type=Path, help="link an asset-free Wii ELF/DOL using this official SDK")
     args = parser.parse_args()
     compiler = args.cc.resolve(strict=True)
     args.output.mkdir(parents=True, exist_ok=True)
     record_path = args.output / "subset-info.json"
     record_path.write_text('{"scope":"actual_scalar_subset","state":"incomplete"}\n', encoding="utf-8")
     environment = os.environ.copy()
+    overrides = ("GCC_EXEC_PREFIX", "COMPILER_PATH", "LIBRARY_PATH", "CPATH",
+                 "C_INCLUDE_PATH", "CPLUS_INCLUDE_PATH", "OBJC_INCLUDE_PATH",
+                 "DEPENDENCIES_OUTPUT", "SUNPRO_DEPENDENCIES")
+    for name in overrides:
+        environment.pop(name, None)
     environment["PATH"] = str(compiler.parent) + os.pathsep + environment.get("PATH", "")
     target = subprocess.check_output([str(compiler), "-dumpmachine"], env=environment, text=True).strip()
-    if target == "powerpc-eabi" and not args.compile_only:
-        parser.error("powerpc-eabi requires --compile-only; target objects cannot run on the host")
+    if target == "powerpc-eabi" and not (args.compile_only or args.wii_devkitpro):
+        parser.error("powerpc-eabi requires --compile-only or --wii-devkitpro; target binaries cannot run on the host")
+    if args.wii_devkitpro and target != "powerpc-eabi":
+        parser.error("--wii-devkitpro requires a powerpc-eabi compiler")
+    inputs = [*SELECTED, "source/memory/byte_swapping.h", "source/memory/data_encoding.h",
+              "source/cseries/cseries.h", str(HARNESS / "shim.h"), str(HARNESS / "fixture.c"),
+              str(HARNESS / "fixture.h"), Path(__file__).resolve().relative_to(Path.cwd()).as_posix()]
+    sdk = None
+    inventory = None
+    sdk_identity = {}
+    if args.wii_devkitpro:
+        sdk = args.wii_devkitpro.resolve(strict=True)
+        inventory = inspect_toolchain(sdk)
+        if inventory["errors"]:
+            raise ValueError("Wii preflight failed: " + "; ".join(inventory["errors"]))
+        if compiler != Path(inventory["tools"]["powerpc-eabi-gcc"]["path"]).resolve():
+            parser.error("Selected compiler does not belong to --wii-devkitpro")
+        inputs += [str(HARNESS / "wii_main.c"), "tools/wii/build.py", "tools/wii/check_toolchain.py"]
+        sdk_files = [sdk / "devkitPPC/wii_rules", compiler,
+                     Path(inventory["tools"]["elf2dol"]["path"]),
+                     sdk / "libogc/lib/wii/libfat.a", sdk / "libogc/lib/wii/libogc.a"]
+        sdk_identity = {p.relative_to(sdk).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in sdk_files}
+        fingerprint = hashlib.sha256()
+        for path in toolchain_inputs(sdk):
+            fingerprint.update(path.relative_to(sdk).as_posix().encode() + b"\0")
+            if path.is_file():
+                fingerprint.update(hashlib.sha256(path.read_bytes()).digest())
+        sdk_identity["toolchain_tree_sha256"] = fingerprint.hexdigest()
+    input_hashes = {Path(name).as_posix(): hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in inputs}
+    source_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+    source_dirty = bool(subprocess.check_output(["git", "status", "--porcelain", "--", *map(str, inputs)], text=True))
     flags = ["-std=gnu11", "-O2", "-Wall", "-Wextra", "-Werror", "-Wno-multichar",
              "-fno-strict-aliasing", "-fwrapv", "-ffp-contract=off", "-I", str(HARNESS), "-I", "source"]
     if target == "powerpc-eabi":
@@ -88,6 +126,14 @@ def main():
     generated = args.output / "engine_scalars.c"
     generated.write_text("\n\n".join(pieces) + "\n", encoding="utf-8")
     sources = [generated, HARNESS / "fixture.c"]
+    build_id = None
+    if sdk is not None:
+        build_id = hashlib.sha256(json.dumps({"source_commit": source_commit, "source_dirty": source_dirty,
+                                               "inputs": input_hashes, "sdk": sdk_identity, "flags": flags},
+                                              sort_keys=True).encode()).hexdigest()[:16]
+        (args.output / "subset_build_id.h").write_text(f'#define WII_MEMORY_BUILD_ID "{build_id}"\n', encoding="utf-8")
+        flags += ["-DWII_MEMORY_PPC", "-I", str(sdk / "libogc/include"), "-I", str(args.output)]
+        sources.append(HARNESS / "wii_main.c")
     artifacts = {}
     report = []
     diagnostics = []
@@ -101,7 +147,10 @@ def main():
             diagnostics.extend(result.stderr.splitlines())
         result.check_returncode()
 
-    if args.compile_only:
+    elf_record = None
+    link_flags = []
+    if args.compile_only or sdk is not None:
+        objects = []
         for source in sources:
             obj = args.output / (source.stem + ".o")
             compile_checked([str(compiler), *flags, "-c", str(source), "-o", str(obj)])
@@ -110,6 +159,20 @@ def main():
                                              int.from_bytes(data[18:20], "big") != 20):
                 raise ValueError(f"Expected ELF32 big-endian PowerPC object: {obj}")
             artifacts[obj.name] = hashlib.sha256(data).hexdigest()
+            objects.append(str(obj))
+        if sdk is not None:
+            elf = args.output / "memory_subset.elf"
+            dol = args.output / "memory_subset.dol"
+            map_path = args.output / "memory_subset.map"
+            link_flags = ["-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float",
+                          "-Wl,-Map," + str(map_path), "-L", str(sdk / "libogc/lib/wii"),
+                          "-lfat", "-logc", "-lm"]
+            compile_checked([str(compiler), *objects, *link_flags, "-o", str(elf)])
+            elf_record = verify_elf(elf)
+            compile_checked([inventory["tools"]["elf2dol"]["path"], str(elf), str(dol)])
+            verify_dol(dol)
+            for artifact in (elf, dol, map_path):
+                artifacts[artifact.name] = hashlib.sha256(artifact.read_bytes()).hexdigest()
     else:
         executable = (args.output / ("fixture.exe" if os.name == "nt" else "fixture")).resolve()
         compile_checked([str(compiler), *flags, *map(str, sources), "-o", str(executable)])
@@ -122,21 +185,24 @@ def main():
             record_path.write_text(json.dumps({"scope": "actual_scalar_subset", "state": "execution_failed",
                                                "exit_code": result.returncode, "report": report}) + "\n", encoding="utf-8")
             raise SystemExit(result.returncode)
-    inputs = [*SELECTED, "source/memory/byte_swapping.h", "source/memory/data_encoding.h",
-              "source/cseries/cseries.h", str(HARNESS / "shim.h"), str(HARNESS / "fixture.c"),
-              Path(__file__).resolve().relative_to(Path.cwd()).as_posix()]
     record = {
-        "scope": "actual_scalar_subset", "state": "compile_pass" if args.compile_only else "execution_pass",
-        "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
-        "source_dirty": bool(subprocess.check_output(["git", "status", "--porcelain", "--", *map(str, inputs)], text=True)),
+        "scope": "actual_scalar_subset", "state": "compile_pass" if (args.compile_only or sdk) else "execution_pass",
+        "source_commit": source_commit, "source_dirty": source_dirty,
         "compiler": subprocess.check_output([str(compiler), "--version"], env=environment, text=True).splitlines()[0],
         "target": target, "flags": flags, "functions": functions, "macros": macros,
-        "inputs_sha256": {Path(name).as_posix(): hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in inputs},
+        "cleared_child_environment_overrides": list(overrides),
+        "inputs_sha256": input_hashes,
         "generated_sha256": hashlib.sha256(generated.read_bytes()).hexdigest(),
         "object_format": "ELF32 big-endian PowerPC" if target == "powerpc-eabi" else "native host",
         "artifacts_sha256": artifacts, "report": report, "compile_diagnostics": diagnostics,
         "limits": "scalar subset with authored assertion/memory services; no engine integration or alignment safety proof",
     }
+    if sdk is not None:
+        # Native SDK paths stay local; publishable records use root-relative paths.
+        record["flags"] = [flag.replace(str(sdk), "<DEVKITPRO>") for flag in flags]
+        record["link_flags"] = [flag.replace(str(sdk), "<DEVKITPRO>") for flag in link_flags]
+        record.update({"build_id": build_id, "sdk_inputs_sha256": sdk_identity,
+                       "elf": elf_record, "runtime_verified": False, "collect_failures": True})
     record_path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
 
 

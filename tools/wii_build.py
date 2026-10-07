@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 
-from .wii.check_toolchain import inspect_toolchain
+from .wii.check_toolchain import inspect_toolchain, toolchain_inputs
 
 BUILD = Path("build/wii")
 SOURCES = [Path("port/wii/probe/main.c"), Path("port/wii/abi/boundary.c"), Path("port/wii/abi/fixture.c")]
@@ -18,20 +18,6 @@ LIBRARIES = ("libfat.a", "libwiiuse.a", "libbte.a", "libogc.a")
 def source_inputs():
     return [Path("tools/wii_build.py"), Path("tools/wii/build.py"),
             Path("tools/wii/check_toolchain.py"), *SOURCES, *sorted(Path("port/wii/abi").glob("*.h"))]
-
-
-def toolchain_inputs(root):
-    paths = {root / "devkitPPC/wii_rules", root / "devkitPPC/base_rules"}
-    # Headers, compiler internals, specs/startup objects and newlib participate
-    # in both reconfiguration and the fingerprint, including directory additions.
-    for relative in ("devkitPPC/bin", "devkitPPC/libexec", "devkitPPC/lib",
-                     "devkitPPC/powerpc-eabi", "libogc/include", "libogc/lib/wii", "tools/bin"):
-        directory = root / relative
-        paths.add(directory)
-        for path in directory.rglob("*"):
-            if path.is_dir() or path.suffix in (".h", ".a", ".o", ".ld", ".specs", ".exe"):
-                paths.add(path)
-    return sorted(paths)
 
 
 def wii_configure_inputs(devkitpro=None):

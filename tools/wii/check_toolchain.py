@@ -17,6 +17,20 @@ def command_output(command: list[str]) -> str:
     return result.stdout.strip()
 
 
+def toolchain_inputs(root: Path) -> list[Path]:
+    paths = {root / "devkitPPC/wii_rules", root / "devkitPPC/base_rules"}
+    # Headers, compiler internals, specs/startup objects and newlib participate
+    # in reconfiguration/fingerprints, including directory additions.
+    for relative in ("devkitPPC/bin", "devkitPPC/libexec", "devkitPPC/lib",
+                     "devkitPPC/powerpc-eabi", "libogc/include", "libogc/lib/wii", "tools/bin"):
+        directory = root / relative
+        paths.add(directory)
+        for path in directory.rglob("*"):
+            if path.is_dir() or path.suffix in (".h", ".a", ".o", ".ld", ".specs", ".exe"):
+                paths.add(path)
+    return sorted(paths)
+
+
 def inspect_toolchain(root: Path) -> dict:
     root = root.resolve()
     errors = []
