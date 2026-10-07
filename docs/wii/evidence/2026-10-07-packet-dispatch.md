@@ -127,3 +127,7 @@ unqualified. Next bounded work is the version-padding/decode contract and
 actual callers, with a separate opt-in diagnostic correction before production
 integration. HWI-005/006 remain open. No Dolphin fork, patch, settings matrix,
 console change or production engine rewrite was performed.
+
+The subsequent [version contract audit](2026-10-07-packet-version-contract.md)
+confirms the source/caller mismatch and specifies the next isolated decoder
+correction. It does not implement or qualify that correction.
