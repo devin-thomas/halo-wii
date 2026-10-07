@@ -27,6 +27,28 @@ static int variadic(const char *unused, ...)
     return integer == -7 && real == 1.5 && wide == UINT64_C(0x1122334455667788);
 }
 
+/* Model the engine's first-byte/word store without executing its uninitialized
+ * long or aliasing UB. Only the fixed one/two-byte synthetic cases call this. */
+static uint32_t model_first_store(uint32_t payload, uint16_t value,
+                                  unsigned int bytes, bool big_endian)
+{
+    uint8_t cell[4];
+    for (unsigned int i = 0; i < 4; ++i) {
+        unsigned int shift = 8 * (big_endian ? 3 - i : i);
+        cell[i] = (uint8_t)(payload >> shift);
+    }
+    for (unsigned int i = 0; i < bytes; ++i) {
+        unsigned int shift = 8 * (big_endian ? bytes - 1 - i : i);
+        cell[i] = (uint8_t)(value >> shift);
+    }
+    uint32_t result = 0;
+    for (unsigned int i = 0; i < 4; ++i) {
+        unsigned int shift = 8 * (big_endian ? 3 - i : i);
+        result |= (uint32_t)cell[i] << shift;
+    }
+    return result;
+}
+
 int wii_abi_report(FILE *output)
 {
     unsigned int checks = 0;
@@ -55,13 +77,24 @@ int wii_abi_report(FILE *output)
     REQUIRE(wii_float_bits(-0.0f) == UINT32_C(0x80000000), "signed_zero");
     uint32_t datum = UINT32_C(0xabcd1234);
     REQUIRE((uint16_t)datum == UINT16_C(0x1234) && (uint16_t)(datum >> 16) == UINT16_C(0xabcd), "datum_halves");
+    const uint32_t payload = UINT32_C(0xa1b2c3d4);
+    REQUIRE(model_first_store(payload, 1, 1, false) == UINT32_C(0xa1b2c301) &&
+            model_first_store(payload, 1, 1, true) == UINT32_C(0x01b2c3d4), "first_byte_endian_failure_model");
+    REQUIRE(model_first_store(payload, UINT16_C(0x1234), 2, false) == UINT32_C(0xa1b21234) &&
+            model_first_store(payload, UINT16_C(0x1234), 2, true) == UINT32_C(0x1234c3d4), "first_word_endian_failure_model");
+    /* Existing HS conversions use n == 0; retain that behavior in this model. */
+    REQUIRE(wii_cell_replace_low8(payload, 0 == 0) == UINT32_C(0xa1b2c301), "hs_zero_boolean_payload");
+    REQUIRE(wii_cell_replace_low8(payload, -7 == 0) == UINT32_C(0xa1b2c300), "hs_nonzero_boolean_payload");
+    REQUIRE(wii_cell_replace_low16(payload, (uint16_t)-2) == UINT32_C(0xa1b2fffe), "hs_negative_short_payload");
+    REQUIRE(wii_cell_replace_low16(payload, UINT16_C(0x1234)) == UINT32_C(0xa1b21234), "hs_positive_short_payload");
+    REQUIRE(wii_cell_replace_low16(payload, (uint16_t)(int16_t)-2.75f) == UINT32_C(0xa1b2fffe), "hs_real_short_payload");
     volatile float factor = wii_float_from_bits(UINT32_C(0x3f800001));
     volatile float subtract = wii_float_from_bits(UINT32_C(0x3f800002));
     float separated = factor * factor - subtract;
     volatile float third = 1.0f / 3.0f;
     float sum = 0.0f;
     for (unsigned int i = 0; i < 1000; ++i) sum += third;
-    if (fprintf(output, "ABI CANONICAL checks=%u address=803a6010 offset=16 float=3fc00000 layout=0,4,8/12 varargs=ok datum=abcd,1234\n",
+    if (fprintf(output, "ABI CANONICAL checks=%u address=803a6010 offset=16 float=3fc00000 layout=0,4,8/12 varargs=ok datum=abcd,1234 cells=a1b2c301,a1b2fffe\n",
                 checks) < 0 ||
         fprintf(output, "ABI ARITHMETIC separate=%08" PRIx32 " sum1000=%08" PRIx32 "\n",
                 wii_float_bits(separated), wii_float_bits(sum)) < 0 ||

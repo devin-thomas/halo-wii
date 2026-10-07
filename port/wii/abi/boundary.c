@@ -43,3 +43,13 @@ uint32_t wii_float_bits(float value)
     memcpy(&bits, &value, sizeof(bits));
     return bits;
 }
+
+uint32_t wii_cell_replace_low8(uint32_t payload, uint8_t value)
+{
+    return (payload & UINT32_C(0xffffff00)) | (uint32_t)value;
+}
+
+uint32_t wii_cell_replace_low16(uint32_t payload, uint16_t value)
+{
+    return (payload & UINT32_C(0xffff0000)) | (uint32_t)value;
+}
