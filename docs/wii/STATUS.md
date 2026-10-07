@@ -75,3 +75,12 @@ Two runs of this DOL exit naturally with host status 0; earlier shutdown faults
 remain preserved and general recovery is unqualified. HWI-005/006 stay blocked.
 Next gate covers caller size unions, dispatch identity/native capacity and outer
 framing before any production proposal.
+
+The [caller framing diagnostic](evidence/2026-10-07-packet-callers.md) passes
+4886 host/PPC predicates in 680 reported cases. Original PPC union/member and
+unconditional-header-swap behavior is measured separately; candidate reports
+and every earlier section agree within their stated scopes. Two separate runs
+of this DOL finish the guest report then exit with host fault 0xc0000409;
+general recovery remains unqualified.
+HWI-005/006 stay blocked. Actual native ABI layouts, dispatch association,
+snapshot/cache lifetime and peer wire identity precede production integration.
