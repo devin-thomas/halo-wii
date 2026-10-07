@@ -45,6 +45,15 @@ executable writes `sd:/halo-wii-memory/subset.log` and returns its check result.
 The [measured execution](evidence/2026-10-07-scalar-wii.md) reports 16 wire-byte
 failures out of 128 checks; a successful build is not compatibility acceptance.
 
+Add `--candidate` with a separate output directory to link the original
+reference alongside an explicit wire-order diagnostic adapter. Use
+`--output build/wii-memory-candidate` for Wii and
+`--output .local/wii-memory-candidate-host` for host execution. This mode writes
+`sd:/halo-wii-memory/compare.log`; its outer result covers candidate checks,
+with reference results recorded separately. The
+[candidate comparison](evidence/2026-10-07-scalar-candidate.md) passes 336
+candidate checks on host/PPC while retaining the original PPC failures.
+
 ## Installation and provenance
 
 Use the [official installer](https://github.com/devkitPro/installer) and [official Wii examples](https://github.com/devkitPro/wii-examples). Verify the current Windows installation instructions and Wii development package group when installing. Record package/compiler versions, Python/Ninja versions, source commit, environment variables and the exact successful commands. Do not mix an unrelated MSYS installation with the devkitPro shell without proving path compatibility.

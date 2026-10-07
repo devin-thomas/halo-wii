@@ -33,3 +33,9 @@ passes 128 host checks at offsets 0-7. Its standalone Wii executable
 16 wire-byte checks fail, measuring the endian incompatibility. The other
 112 predicates pass, while alignment safety and physical Wii remain unqualified.
 The separate host shutdown failure persists.
+
+An opt-in [scalar adapter comparison](evidence/2026-10-07-scalar-candidate.md)
+passes the unchanged 128-check fixture plus 208 edge checks on host/PPC, while
+reproducing all 16 reference wire failures in the same PPC executable. This is
+an isolated diagnostic result; production packet/structure integration and
+clean runtime acceptance remain open.

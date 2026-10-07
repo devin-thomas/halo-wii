@@ -103,3 +103,11 @@ emulation predicates does not establish defined C alignment behavior or
 physical Wii acceptance. HS/save policies, packet/cache layouts, callbacks,
 intrinsics/atomics and gameplay math require separate proofs. HWI-005 and
 HWI-006 remain open; no Halo gameplay or physical Wii pass is implied.
+
+## Subsequent adapter comparison
+
+The [explicit scalar adapter follow-up](2026-10-07-scalar-candidate.md) passes
+336 candidate checks on host/PPC and reproduces the original 128/16 failure
+alongside it. An independent coordinator run also reproduces this original
+failure with the same build/artifact identity. This baseline remains unchanged;
+the candidate is separate from production integration.
