@@ -63,6 +63,14 @@ and saves a complete manifest for the preserved version failures. See the
 [packet comparison](evidence/2026-10-07-packet-dispatch.md) for per-unit warning
 exceptions, exact failures and qualification limits.
 
+Add `--packet-policy` instead of `--packets` to include a third isolated
+excluded-field decoder and its version edges. Outputs should be separate:
+`--output .local/wii-packet-policy-host` and `--output build/wii-packet-policy`.
+It writes `sd:/halo-wii-memory/version.log`. The aggregate includes the two
+preserved failing sections; the third passes 4,416 host/PPC predicates in the
+[policy comparison](evidence/2026-10-07-packet-version-policy.md). This flag
+does not integrate the policy into the engine.
+
 ## Installation and provenance
 
 Use the [official installer](https://github.com/devkitPro/installer) and [official Wii examples](https://github.com/devkitPro/wii-examples). Verify the current Windows installation instructions and Wii development package group when installing. Record package/compiler versions, Python/Ninja versions, source commit, environment variables and the exact successful commands. Do not mix an unrelated MSYS installation with the devkitPro shell without proving path compatibility.

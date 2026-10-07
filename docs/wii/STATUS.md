@@ -46,3 +46,9 @@ executes 1,504 checks per implementation. Host reference/candidate each fail
 adapter retains only those same 16 version failures and matches all 96 wire
 goldens. Packet qualification and verifier/version policy remain open; this
 does not establish production integration or clean host shutdown.
+
+A third [diagnostic placeholder decoder](evidence/2026-10-07-packet-version-policy.md)
+passes 4,416 host/PPC checks while preserving the previous implementations and
+their failed assertions. This proves the listed diagnostic version policy;
+excluded arrays, verifier safety, production compatibility, clean host shutdown
+and physical Wii remain unqualified.

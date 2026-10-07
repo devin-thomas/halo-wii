@@ -75,3 +75,7 @@ partial native output, input preservation and full-buffer canaries at offsets
 comparison; the new decoder should separately demonstrate consumption 4 and
 tail `e7`. Only after host/PPC execution, independent review and a deliberate
 verifier/array/compatibility policy should production integration be proposed.
+
+The subsequent [third diagnostic comparison](2026-10-07-packet-version-policy.md)
+implements this bounded candidate and passes 4,416 host/PPC predicates. The
+historical failures remain preserved, and the broader gates remain open.
