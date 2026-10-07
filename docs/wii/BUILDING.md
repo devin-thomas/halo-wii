@@ -54,6 +54,15 @@ with reference results recorded separately. The
 [candidate comparison](evidence/2026-10-07-scalar-candidate.md) passes 336
 candidate checks on host/PPC while retaining the original PPC failures.
 
+Add `--packets` to compare actual packet dispatch and string helpers with the
+original scalar services and the opt-in adapter. Use separate outputs
+`--output .local/wii-packet-host` and `--output build/wii-packets` with the same
+host/Wii compiler arguments. This writes `sd:/halo-wii-memory/packets.log`;
+the outer result includes both implementations. The host currently exits 1
+and saves a complete manifest for the preserved version failures. See the
+[packet comparison](evidence/2026-10-07-packet-dispatch.md) for per-unit warning
+exceptions, exact failures and qualification limits.
+
 ## Installation and provenance
 
 Use the [official installer](https://github.com/devkitPro/installer) and [official Wii examples](https://github.com/devkitPro/wii-examples). Verify the current Windows installation instructions and Wii development package group when installing. Record package/compiler versions, Python/Ninja versions, source commit, environment variables and the exact successful commands. Do not mix an unrelated MSYS installation with the devkitPro shell without proving path compatibility.

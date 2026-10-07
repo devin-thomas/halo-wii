@@ -39,3 +39,10 @@ passes the unchanged 128-check fixture plus 208 edge checks on host/PPC, while
 reproducing all 16 reference wire failures in the same PPC executable. This is
 an isolated diagnostic result; production packet/structure integration and
 clean runtime acceptance remain open.
+
+The [actual packet dispatch comparison](evidence/2026-10-07-packet-dispatch.md)
+executes 1,504 checks per implementation. Host reference/candidate each fail
+16 older-version consumption/tail checks. PPC reference fails 432; the scalar
+adapter retains only those same 16 version failures and matches all 96 wire
+goldens. Packet qualification and verifier/version policy remain open; this
+does not establish production integration or clean host shutdown.

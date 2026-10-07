@@ -122,3 +122,8 @@ Next work should exercise actual packet field dispatch against authored byte
 goldens, including version padding, variable sizes, signed lengths and native
 destination layout, before choosing a production boundary integration. HWI-005
 and HWI-006 remain open. No Dolphin fork, patch or profile matrix was performed.
+
+The subsequent [actual packet comparison](2026-10-07-packet-dispatch.md) now
+executes this adapter through the original dispatch bodies. It removes the
+measured PPC endian failures, but preserves 16 older-version consumption/tail
+failures on both host and PPC. Production integration remains unqualified.
