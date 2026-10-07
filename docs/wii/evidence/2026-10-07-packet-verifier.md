@@ -121,3 +121,8 @@ validate recursive array schemas/reserve arithmetic and pair encoder/decoder
 child skipping, followed by explicit runtime-version native-capacity policy
 before any production boundary proposal. HWI-005/006 remain blocked; no engine
 integration, gameplay or hardware pass is claimed.
+
+The [subsequent paired array diagnostic](2026-10-07-packet-arrays.md) qualifies
+a separate immutable schema snapshot with stable reserves across runtime versions.
+This own-version flat verifier, all its existing bodies and its 383 predicates
+remain unchanged; the shared extent helper is extended without production use.

@@ -60,3 +60,10 @@ to own-version excluded fields and commits metadata only after full success.
 The original verifier and earlier results are preserved. Arrays reject without
 child traversal; recursive schema/reserve handling, runtime-version native
 capacity, production integration and clean host shutdown remain open.
+
+An isolated [paired array diagnostic](evidence/2026-10-07-packet-arrays.md)
+passes 342,620 predicates in 306 case executions on host/PPC, including maximum
+representable schema depth, child skipping and stable native-capacity policy.
+Original bodies, metadata and all earlier reports/failures remain intact.
+Production integration, actual group boundaries, broader ABI, host teardown and
+physical Wii remain open; no gameplay or network-session pass is established.

@@ -79,6 +79,14 @@ It writes `sd:/halo-wii-memory/verifier.log`. The
 383 host/PPC predicates, preserving previous failed sections in the aggregate.
 Arrays reject; runtime-version layouts and production integration remain open.
 
+Add `--packet-arrays` to include the isolated recursive schema snapshot and
+paired array codecs. Use `--output .local/wii-packet-arrays-host` or
+`--output build/wii-packet-arrays`; Wii writes `sd:/halo-wii-memory/arrays.log`.
+The [array comparison](evidence/2026-10-07-packet-arrays.md) passes 342,620
+host/PPC predicates while preserving all earlier sections. Stable all-version
+native reserves are a separate explicit policy; this flag does not integrate
+any verifier or codec into production.
+
 ## Installation and provenance
 
 Use the [official installer](https://github.com/devkitPro/installer) and [official Wii examples](https://github.com/devkitPro/wii-examples). Verify the current Windows installation instructions and Wii development package group when installing. Record package/compiler versions, Python/Ninja versions, source commit, environment variables and the exact successful commands. Do not mix an unrelated MSYS installation with the devkitPro shell without proving path compatibility.
