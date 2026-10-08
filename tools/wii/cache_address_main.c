@@ -46,7 +46,7 @@ static int mem2_copy(FILE *report)
                          cache_probe_crc32(copy + table.offset, table.length) != CACHE_PRIVATE_TABLE_CRC;
     fprintf(report, "MEM2 COPY storage=%p bytes=%lu alignment_charge=%lu failures=%d\n", (void *)copy,
             (unsigned long)CACHE_PRIVATE_SIZE, (unsigned long)(start + aligned - old_lo), result);
-    if ((uintptr_t)SYS_GetArena2Lo() != start + aligned) {
+    if ((uintptr_t)SYS_GetArena2Lo() != start + aligned || (uintptr_t)SYS_GetArena2Hi() != hi) {
         fprintf(report, "MEM2 FAIL concurrent arena mutation; refusing unsafe restore\n");
         return 1;
     }

@@ -267,4 +267,3 @@ void cache_address_graph_unload(struct cache_address_graph *graph)
     free(graph->bytes);
     memset(graph, 0, sizeof(*graph));
 }
-
