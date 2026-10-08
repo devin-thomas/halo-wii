@@ -1,5 +1,43 @@
 # Wii development helper
 
+## Offline Windows shutdown symbols
+
+Read the executable's PE CodeView identity without loading it:
+
+```powershell
+python -B tools/wii/inspect_pe_symbols.py '<local-executable.exe>' --expected-sha256 '<64-lowercase-hex-digits>'
+python -B -m unittest discover -s tools/wii -p test_inspect_pe_symbols.py
+```
+
+The bounded reader requires one RSDS record and reports its GUID, age and PDB
+basename, plus file and record hashes. It omits the embedded build-machine PDB
+path. Same-API stat guards and an optional required full hash protect the read
+snapshot; they do not exclude concurrent writers or prove PE loader acceptance.
+
+Build `resolve_shutdown_symbols.cpp` from an x64 MSVC developer shell using
+your installed DIA SDK. Keep compiled outputs in an ignored local directory:
+
+```powershell
+cl /nologo /std:c++17 /EHsc /W4 /WX /utf-8 /I '<VS>/DIA SDK/include' tools/wii/resolve_shutdown_symbols.cpp /Fo.local/resolver.obj /Fe.local/resolver.exe /link ole32.lib oleaut32.lib
+.local/resolver.exe --dia-dll '<absolute-local-DIA-DLL>' --pdb '<absolute-local-PDB>' --guid '<PE-RSDS-GUID>' --age 1 --function-rva 0x00f8e570 --function-rva 0x00f8e5bf --data-rva 0x01f50148
+```
+
+Create the output directory first. Use the trusted installed AMD64 DIA DLL;
+the resolver loads that DLL directly, without registry setup or symbol-server
+lookup. Inputs must use local drive-rooted paths; UNC/device paths and mapped
+remote drives are rejected. The executable being investigated is never loaded.
+Supply the GUID and age from its exact hashed PE; a PDB mismatch exits before
+any RVA result is published. Repeated function/data queries are limited to 64.
+
+JSON distinguishes an exact symbol start, a containing byte extent, an
+unqualified nearby symbol and a missing symbol. It preserves the requested
+RVA, symbol RVA, signed displacement and DIA displacement, with extent units.
+Exit 0 means every query has qualified address coverage; exit 4 retains JSON
+for nearby/missing results. Argument errors exit 2, DLL/PDB validation errors
+exit 3 and DIA/property/output errors exit 5. Address coverage alone does not
+prove callback ownership, thread state or shutdown cause. Keep local PDBs,
+compiled binaries and reports containing private paths out of Git.
+
 ## Toolchain preflight
 
 Run the read-only preflight from the repository root:
