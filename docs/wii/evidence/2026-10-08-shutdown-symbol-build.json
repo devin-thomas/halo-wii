@@ -1,0 +1,100 @@
+{
+  "scope": "Exact-revision isolated Windows symbol-build attempt; no emulator execution",
+  "upstream_revision": "f84df02055ab9610feec48e65648cac5a3c098fa",
+  "complete_pinned_repositories": 38,
+  "tracked_source_inventory_entries": 35773,
+  "source_inventory_before_build_sha256": "a562918850517b3d59075eb8d0326f3d1e764f8c7032bc19f7670518fc32d18e",
+  "configure": {
+    "native_MAIN_exit": 0,
+    "prior_controller_exit": 1,
+    "qualification": "Corrected native host/redist environment generated Release successfully; prior strict lingering-child failure retained",
+    "repeated_in_final_controller": false,
+    "generated_gate_sha256": "044dc11a64ce791d32e1ffeac350402d0e4b5e49fca2ec0068642bc293b4cec0",
+    "features": "Original bundled Qt/SDL/cubeb/Vulkan/FFmpeg/mGBA and other recorded upstream features retained",
+    "flags": [
+      "/O2",
+      "/DNDEBUG",
+      "/Z7",
+      "/WX",
+      "-std:c++latest",
+      "/MAP",
+      "/DEBUG",
+      "/OPT:REF",
+      "/OPT:ICF"
+    ],
+    "LTO": false,
+    "host": "Windows AMD64",
+    "target": "Windows x86_64",
+    "CMAKE_CROSSCOMPILING": "TRUE from unchanged upstream toolchain; not forced OFF"
+  },
+  "limits": {
+    "original_prerequisite_seconds": 1800,
+    "prior_charged_seconds": 711,
+    "remaining_prerequisite_seconds_at_start": 1089,
+    "final_source_generated_qualification_seconds": 126.6075325012207,
+    "build_seconds": 5400,
+    "root_build_attempts": 1,
+    "parallel_jobs": 1,
+    "minimum_free_RAM_bytes": 3221225472,
+    "minimum_free_C_bytes": 64424509440
+  },
+  "actual_build": {
+    "native_MAIN_exit": 1,
+    "controller_exit": 1,
+    "outer_elapsed_seconds": 242.85819920001086,
+    "build_elapsed_seconds": 115.92463949999365,
+    "build_elapsed_including_cleanup_and_hash_seconds": 115.93676630000118,
+    "ninja_failed_step": 510,
+    "ninja_total_steps": 2029,
+    "failure_file": "Source/PCH/pch.h",
+    "failure_line": 11,
+    "diagnostic": "C1189 explicit Visual Studio 2026 compiler requirement",
+    "actual_MSC_FULL_VER": 194435228,
+    "minimum_MSC_FULL_VER": 195136252,
+    "forced_fatal_owned_job_cleanup": true,
+    "qualified_helper_cleanup_accepted": false,
+    "owned_job_after_cleanup": 0,
+    "command_record_sha256": "6174a23c97a0640488c88a37f34c649f7c46995d00625098bfc96e4dd3412882",
+    "stdout_sha256": "f4719f48d2c75999692cb7a693cfbd37f21ea8439f4104b1a5b6e65081e42c59",
+    "result_sha256": "937e0c76c44a8cac85f6aa918d2b11ac250aa5c2420264550a93cc7bae9f965b",
+    "ancillary_diagnostic": "ScmRevGen fatal: bad revision '^master' retained; no separate cause or generated-version claim"
+  },
+  "independent_exact_command_repeat": {
+    "native_MAIN_exit": 1,
+    "elapsed_including_cleanup_hash_seconds": 7.037635200002114,
+    "same_C1189_guard": true,
+    "command_record_sha256": "ce0fdbfbe92b9198581f03151e7cc75862afd36be0b6e6fb3d292fa21741f495",
+    "forced_fatal_owned_job_cleanup": true,
+    "owned_job_after_cleanup": 0
+  },
+  "saved_record_audit": {
+    "predicates": 3910,
+    "failures": 0,
+    "closed_commands": 646,
+    "raw_log_pairs": 646,
+    "raw_log_bytes": 3354243,
+    "minimum_sampled_free_RAM_bytes": 11993395200,
+    "minimum_sampled_free_C_bytes": 181858324480,
+    "review_sha256": "6d232ed3664fa8535fc86d4d7803409028440d39c26dce165051d1984b4c30f2",
+    "source_after_build_qualification": "not reached"
+  },
+  "preflight_correction": {
+    "top_level_MSVC_minimum": "19.32",
+    "top_level_toolset_minimum": 143,
+    "limitation": "Earlier candidate assessment omitted stricter pinned PCH compiler guard; configure success was insufficient",
+    "pch_body_sha256": "88523dd6eccd0a630633c5759cddf88034ef7acdb1f598a40fc0bdd3362d3280",
+    "diagnosis_sha256": "e10a23265866cf36856b0609a3f3311a2cd7f0921c506f4275f4f1518daad634"
+  },
+  "artifacts": null,
+  "PE_RSDS_validation": "not reached",
+  "matching_PDB_DIA_validation": "not reached",
+  "runtime_or_stock_owner_qualification": false,
+  "ticket_states": {
+    "HWI-005": "BLOCKED",
+    "HWI-006": "BLOCKED",
+    "HWI-007": "TODO",
+    "HWI-008": "TODO"
+  },
+  "preservation": "Earlier frozen failures remain failures; no authored source patch, option cut, toolchain installation, stock-RVA symbol substitution, emulator/SD/profile operation",
+  "limits_of_evidence": "Sampled resources do not measure linker peak or prove a successful future build; source-owner, geometry/GX, engine/gameplay and physical Wii acceptance remain open"
+}

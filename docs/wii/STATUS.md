@@ -246,3 +246,11 @@ enforces selected material range before composing a whole-root ordinal, reusing
 parent-first LE16 getters without layout/workspace/reservation growth. Clean
 source passes authored host96cases/52548checks0 and strict PPC compile only.
 No owned-data/SD/target/planner run, vertex semantics or ticket acceptance follows.
+
+
+The [isolated shutdown symbol-build attempt](evidence/2026-10-08-shutdown-symbol-build.md)
+verifies exact source/dependencies and Release configuration, then fails on
+the pinned PCH Visual Studio 2026 full-version guard. An independent repeat
+confirms installed MSVC is below 195136252; earlier minimum-only feasibility
+is corrected. Saved 3910-predicate audit qualifies records and owned cleanup,
+without artifacts, PDB/owner/runtime or ticket acceptance. HWI005/006 remain BLOCKED.
