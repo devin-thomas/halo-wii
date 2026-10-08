@@ -63,3 +63,33 @@ Header identity does not validate decompression, checksum, tags, geometry,
 scripts, asset conversion or gameplay. Stored and declared decompressed lengths
 remain separate. The runtime maps-only importer in `port/linux/src/xiso.c`
 remains unchanged and does not provide this complete reachable-tree inventory.
+
+## Bounded cache address diagnostics
+
+`inspect_cache_residency.py` streams a supported Xbox v5 compressed map with
+64 KiB inflation chunks and retains at most the 22 MiB tag-data bound. It
+reports numeric index/BSP metadata and hashes. Optional `--tag-output` writes
+private raw tag bytes to a new external path; keep those bytes and reports out
+of Git. Arbitrary bytes after the first zlib stream are observed as trailing
+content, without canonical padding validation. BSP metadata uses unrounded
+file lengths; the existing loader/strict validator remains a separate check.
+
+```powershell
+python tools/wii/inspect_cache_residency.py '<private-map>.map' --output '<external-private-folder>/residency.json'
+python -m unittest discover -s tools/wii -p test_inspect_cache_residency.py
+python tools/wii/run_cache_address.py --cc '<host-gcc>' --output .local/cache-address-host
+python tools/wii/run_cache_address.py --cc '<devkitPPC-gcc>' --wii-devkitpro '<devkitPro>' --output .local/cache-address-ppc
+```
+
+The default C diagnostic contains authored synthetic data. Explicit
+`--private-tag-data '<external-tag-blob>'` embeds owned raw bytes in generated
+source and binaries under a new Git-ignored output directory. Never publish
+that generated source, ELF/DOL or host executable. The diagnostic decodes
+little-endian numeric addresses, datums and index words, then resolves checked
+offsets in owned storage. It does not cast the original Xbox address into a
+Wii pointer. It preserves parent groups and opaque words; no capacity constants
+change. Header/index/name/root-address references are qualified separately from
+nested tag bodies, unloaded BSP contents, floats, geometry, scripts, assets,
+canonical checksums, conversion and gameplay. Its round trip is a memory
+snapshot, not a durable save-file format. Immutable truthful buffers and no
+concurrent mutation are required; size/mtime checks are not writer exclusion.
