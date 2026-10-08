@@ -357,6 +357,18 @@ adjust this CPU path. Lightmap counts/bitmap-dependent limits, decompression,
 float interpretation, native geometry and rendering remain separate. Persistent
 layouts, workspace, reservations and inspection serialization stay unchanged.
 
+`cache_material_decode_packed_vector` decodes a copied packed word into three
+binary32 float components. The source uses signed 11/11/10-bit fields and a
+biased midpoint: `(2q+1)*(1.0f/2047.0f)` for the first two components and
+`(2q+1)*(1.0f/1023.0f)` for the third. In particular, packed zero yields positive
+small components, and all-one fields yield negative small components. Explicit
+unsigned extraction and sign extension avoid a dependency on signed shifts or
+out-of-range unsigned-to-signed conversion. The helper does not normalize, clamp or
+encode vectors, interpret position/texture-coordinate bit words, or retain a
+view. Its 12-byte result is caller storage; persistent layouts and capacity
+remain unchanged. Host float-bit tests and PPC compilation have separate scopes;
+PPC floating-point runtime agreement requires execution evidence.
+
 The root projection grows from 24 to 36 bytes, increasing the two-half workspace
 by 24 payload bytes. For two lightmaps and 34 materials, payload is 8,856 bytes;
 an authored model using compiled PPC layouts charges 64 additional arena bytes

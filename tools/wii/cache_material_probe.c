@@ -1,4 +1,5 @@
 #include "cache_material_probe.h"
+#include <float.h>
 #include <string.h>
 
 #define SHADER_GROUP UINT32_C(0x73686472)
@@ -11,6 +12,9 @@ _Static_assert(sizeof(struct cache_material_root_projection) == 36, "root projec
 _Static_assert(sizeof(struct cache_material_surface_projection) == 6, "surface projection");
 _Static_assert(sizeof(struct cache_material_compressed_vertex_projection) == 32, "compressed vertex projection");
 _Static_assert(sizeof(struct cache_material_surface_vertices_projection) == 96, "surface vertices projection");
+_Static_assert(sizeof(float) == 4 && FLT_RADIX == 2 && FLT_MANT_DIG == 24 &&
+               FLT_MIN_EXP == -125 && FLT_MAX_EXP == 128, "source binary32 float precision");
+_Static_assert(sizeof(struct cache_material_vector_projection) == 12, "vector projection");
 _Static_assert(sizeof(struct cache_material_lightmap_projection) == 20, "lightmap projection");
 
 struct material_reader {
@@ -589,6 +593,27 @@ int cache_material_get_surface_vertices(const struct cache_material_view *view, 
     for (unsigned i = 0; i < 3; ++i)
         if (!cache_material_get_compressed_vertex(view, material_index, surface.vertex_indices[i], &value.vertices[i], result))
             return 0;
+    *output = value;
+    return 1;
+}
+
+int cache_material_decode_packed_vector(uint32_t packed, struct cache_material_vector_projection *output,
+                                        struct cache_material_result *result)
+{
+    if (!start(result))
+        return 0;
+    if (!output)
+        return fail(result, CACHE_MATERIAL_ARGUMENT, 0);
+    struct cache_material_vector_projection value;
+    for (unsigned i = 0; i < 3; ++i) {
+        unsigned width = i < 2 ? 11 : 10;
+        uint32_t sign = UINT32_C(1) << (width - 1);
+        uint32_t code = packed & (sign * 2 - 1);
+        int32_t q = (int32_t)code - (code & sign ? (int32_t)(sign * 2) : 0);
+        /* The source's power-of-two scaling yields the exact integer 2q+1. */
+        value.components[i] = (float)(q * 2 + 1) * (i < 2 ? 1.0f / 2047.0f : 1.0f / 1023.0f);
+        packed >>= width;
+    }
     *output = value;
     return 1;
 }

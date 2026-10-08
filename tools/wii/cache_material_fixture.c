@@ -1,7 +1,11 @@
 #include "cache_material_fixture.h"
 #include "cache_material_probe.h"
+#include <float.h>
 #include <stdlib.h>
 #include <string.h>
+
+_Static_assert(sizeof(float) == 4 && FLT_RADIX == 2 && FLT_MANT_DIG == 24 &&
+               FLT_MIN_EXP == -125 && FLT_MAX_EXP == 128, "fixture requires binary32 float");
 
 enum { GUARD = 32, TAG_BYTES = 4096, SLOT_BYTES = 65536, BSP_AT = 8192,
        BSP_BYTES = 57344, ROOT_AT = BSP_AT + 24, LM_AT = BSP_AT + 800,
@@ -446,6 +450,107 @@ static int material_surface_edges(struct context *context, struct storage *stora
     return 0;
 }
 
+static uint32_t float_word(float value)
+{
+    uint32_t bits;
+    memcpy(&bits, &value, sizeof(bits));
+    return bits;
+}
+
+static void packed_vector_oracle(uint32_t packed, uint32_t bits[3])
+{
+    /* Preserve the source's float operation order, but reinterpret signed bits
+     * explicitly instead of its implementation-defined unsigned-to-long cast. */
+    for (unsigned component = 0; component < 3; ++component) {
+        uint32_t shifted = packed << (component == 2 ? 22 : 21);
+        int32_t signed_word;
+        memcpy(&signed_word, &shifted, sizeof(signed_word));
+        float value = (float)signed_word;
+        float scale = component == 2 ? (1.0f / 2097152.0f) : (1.0f / 1048576.0f);
+        float reciprocal = component == 2 ? (1.0f / 1023.0f) : (1.0f / 2047.0f);
+        bits[component] = float_word((value * scale + 1.0f) * reciprocal);
+        packed >>= 11;
+    }
+}
+
+static int packed_vector_check(struct context *context, uint32_t packed, const uint32_t expected[3])
+{
+    struct {
+        uint32_t before[2];
+        struct cache_material_vector_projection value;
+        uint32_t after[2];
+    } guarded;
+    struct cache_material_result result;
+    memset(&guarded, 0xa7, sizeof(guarded));
+    memset(&result, 0xa7, sizeof(result));
+    int decoded = cache_material_decode_packed_vector(packed, &guarded.value, &result);
+    CHECK(decoded && result.error == CACHE_MATERIAL_OK, "packed_vector_all_words_valid");
+    if (!decoded)
+        return abort_case(context, "packed_vector_decode");
+    for (unsigned component = 0; component < 3; ++component)
+        CHECK(float_word(guarded.value.components[component]) == expected[component],
+              "packed_vector_exact_float32_component_bits");
+    CHECK(guarded.before[0] == UINT32_C(0xa7a7a7a7) && guarded.before[1] == UINT32_C(0xa7a7a7a7) &&
+          guarded.after[0] == UINT32_C(0xa7a7a7a7) && guarded.after[1] == UINT32_C(0xa7a7a7a7),
+          "packed_vector_full_twelve_byte_output_canaries");
+    return 0;
+}
+
+static int packed_vectors(struct context *context)
+{
+    static const char *names[] = {"packed_vector_exhaustive_low11", "packed_vector_exhaustive_middle11",
+        "packed_vector_exhaustive_high10"};
+    for (unsigned field = 0; field < 3; ++field) {
+        context->name = names[field];
+        ++context->cases;
+        unsigned shift = field * 11;
+        uint32_t mask = field == 2 ? UINT32_C(0x3ff) : UINT32_C(0x7ff);
+        for (uint32_t code = 0; code <= mask; ++code) {
+            uint32_t background = UINT32_C(0xa5963c69) ^ (code * UINT32_C(0x9e3779b9));
+            uint32_t packed = (background & ~(mask << shift)) | (code << shift);
+            uint32_t expected[3];
+            packed_vector_oracle(packed, expected);
+            if (packed_vector_check(context, packed, expected))
+                return 1;
+        }
+    }
+    context->name = "packed_vector_independent_fixed_bits_and_midpoint_bias";
+    ++context->cases;
+    static const struct {
+        uint32_t packed, bits[3];
+    } goldens[] = {
+        {UINT32_C(0x00000000), {UINT32_C(0x3a001002), UINT32_C(0x3a001002), UINT32_C(0x3a802008)}},
+        {UINT32_C(0xffffffff), {UINT32_C(0xba001002), UINT32_C(0xba001002), UINT32_C(0xba802008)}},
+        {UINT32_C(0x7fdffbff), {UINT32_C(0x3f800000), UINT32_C(0x3f800000), UINT32_C(0x3f800000)}},
+        {UINT32_C(0x80200400), {UINT32_C(0xbf800000), UINT32_C(0xbf800000), UINT32_C(0xbf800000)}},
+        {UINT32_C(0x001ffc00), {UINT32_C(0xbf800000), UINT32_C(0x3f800000), UINT32_C(0x3a802008)}},
+        {UINT32_C(0x7fffffff), {UINT32_C(0xba001002), UINT32_C(0xba001002), UINT32_C(0x3f800000)}},
+        {UINT32_C(0x80000000), {UINT32_C(0x3a001002), UINT32_C(0x3a001002), UINT32_C(0xbf800000)}},
+        {UINT32_C(0x00000400), {UINT32_C(0xbf800000), UINT32_C(0x3a001002), UINT32_C(0x3a802008)}},
+        {UINT32_C(0x00200000), {UINT32_C(0x3a001002), UINT32_C(0xbf800000), UINT32_C(0x3a802008)}}
+    };
+    for (unsigned i = 0; i < sizeof(goldens) / sizeof(goldens[0]); ++i)
+        if (packed_vector_check(context, goldens[i].packed, goldens[i].bits))
+            return 1;
+    context->name = "packed_vector_null_arguments_atomic_output";
+    ++context->cases;
+    struct {
+        uint32_t before[2];
+        struct cache_material_vector_projection value;
+        uint32_t after[2];
+    } guarded, before;
+    struct cache_material_result result;
+    memset(&guarded, 0xa7, sizeof(guarded));
+    memcpy(&before, &guarded, sizeof(before));
+    CHECK(sizeof(guarded.value) == 12, "packed_vector_three_binary32_caller_bytes");
+    CHECK(!cache_material_decode_packed_vector(UINT32_MAX, NULL, &result) &&
+          result.error == CACHE_MATERIAL_ARGUMENT, "packed_vector_null_output_argument");
+    CHECK(!cache_material_decode_packed_vector(0, &guarded.value, NULL) &&
+          !memcmp(&guarded, &before, sizeof(before)), "packed_vector_null_result_whole_output_atomic");
+    CHECK(!cache_material_decode_packed_vector(0, NULL, NULL), "packed_vector_both_null_reject");
+    return 0;
+}
+
 static uint32_t compressed_word(unsigned material, unsigned ordinal, unsigned word_index)
 {
     static const uint32_t words[8] = {UINT32_C(0x80000000), UINT32_C(0x00000001),
@@ -523,6 +628,12 @@ static int compressed_vertices(struct context *context, struct storage *storage,
             }
             CHECK(!memcmp(encoded, bytes + DATA_AT + 1024 + material * 512 + ordinal * 32, sizeof(encoded)),
                   "compressed_explicit_LE_reencode_selected_tagdata_not_hardware");
+            for (unsigned packed_field = 3; packed_field < 6; ++packed_field) {
+                uint32_t expected[3];
+                packed_vector_oracle(compressed_word(material, ordinal, packed_field), expected);
+                if (packed_vector_check(context, projected[packed_field], expected))
+                    return 1;
+            }
         }
         struct cache_material_compressed_vertex_projection before = guarded.value;
         CHECK(!cache_material_get_compressed_vertex(&view, material, 3, &guarded.value, &result) &&
@@ -1499,10 +1610,11 @@ int cache_material_fixture(FILE *report, int collect)
         aborted = abort_case(context, "allocation");
         goto cleanup;
     }
-    if (fprintf(report, "CACHE_MATERIAL BEGIN scope=authored_partial_root_lightmap_material_surface_compressed_vertex_words_triangle_vertex_association_no_native_conversion\n") < 0) {
+    if (fprintf(report, "CACHE_MATERIAL BEGIN scope=authored_partial_root_lightmap_material_surface_compressed_vertex_words_triangle_vertex_association_packedvector_decode_no_native_geometry\n") < 0) {
         aborted = 1;
         goto cleanup;
     }
+    aborted = packed_vectors(context);
     for (unsigned placement = 0; placement < 2 && !aborted; ++placement)
         for (unsigned offset = 0; offset < 8 && !aborted; ++offset)
             aborted = valid_case(context, &storage, placement, offset);

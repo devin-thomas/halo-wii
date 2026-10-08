@@ -61,6 +61,7 @@ struct cache_material_compressed_vertex_projection {
 struct cache_material_surface_vertices_projection {
     struct cache_material_compressed_vertex_projection vertices[3];
 };
+struct cache_material_vector_projection { float components[3]; };
 struct cache_material_lightmap_projection {
     int16_t bitmap_index;
     uint16_t pad;
@@ -93,7 +94,7 @@ const char *cache_material_error_name(enum cache_material_error);
  * material surface can also resolve direct compressed environment ordinals;
  * global material ownership and lightmap limits stay separate. Float words retain their bits.
  * Compressed environment records expose eight LE32 words without decompression.
- * No native vertex/shader conversion, engine pools, or standalone cache save.
+ * No complete native vertex/shader conversion, engine pools, or standalone cache save.
  * Source counts retain their maxima; workspace uses the actual aggregate.
  * measure performs complete selected validation without allocating or writing
  * source. Results, outputs, controls and source are truthful and disjoint.
@@ -154,6 +155,14 @@ int cache_material_get_compressed_vertex(const struct cache_material_view *, siz
  * Output/result and stale-view rules match the individual vertex getter. */
 int cache_material_get_surface_vertices(const struct cache_material_view *, size_t material_index,
                                         size_t local_ordinal, struct cache_material_surface_vertices_projection *,
+                                        struct cache_material_result *);
+/* Pure by-value decoder for source signed 11/11/10-bit packed vectors. It uses
+ * the source midpoint rule (2q+1)/2047 for the first two components and /1023
+ * for the third, with source float reciprocals. Zero packed fields yield a
+ * positive midpoint, not zero. No normalization, clamp or encoding is applied.
+ * All packed words are valid; output is owned binary32 caller storage and must
+ * be truthful and disjoint from result. No view or borrowed buffers are used. */
+int cache_material_decode_packed_vector(uint32_t packed, struct cache_material_vector_projection *,
                                         struct cache_material_result *);
 
 /* Selected raw spans serialize root, all lightmaps, then flattened materials.
