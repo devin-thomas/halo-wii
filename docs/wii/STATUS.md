@@ -142,3 +142,13 @@ Both naturally exit with host `0xc0000409`; HWI-005 remains BLOCKED on clean
 process exit. Later scoped diagnostic clean exits remain valid; general
 recovery is unqualified. Next shutdown work is matching-symbol callback-owner
 diagnosis, separate from active asset/address/BSP preparation.
+
+The [selected BSP residency diagnostic](evidence/2026-10-07-owned-bsp-residency.md)
+passes 75 cases / 5,432 checks and 16 actual host/PPC parent cycles with
+32 child loads. Two readable windows exclude the 21,424,380-byte gap;
+parent validity is checked before child control access. The actual root is
+opaque and descriptor counts are zero; positive descriptor tests are authored.
+Original capacities remain, with 1,796,360 charged PPC MEM2 bytes remaining.
+Both exact-DOL Dolphin launches pass guest checks then fault naturally with
+host 0xc0000409. Earlier failures remain; engine strategy, geometry, hardware,
+gameplay and ticket blockers are unchanged.
