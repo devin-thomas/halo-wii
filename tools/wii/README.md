@@ -345,6 +345,18 @@ index association and rendering remain separate. The getter preserves the
 same parent-first pins and atomic output rejection without allocating or
 growing persistent projections, workspace, source reservations or arena slots.
 
+`cache_material_get_surface_vertices` composes a selected material's local
+surface with its three compressed environment records. The source CPU triangle
+path uses each unsigned index directly as an ordinal in that material's
+compressed tag data. All three indices are checked against its environment
+count before vertex payload reads, and the 96-byte caller result is published
+only after all three records resolve. Repeated and reversed indices preserve
+their stored order; overlapping material ranges still use the explicit caller
+selection. Hardware offset/base fields and automatic global ownership do not
+adjust this CPU path. Lightmap counts/bitmap-dependent limits, decompression,
+float interpretation, native geometry and rendering remain separate. Persistent
+layouts, workspace, reservations and inspection serialization stay unchanged.
+
 The root projection grows from 24 to 36 bytes, increasing the two-half workspace
 by 24 payload bytes. For two lightmaps and 34 materials, payload is 8,856 bytes;
 an authored model using compiled PPC layouts charges 64 additional arena bytes

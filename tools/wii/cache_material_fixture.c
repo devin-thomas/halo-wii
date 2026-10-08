@@ -649,6 +649,196 @@ static int compressed_vertices(struct context *context, struct storage *storage,
     return 0;
 }
 
+static int triangle_vertices(struct context *context, struct storage *storage,
+                              unsigned placement, unsigned offset)
+{
+    context->name = "material_selected_triangle_compressed_vertices";
+    ++context->cases;
+    unsigned char *bytes;
+    struct cache_bsp_control bsp;
+    struct cache_bsp_view parent;
+    if (!prepare(storage, placement, offset, &bytes, &bsp, &parent))
+        return abort_case(context, "triangle_prepare");
+    /* Alias outputs need a truthful 96-byte accessible object even when the
+     * control or view itself is smaller than the caller's triangle result. */
+    struct {
+        struct cache_material_control value;
+        unsigned char margin[96];
+    } control_storage;
+    struct {
+        struct cache_material_view value;
+        unsigned char margin[96];
+    } view_storage;
+    memset(&control_storage, 0, sizeof(control_storage));
+    memset(&view_storage, 0, sizeof(view_storage));
+    memset(control_storage.margin, 0xa7, sizeof(control_storage.margin));
+    memset(view_storage.margin, 0xa7, sizeof(view_storage.margin));
+    struct cache_material_control *control = &control_storage.value;
+    struct cache_material_view *view = &view_storage.value;
+    struct cache_material_result result;
+    struct cache_bsp_result bsp_result;
+    struct {
+        uint32_t before[2];
+        struct cache_material_surface_vertices_projection value;
+        uint32_t after[2];
+    } guarded;
+    memset(&guarded, 0xa7, sizeof(guarded));
+    CHECK(sizeof(guarded.value) == 96, "triangle_exact_three_32_byte_caller_records");
+    static const uint16_t triangles[12][3] = {{0, 1, 2}, {2, 2, 2}, {2, 1, 0},
+        {1, 0, 2}, {0, 0, 1}, {2, 0, 1}, {0, 1, 3}, {0, 65535, 1},
+        {32768, 0, 1}, {0, 1, 65535}, {0, 1, 32768}, {1, 2, 0}};
+    static const unsigned firsts[4][2] = {{0, 3}, {6, 3}, {3, 2}, {0, 3}};
+    static const unsigned counts[4][2] = {{3, 3}, {5, 3}, {3, 4}, {1, 3}};
+    memset(storage->work, 0xa7, WORK_BYTES + GUARD * 2);
+    for (unsigned phase = 0; phase < 4; ++phase) {
+        int ready = cache_material_unload(control, &result) && cache_bsp_unload(&bsp, &bsp_result);
+        CHECK(ready, "triangle_child_and_BSP_unload_before_source_edits");
+        if (!ready)
+            return abort_case(context, "triangle_unload_before_source_edit");
+        if (!phase) {
+            for (unsigned ordinal = 0; ordinal < 12; ++ordinal)
+                for (unsigned corner = 0; corner < 3; ++corner)
+                    half(bytes, SURFACE_AT + ordinal * 6 + corner * 2, triangles[ordinal][corner]);
+            for (unsigned material = 0; material < 2; ++material) {
+                size_t data_at = DATA_AT + 1024 + material * 512;
+                word(bytes, MAT_AT + material * 256 + 248, BASE + (uint32_t)data_at);
+                for (unsigned ordinal = 0; ordinal < 3; ++ordinal)
+                    for (unsigned i = 0; i < 8; ++i)
+                        word(bytes, data_at + ordinal * 32 + i * 4, compressed_word(material, ordinal, i));
+            }
+        }
+        for (unsigned material = 0; material < 2; ++material) {
+            word(bytes, MAT_AT + material * 256 + 20, firsts[phase][material]);
+            word(bytes, MAT_AT + material * 256 + 24, counts[phase][material]);
+        }
+        if (phase == 3) {
+            word(bytes, MAT_AT + 180, 0);
+            word(bytes, MAT_AT + 236, 16);
+            word(bytes, MAT_AT + 248, BASE + SLOT_BYTES - 16);
+        }
+        ready = cache_bsp_bind(&bsp, &storage->owner, &storage->handle,
+                               TAG_BYTES, 1048576, 0, &parent, &bsp_result) &&
+            cache_material_bind(control, &parent, storage->work + GUARD, WORK_BYTES, view, &result);
+        CHECK(ready, "triangle_authored_ranges_bind_without_owner_order_restriction");
+        if (!ready)
+            return abort_case(context, "triangle_publication");
+        memcpy(storage->snapshot, bytes, SLOT_BYTES);
+        memcpy(storage->work_before, storage->work, WORK_BYTES + GUARD * 2);
+        unsigned char control_before[sizeof(control_storage)], view_before[sizeof(view_storage)];
+        struct cache_arena_owner owner_before;
+        struct cache_bsp_control bsp_before;
+        memcpy(control_before, &control_storage, sizeof(control_storage));
+        memcpy(view_before, &view_storage, sizeof(view_storage));
+        memcpy(&owner_before, &storage->owner, sizeof(owner_before));
+        memcpy(&bsp_before, &bsp, sizeof(bsp));
+#define TRIANGLE_PRESERVED() (!memcmp(bytes, storage->snapshot, SLOT_BYTES) && \
+    !memcmp(storage->work, storage->work_before, WORK_BYTES + GUARD * 2) && \
+    !memcmp(&control_storage, control_before, sizeof(control_storage)) && \
+    !memcmp(&view_storage, view_before, sizeof(view_storage)) && \
+    !memcmp(&storage->owner, &owner_before, sizeof(owner_before)) && !memcmp(&bsp, &bsp_before, sizeof(bsp)))
+        for (unsigned material = 0; material < 2; ++material) {
+            for (unsigned local = 0; local < counts[phase][material]; ++local) {
+                unsigned global = firsts[phase][material] + local;
+                int valid = !(phase == 1 && material == 0) && !(phase == 3 && material == 0);
+                struct cache_material_surface_vertices_projection before = guarded.value;
+                int obtained = cache_material_get_surface_vertices(view, material, local, &guarded.value, &result);
+                if (!valid) {
+                    CHECK(!obtained && result.error == CACHE_MATERIAL_COUNT &&
+                          !memcmp(&guarded.value, &before, sizeof(before)),
+                          "triangle_bad_unsigned_corner_or_zero_environment_full96_atomic");
+                    if (global == 6 || global == 9 || global == 10)
+                        CHECK(!memcmp(&guarded.value, &before, sizeof(before)), "triangle_late_invalid_corner_publishes_no_earlier_vertices");
+                    continue;
+                }
+                CHECK(obtained, "triangle_distinct_repeated_reversed_and_explicit_material_get");
+                if (!obtained)
+                    return abort_case(context, "triangle_valid_get");
+                for (unsigned corner = 0; corner < 3; ++corner) {
+                    const struct cache_material_compressed_vertex_projection *vertex = &guarded.value.vertices[corner];
+                    const uint32_t words[8] = {vertex->position_bits[0], vertex->position_bits[1], vertex->position_bits[2],
+                        vertex->normal_packed, vertex->binormal_packed, vertex->tangent_packed,
+                        vertex->texcoord_bits[0], vertex->texcoord_bits[1]};
+                    unsigned char encoded[32];
+                    unsigned ordinal = triangles[global][corner];
+                    for (unsigned i = 0; i < 8; ++i) {
+                        CHECK(words[i] == compressed_word(material, ordinal, i), "triangle_direct_unsigned_ordinal_named_word_golden");
+                        word(encoded, i * 4, words[i]);
+                    }
+                    CHECK(!memcmp(encoded, bytes + DATA_AT + 1024 + material * 512 + ordinal * 32, sizeof(encoded)),
+                          "triangle_LE_reencode_ignores_hardware_Data_offset_base");
+                }
+            }
+            struct cache_material_surface_vertices_projection before = guarded.value;
+            CHECK(!cache_material_get_surface_vertices(view, material, counts[phase][material], &guarded.value, &result) &&
+                  result.error == CACHE_MATERIAL_COUNT && !memcmp(&guarded.value, &before, sizeof(before)),
+                  "triangle_local_surface_onepast_full96_atomic");
+            CHECK(!cache_material_get_surface_vertices(view, material, SIZE_MAX, &guarded.value, &result) &&
+                  result.error == CACHE_MATERIAL_COUNT && !memcmp(&guarded.value, &before, sizeof(before)),
+                  "triangle_local_surface_SIZE_MAX_full96_atomic");
+        }
+        struct cache_material_surface_vertices_projection before = guarded.value;
+        CHECK(!cache_material_get_surface_vertices(view, 2, 0, &guarded.value, &result) &&
+              result.error == CACHE_MATERIAL_COUNT && !memcmp(&guarded.value, &before, sizeof(before)),
+              "triangle_material_onepast_full96_atomic");
+        CHECK(!cache_material_get_surface_vertices(view, SIZE_MAX, 0, &guarded.value, &result) &&
+              result.error == CACHE_MATERIAL_COUNT && !memcmp(&guarded.value, &before, sizeof(before)),
+              "triangle_material_SIZE_MAX_full96_atomic");
+        if (!phase) {
+            CHECK(!cache_material_get_surface_vertices(view, 0, 0, NULL, &result) &&
+                  result.error == CACHE_MATERIAL_ARGUMENT, "triangle_null_output");
+            CHECK(!cache_material_get_surface_vertices(NULL, 0, 0, &guarded.value, &result) &&
+                  result.error == CACHE_MATERIAL_ARGUMENT && !memcmp(&guarded.value, &before, sizeof(before)),
+                  "triangle_null_view_atomic");
+            size_t alignment = _Alignof(struct cache_material_surface_vertices_projection);
+            size_t at = (alignment - (uintptr_t)bytes % alignment) % alignment;
+            void *aliases[] = {bytes + at, storage->work + GUARD, control, view, &storage->owner, &bsp};
+            const char *labels[] = {"triangle_source_alias", "triangle_workspace_alias", "triangle_padded_control_alias",
+                "triangle_padded_view_alias", "triangle_owner_alias", "triangle_BSP_control_alias"};
+            int enough = sizeof(storage->owner) >= sizeof(guarded.value) && sizeof(bsp) >= sizeof(guarded.value);
+            CHECK(enough, "triangle_alias_owner_and_BSP_truthful96_byte_storage");
+            if (!enough)
+                return abort_case(context, "triangle_alias_storage_too_small");
+            for (unsigned i = 0; i < sizeof(aliases) / sizeof(aliases[0]); ++i) {
+                CHECK(!cache_material_get_surface_vertices(view, 0, 0, aliases[i], &result) &&
+                      result.error == CACHE_MATERIAL_OVERLAP, labels[i]);
+                int unchanged = TRIANGLE_PRESERVED();
+                CHECK(unchanged, "triangle_alias_preserves_full96_objects_and_controls");
+                if (!unchanged)
+                    return abort_case(context, "triangle_alias_changed_borrowed_objects");
+            }
+        }
+        int unchanged = TRIANGLE_PRESERVED();
+        CHECK(unchanged, "triangle_queries_preserve_source_workspace_and_all_controls");
+        if (!unchanged)
+            return abort_case(context, "triangle_query_changed_borrowed_objects");
+        CHECK(guarded.before[0] == UINT32_C(0xa7a7a7a7) && guarded.before[1] == UINT32_C(0xa7a7a7a7) &&
+              guarded.after[0] == UINT32_C(0xa7a7a7a7) && guarded.after[1] == UINT32_C(0xa7a7a7a7),
+              "triangle_full96_output_canaries");
+        CHECK(all_bytes(storage->placements[placement], GUARD + offset, 0xa7) &&
+              all_bytes(bytes + SLOT_BYTES, GUARD + 8 - offset, 0xa7), "triangle_full_source_margin_canaries");
+        if (!phase) {
+            struct cache_material_view stale = *view;
+            ready = cache_material_bind(control, &parent, storage->work + GUARD, WORK_BYTES, view, &result);
+            CHECK(ready, "triangle_child_rebind");
+            if (!ready)
+                return abort_case(context, "triangle_child_rebind");
+            CHECK(!cache_material_get_surface_vertices(&stale, 0, 0, &guarded.value, &result) &&
+                  result.error == CACHE_MATERIAL_STATE && !memcmp(&guarded.value, &before, sizeof(before)),
+                  "triangle_rebound_child_full96_atomic");
+        }
+        struct cache_material_view stale = *view;
+        ready = cache_material_unload(control, &result);
+        CHECK(ready, "triangle_child_unload_guard_before_next_source_phase");
+        if (!ready)
+            return abort_case(context, "triangle_child_unload");
+        CHECK(!cache_material_get_surface_vertices(&stale, 0, 0, &guarded.value, &result) &&
+              result.error == CACHE_MATERIAL_STATE && !memcmp(&guarded.value, &before, sizeof(before)),
+              "triangle_unloaded_child_full96_atomic");
+#undef TRIANGLE_PRESERVED
+    }
+    return 0;
+}
+
 struct mutation { const char *name; size_t at; uint32_t value; unsigned width; enum cache_material_error error; };
 static int invalid_case(struct context *context, struct storage *storage, const struct mutation *mutation)
 {
@@ -861,6 +1051,9 @@ static int arena_backing(struct context *context, struct storage *storage)
     struct cache_material_compressed_vertex_projection vertex, vertex_before;
     memset(&vertex, 0x5a, sizeof(vertex));
     vertex_before = vertex;
+    struct cache_material_surface_vertices_projection triangle, triangle_before;
+    memset(&triangle, 0x5a, sizeof(triangle));
+    triangle_before = triangle;
     prepared = cache_arena_owner_release(&owner, &arena);
     BACKING_CHECK(prepared, "release_arena_before_overwrite");
     if (!prepared) { failed = abort_case(context, "arena_release_before_overwrite"); goto cleanup; }
@@ -873,6 +1066,9 @@ static int arena_backing(struct context *context, struct storage *storage)
     BACKING_CHECK(!cache_material_get_compressed_vertex(&view, 0, 0, &vertex, &result) &&
                   result.error == CACHE_MATERIAL_STATE && !memcmp(&vertex, &vertex_before, sizeof(vertex)),
                   "compressed_parent_release_before_overwritten_arena_child_controls");
+    BACKING_CHECK(!cache_material_get_surface_vertices(&view, 0, 0, &triangle, &result) &&
+                  result.error == CACHE_MATERIAL_STATE && !memcmp(&triangle, &triangle_before, sizeof(triangle)),
+                  "triangle_parent_release_before_overwritten_arena_child_controls");
     BACKING_CHECK(cache_arena_owner_bind(&owner, &plan, backing, arena_bytes, &arena), "same_address_arena_rebind");
     BACKING_CHECK(!cache_material_get_root(&view, &root, &result) && result.error == CACHE_MATERIAL_STATE,
                   "same_address_rebound_arena_old_handle_rejects_before_children");
@@ -882,6 +1078,9 @@ static int arena_backing(struct context *context, struct storage *storage)
     BACKING_CHECK(!cache_material_get_compressed_vertex(&view, 0, 0, &vertex, &result) &&
                   result.error == CACHE_MATERIAL_STATE && !memcmp(&vertex, &vertex_before, sizeof(vertex)),
                   "compressed_rebound_arena_before_overwritten_child_controls");
+    BACKING_CHECK(!cache_material_get_surface_vertices(&view, 0, 0, &triangle, &result) &&
+                  result.error == CACHE_MATERIAL_STATE && !memcmp(&triangle, &triangle_before, sizeof(triangle)),
+                  "triangle_rebound_arena_before_overwritten_child_controls");
 cleanup:
     if (owner.live && !cache_arena_owner_release(&owner, &arena))
         failed = abort_case(context, "arena_cleanup_release");
@@ -916,6 +1115,9 @@ static int lifecycle(struct context *context, struct storage *storage)
         struct cache_material_compressed_vertex_projection vertex, vertex_before;
         memset(&vertex, 0x5a, sizeof(vertex));
         vertex_before = vertex;
+        struct cache_material_surface_vertices_projection triangle, triangle_before;
+        memset(&triangle, 0x5a, sizeof(triangle));
+        triangle_before = triangle;
         int released = cache_arena_owner_release(&storage->owner, &arena);
         CHECK(released, "outer_release");
         if (!released)
@@ -935,6 +1137,9 @@ static int lifecycle(struct context *context, struct storage *storage)
         CHECK(!cache_material_get_compressed_vertex(&view, 0, 0, &vertex, &result) &&
               result.error == CACHE_MATERIAL_STATE && !memcmp(&vertex, &vertex_before, sizeof(vertex)),
               "compressed_outer_release_before_destroyed_controls_workspace");
+        CHECK(!cache_material_get_surface_vertices(&view, 0, 0, &triangle, &result) &&
+              result.error == CACHE_MATERIAL_STATE && !memcmp(&triangle, &triangle_before, sizeof(triangle)),
+              "triangle_outer_release_before_destroyed_controls_workspace");
         used = 77;
         CHECK(!cache_material_serialize(&view, storage->serial, SERIAL_BYTES, &used, &result) &&
               result.error == CACHE_MATERIAL_STATE && used == 77, "stale_serialize_unchanged_used");
@@ -948,6 +1153,9 @@ static int lifecycle(struct context *context, struct storage *storage)
         CHECK(!cache_material_get_compressed_vertex(&view, 0, 0, &vertex, &result) &&
               result.error == CACHE_MATERIAL_STATE && !memcmp(&vertex, &vertex_before, sizeof(vertex)),
               "compressed_alternate_owner_generation_atomic");
+        CHECK(!cache_material_get_surface_vertices(&view, 0, 0, &triangle, &result) &&
+              result.error == CACHE_MATERIAL_STATE && !memcmp(&triangle, &triangle_before, sizeof(triangle)),
+              "triangle_alternate_owner_generation_full96_atomic");
     }
     return 0;
 }
@@ -1087,6 +1295,10 @@ static int limits(struct context *context, struct storage *storage)
     half(large, 3u * 1048576u, 65535);
     half(large, 3u * 1048576u + 2, 32768);
     half(large, 3u * 1048576u + 4, 0);
+    static const uint16_t maximum_triangles[2][3] = {{0, 63999, 32768}, {32768, 63999, 0}};
+    for (unsigned record = 0; record < 2; ++record)
+        for (unsigned corner = 0; corner < 3; ++corner)
+            half(large, 3u * 1048576u + (record + 1) * 6 + corner * 2, maximum_triangles[record][corner]);
     half(large, 3u * 1048576u + 131071u * 6u, 1);
     half(large, 3u * 1048576u + 131071u * 6u + 2, 65534);
     half(large, 3u * 1048576u + 131071u * 6u + 4, 32767);
@@ -1109,6 +1321,7 @@ static int limits(struct context *context, struct storage *storage)
     for (unsigned i = 0; i < 8; ++i) {
         word(large, 1048576 + i * 4, compressed_word(0, 0, i));
         word(large, 1048576 + 63999u * 32u + i * 4, compressed_word(0, 63999, i));
+        word(large, 1048576 + 32768u * 32u + i * 4, compressed_word(0, 32768, i));
     }
     struct cache_arena_owner owner = {0};
     struct cache_arena_handle handle;
@@ -1175,6 +1388,28 @@ static int limits(struct context *context, struct storage *storage)
     LIMIT_CHECK(!cache_material_get_compressed_vertex(&view, 2047, 0, &vertex, &result) &&
                 result.error == CACHE_MATERIAL_COUNT && !memcmp(&vertex, &vertex_before, sizeof(vertex)),
                 "compressed_last_material_zero_environment_no_pointer_follow");
+    struct cache_material_surface_vertices_projection triangle;
+    memset(&triangle, 0x5a, sizeof(triangle));
+    for (unsigned record = 0; record < 2; ++record) {
+        prepared = cache_material_get_surface_vertices(&view, 0, record + 1, &triangle, &result);
+        LIMIT_CHECK(prepared, "triangle_64000_direct_first_last_unsigned32768_get");
+        if (!prepared) { failed = abort_case(context, "maximum_triangle_get"); goto cleanup; }
+        for (unsigned corner = 0; corner < 3; ++corner) {
+            const struct cache_material_compressed_vertex_projection *v = &triangle.vertices[corner];
+            const uint32_t values[8] = {v->position_bits[0], v->position_bits[1], v->position_bits[2],
+                v->normal_packed, v->binormal_packed, v->tangent_packed, v->texcoord_bits[0], v->texcoord_bits[1]};
+            for (unsigned i = 0; i < 8; ++i)
+                LIMIT_CHECK(values[i] == compressed_word(0, maximum_triangles[record][corner], i),
+                            "triangle_64000_all_corner_named_word_golden");
+        }
+    }
+    struct cache_material_surface_vertices_projection triangle_before = triangle;
+    LIMIT_CHECK(!cache_material_get_surface_vertices(&view, 0, 0, &triangle, &result) &&
+                result.error == CACHE_MATERIAL_COUNT && !memcmp(&triangle, &triangle_before, sizeof(triangle)),
+                "triangle_64000_corner65535_rejects_full96_atomic");
+    LIMIT_CHECK(!cache_material_get_surface_vertices(&view, 0, 3, &triangle, &result) &&
+                result.error == CACHE_MATERIAL_COUNT && !memcmp(&triangle, &triangle_before, sizeof(triangle)),
+                "triangle_64000_local_onepast_full96_atomic");
     size_t used;
     LIMIT_CHECK(cache_material_serialize(&view, serialized, req.serialized_bytes, &used, &result) &&
                 used == req.serialized_bytes && !memcmp(serialized + 680, large + MAT_AT, 2048u * 256u),
@@ -1264,7 +1499,7 @@ int cache_material_fixture(FILE *report, int collect)
         aborted = abort_case(context, "allocation");
         goto cleanup;
     }
-    if (fprintf(report, "CACHE_MATERIAL BEGIN scope=authored_partial_root_lightmap_material_surface_compressed_vertex_words_no_native_conversion\n") < 0) {
+    if (fprintf(report, "CACHE_MATERIAL BEGIN scope=authored_partial_root_lightmap_material_surface_compressed_vertex_words_triangle_vertex_association_no_native_conversion\n") < 0) {
         aborted = 1;
         goto cleanup;
     }
@@ -1280,6 +1515,9 @@ int cache_material_fixture(FILE *report, int collect)
     for (unsigned placement = 0; placement < 2 && !aborted; ++placement)
         for (unsigned offset = 0; offset < 8 && !aborted; ++offset)
             aborted = compressed_vertices(context, &storage, placement, offset);
+    for (unsigned placement = 0; placement < 2 && !aborted; ++placement)
+        for (unsigned offset = 0; offset < 8 && !aborted; ++offset)
+            aborted = triangle_vertices(context, &storage, placement, offset);
     static const struct mutation mutations[] = {
         {"negative_lightmaps", ROOT_AT + 260, UINT32_MAX, 4, CACHE_MATERIAL_COUNT},
         {"overmaximum_lightmaps", ROOT_AT + 260, 129, 4, CACHE_MATERIAL_COUNT},

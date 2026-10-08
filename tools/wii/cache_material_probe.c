@@ -10,6 +10,7 @@ _Static_assert(sizeof(struct cache_material_projection) == 128, "material projec
 _Static_assert(sizeof(struct cache_material_root_projection) == 36, "root projection");
 _Static_assert(sizeof(struct cache_material_surface_projection) == 6, "surface projection");
 _Static_assert(sizeof(struct cache_material_compressed_vertex_projection) == 32, "compressed vertex projection");
+_Static_assert(sizeof(struct cache_material_surface_vertices_projection) == 96, "surface vertices projection");
 _Static_assert(sizeof(struct cache_material_lightmap_projection) == 20, "lightmap projection");
 
 struct material_reader {
@@ -558,6 +559,36 @@ int cache_material_get_compressed_vertex(const struct cache_material_view *view,
     value.tangent_packed = le32(source + 20);
     for (unsigned i = 0; i < 2; ++i)
         value.texcoord_bits[i] = le32(source + 24 + i * 4);
+    *output = value;
+    return 1;
+}
+
+int cache_material_get_surface_vertices(const struct cache_material_view *view, size_t material_index,
+                                        size_t local_ordinal, struct cache_material_surface_vertices_projection *output,
+                                        struct cache_material_result *result)
+{
+    if (!start(result))
+        return 0;
+    if (!output)
+        return fail(result, CACHE_MATERIAL_ARGUMENT, 0);
+    struct cache_material_projection material;
+    struct cache_material_surface_projection surface;
+    if (!cache_material_get_material(view, material_index, &material, result) ||
+        !cache_material_get_material_surface(view, material_index, local_ordinal, &surface, result))
+        return 0;
+    /* The CPU triangle path indexes this material's compressed data directly. */
+    for (unsigned i = 0; i < 3; ++i)
+        if ((size_t)surface.vertex_indices[i] >= (size_t)material.vertex_buffers[0].count)
+            return fail(result, CACHE_MATERIAL_COUNT, surface.vertex_indices[i]);
+    struct material_reader reader;
+    const unsigned char *published;
+    if (!graph_open(view, &reader, &published, result) ||
+        !output_object(view, &reader, output, sizeof(*output), result))
+        return 0;
+    struct cache_material_surface_vertices_projection value;
+    for (unsigned i = 0; i < 3; ++i)
+        if (!cache_material_get_compressed_vertex(view, material_index, surface.vertex_indices[i], &value.vertices[i], result))
+            return 0;
     *output = value;
     return 1;
 }

@@ -58,6 +58,9 @@ struct cache_material_compressed_vertex_projection {
     uint32_t normal_packed, binormal_packed, tangent_packed;
     uint32_t texcoord_bits[2];
 };
+struct cache_material_surface_vertices_projection {
+    struct cache_material_compressed_vertex_projection vertices[3];
+};
 struct cache_material_lightmap_projection {
     int16_t bitmap_index;
     uint16_t pad;
@@ -86,8 +89,9 @@ const char *cache_material_error_name(enum cache_material_error);
 /* Partial Xbox LE projection only: root lightmaps, all their materials, numeric
  * shader references, vertex-buffer metadata and tag-data metadata. The rest of
  * each root/lightmap/material stays opaque. Root surfaces are 6-byte records;
- * their three unsigned index words may be inspected explicitly LE. No vertex
- * indexing origin or per-material index limit is inferred. Float words retain their bits.
+ * their three unsigned index words may be inspected explicitly LE. An explicit
+ * material surface can also resolve direct compressed environment ordinals;
+ * global material ownership and lightmap limits stay separate. Float words retain their bits.
  * Compressed environment records expose eight LE32 words without decompression.
  * No native vertex/shader conversion, engine pools, or standalone cache save.
  * Source counts retain their maxima; workspace uses the actual aggregate.
@@ -129,7 +133,7 @@ int cache_material_get_material(const struct cache_material_view *, size_t,
                                  struct cache_material_projection *, struct cache_material_result *);
 /* Select a surface within the material's validated signed source range. Local
  * ordinals must be below that material's count even when the corresponding root
- * ordinal exists. Index words remain opaque; vertex origin/bounds are not inferred.
+ * ordinal exists. Index words remain unchanged; this getter does not read vertices.
  * Output/result and stale-view behavior match the whole-root surface getter. */
 int cache_material_get_material_surface(const struct cache_material_view *, size_t material_index,
                                         size_t local_ordinal, struct cache_material_surface_projection *,
@@ -142,6 +146,15 @@ int cache_material_get_material_surface(const struct cache_material_view *, size
 int cache_material_get_compressed_vertex(const struct cache_material_view *, size_t material_index,
                                          size_t ordinal, struct cache_material_compressed_vertex_projection *,
                                          struct cache_material_result *);
+/* Select a material-local surface and resolve its three unsigned indices as
+ * direct compressed environment record ordinals for that same material. All
+ * indices must be below its environment count before vertex payload reads;
+ * all three records are staged before output publication. No lightmap bound,
+ * global material ownership, hardware offset/base or decompression is inferred.
+ * Output/result and stale-view rules match the individual vertex getter. */
+int cache_material_get_surface_vertices(const struct cache_material_view *, size_t material_index,
+                                        size_t local_ordinal, struct cache_material_surface_vertices_projection *,
+                                        struct cache_material_result *);
 
 /* Selected raw spans serialize root, all lightmaps, then flattened materials.
  * Known projected numeric words are explicitly rewritten LE over opaque copies.
