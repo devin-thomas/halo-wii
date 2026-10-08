@@ -1,0 +1,530 @@
+{
+  "scope": "retained_campaign_root_lightmap_material_metadata_and_memory_proposal",
+  "source_commit": "c2c871c6393d03f8b0117fcf5f6acfb1def6b86c",
+  "native_decoder_implemented": false,
+  "runtime_runs": 0,
+  "SD_writes": 0,
+  "additional_map_extraction": 0,
+  "BSP_input_sha256": "7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b",
+  "measurements": {
+    "root_bytes": 648,
+    "lightmap_bytes": 32,
+    "material_bytes": 256,
+    "lightmap_count": 2,
+    "materials_per_lightmap": [
+      20,
+      14
+    ],
+    "bitmap_indices": [
+      -1,
+      -1
+    ],
+    "material_count": 34,
+    "source_materials_per_lightmap_maximum": 2048,
+    "source_vertices_per_material_maximum": 64000,
+    "environment_vertex_type": 1,
+    "lightmap_vertex_type": 3,
+    "environment_vertex_counts_minimum_maximum": [
+      4,
+      5863
+    ],
+    "environment_vertices": 14788,
+    "lightmap_vertices": 0,
+    "surface_range_total": 8084,
+    "surface_ranges_ordered_disjoint": true,
+    "compressed_tag_data_bytes": 473216,
+    "uncompressed_tag_data_bytes": 0,
+    "recorded_shader_group_word_counts": {
+      "73656e76": 11,
+      "73676c61": 9,
+      "736f7472": 14
+    },
+    "shader_NONE_count": 0,
+    "centroid_nonzero_float_bit_words": 27
+  },
+  "resource_associations": {
+    "material_count": 34,
+    "resource_nonnull_count": 68,
+    "zero_count_resource_count": 34,
+    "vertex_payload_bytes": 473216,
+    "lightmap_payload_bytes": 0,
+    "selected_serialized_bytes": 9416,
+    "selected_serialization_expected_sha256": "e58ffaeb6e7e82553d1d770a6e21e585d0246f3a0febb3dbba8ec3169e614022"
+  },
+  "source_layout": {
+    "shader_reference": 0,
+    "permutation": 16,
+    "flags": 18,
+    "first_surface": 20,
+    "surface_count": 24,
+    "centroid_bits": 28,
+    "vertex_buffer": 176,
+    "lightmap_vertex_buffer": 196,
+    "uncompressed_tag_data": 216,
+    "compressed_tag_data": 236,
+    "vertex_buffer_bytes": 20,
+    "tag_data_bytes": 20,
+    "tag_data_address_offset": 12,
+    "lightmap_materials_block_offset": 20,
+    "D3D_descriptor_bytes": 12,
+    "D3D_descriptor_Data_offset": 4
+  },
+  "semantics": {
+    "counts": "signed_nonnegative_source_limits_range_multiplication",
+    "shader_reference": "full_numeric_words_retained_new_raw_tag_identity_proof_pending",
+    "float_values": "uint32_bits_no_arithmetic",
+    "vertex_data": "Xbox_types_1_3_strides32_8_not_PC_uncompressed_requirements",
+    "compressed_size": "32N_plus8M_less_than_or_equal_source_size_not_equality",
+    "hardware_format": "pre_registration_descriptor_record_identity_not_native_pointer",
+    "empty_lightmap_buffers": "retain_resource_words_no_payload_dereference",
+    "null_hardware_format_source_policy": "allowed_no_buffer_extent_proof",
+    "opaque_fields": "not_guessed_or_rewritten"
+  },
+  "raw_record_identities": {
+    "materials": "101fab21ec970d899e8e34d3d7c71a188c77bd62e1f6b012b94e2426041044a5",
+    "associations": "dd62993dda9abc88dad140ea0bdca565cac413fa93d88f9dbd874b1535674dd9"
+  },
+  "limitations": [
+    "shader_full_datum_group_ancestor_name_against_raw_tag_index_not_newly_checked",
+    "float_semantics_triangle_indices_vertex_geometry_collision_not_validated",
+    "resource_extent_not_native_GX_conversion",
+    "expected_concat_SHA_not_target_serialization",
+    "native_workspace_is_candidate_not_implemented_or_target_runtime_measured",
+    "source_capacities_retained_workload_size_not_hard_cap",
+    "system_peak_and_engine_pools_unqualified",
+    "earlier_host_shutdown_and_ABI_failures_remain"
+  ],
+  "qualification": {
+    "metadata": "pass",
+    "native_projection": "not_implemented",
+    "campaign_PPC_runtime": "untested",
+    "geometry_gameplay_hardware": "unqualified",
+    "HWI-005": "BLOCKED",
+    "HWI-006": "BLOCKED",
+    "HWI-007": "TODO",
+    "HWI-008": "TODO"
+  },
+  "independent_material_audit": {
+    "checks": 831,
+    "inconsistencies": 0,
+    "record_sha256": "a01bdb187719a5c04d1ea32d4c5655eb742c017181be85ef599140bc6e11789d",
+    "additional_extraction": 0,
+    "additional_runtime_runs": 0,
+    "additional_SD_writes": 0
+  },
+  "native_memory_proposal": {
+    "scope": "candidate_numeric_partial_material_ABI_and_arena_plan_only",
+    "candidate_only": true,
+    "candidate_lifetime_implemented": false,
+    "PPC_execution": false,
+    "DOL_built": false,
+    "SD_or_runtime_access": false,
+    "image_or_asset_payload_access": false,
+    "actual_workload": {
+      "lightmaps": 2,
+      "materials": 34,
+      "materials_per_lightmap": [
+        20,
+        14
+      ],
+      "root_bytes": 648,
+      "lightmap_bytes": 32,
+      "material_bytes": 256,
+      "workspace_halves": 2,
+      "one_half": 4416,
+      "workspace_bytes": 8832,
+      "serialized_bytes": 9416
+    },
+    "candidate_material_offsets": {
+      "shader_words": 0,
+      "permutation": 16,
+      "flags": 18,
+      "first_surface": 20,
+      "surface_count": 24,
+      "centroid_bits": 28,
+      "vertex_buffers": 40,
+      "data_fields": 80,
+      "source_span": 120
+    },
+    "candidate_control_fields": [
+      "copied_parent_cache_bsp_view",
+      "uint64_generation",
+      "uint32_live",
+      "uint32_lightmap_count",
+      "uint32_material_count",
+      "fixed_uint32_published_span",
+      "native_workspace_pointer",
+      "native_size_t_workspace_bytes"
+    ],
+    "host_sizes": {
+      "material": 128,
+      "material_align": 4,
+      "root": 24,
+      "lightmap": 20,
+      "vertex": 20,
+      "data": 20,
+      "control": 88,
+      "control_align": 8,
+      "view": 56,
+      "view_align": 8,
+      "parent_view": 40,
+      "bsp_control": 200,
+      "pointer": 8,
+      "size_t": 8
+    },
+    "PPC_sizes_from_ELF_symbols": {
+      "bsp_control": 152,
+      "control": 80,
+      "control_align": 8,
+      "data": 20,
+      "lightmap": 20,
+      "material": 128,
+      "material_align": 4,
+      "parent_view": 40,
+      "pointer": 4,
+      "root": 24,
+      "size_t": 4,
+      "vertex": 20,
+      "view": 56,
+      "view_align": 8
+    },
+    "PPC_object_class": {
+      "class": 32,
+      "endianness": "big",
+      "machine": 20,
+      "execution": false
+    },
+    "slot_alignment": 64,
+    "measured_span_capacity": 54368224,
+    "PPC_placement_budget": {
+      "original_arena_capacity": 54368224,
+      "alternate_placement_offset": 4096,
+      "maximum_arena_charge": 52586192,
+      "minimum_arena_remaining": 1782032,
+      "formula": "arena_charge = placement_offset + relative_plan.required; accessible_capacity = original_capacity - placement_offset"
+    },
+    "view_charge": "Measured caller-owned control only; not an additional arena slot or stack peak claim.",
+    "source_materials_per_lightmap_maximum": 2048,
+    "source_vertices_per_material_maximum": 64000,
+    "retained_widget_workspace_host": 2048,
+    "retained_widget_workspace_PPC": 1456,
+    "retained_widget_serial": 2160,
+    "removed_old_BSP_stage_and_serial": [
+      2048,
+      2048
+    ],
+    "limitations": [
+      "No decoder, publication, serialization, or lifetime API implemented.",
+      "State and sound remain budget placeholders, not qualified engine pools.",
+      "Retained UI widget storage is conservative; campaign UI is not qualified.",
+      "No full-system peak, physical placement, allocator, or geometry qualification.",
+      "Source maxima remain 2048 materials per lightmap and 64000 vertices per material.",
+      "Actual workload is 2 lightmaps and 34 materials; larger requests are not truncated."
+    ],
+    "compiler_versions": {
+      "host": "gcc.exe (Rev3, Built by MSYS2 project) 16.2.0",
+      "ppc": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0"
+    },
+    "strict_compile_exits": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "source_inputs_unchanged": true,
+    "metadata_unchanged": true,
+    "plans": [
+      {
+        "label": "host_actual_allocated_span",
+        "capacity": 54368224,
+        "required": 52582744,
+        "remaining": 1785480,
+        "original_arena_capacity": 54368224,
+        "placement_offset": 0,
+        "arena_charge": 52582744,
+        "arena_remaining": 1785480,
+        "reserve_offset": 50485592,
+        "reserve_bytes": 2097152,
+        "slots": [
+          {
+            "name": "tags",
+            "offset": 0,
+            "bytes": 23068672,
+            "alignment": 64
+          },
+          {
+            "name": "state_placeholder",
+            "offset": 23068672,
+            "bytes": 20971520,
+            "alignment": 64
+          },
+          {
+            "name": "sound_placeholder",
+            "offset": 44040192,
+            "bytes": 4194304,
+            "alignment": 64
+          },
+          {
+            "name": "maximum_index",
+            "offset": 48234496,
+            "bytes": 2097120,
+            "alignment": 64
+          },
+          {
+            "name": "io_a",
+            "offset": 50331648,
+            "bytes": 65536,
+            "alignment": 64
+          },
+          {
+            "name": "io_b",
+            "offset": 50397184,
+            "bytes": 65536,
+            "alignment": 64
+          },
+          {
+            "name": "retained_widget_workspace",
+            "offset": 50462720,
+            "bytes": 2048,
+            "alignment": 64
+          },
+          {
+            "name": "retained_widget_serial",
+            "offset": 50464768,
+            "bytes": 2160,
+            "alignment": 64
+          },
+          {
+            "name": "material_workspace",
+            "offset": 50466944,
+            "bytes": 8832,
+            "alignment": 64
+          },
+          {
+            "name": "material_serial",
+            "offset": 50475776,
+            "bytes": 9416,
+            "alignment": 64
+          },
+          {
+            "name": "existing_bsp_control",
+            "offset": 50485248,
+            "bytes": 200,
+            "alignment": 64
+          },
+          {
+            "name": "candidate_material_control",
+            "offset": 50485504,
+            "bytes": 88,
+            "alignment": 64
+          }
+        ],
+        "base_kind": "actual_accessible_malloc_span"
+      },
+      {
+        "label": "ppc_numeric_90002000",
+        "base": "0x90002000",
+        "capacity": 54368224,
+        "required": 52582096,
+        "remaining": 1786128,
+        "original_arena_capacity": 54368224,
+        "placement_offset": 0,
+        "arena_charge": 52582096,
+        "arena_remaining": 1786128,
+        "reserve_offset": 50484944,
+        "reserve_bytes": 2097152,
+        "slots": [
+          {
+            "name": "tags",
+            "offset": 0,
+            "bytes": 23068672,
+            "alignment": 64
+          },
+          {
+            "name": "state_placeholder",
+            "offset": 23068672,
+            "bytes": 20971520,
+            "alignment": 64
+          },
+          {
+            "name": "sound_placeholder",
+            "offset": 44040192,
+            "bytes": 4194304,
+            "alignment": 64
+          },
+          {
+            "name": "maximum_index",
+            "offset": 48234496,
+            "bytes": 2097120,
+            "alignment": 64
+          },
+          {
+            "name": "io_a",
+            "offset": 50331648,
+            "bytes": 65536,
+            "alignment": 64
+          },
+          {
+            "name": "io_b",
+            "offset": 50397184,
+            "bytes": 65536,
+            "alignment": 64
+          },
+          {
+            "name": "retained_widget_workspace",
+            "offset": 50462720,
+            "bytes": 1456,
+            "alignment": 64
+          },
+          {
+            "name": "retained_widget_serial",
+            "offset": 50464192,
+            "bytes": 2160,
+            "alignment": 64
+          },
+          {
+            "name": "material_workspace",
+            "offset": 50466368,
+            "bytes": 8832,
+            "alignment": 64
+          },
+          {
+            "name": "material_serial",
+            "offset": 50475200,
+            "bytes": 9416,
+            "alignment": 64
+          },
+          {
+            "name": "existing_bsp_control",
+            "offset": 50484672,
+            "bytes": 152,
+            "alignment": 64
+          },
+          {
+            "name": "candidate_material_control",
+            "offset": 50484864,
+            "bytes": 80,
+            "alignment": 64
+          }
+        ],
+        "base_kind": "numeric_arithmetic_only_not_accessible_storage_proof"
+      },
+      {
+        "label": "ppc_numeric_90003000",
+        "base": "0x90003000",
+        "capacity": 54364128,
+        "required": 52582096,
+        "remaining": 1782032,
+        "original_arena_capacity": 54368224,
+        "placement_offset": 4096,
+        "arena_charge": 52586192,
+        "arena_remaining": 1782032,
+        "reserve_offset": 50484944,
+        "reserve_bytes": 2097152,
+        "slots": [
+          {
+            "name": "tags",
+            "offset": 0,
+            "bytes": 23068672,
+            "alignment": 64
+          },
+          {
+            "name": "state_placeholder",
+            "offset": 23068672,
+            "bytes": 20971520,
+            "alignment": 64
+          },
+          {
+            "name": "sound_placeholder",
+            "offset": 44040192,
+            "bytes": 4194304,
+            "alignment": 64
+          },
+          {
+            "name": "maximum_index",
+            "offset": 48234496,
+            "bytes": 2097120,
+            "alignment": 64
+          },
+          {
+            "name": "io_a",
+            "offset": 50331648,
+            "bytes": 65536,
+            "alignment": 64
+          },
+          {
+            "name": "io_b",
+            "offset": 50397184,
+            "bytes": 65536,
+            "alignment": 64
+          },
+          {
+            "name": "retained_widget_workspace",
+            "offset": 50462720,
+            "bytes": 1456,
+            "alignment": 64
+          },
+          {
+            "name": "retained_widget_serial",
+            "offset": 50464192,
+            "bytes": 2160,
+            "alignment": 64
+          },
+          {
+            "name": "material_workspace",
+            "offset": 50466368,
+            "bytes": 8832,
+            "alignment": 64
+          },
+          {
+            "name": "material_serial",
+            "offset": 50475200,
+            "bytes": 9416,
+            "alignment": 64
+          },
+          {
+            "name": "existing_bsp_control",
+            "offset": 50484672,
+            "bytes": 152,
+            "alignment": 64
+          },
+          {
+            "name": "candidate_material_control",
+            "offset": 50484864,
+            "bytes": 80,
+            "alignment": 64
+          }
+        ],
+        "base_kind": "numeric_arithmetic_only_not_accessible_storage_proof"
+      }
+    ],
+    "raw_proposal_sha256": "d0e850972d789b958b14ae4a22fce62314d6238129ea56ceef0850e7b883a99a",
+    "curated_record_sha256": "f200533268f670121433456b23ec787abf16fd8fc8e520b3dfd4960e4b59dc04",
+    "candidate_layout_sha256": "31208e26db2bee9a9ee8feee2c12ce30033a9dd288d9c797ffcb5ab31413b45c",
+    "compiler_and_artifact_identities": {
+      "gcc.exe": "75e87953e9d04e8a5d81225397292e9f8ae599a0ed85f70ed175767577aaa9f6",
+      "powerpc-eabi-gcc.exe": "692e3f84b35b7622f90d9fa2eae47c21cab88d3d95f857fc2381c4593765e814",
+      "powerpc-eabi-nm.exe": "be254592369331d2341984de4f37cccb3812eff9f077dbc65d9426c559f301b8"
+    },
+    "artifacts_sha256": {
+      "host-measurement.o": "c88c304b434d01120632d2e536f229bb82d8ccfb91853d0c8030dbc0896621c6",
+      "ppc-arena.o": "b56f77971d28b0f2db2680f83d8881798201ed5f0c8475833829e3ba9e66431e",
+      "ppc-measurement.o": "aef49c1d59138327226d2644578285a83182107c2d5d973cfea0cd65897584c1",
+      "ppc-planner.o": "8ed368e7852390bc1b36d7eca87cc06e7bae9d682907616b232fe97df72a9c2f",
+      "planner.exe": "5c3b68937e4ba98ccd3d3f05d10047ed62351fe286c73eb3b9ffb4c0eee1e289"
+    }
+  },
+  "independent_proposal_audit": {
+    "checks": 467,
+    "inconsistencies": 0,
+    "record_sha256": "40532d582230d56a91384dcfeea13e48de39676a0f90fd074d926792ab6e543e",
+    "additional_builds": 0,
+    "additional_runtime_runs": 0,
+    "additional_SD_writes": 0
+  },
+  "root_publication_validation": {
+    "checks": 130,
+    "failures": 0
+  }
+}

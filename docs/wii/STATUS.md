@@ -160,3 +160,10 @@ extent/count inspection; nested fields and geometry remain unqualified.
 Duplicate full staging/serialization would exceed the measured PPC remainder;
 next preparation uses bounded projection with the existing tag reservation.
 No new runtime launch or SD write occurs, and ticket blockers remain.
+
+The [retained campaign material metadata](evidence/2026-10-07-campaign-material-metadata.md)
+checks all 34 materials, 68 descriptor relationships and 473,216 bytes of
+count-derived environment payload extents. All lightmap vertex counts are zero;
+shader association and vertex contents remain unqualified. A separately charged
+partial native projection is proposed; no campaign decoder/runtime is implemented
+and no new extraction, SD write or target launch occurs.
