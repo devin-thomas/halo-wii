@@ -1,0 +1,496 @@
+{
+  "scope": "bounded_MEM2_owner_budget_and_private_raw_UI_tag_streaming_diagnostic",
+  "source_commit": "bc90b840f83dee35cea91cb27a801a413f09036a",
+  "production_integrated": false,
+  "qualification": {
+    "owner_and_raw_stream": "host_and_emulated_ppc_pass",
+    "engine_memory_strategy": "unqualified",
+    "HWI-005": "BLOCKED",
+    "HWI-006": "BLOCKED",
+    "HWI-007": "TODO",
+    "HWI-008": "TODO",
+    "physical_wii": "untested",
+    "gameplay": "untested",
+    "nested_tag_BSP_body_conversion": "unimplemented",
+    "full_system_peak_fragmentation": "unqualified"
+  },
+  "owned_source_image_sha256": "43ec0813edadd592b7b489a930f108d289db9313ac337611110ffca8be0a7258",
+  "input": {
+    "bytes": 1642244,
+    "sha256": "a1d9e65575ce3617d91a4312fe4dcd2bfeb62634590f5f686540376e316b59f4",
+    "crc32": "e22586e4",
+    "table_crc32": "2e540905",
+    "instances": 983,
+    "embedded_in_build": false,
+    "sd_staging_record_sha256": "8f69d00b5d11129f6704e89a55ca82bf2a6f4034035ab4f063a9660d4b4e4f90",
+    "mtools_package_record_sha256": "02b135c4115113997b6ee1c7f117c10c0c82af191ff7fdea29cad1cce6dac0a5",
+    "mtools_version": "4.0.48-1",
+    "copy_exit_code": 0,
+    "exclusive_new_file": true,
+    "prior_SD_files_preserved": 12,
+    "post_runtime_input_unchanged": true
+  },
+  "synthetic": {
+    "address": {
+      "cases_each": 1916,
+      "checks_each": 8437,
+      "failures_each": 0
+    },
+    "arena": {
+      "cases_each_this_run": 1407,
+      "checks_each_this_run": 2981,
+      "failures_each": 0,
+      "counts_can_depend_on_actual_alignment": true
+    },
+    "stream": {
+      "host_cases": 60,
+      "host_checks": 958,
+      "host_failures": 0,
+      "PPC_execution": "not_executed_host_tmpfile_only",
+      "runtime_IO_error_injection": false
+    }
+  },
+  "profile": {
+    "tag_slot_bytes": 23068672,
+    "state_slot_bytes": 20971520,
+    "sound_slot_bytes": 4194304,
+    "index_capacity": 65535,
+    "index_record_bytes": 32,
+    "index_slot_bytes": 2097120,
+    "IO_buffers": 2,
+    "IO_buffer_bytes_each": 65536,
+    "provisional_reserve_bytes": 2097152,
+    "state_sound": "canary_placeholders_not_engine_pools",
+    "capacities_reduced": false,
+    "data_end_bytes_this_placement": 50462720,
+    "required_bytes_this_placement": 52559872,
+    "alternate_placement_delta_bytes": 4096,
+    "maximum_arena_charge_bytes": 52563968,
+    "MEM2_span_bytes": 54368224,
+    "minimum_remaining_MEM2_bytes": 1804256,
+    "excludes": [
+      "textures",
+      "actual_engine_pool_metadata",
+      "full_stack_and_system_peak",
+      "nested_conversion_workspace"
+    ]
+  },
+  "owned_cycles": {
+    "count_each": 16,
+    "instances_each": 983,
+    "chunks_each": 26,
+    "fread_calls_each": 27,
+    "expected_rejections_each": [
+      "trailing",
+      "short",
+      "CRC"
+    ],
+    "stale_rebind_rejections_each": 15,
+    "stale_release_rejections_each": 16,
+    "generation_after_cycles_each": 32,
+    "failures_each": 0,
+    "index": "explicit_LE_numeric_words_names_bounded_root_one_byte_scenario_full_datum_scnr",
+    "CRC_scope": "raw_input_identity_not_canonical_Xbox_checksum",
+    "IO": "alternating_synchronous_64KiB_fread_buffers_not_async_IO",
+    "owner_contract": "immutable_single_caller_originating_persistent_owner_handles_no_concurrent_mutation",
+    "failure_ownership": "partial_or_full_written_backing_remains_owned_until_explicit_release",
+    "durable_save": false
+  },
+  "controlled_fragmentation": {
+    "free_intervals": 3,
+    "guard_bytes": 131072,
+    "aggregate_free_bytes": 54237152,
+    "largest_free_span_bytes": 18122720,
+    "requested_bytes": 52559872,
+    "capacity_rejections_each": 3,
+    "guard_failures_each": 0,
+    "scope": "controlled_owned_intervals_not_system_heap_fragmentation"
+  },
+  "memory_samples": {
+    "MEM1_lo_after_setup": "80160000",
+    "MEM1_hi_after_setup": "81800000",
+    "MEM1_bytes_after_setup": 23724032,
+    "MEM2_lo_after_setup": "90002000",
+    "MEM2_hi_after_setup": "933db7e0",
+    "MEM2_lo_after_release": "90002000",
+    "MEM2_hi_after_release": "933db7e0",
+    "MEM2_bounds_restored": true,
+    "heap_in_use_before": 783272,
+    "heap_in_use_released": 783272,
+    "heap_arena_before": 815296,
+    "heap_arena_released": 852160,
+    "heap_free_before": 32024,
+    "heap_free_released": 68888,
+    "all_heap_state_restored": false,
+    "compiled_static_frames": [
+      {
+        "symbol": "check",
+        "bytes": 16,
+        "kind": "static"
+      },
+      {
+        "symbol": "lookup_failure",
+        "bytes": 144,
+        "kind": "static"
+      },
+      {
+        "symbol": "synthetic",
+        "bytes": 16,
+        "kind": "static"
+      },
+      {
+        "symbol": "resolver_vectors",
+        "bytes": 496,
+        "kind": "static"
+      },
+      {
+        "symbol": "malformed",
+        "bytes": 392,
+        "kind": "static"
+      },
+      {
+        "symbol": "wii_cache_address_fixture",
+        "bytes": 312,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_probe_crc32",
+        "bytes": 8,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_address_owned",
+        "bytes": 272,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_address_decode_instance.part.0.constprop",
+        "bytes": 8,
+        "kind": "static"
+      },
+      {
+        "symbol": "region_valid.constprop",
+        "bytes": 8,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_address_error_name",
+        "bytes": 8,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_address_resolve",
+        "bytes": 16,
+        "kind": "static"
+      },
+      {
+        "symbol": "references",
+        "bytes": 40,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_address_decode_header.part.0",
+        "bytes": 80,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_address_decode_instance",
+        "bytes": 16,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_address_decode_header",
+        "bytes": 24,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_address_graph_load",
+        "bytes": 160,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_address_graph_lookup",
+        "bytes": 80,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_address_graph_bytes",
+        "bytes": 8,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_address_graph_unload",
+        "bytes": 16,
+        "kind": "static"
+      },
+      {
+        "symbol": "arena_check",
+        "bytes": 16,
+        "kind": "static"
+      },
+      {
+        "symbol": "reject_resolution",
+        "bytes": 40,
+        "kind": "static"
+      },
+      {
+        "symbol": "wii_cache_arena_fixture",
+        "bytes": 1184,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_arena_error_name",
+        "bytes": 8,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_arena_plan_build",
+        "bytes": 280,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_arena_owner_bind",
+        "bytes": 528,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_arena_owner_release",
+        "bytes": 16,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_arena_owner_handle",
+        "bytes": 8,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_arena_owner_resolve",
+        "bytes": 8,
+        "kind": "static"
+      },
+      {
+        "symbol": "wii_cache_stream_fixture",
+        "bytes": 8,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_stream_error_name",
+        "bytes": 8,
+        "kind": "static"
+      },
+      {
+        "symbol": "cache_stream_read",
+        "bytes": 80,
+        "kind": "static"
+      },
+      {
+        "symbol": "slot_view",
+        "bytes": 48,
+        "kind": "static"
+      },
+      {
+        "symbol": "stream_cycles.constprop",
+        "bytes": 1192,
+        "kind": "static"
+      },
+      {
+        "symbol": "main",
+        "bytes": 24,
+        "kind": "static"
+      }
+    ],
+    "full_stack_library_call_chain_peak": "unqualified"
+  },
+  "builds": {
+    "host": {
+      "source_commit": "bc90b840f83dee35cea91cb27a801a413f09036a",
+      "source_dirty": false,
+      "build_id": "d99382b9caed78c0",
+      "compiler": "gcc.exe (Rev3, Built by MSYS2 project) 16.2.0",
+      "compiler_sha256": "75e87953e9d04e8a5d81225397292e9f8ae599a0ed85f70ed175767577aaa9f6",
+      "target": "x86_64-w64-mingw32",
+      "inputs_sha256": {
+        "tools/wii/cache_address_probe.c": "b8f87e3a1cbdb4eae72f4695e04ecd85a9f346b92413d6215fcd5dadd17aa9a9",
+        "tools/wii/cache_address_fixture.c": "8ce0b9b1f201626038ec2621ab5b8e0b8abd6d68298b1d8a010b24adabf2522c",
+        "tools/wii/cache_address_owned.c": "15db730e67d56881d35a349d69dc9538cbec4b6dacdafb50e062cecc73f016f9",
+        "tools/wii/cache_arena_plan.c": "7c0e26625fcdec0c9a1372b6fd6801b8158dbb15f062f94d4a5cdc8567abd0b2",
+        "tools/wii/cache_arena_fixture.c": "c2a7f4d408ff4ae9dfc49fdb3ae406c3feb5d95d85fd21404a550644064ab9e1",
+        "tools/wii/cache_stream_io.c": "dd6f2ea4f7379e01b14f62ff1cedb13e3419a68dc1ff8052d39042876203eae6",
+        "tools/wii/cache_stream_fixture.c": "63053dcd3f4d5b91d855dc5a5247c28ca952c7c94ea4b535e83ccc48b4205104",
+        "tools/wii/cache_stream_main.c": "921eb37645b032a2c74af4729a5300fb4cfd6783e9dc4bae4ae41f43be922309",
+        "tools/wii/cache_address_probe.h": "b12006e37e0bf92c265e4c7dd7cdc275f6dd5952296fc1428ef4263e3cf044b7",
+        "tools/wii/cache_address_fixture.h": "1b6c2e41c46a589e146accce457d11356937aeb57167fbe89639c8ecb5c87f81",
+        "tools/wii/cache_address_owned.h": "7d689728316022605468e931b6502140a8e62ced0a1c68f00424f09327c30751",
+        "tools/wii/run_cache_address.py": "1499695455ff1737cd18e16863744eec30b660e5275976ee7c0b194080d4d4c3",
+        "tools/wii/build.py": "dc426a9068782e9f4d593fa4d5b241c966a61caad6860e766b8dbd4ddee9d48a",
+        "tools/wii/check_toolchain.py": "04b53c1e4f6bc534430062d57ef2fa12f508c43489a4228c5dffb49cdbd8a50c",
+        "source/cache/cache_files.c": "69ec94025580cf603b06b83ede8983d27163bf06e162e1cbf27611a174165ade",
+        "source/cache/physical_memory_map.c": "e68bed26b70dff2860d2d463a6a7871a383284fef9762c6f6b7f5bf1bf89023a",
+        "source/cache/physical_memory_map.h": "ec343ab913c4e7a1fa7ce441cb46cdc9e6cdfa9fae8096fccba8bd9dc3253b63",
+        "port/linux/include/halo_port_capacity.h": "5970e9fca8186435460fc273f21b7c6fcc8b54523231257a95cc0037d1457666",
+        "tools/wii/cache_arena_plan.h": "32989ed97be742b9beb1e1e03cbe8ccf7c66b8fb41772b0d3f99dbd0eb6dffbf",
+        "tools/wii/cache_arena_fixture.h": "a1a1ff746598a7759b5c66997cb274696f0a33afdc129d8efb4498394a888956",
+        "tools/wii/cache_stream_io.h": "a1b77822b48fad27bb684caa672f399d76cd03cde4e8a6a2d310a0dcec302bf8",
+        "tools/wii/cache_stream_fixture.h": "8cb1177eaadaffb0e8ac122d7c985b0d2a7985f6b775bda6f28e3b7384d38db7"
+      },
+      "sdk_identity": {},
+      "artifacts_sha256": {
+        "cache_address.exe": "51eebff879fed2f7b0993c1b52ac8545fa535fc721b5d2b8ad5230730db6851d",
+        "cache_address_fixture.o": "285c22de2c79a6627acfa48c43ba9291b735a1cfd13aec51ed5d40d14fc2609b",
+        "cache_address_fixture.su": "6bdc1f22d58e9bb117e5f1dd0850ee7edb8a5fd3531c3fe1011665bb5a317043",
+        "cache_address_owned.o": "3c9128d0f71f0d2992c666d1c3b94a42a8adf666f4ea4b0307402ce96dda9add",
+        "cache_address_owned.su": "9b6a857968bab808a2236676bb817ffa712a94b8daf3ac5577a32c5e77f63392",
+        "cache_address_probe.o": "04e0003abb68b1070e93d8a39593e756eb4bee299be8e7c80253f5eaa142dc0b",
+        "cache_address_probe.su": "dd5decc08a2fc672a6ab5f0a0bbf97156ddcbfb5c1d687cab95eeadda1dbe599",
+        "cache_arena_fixture.o": "34fa138377d959e5950d8719764323f2d020bcc1094dbdebf5b2c7da3662d1ae",
+        "cache_arena_fixture.su": "f9ab247c9309f68193009a6d892a2ff73b92f04d320a6efd056b85dbdabceaaf",
+        "cache_arena_plan.o": "963a0d505d5f26267e108d2a0e0cabfc6abba520760c747a50252ba9ed3c3a03",
+        "cache_arena_plan.su": "c15f2bed0ff8d6898248036003d9a7fc3cd66d9fcb19af325e25e19a394f510e",
+        "cache_stream_fixture.o": "49ffefece384ded0ccb56ecba01c2e4bc34eef54877bd72be6bc3db1fc571e42",
+        "cache_stream_fixture.su": "195a1d8404a3e81856da1fa21136edac8986044ebd8b4828e24cd8e75a47a0a5",
+        "cache_stream_io.o": "014c9146857c0a2cf7e7844ff0ab60ba6aae9ec97a6c9554e880d3c57c935763",
+        "cache_stream_io.su": "8c9403e720b25479a6b0bf35cd90142ed4f80a656975702abac029b4c11218a8",
+        "cache_stream_main.o": "356e58757efacc3f03229f12c2c31cb1992451a19bcf86be400bce4144b1444b",
+        "cache_stream_main.su": "bf68835ce75ce2d757999a39da0efc0b19d3253746cca68dc2d6e97c2e8d41e3"
+      },
+      "generated_payload_sha256": "1feaa1d48622d4d4a4d3887c8496e14ad9bb1629e0cabaf8a04a1504f0654fd4",
+      "strict_compiled_units": 8,
+      "commands_all_zero": true,
+      "compile_diagnostics": []
+    },
+    "ppc": {
+      "source_commit": "bc90b840f83dee35cea91cb27a801a413f09036a",
+      "source_dirty": false,
+      "build_id": "969c6457481c2908",
+      "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+      "compiler_sha256": "692e3f84b35b7622f90d9fa2eae47c21cab88d3d95f857fc2381c4593765e814",
+      "target": "powerpc-eabi",
+      "inputs_sha256": {
+        "tools/wii/cache_address_probe.c": "b8f87e3a1cbdb4eae72f4695e04ecd85a9f346b92413d6215fcd5dadd17aa9a9",
+        "tools/wii/cache_address_fixture.c": "8ce0b9b1f201626038ec2621ab5b8e0b8abd6d68298b1d8a010b24adabf2522c",
+        "tools/wii/cache_address_owned.c": "15db730e67d56881d35a349d69dc9538cbec4b6dacdafb50e062cecc73f016f9",
+        "tools/wii/cache_arena_plan.c": "7c0e26625fcdec0c9a1372b6fd6801b8158dbb15f062f94d4a5cdc8567abd0b2",
+        "tools/wii/cache_arena_fixture.c": "c2a7f4d408ff4ae9dfc49fdb3ae406c3feb5d95d85fd21404a550644064ab9e1",
+        "tools/wii/cache_stream_io.c": "dd6f2ea4f7379e01b14f62ff1cedb13e3419a68dc1ff8052d39042876203eae6",
+        "tools/wii/cache_stream_fixture.c": "63053dcd3f4d5b91d855dc5a5247c28ca952c7c94ea4b535e83ccc48b4205104",
+        "tools/wii/cache_stream_main.c": "921eb37645b032a2c74af4729a5300fb4cfd6783e9dc4bae4ae41f43be922309",
+        "tools/wii/cache_address_probe.h": "b12006e37e0bf92c265e4c7dd7cdc275f6dd5952296fc1428ef4263e3cf044b7",
+        "tools/wii/cache_address_fixture.h": "1b6c2e41c46a589e146accce457d11356937aeb57167fbe89639c8ecb5c87f81",
+        "tools/wii/cache_address_owned.h": "7d689728316022605468e931b6502140a8e62ced0a1c68f00424f09327c30751",
+        "tools/wii/run_cache_address.py": "1499695455ff1737cd18e16863744eec30b660e5275976ee7c0b194080d4d4c3",
+        "tools/wii/build.py": "dc426a9068782e9f4d593fa4d5b241c966a61caad6860e766b8dbd4ddee9d48a",
+        "tools/wii/check_toolchain.py": "04b53c1e4f6bc534430062d57ef2fa12f508c43489a4228c5dffb49cdbd8a50c",
+        "source/cache/cache_files.c": "69ec94025580cf603b06b83ede8983d27163bf06e162e1cbf27611a174165ade",
+        "source/cache/physical_memory_map.c": "e68bed26b70dff2860d2d463a6a7871a383284fef9762c6f6b7f5bf1bf89023a",
+        "source/cache/physical_memory_map.h": "ec343ab913c4e7a1fa7ce441cb46cdc9e6cdfa9fae8096fccba8bd9dc3253b63",
+        "port/linux/include/halo_port_capacity.h": "5970e9fca8186435460fc273f21b7c6fcc8b54523231257a95cc0037d1457666",
+        "tools/wii/cache_arena_plan.h": "32989ed97be742b9beb1e1e03cbe8ccf7c66b8fb41772b0d3f99dbd0eb6dffbf",
+        "tools/wii/cache_arena_fixture.h": "a1a1ff746598a7759b5c66997cb274696f0a33afdc129d8efb4498394a888956",
+        "tools/wii/cache_stream_io.h": "a1b77822b48fad27bb684caa672f399d76cd03cde4e8a6a2d310a0dcec302bf8",
+        "tools/wii/cache_stream_fixture.h": "8cb1177eaadaffb0e8ac122d7c985b0d2a7985f6b775bda6f28e3b7384d38db7"
+      },
+      "sdk_identity": {
+        "toolchain_tree_sha256": "d0ca79f317d44426f5563ff60121b344cb3a1148e5ec7a901ad5739b73ba6441"
+      },
+      "artifacts_sha256": {
+        "cache_address.dol": "56d3fe8ab9ef1b9b9d5e4e411f17e5aaa5cc858b1baaff1a1ce821b03f864787",
+        "cache_address.elf": "3bc82f25c8aa0dbdbdaaf9722a1618b5749719c8ee489158d116413b914d0111",
+        "cache_address.map": "fc2b3a1370a884964bfcd04b60e1c0a7b75bbbf4ce83690a4d911841dd57e34b",
+        "cache_address_fixture.o": "59b00cf2b355e8cf5f8a185ad355e89d0926bae6d3213c1bf73b0486ab57c68e",
+        "cache_address_fixture.su": "3ac0f027e2a6ee303668a91effed8527a73624fad5152d9984773bf642e3e226",
+        "cache_address_owned.o": "9543785be8f9406c4ee90be4fd9a4d29ece0f336d3f767735e2eafb484fc9167",
+        "cache_address_owned.su": "2d9b0f9eacdf389a969e60bdff4e5e43afe8196284328aff393efeb869962ae9",
+        "cache_address_probe.o": "a9ba2353d34521de709e8cef55543bcd3eb6d22ce6058d5ac938ed105036b51f",
+        "cache_address_probe.su": "717aca6d1f4de59f2f0ecfd7beaca862fd9923b3fd99d830e51b12b729bd051e",
+        "cache_arena_fixture.o": "9c1ea7fcb633da36fb0e67d1f2ea4505ef453bbf69235c8c4c799dc2f533d646",
+        "cache_arena_fixture.su": "1f1fae64c65175526daaafd0ac69f298cd254abb7173f28cf13d64ed340abfc7",
+        "cache_arena_plan.o": "b56f77971d28b0f2db2680f83d8881798201ed5f0c8475833829e3ba9e66431e",
+        "cache_arena_plan.su": "099423558acf66d4b0c45094b6c0b72345662ab8c62d87fde9e89137c0e35a07",
+        "cache_stream_fixture.o": "75f2080f255f39e0a60240f7d4c91947841b8c248927a17ac8e764f7be5f7bb9",
+        "cache_stream_fixture.su": "1f3e32747c8341ab819aa12a8ac2de90991bcc3f13139689f6b3ebd2364c9fa3",
+        "cache_stream_io.o": "111c386c9975b3315a1aa04edc3d229cade65db60f7ca567a727789f21ebc815",
+        "cache_stream_io.su": "ef3ef3a1d9030009cea16f908ddbeff26383c19dc3ef0753b28cec3b677d6d4f",
+        "cache_stream_main.o": "46cf7b8cd9754538bb7698eb4396ad5594e93787381678ef9a10bd5c8446282e",
+        "cache_stream_main.su": "ad5fc57fe12f40050a6ead4cd4e6d62074b8ffd8945d13d3d8ae0630e6cf2d4a"
+      },
+      "generated_payload_sha256": "c1c60d9c43f2c64baa7b1a9c4fb432147e8316e1c16fcbb1b5c33118e873db5f",
+      "strict_compiled_units": 8,
+      "commands_all_zero": true,
+      "compile_diagnostics": []
+    }
+  },
+  "runtime": {
+    "build_id": "969c6457481c2908",
+    "dol_sha256": "56d3fe8ab9ef1b9b9d5e4e411f17e5aaa5cc858b1baaff1a1ce821b03f864787",
+    "dolphin_executable_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+    "host_exit_unsigned": 0,
+    "host_exit_hex": "0x0",
+    "elapsed_seconds": 7.578,
+    "timeout": false,
+    "guest_lf_sha256": "8d52d9da878934e1379f789eec69807adef3711af9b001a01608256657df253d",
+    "guest_completed": true,
+    "settings_file_sha256_before": "95d231a8d9ce93799e45965614e9e3f548fe14f04ada91d6c34593f059bd25a8",
+    "settings_file_sha256_after": "95d231a8d9ce93799e45965614e9e3f548fe14f04ada91d6c34593f059bd25a8",
+    "guest_report": [
+      "BEGIN STREAM build=969c6457481c2908",
+      "CACHE_ADDRESS SUMMARY cases=1916 checks=8437 failures=0 aborted=0 scope=synthetic_index_name_root_address_only source_mutation=none nested_tag_BSP_body_conversion=not_performed",
+      "CACHE_ARENA PLAN placement=0 offset=0 alignment_padding=3136 data=3251 reserve=257 charged=3508 capacity=8192",
+      "CACHE_ARENA PLAN placement=0 offset=1 alignment_padding=3135 data=3250 reserve=257 charged=3507 capacity=8192",
+      "CACHE_ARENA PLAN placement=0 offset=2 alignment_padding=3134 data=3249 reserve=257 charged=3506 capacity=8192",
+      "CACHE_ARENA PLAN placement=0 offset=3 alignment_padding=3133 data=3248 reserve=257 charged=3505 capacity=8192",
+      "CACHE_ARENA PLAN placement=0 offset=4 alignment_padding=3132 data=3247 reserve=257 charged=3504 capacity=8192",
+      "CACHE_ARENA PLAN placement=0 offset=5 alignment_padding=3131 data=3246 reserve=257 charged=3503 capacity=8192",
+      "CACHE_ARENA PLAN placement=0 offset=6 alignment_padding=3130 data=3245 reserve=257 charged=3502 capacity=8192",
+      "CACHE_ARENA PLAN placement=0 offset=7 alignment_padding=3129 data=3244 reserve=257 charged=3501 capacity=8192",
+      "CACHE_ARENA PLAN placement=1 offset=0 alignment_padding=3008 data=3123 reserve=257 charged=3380 capacity=8192",
+      "CACHE_ARENA PLAN placement=1 offset=1 alignment_padding=3007 data=3122 reserve=257 charged=3379 capacity=8192",
+      "CACHE_ARENA PLAN placement=1 offset=2 alignment_padding=3006 data=3121 reserve=257 charged=3378 capacity=8192",
+      "CACHE_ARENA PLAN placement=1 offset=3 alignment_padding=3005 data=3120 reserve=257 charged=3377 capacity=8192",
+      "CACHE_ARENA PLAN placement=1 offset=4 alignment_padding=3004 data=3119 reserve=257 charged=3376 capacity=8192",
+      "CACHE_ARENA PLAN placement=1 offset=5 alignment_padding=3003 data=3118 reserve=257 charged=3375 capacity=8192",
+      "CACHE_ARENA PLAN placement=1 offset=6 alignment_padding=3002 data=3117 reserve=257 charged=3374 capacity=8192",
+      "CACHE_ARENA PLAN placement=1 offset=7 alignment_padding=3001 data=3116 reserve=257 charged=3373 capacity=8192",
+      "CACHE_ARENA FRAGMENTATION authored_holes=3 aggregate_free=48 largest_free_span=16 request=32 contiguous_equivalent_fits=1 system_allocator_measured=0",
+      "CACHE_ARENA SUMMARY cases=1407 checks=2981 failures=0 aborted=0 scope=generic_budget_owner_and_synthetic_placements engine_capacity_reduced=0 system_fragmentation_measured=0",
+      "STREAM SYNTHETIC not_executed target=PPC reason=host_tmpfile_only",
+      "STREAM REQUEST tags=23068672 state=20971520 sound=4194304 max_index=2097120 io_each=65536 reserve=2097152 state_sound=canary_placeholders_not_engine_pools",
+      "STREAM ARENAS mem1_lo=0x80160000 mem1_hi=0x81800000 mem1_bytes=23724032 mem2_lo=0x90002000 mem2_hi=0x933db7e0 mem2_bytes=54368224",
+      "STREAM HEAP before in_use=783272 arena=815296 free=32024",
+      "STREAM FRAGMENT controlled_intervals=3 guard_bytes=131072 aggregate_free=54237152 largest_free=18122720 requested=52559872 rejected=3 failures=0 scope=owned_intervals_not_system_heap",
+      "STREAM IO bytes=1642244 chunks=26 fread_calls=27 crc32=e22586e4",
+      "STREAM PLAN placement=0 base=0x90002000 data_end=50462720 reserve=2097152 required=52559872 arena_charge=52559872 remaining=1808352",
+      "STREAM PLAN placement=1 base=0x90003000 data_end=50462720 reserve=2097152 required=52559872 arena_charge=52563968 remaining=1804256",
+      "STREAM HEAP released in_use=783272 arena=852160 free=68888",
+      "STREAM ARENAS released mem2_lo=0x90002000 mem2_hi=0x933db7e0 mem2_bytes=54368224",
+      "STREAM SUMMARY cycles=16 tags=983 max_charge=52563968 chunks=26 expected_errors=3 stale_rebind=15 stale_release=16 generation=32 failures=0",
+      "END STREAM build=969c6457481c2908 result=0"
+    ],
+    "Dolphin_version": "2609",
+    "backend": "D3D",
+    "CPUThread": false,
+    "cheats_overclock_RAM_override": false,
+    "prior_SD_files_preserved": true
+  },
+  "raw_records_sha256": {
+    "host_build": "b8d52d29b624e5d72613a1118160e0258d66e9006a68f7bd6a294f301b9e2303",
+    "ppc_build": "df51d64578fda61f20fdaf9ffaa7a1ac8a7544a071b09c9996e77c4f34549ea7",
+    "runtime": "7bb0eea9ab5b691e71d8fe160634b02b5cce0ad54796bbd869f4f842a92479e1"
+  },
+  "review": {
+    "source_findings_resolved": [
+      "originating_owner_handle_contract",
+      "scenario_full_datum_and_group_check"
+    ],
+    "unresolved_source_findings": [],
+    "independent_record_sha256": "02848b91f4334653fe847fbeeb8137c05593a94713b2b748401fe3bdc1414bc8",
+    "independent_checks": 206,
+    "unresolved_failures": 0,
+    "scope": "retained_source_build_input_FAT_content_runtime_record_no_repeat_target_run",
+    "limitations": [
+      "no_transient_SD_or_settings_writer_exclusion",
+      "no_image_or_whole_map_rehash_or_inflation",
+      "no_full_peak_engine_nested_hardware_qualification"
+    ]
+  },
+  "next_gate": "bounded_typed_nested_UI_root_graph_and_BSP_residency_lifetime_prerequisites"
+}

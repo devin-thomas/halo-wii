@@ -115,3 +115,12 @@ instances through eight owned memory round trips, plus 1,916 synthetic cases /
 observations do not qualify full peak or fragmentation. Fixed Xbox regions and
 current native capacities remain measured blockers; no full-map residency,
 nested conversion or gameplay pass. See [address evidence](evidence/2026-10-07-owned-cache-address.md).
+
+The [bounded owner/streaming diagnostic](evidence/2026-10-07-owned-cache-stream.md)
+passes 16 host/PPC raw UI cycles across two placements, preserves full source
+reservations, rejects stale handles and three deliberate IO identity errors,
+and restores MEM2 bounds. Its maximum charge leaves 1,804,256 bytes in the
+measured arena under a provisional reserve. State/sound are placeholders;
+controlled interval holes are not system fragmentation, and heap arena size
+changes. Full memory strategy, nested conversion, physical Wii and gameplay
+remain unqualified; earlier ABI/shutdown failures stay preserved.
