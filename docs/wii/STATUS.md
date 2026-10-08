@@ -212,3 +212,12 @@ lifetimes and atomic output. Workspace growth adds 24 payload / 64 charged bytes
 the twelve-slot PPC numeric model retains 1,781,968 bytes after its reserve.
 This model does not repeat target memory or owned-byte qualification. Vertex
 semantics, geometry/GX, gameplay, hardware and ticket blockers remain open.
+
+
+The [original probe debugger setup attempt](evidence/2026-10-08-shutdown-debugger-setup.md)
+stops before watchpoint/lifecycle capture because its controller compares
+raw padding/zero-filled data against GDB displayed extents. One early library
+stop,0 lifecycle events and explicit owned-process forced cleanup are retained.
+The SD backup/source/after, sentinel/log, profile/configs and exact inputs agree.
+This setup failure does not establish debugger incapability or shutdown cause;
+HWI-005/006 blockers and prior runtime/hardware limits remain open.
