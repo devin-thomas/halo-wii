@@ -194,3 +194,12 @@ precede natural Dolphin host 0xc0000409 faults at 59.866 and independently
 59.6373275 seconds. Matching heap counters and restored bounds do not qualify
 system peak, engine strategy, geometry/GX, gameplay, physical Wii or clear prior
 shutdown/ABI blockers.
+
+The [offline shutdown symbol gate](evidence/2026-10-07-shutdown-symbol-scope.md)
+confirms exact stock PE GUID/age and qualifies generic DIA resolution with
+17 Python tests, 55 authored PDB cases / 292 checks and strict MSVC builds.
+Official routes checked expose no exact PDB acquisition route. Static binary
+review links initialization to onexit registration and corrects a retained
+mid-instruction disassembly; source/thread ownership and shutdown cause remain
+unresolved. No new Dolphin/SD/settings/asset operation occurs; ticket states
+and prior runtime/hardware limits remain unchanged.

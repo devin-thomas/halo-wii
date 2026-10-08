@@ -1,0 +1,291 @@
+{
+  "schema": "opence-offline-shutdown-symbol-scope-v1",
+  "publication_state": "FINAL_SCOPED_OFFLINE_QUALIFICATION",
+  "scope": "Offline stock PE identity, bounded binary observations, official acquisition-route miss and authored exact-PDB DIA resolver qualification; shutdown cause unresolved.",
+  "source_commit": "76bb04b221e8190ec771d8a7d10792433dd20e9e",
+  "source_commit_scope": "The precommit compiled/tested physical source snapshots match these committed files after existing Git line-ending normalization; no clean-tree build claim.",
+  "stock_pe": {
+    "sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+    "file_bytes": 22716416,
+    "class": "PE32+",
+    "machine": 34404,
+    "timestamp": 3540512024,
+    "image_base": 5368709120,
+    "image_size": 44929024,
+    "entry_rva": 13350336
+  },
+  "codeview": {
+    "guid": "FFAA1DB7-B44E-6BFF-14B0-9F60EDB3BE84",
+    "age": 1,
+    "symbol_key": "FFAA1DB7B44E6BFF14B09F60EDB3BE841",
+    "pdb_basename": "Dolphin.pdb",
+    "record_bytes": 92,
+    "record_sha256": "afd326823fe2165084a8a1222957b4d5f1da5ab01ff277c5ac1f2ecfe555e120"
+  },
+  "stock_pe_inspection": {
+    "record_sha256": "4f6b5624530523c1aca47f87eb892c077cc05b9ed9d4a61adc8e6ad824c18675",
+    "commands_record_sha256": "05fc9ba6212d422fcf972f1ccd4ec2db587bf752ce8f593ba1c6dd02a486c42b",
+    "inspector_snapshot_sha256": "65596ce75f76c388bf225369785ecb765539012c71c75f812cd5f8f094c6b79e",
+    "tests_snapshot_sha256": "c9fb175e9f96a343ce21f5093dd698e93de60cca5b3e2f7221ecfc9109c06b4f",
+    "authored_python_tests": 17,
+    "test_exit_code": 0,
+    "stock_inspection_exit_code": 0,
+    "additional_v4_case": "Same-API descriptor mtime change rejection",
+    "no_image_loading_or_execution": true
+  },
+  "retained_preflight_failures": [
+    {
+      "record_sha256": "734c1f318c9f9ef25bde157f2f28b7076c33197230bb35ba0fa82f7e46901d2d",
+      "kind": "authored_parser_test_failure",
+      "tests": 15,
+      "failures": 4,
+      "exit_code": 1,
+      "reason": "UUID conversion received a bytearray slice; corrected to immutable bytes. Failing source snapshots retained.",
+      "full_raw_stdout_stderr_in_local_command_record": false,
+      "output_scope": "Local command record stores structured failure summary; original full traceback remains in root tool history."
+    },
+    {
+      "record_sha256": "b2ed964770081f4407c188539a6f153834a4905127ee81dd563d032a3ad75e97",
+      "kind": "stock_offline_inspection_rejection",
+      "exit_code": 1,
+      "reason": "Cross-API Windows ctime comparison differed despite matching device/inode/size/mtime. Corrected same-API before/after guards retain path/descriptor agreement without asserting a filesystem lock."
+    },
+    {
+      "kind": "DIA_fixture_harness_assumption",
+      "record_sha256": "c7790f20cc3a0d2106ef48dde016e921b681b22ab86b5eade5840e0e27a63db9",
+      "cases": 50,
+      "checks": 265,
+      "failed_assertions": 3,
+      "explanation": "RVA0 is valid linker __ImageBase static global; initial assumption of missing was incorrect, no resolver defect."
+    }
+  ],
+  "official_acquisition": {
+    "record_sha256": "7eeffdfab33e8cf368f73e2e72bb5302aab6b2702fa0102561329b2f3e8bc736",
+    "request_count": 26,
+    "http_200_count": 25,
+    "http_403_count": 1,
+    "http_403_scope": "CDN challenge on direct release page request",
+    "release": "2609",
+    "revision": "f84df02055ab9610feec48e65648cac5a3c098fa",
+    "buildid": 189395,
+    "builderid": 30,
+    "buildnumber": 998,
+    "verified_published_artifact": "https://dl.dolphin-emu.org/releases/2609/dolphin-2609-x64.7z",
+    "published_archive_bytes_from_packaging_log": 20034258,
+    "exact_pdb_route_verified": false,
+    "exact_pdb_requested": false,
+    "exact_pdb_acquired": false,
+    "outcome": "bounded_official_acquisition_route_miss",
+    "not_a_404_or_proof_of_never_existing": true,
+    "issue_13721_scope": "Historical author report, currently New; not proof of exact 2609 PDB availability.",
+    "primary_links": [
+      "https://dolphin-emu.org/download/release/2609/",
+      "https://dolphin.ci/#/builders/30/builds/998",
+      "https://dolphin.ci/api/v2/builds/189395/properties",
+      "https://dolphin.ci/api/v2/builds/189395/steps",
+      "https://github.com/dolphin-emu/sadm/blob/1b682df75adebc5d93d4abd0db5f965f18ae71ed/roles/buildbot/etc/master.cfg",
+      "https://github.com/dolphin-emu/dolphin/blob/f84df02055ab9610feec48e65648cac5a3c098fa/CMakeLists.txt#L190",
+      "https://bugs.dolphin-emu.org/issues/13721"
+    ]
+  },
+  "bounded_binary_review": {
+    "record_sha256": "6cc564ed78ab25881a9bbed703056bf8b03ff6c88f3baee8ed33c8c9aefb83df",
+    "callback_begin_rva": 16311664,
+    "callback_code_end_rva": 16311750,
+    "return_rva": 16311744,
+    "runtime_function_fragment_count": 3,
+    "global_rva": 32833864,
+    "global_width_bytes": 4,
+    "global_runtime_value_known": false,
+    "terminate_import": {
+      "dll": "api-ms-win-crt-runtime-l1-1-0.dll",
+      "name": "terminate"
+    },
+    "helper_import": {
+      "dll": "api-ms-win-crt-heap-l1-1-0.dll",
+      "name": "free"
+    },
+    "initializer_begin_rva": 9245776,
+    "initializer_end_rva": 9245909,
+    "initializer_global_zero_store_bytes": 16,
+    "onexit_imports": [
+      {
+        "IAT_rva": 16350200,
+        "dll": "api-ms-win-crt-runtime-l1-1-0.dll",
+        "name": "_register_onexit_function"
+      },
+      {
+        "IAT_rva": 16350192,
+        "dll": "api-ms-win-crt-runtime-l1-1-0.dll",
+        "name": "_crt_atexit"
+      }
+    ],
+    "nearest_export_label_is_callback_identity": false,
+    "nearest_hid_export_distance_bytes": 6375840,
+    "misaligned_retained_disassembly_start_rva": 16311712,
+    "actual_instruction_begin_rva": 16311711,
+    "source_class_or_thread_owner_attributed": false,
+    "all_global_writers_enumerated": false,
+    "matching_PDB_symbols_used": false,
+    "retained_material_exit_code_proves_same_callback_stack": false
+  },
+  "generic_dia_strict_preflight": {
+    "record_sha256": "718bbc76d11ee66ce10f3534402f995796076962c54d647129a1d0043d22a7b5",
+    "resolver_snapshot_sha256": "77fa9ff4121341f96a986df680debedcb13ed38ed2d05bb2565c94ab465698c1",
+    "version": 2,
+    "compiler_version": "19.44.35228.0",
+    "linker_version": "14.44.35228.0",
+    "toolchain_record_sha256": "06b2f581d1611694262adbb49b53df767bc41c856f176557ff37ec8e186daa9e",
+    "toolchain_artifacts": [
+      {
+        "basename": "dia2.h",
+        "bytes": 1256012,
+        "sha256": "b56bfc63323476ad7535b578b9e1095427ea777fee000b35f4d2bf70c73ff6a0"
+      },
+      {
+        "basename": "cvconst.h",
+        "bytes": 125380,
+        "sha256": "a994184162700a1ac3b4eb9568ec168e5ff97774f2650061d15cf0ef641b3690"
+      },
+      {
+        "basename": "msdia140.dll",
+        "bytes": 2293288,
+        "sha256": "c6cb047398680aa7093e3d4f1768977ef8ded90ad961225d633407a0ed1c881f"
+      },
+      {
+        "basename": "cl.exe",
+        "bytes": 677736,
+        "sha256": "88c8344236a27a6e727e0a8edc49aaa2690bdc7a9464b9d18cc7abe70a9f1c0d"
+      },
+      {
+        "basename": "link.exe",
+        "bytes": 3252576,
+        "sha256": "ca11e6c45debd34bf652dfe984c5360a531a005ed78bf72852330c9c2590cf0d"
+      }
+    ],
+    "earlier_v1_compile_record_sha256": "ff2ccbba666e887cfbc716fc27954f5e80d4b739c0f28b1653509735f186c6b1",
+    "earlier_v1_scope": "Two successful strict compile/link commands before the local-drive path-policy correction; final v2 resolver is a different source snapshot.",
+    "standard": "C++17",
+    "warning_flags": [
+      "/W4",
+      "/WX"
+    ],
+    "commands": 2,
+    "compile_link_exit_codes": [
+      0,
+      0
+    ],
+    "commands_scope": "Resolver and authored fixture compile/link; not fixture execution or stock PDB validation.",
+    "fixture_execution": {
+      "record_sha256": "300b44a6cbd7d41732e79a0bb226da545dccc0bc87b3c8788e47ccb784c11b85",
+      "harness_sha256": "2492173924058a5d72eb52310ece84fe9604d6dc2a94c819930964193a5c692c",
+      "resolver_exe_sha256": "84ce7f928d49143f592c781427e2c3d699e425c3afd726f1e7bbc21f537f6501",
+      "cases": 55,
+      "checks": 292,
+      "failures": 0,
+      "fixture_identity": {
+        "guid": "000E0841-B9E3-44DB-B951-E7B097A06D53",
+        "age": 1,
+        "symbol_key": "000E0841B9E344DBB951E7B097A06D531",
+        "pdb_basename": "fixture.pdb",
+        "debug_entry": 0,
+        "record_bytes": 97,
+        "record_sha256": "caac36616b8e443aac56b2d9df1a9fcede66842c0e938d17f6e2e75e8efc8cf3"
+      },
+      "alternate_fixture_identity": {
+        "guid": "84E90822-E3A3-4507-BD34-975F0165B4D6",
+        "age": 1,
+        "symbol_key": "84E90822E3A34507BD34975F0165B4D61",
+        "pdb_basename": "fixture.pdb",
+        "debug_entry": 0,
+        "record_bytes": 97,
+        "record_sha256": "b491a8208f16dedcb35e251215a95432af79a43d1f3795cf59f1d7b13f6c4be0"
+      },
+      "fixture_RVAs": {
+        "fixture_function": 4096,
+        "fixture_global": 475136
+      },
+      "returned_byte_extents": {
+        "fixture_function": 19,
+        "fixture_global": 16
+      },
+      "authored_artifact_hashes": {
+        "fixture.exe_v2": "4e16c0445820b6621267ebdc3bbc928557c0c994f9935df15bbb90fe48b26a33",
+        "fixture.pdb_v2": "32d3a4be272565dd04b1c516392bac20736ff7b0e406c232fb8db7b0e1286823",
+        "fixture.map_v2": "81613b2384935ba15ae1c263b75bf013008eb4a53ad08488754b0b6bb2bb5634",
+        "fixture.exe_v1": "3478a885820f495ca6400d95656bd2cd7ac3ed37e942c943165d0b3586e1a236",
+        "fixture.pdb_v1": "b082a28b6e93dcc03f58126c2ccd4b4459ac394e86b595a19b4ef07fdfcabf3b"
+      },
+      "coverage": [
+        "function/data exact starts, interiors and last byte",
+        "one-past extents and nearby/missing function symbols",
+        "both cross-PDB GUID/age mismatches",
+        "wrong GUID/age, absent PDB/DLL and invalid PDB",
+        "numeric signs/overflow, duplicate/unknown/incomplete arguments",
+        "64 accepted queries and 65 rejected",
+        "UNC, device and extended-device paths rejected before loads",
+        "RVA zero correctly identifies linker __ImageBase"
+      ],
+      "resolver_only_executed": true,
+      "fixture_executable_executed": false,
+      "stock_PDB_tested": false,
+      "residual_test_gaps": [
+        "Unicode/quoted symbol names",
+        "mapped remote drive fixture",
+        "every supported scalar/array/typedef or scalable type variant",
+        "concurrent PDB modification and adversarial junction isolation"
+      ]
+    },
+    "independent_review": {
+      "record_sha256": "890bb29a853b85115cb30c5b998a1c6eb35454ee1b75f19a7b29c3c0e93a2e00",
+      "review_predicates": 14,
+      "failed_predicates": 0,
+      "independent_python_tests": 17,
+      "unresolved_actionable_findings": 0,
+      "resolved_finding": "Explicit UNC/device acceptance replaced by local-drive-root guard before loads",
+      "precondition": "Trusted local DLL/files; no adversarial junction isolation claim"
+    }
+  },
+  "source_references": [
+    "tools/wii/inspect_pe_symbols.py",
+    "tools/wii/test_inspect_pe_symbols.py",
+    "tools/wii/resolve_shutdown_symbols.cpp"
+  ],
+  "limits": [
+    "Exact stock PDB absent from this acquisition result; no source-class or thread-owner attribution.",
+    "A rebuilt PDB is not evidence of identity compatibility with the stock executable.",
+    "Static initializer/onexit linkage does not establish callback trigger values, all global writers or live ownership.",
+    "Instruction decoding must begin at a verified boundary; the retained mid-instruction decoding is not execution proof.",
+    "No new Dolphin launch, profile/settings/SD mutation, asset access, binary/PDB download or target run in this gate.",
+    "Earlier runtime outcomes and faults remain separate observations; no recovery or hardware acceptance claim.",
+    "Hash-only raw-record references omit local paths, embedded PDB directory and raw binary bytes."
+  ],
+  "ticket_status": {
+    "HWI-005": "BLOCKED",
+    "HWI-006": "BLOCKED",
+    "HWI-007": "TODO",
+    "HWI-008": "TODO"
+  },
+  "source_artifacts": [
+    {
+      "path": "tools/wii/inspect_pe_symbols.py",
+      "physical_sha256": "65596ce75f76c388bf225369785ecb765539012c71c75f812cd5f8f094c6b79e",
+      "git_blob_sha256": "65596ce75f76c388bf225369785ecb765539012c71c75f812cd5f8f094c6b79e"
+    },
+    {
+      "path": "tools/wii/test_inspect_pe_symbols.py",
+      "physical_sha256": "c9fb175e9f96a343ce21f5093dd698e93de60cca5b3e2f7221ecfc9109c06b4f",
+      "git_blob_sha256": "c9fb175e9f96a343ce21f5093dd698e93de60cca5b3e2f7221ecfc9109c06b4f"
+    },
+    {
+      "path": "tools/wii/resolve_shutdown_symbols.cpp",
+      "physical_sha256": "77fa9ff4121341f96a986df680debedcb13ed38ed2d05bb2565c94ab465698c1",
+      "git_blob_sha256": "77fa9ff4121341f96a986df680debedcb13ed38ed2d05bb2565c94ab465698c1"
+    },
+    {
+      "path": "tools/wii/README.md",
+      "physical_sha256": "ea0c98c1f110b2f77ca342e66d6c0b9e3e50d8e7035a03deaf9b01f5c60cefec",
+      "git_blob_sha256": "3e28b05ae6bb831967399e4baf882d2234299917c2d0a09f9f1b8ad0c040c568"
+    }
+  ]
+}
