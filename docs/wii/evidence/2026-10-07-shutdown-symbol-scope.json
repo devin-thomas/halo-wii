@@ -287,5 +287,108 @@
       "physical_sha256": "ea0c98c1f110b2f77ca342e66d6c0b9e3e50d8e7035a03deaf9b01f5c60cefec",
       "git_blob_sha256": "3e28b05ae6bb831967399e4baf882d2234299917c2d0a09f9f1b8ad0c040c568"
     }
-  ]
+  ],
+  "bounded_exact_source_crossreference": {
+    "revision": "f84df02055ab9610feec48e65648cac5a3c098fa",
+    "record_sha256": "050cbc1546e3b6374944b7688a384a0c56ff5c7ae09baf57e76ad9aabf2b72b0",
+    "worker_context_sha256": "8143f372358a7fbd46973226568285fa35a48e0c1478529014963de1306c7059",
+    "source_files": 12,
+    "metadata_body_bytes": 1790882,
+    "metadata_truncated": false,
+    "raw_source_http_200_count": 12,
+    "metadata_http_200_count": 1,
+    "exact_blob_checks": 14,
+    "failed_checks": 0,
+    "sources": [
+      {
+        "path": "Source/Core/Common/WorkQueueThread.h",
+        "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Core/Common/WorkQueueThread.h",
+        "body_sha256": "04c754ad0531857497d23dab0750f5c55222646e609c83c89d9329fa7d3a6893",
+        "git_blob_sha1": "826ee778becfb841c32b47a0ce399e2fc41b42a8"
+      },
+      {
+        "path": "Source/Core/InputCommon/ControllerInterface/ControllerInterface.cpp",
+        "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Core/InputCommon/ControllerInterface/ControllerInterface.cpp",
+        "body_sha256": "380b8111dfe886d5db759306bc5bcf58b8b022a9426dc6ff2aa77d23636ed1d6",
+        "git_blob_sha1": "20fd517b2db3499a8ec8415cac4aee8284c993c9"
+      },
+      {
+        "path": "Source/Core/InputCommon/ControllerInterface/ControllerInterface.h",
+        "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Core/InputCommon/ControllerInterface/ControllerInterface.h",
+        "body_sha256": "d5b51345a13a2746091f7fb586d8a103ea378fdca23f1703abe057b3cf44f0c0",
+        "git_blob_sha1": "8f7f4baf402c67620760999babba62d0036e1b0b"
+      },
+      {
+        "path": "Source/Core/InputCommon/ControllerInterface/Win32/Win32.cpp",
+        "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Core/InputCommon/ControllerInterface/Win32/Win32.cpp",
+        "body_sha256": "39d2a2b3bb786f68c9fb74eaefc253e3c6776c5b8c6eb0a1d88bdd402bd61dac",
+        "git_blob_sha1": "eb4bd6fd6bbe8b4647c04286874cb1a8aedcafa0"
+      },
+      {
+        "path": "Source/Core/InputCommon/ControllerInterface/Win32/Win32.h",
+        "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Core/InputCommon/ControllerInterface/Win32/Win32.h",
+        "body_sha256": "ccdd26d73fe3fe51c3fc31ce33777aa7d1cd268dbffea1d8b8aaa1e55b9b28b5",
+        "git_blob_sha1": "17e46c54b900b8fbb39f129b04fced4e1cd1c7c5"
+      },
+      {
+        "path": "Source/Core/InputCommon/ControllerInterface/WGInput/WGInput.cpp",
+        "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Core/InputCommon/ControllerInterface/WGInput/WGInput.cpp",
+        "body_sha256": "541c8d23d26f643f4f30cd6f976a7e372fad90341384976820936b35ba449064",
+        "git_blob_sha1": "567090ee7be95a7bc466446b856ce28fef58e35e"
+      },
+      {
+        "path": "Source/Core/InputCommon/ControllerInterface/SDL/SDL.cpp",
+        "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Core/InputCommon/ControllerInterface/SDL/SDL.cpp",
+        "body_sha256": "3a3fa5ae3b1249d21e2292d79a03c9387cf71dc39d60616983106a5866a88730",
+        "git_blob_sha1": "5aeb9e07db9af9089f23c312c9e83b1055334e42"
+      },
+      {
+        "path": "Source/Core/Core/HW/WiimoteReal/WiimoteReal.cpp",
+        "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Core/Core/HW/WiimoteReal/WiimoteReal.cpp",
+        "body_sha256": "f4b900e31105df29b382236240a39318d029a74a602428b7521fde3d7550266a",
+        "git_blob_sha1": "79129b3a92ba9e26b7a4256247de613010205a5a"
+      },
+      {
+        "path": "Source/Core/Core/HW/WiimoteReal/IOhidapi.cpp",
+        "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Core/Core/HW/WiimoteReal/IOhidapi.cpp",
+        "body_sha256": "cdb08fa05e75fa4b56ea794d39362f78c751d2ca14dedfa9590da64acf18b97c",
+        "git_blob_sha1": "36c9a2377d5c81145b832566ac123ffce264a138"
+      },
+      {
+        "path": "Source/Core/InputCommon/ControllerInterface/XInput/XInput.cpp",
+        "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Core/InputCommon/ControllerInterface/XInput/XInput.cpp",
+        "body_sha256": "a640196131ffb0050a4ec16c6176177ad6d2cfcbc4f2ca1f6e00b5bbe95f5a1d",
+        "git_blob_sha1": "ebe79f8984a31a86bd7fe770e9a2ef533f70b975"
+      },
+      {
+        "path": "Source/Core/VideoCommon/Resources/CustomResourceManager.cpp",
+        "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Core/VideoCommon/Resources/CustomResourceManager.cpp",
+        "body_sha256": "0f779b76a9071d264d37218a653ce3cbaf7a870486b17fe527a37e86e50fdeb4",
+        "git_blob_sha1": "29e215b8ea8fc7dc7bda83933601f3f80249af8f"
+      },
+      {
+        "path": "Source/Core/VideoCommon/Resources/CustomResourceManager.h",
+        "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Core/VideoCommon/Resources/CustomResourceManager.h",
+        "body_sha256": "8be64cd647ae3a566be93c3c6b8a0c7159fafc2d20565d3f567da321306438ed",
+        "git_blob_sha1": "8bd0e7501992904a60230dc529ea7bb5db8339df"
+      }
+    ],
+    "observations": [
+      "WGInput static queue has explicit shutdown and join path",
+      "Wiimote scanner has explicit stop/join path",
+      "SDL worker is a backend member with destructor join",
+      "CustomResourceManager Shutdown stops its worker then Reset restarts it if preceding operations return normally",
+      "Its implicit member destruction separately invokes the generic WorkQueue destructor shutdown/join"
+    ],
+    "verified_address_source_mapping": false,
+    "callback_or_global_owner_attributed": false,
+    "resource_worker_restart_proves_unjoined_exit": false,
+    "limits": [
+      "No exact PDB, linker map or object-to-RVA mapping for stock executable",
+      "Twelve source files do not establish a whole-source negative result",
+      "Exact revision does not establish release definitions, compiler/STL ABI or optimized inclusion",
+      "Method execution, live worker state and later successful shutdown in the fault run are unknown",
+      "No emulator clone/fork/build/runtime/settings/SD/asset operation"
+    ]
+  }
 }
