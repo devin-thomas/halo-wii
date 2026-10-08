@@ -1,0 +1,124 @@
+{
+  "scope": "authored_compressed_environment_vertex_words_host_execution_PPC_compile_only",
+  "source_commit": "f476317f096d11144256da13a2958ffca178ef10",
+  "API": "cache_material_get_compressed_vertex",
+  "compressed_record_bytes": 32,
+  "fields": [
+    "position_bits[3]",
+    "normal_packed",
+    "binormal_packed",
+    "tangent_packed",
+    "texcoord_bits[2]"
+  ],
+  "implementation": {
+    "source": "compressed tag-data address",
+    "ordinal_bound": "material environment count",
+    "endian": "explicit LE32",
+    "staged_atomic_output": true,
+    "copied_parent_first_pins": true,
+    "no_decompression": true,
+    "no_triangle_vertex_association": true,
+    "no_allocation": true,
+    "no_persistent_layout_workspace_reservation_or_serialization_growth": true
+  },
+  "representations": {
+    "root": 36,
+    "material": 128,
+    "lightmap": 20,
+    "surface": 6,
+    "compressed_vertex_output": 32,
+    "prior_two_lightmap_34_material_workspace": 8856,
+    "prior_owned_serialization": 9416,
+    "prior_owned_serialization_reexecuted": false
+  },
+  "builds": {
+    "host": {
+      "build_id": "d161fe8d2ea39019",
+      "source_clean": true,
+      "strict_C11_units": 8,
+      "commands": 10,
+      "failed_commands": 0,
+      "state": "execution_pass",
+      "cache_info_sha256": "db1668667a6009c78012648bdcab450a519397c32f3f9991888854b4c6d8aaab",
+      "command_record_sha256": "dfa41188042efdeb77aee17c1e461d569c5c51fd94981a0635e5b4abaab6bc43",
+      "own_static_frame_bytes": 480,
+      "stack_report_sha256": "ea72671a2e9e7e194e75bcbc9026b5b860f0e651eedac89bfa19e4f75641572d",
+      "artifacts_sha256": {
+        "cache_address.exe": "59aac0583a06b8f95b0db731141b7fe6ce14d65d796f464b837574dbbc32ba6b",
+        "cache_address_fixture.o": "285c22de2c79a6627acfa48c43ba9291b735a1cfd13aec51ed5d40d14fc2609b",
+        "cache_address_fixture.su": "6bdc1f22d58e9bb117e5f1dd0850ee7edb8a5fd3531c3fe1011665bb5a317043",
+        "cache_address_main.o": "82b8efa5866613552a517fe68e1dd5ac1a02b7bbccd26d40e0fb89e54c5d44c9",
+        "cache_address_main.su": "077a8ae083bd75c7f0f61a2cb5011cb2fbd46f9f1d951cb73509febaf4759199",
+        "cache_address_owned.o": "3c9128d0f71f0d2992c666d1c3b94a42a8adf666f4ea4b0307402ce96dda9add",
+        "cache_address_owned.su": "9b6a857968bab808a2236676bb817ffa712a94b8daf3ac5577a32c5e77f63392",
+        "cache_address_probe.o": "04e0003abb68b1070e93d8a39593e756eb4bee299be8e7c80253f5eaa142dc0b",
+        "cache_address_probe.su": "dd5decc08a2fc672a6ab5f0a0bbf97156ddcbfb5c1d687cab95eeadda1dbe599",
+        "cache_arena_plan.o": "963a0d505d5f26267e108d2a0e0cabfc6abba520760c747a50252ba9ed3c3a03",
+        "cache_arena_plan.su": "c15f2bed0ff8d6898248036003d9a7fc3cd66d9fcb19af325e25e19a394f510e",
+        "cache_bsp_probe.o": "4d580bbe2035d3711e69396dac7b7fff27d5c835cfdd26e984312027e58f5c3c",
+        "cache_bsp_probe.su": "296fcb30e097a8676b4dd8411ac209e4d62a4e72742e7fa446a81603770ccf23",
+        "cache_material_fixture.o": "f389c54377ee7a89b5fc3b7dabf76bdfef7896fd945752a8476c8751dca7223e",
+        "cache_material_fixture.su": "d738da9d21337e422524266efceba72870a0a687f30b422479cc7844d626f10b",
+        "cache_material_probe.o": "9d028a801632410c0f6d732a3aea0b3d02f3cc7451f25fdd512d7e6b29438f34",
+        "cache_material_probe.su": "ea72671a2e9e7e194e75bcbc9026b5b860f0e651eedac89bfa19e4f75641572d"
+      },
+      "material_cases": 112,
+      "material_checks": 54459,
+      "material_failures": 0,
+      "address_cases": 1916,
+      "address_checks": 8437,
+      "address_failures": 0
+    },
+    "ppc": {
+      "build_id": "8bd6ed45371ae712",
+      "source_clean": true,
+      "strict_C11_units": 8,
+      "commands": 10,
+      "failed_commands": 0,
+      "state": "compile_pass",
+      "cache_info_sha256": "a3e6ccb517af73254b7e8447a90a337643ed378b884f7a8a44093896947db21d",
+      "command_record_sha256": "0ecfb8e414dd58106598c8a8f13bca60021573a3b898700bc43c43bf04ca021b",
+      "own_static_frame_bytes": 352,
+      "stack_report_sha256": "461beb0971e43c139b0074ea464128ac21d98e3a62d5be298bf71627f9ea7e9c",
+      "artifacts_sha256": {
+        "cache_address.dol": "182718d8228274cc43ec0226e85ed163143cd1b64d76102f3be7c2dd07874307",
+        "cache_address.elf": "f5bd551b550128620c5e27fe132028f6be99f11b31b09f339584eb24c6043ebe",
+        "cache_address.map": "bd185c9d800bfdaed8c89228827c1f84aedcf130b81420ee4d4ed24aaa957755",
+        "cache_address_fixture.o": "59b00cf2b355e8cf5f8a185ad355e89d0926bae6d3213c1bf73b0486ab57c68e",
+        "cache_address_fixture.su": "3ac0f027e2a6ee303668a91effed8527a73624fad5152d9984773bf642e3e226",
+        "cache_address_main.o": "6ad60fe1a1c01eb54af0ec6b4896804b8068f0b29d9d184d594cfac50d55948e",
+        "cache_address_main.su": "a96bce0ae662f8c2c53d51be33987eef7c811290e901bea88d1a6cc5325cc4e8",
+        "cache_address_owned.o": "9543785be8f9406c4ee90be4fd9a4d29ece0f336d3f767735e2eafb484fc9167",
+        "cache_address_owned.su": "2d9b0f9eacdf389a969e60bdff4e5e43afe8196284328aff393efeb869962ae9",
+        "cache_address_probe.o": "a9ba2353d34521de709e8cef55543bcd3eb6d22ce6058d5ac938ed105036b51f",
+        "cache_address_probe.su": "717aca6d1f4de59f2f0ecfd7beaca862fd9923b3fd99d830e51b12b729bd051e",
+        "cache_arena_plan.o": "b56f77971d28b0f2db2680f83d8881798201ed5f0c8475833829e3ba9e66431e",
+        "cache_arena_plan.su": "099423558acf66d4b0c45094b6c0b72345662ab8c62d87fde9e89137c0e35a07",
+        "cache_bsp_probe.o": "2621da61b106878e2d72679e8a4b42d54cc074a46d977eb7baf016401fd13e77",
+        "cache_bsp_probe.su": "965685b2f9438a2f613b9dc29775c99a3f588855f48348b9e52d8a6c7a101f75",
+        "cache_material_fixture.o": "809a8d1d884839860cbc39ec0bf057f8686addf35ffb72c239de0a2b434d112e",
+        "cache_material_fixture.su": "4b4d67501aa004c70d661abeab9c703699a8d3eb64295d2cc4d8bb3f97224216",
+        "cache_material_probe.o": "bfa85fd0db9c0bfd9e89a01de153f3694293120fbe22181d8e2b2cbad76c50b9",
+        "cache_material_probe.su": "461beb0971e43c139b0074ea464128ac21d98e3a62d5be298bf71627f9ea7e9c"
+      },
+      "target_executed": false
+    }
+  },
+  "manual_source_review": {
+    "predicate_count": 37,
+    "failures": 0,
+    "sha256": "e79e0925359fc3ce938b6f4d2ac29fd2581d3e5f9f08bf43014cb89a22a61c17"
+  },
+  "saved_build_review": {
+    "predicate_count": 371,
+    "failures": 0,
+    "sha256": "c0dfec775ad02c58d050ad4130a744c2be95cbb9e7873580d174705be981db49"
+  },
+  "limits": [
+    "Raw float and packed-vector words remain uninterpreted; no decompression, triangle index origin, GX or geometry qualification",
+    "Compiler own static frame is not combined call-stack peak or fragmentation",
+    "No new planner, owned-input, SD, profile, emulator or PPC execution",
+    "Existing original cold-run shutdown, engine/gameplay and physical Wii acceptance remain open",
+    "HWI-005/006 BLOCKED; HWI-007/008 TODO"
+  ]
+}

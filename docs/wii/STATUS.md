@@ -254,3 +254,11 @@ the pinned PCH Visual Studio 2026 full-version guard. An independent repeat
 confirms installed MSVC is below 195136252; earlier minimum-only feasibility
 is corrected. Saved 3910-predicate audit qualifies records and owned cleanup,
 without artifacts, PDB/owner/runtime or ticket acceptance. HWI005/006 remain BLOCKED.
+
+
+The [compressed environment vertex word accessor](evidence/2026-10-08-compressed-vertex-api.md) exposes
+eight LE32 words using validated material count/address and parent-first pins.
+Clean authored host 112 cases / 54459 checks pass;
+PPC compilation passes without execution. No allocation/workspace/capacity growth,
+decompression, triangle-origin policy, GX or owned-input/SD/target operation.
+Ticket acceptance and the original shutdown blockers remain unchanged.
