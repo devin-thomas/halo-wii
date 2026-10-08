@@ -505,6 +505,26 @@ int cache_material_get_material(const struct cache_material_view *view, size_t i
     return 1;
 }
 
+int cache_material_get_material_surface(const struct cache_material_view *view, size_t material_index,
+                                        size_t local_ordinal, struct cache_material_surface_projection *output,
+                                        struct cache_material_result *result)
+{
+    if (!start(result))
+        return 0;
+    if (!output)
+        return fail(result, CACHE_MATERIAL_ARGUMENT, 0);
+    struct cache_material_projection material;
+    if (!cache_material_get_material(view, material_index, &material, result))
+        return 0;
+    /* Publication validates both signed fields against the bounded root count. */
+    if (local_ordinal >= (size_t)material.surface_count)
+        return fail(result, CACHE_MATERIAL_COUNT, local_ordinal);
+    size_t first = (size_t)material.first_surface;
+    if (local_ordinal > SIZE_MAX - first)
+        return fail(result, CACHE_MATERIAL_OVERFLOW, local_ordinal);
+    return cache_material_get_surface(view, first + local_ordinal, output, result);
+}
+
 static void write_material(unsigned char *p, const struct cache_material_projection *m)
 {
     for (unsigned i = 0; i < 4; ++i)

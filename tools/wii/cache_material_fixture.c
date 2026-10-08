@@ -296,12 +296,153 @@ static int valid_case(struct context *context, struct storage *storage, unsigned
     CHECK(!cache_material_get_root(&stale, &root, &result) && result.error == CACHE_MATERIAL_STATE, "stale_child_after_rebind");
     CHECK(!cache_material_get_surface(&stale, 0, &surface_guard.value, &result) && result.error == CACHE_MATERIAL_STATE &&
           !memcmp(&surface_guard.value, &surface_before, sizeof(surface_before)), "surface_stale_child_rebind_atomic_output");
+    CHECK(!cache_material_get_material_surface(&stale, 1, 0, &surface_guard.value, &result) &&
+          result.error == CACHE_MATERIAL_STATE && !memcmp(&surface_guard.value, &surface_before, sizeof(surface_before)),
+          "material_surface_stale_child_rebind_atomic_output");
     CHECK(cache_material_unload(&control, &result), "unload");
     CHECK(!cache_material_get_root(&view, &root, &result) && result.error == CACHE_MATERIAL_STATE, "stale_child_after_unload");
     CHECK(!cache_material_get_surface(&view, 0, &surface_guard.value, &result) && result.error == CACHE_MATERIAL_STATE &&
           !memcmp(&surface_guard.value, &surface_before, sizeof(surface_before)), "surface_stale_child_unload_atomic_output");
+    CHECK(!cache_material_get_material_surface(&view, 1, 0, &surface_guard.value, &result) &&
+          result.error == CACHE_MATERIAL_STATE && !memcmp(&surface_guard.value, &surface_before, sizeof(surface_before)),
+          "material_surface_stale_child_unload_atomic_output");
     uint64_t generation = control.generation;
     CHECK(cache_material_unload(&control, &result) && control.generation == generation, "inactive_idempotent");
+    return 0;
+}
+
+static int material_surface_edges(struct context *context, struct storage *storage,
+                                  unsigned placement, unsigned offset)
+{
+    context->name = "material_local_surface_ranges_aliases_and_atomic_output";
+    ++context->cases;
+    unsigned char *bytes;
+    struct cache_bsp_control bsp;
+    struct cache_bsp_view parent;
+    if (!prepare(storage, placement, offset, &bytes, &bsp, &parent))
+        return abort_case(context, "material_surface_prepare");
+    memset(storage->work, 0xa7, WORK_BYTES + GUARD * 2);
+    struct cache_material_control control = {0};
+    struct cache_material_view view = {0}, stale = {0};
+    struct cache_material_result result;
+    static const uint16_t indices[] = {0, 1, 32767, 32768, 65534, 65535};
+    static const unsigned firsts[3][2] = {{0, 3}, {4, 2}, {12, 11}};
+    static const unsigned counts[3][2] = {{3, 3}, {3, 3}, {0, 1}};
+    struct {
+        uint16_t before[2];
+        struct cache_material_surface_projection value;
+        uint16_t after[2];
+    } guarded = {{0xa7a7, 0xa7a7}, {{0x5a5a, 0x5a5a, 0x5a5a}}, {0xa7a7, 0xa7a7}};
+    for (unsigned phase = 0; phase < 3; ++phase) {
+        /* Both previous views are inactive before changing authored source. */
+        if (phase) {
+            struct cache_bsp_result bsp_result;
+            int unloaded = cache_bsp_unload(&bsp, &bsp_result);
+            CHECK(unloaded, "material_surface_parent_unload_before_source_change");
+            if (!unloaded)
+                return abort_case(context, "material_surface_parent_unload");
+            for (unsigned material = 0; material < 2; ++material) {
+                word(bytes, MAT_AT + material * 256 + 20, firsts[phase][material]);
+                word(bytes, MAT_AT + material * 256 + 24, counts[phase][material]);
+            }
+            int rebound = cache_bsp_bind(&bsp, &storage->owner, &storage->handle,
+                                         TAG_BYTES, 1048576, 0, &parent, &bsp_result);
+            CHECK(rebound, "material_surface_parent_rebind_after_source_change");
+            if (!rebound)
+                return abort_case(context, "material_surface_parent_rebind");
+        }
+        int bound = cache_material_bind(&control, &parent, storage->work + GUARD, WORK_BYTES, &view, &result);
+        CHECK(bound, "material_surface_range_publication");
+        if (!bound)
+            return abort_case(context, "material_surface_bind");
+        memcpy(storage->snapshot, bytes, SLOT_BYTES);
+        memcpy(storage->work_before, storage->work, WORK_BYTES + GUARD * 2);
+        struct cache_material_control control_before;
+        struct cache_material_view view_before;
+        memcpy(&control_before, &control, sizeof(control));
+        memcpy(&view_before, &view, sizeof(view));
+        struct cache_material_surface_projection before = guarded.value;
+        if (phase)
+            CHECK(!cache_material_get_material_surface(&stale, 1, 0, &guarded.value, &result) &&
+                  result.error == CACHE_MATERIAL_STATE && !memcmp(&guarded.value, &before, sizeof(before)),
+                  "material_surface_prior_epoch_after_range_rebind");
+        for (unsigned material = 0; material < 2; ++material) {
+            for (unsigned local = 0; local < counts[phase][material]; ++local) {
+                int obtained = cache_material_get_material_surface(&view, material, local, &guarded.value, &result);
+                CHECK(obtained, "material_surface_local_first_through_last_get");
+                if (!obtained)
+                    return abort_case(context, "material_surface_get");
+                unsigned ordinal = firsts[phase][material] + local;
+                unsigned char encoded[6];
+                for (unsigned i = 0; i < 3; ++i) {
+                    CHECK(guarded.value.vertex_indices[i] == indices[(ordinal + i) % 6],
+                          "material_surface_independent_unsigned_golden");
+                    half(encoded, i * 2, guarded.value.vertex_indices[i]);
+                }
+                CHECK(!memcmp(encoded, bytes + SURFACE_AT + ordinal * 6, sizeof(encoded)),
+                      "material_surface_explicit_LE_matches_selected_root_record");
+            }
+            before = guarded.value;
+            CHECK(!cache_material_get_material_surface(&view, material, counts[phase][material], &guarded.value, &result) &&
+                  result.error == CACHE_MATERIAL_COUNT && !memcmp(&guarded.value, &before, sizeof(before)),
+                  "material_surface_local_onepast_or_empty_atomic");
+            CHECK(!cache_material_get_material_surface(&view, material, SIZE_MAX, &guarded.value, &result) &&
+                  result.error == CACHE_MATERIAL_COUNT && !memcmp(&guarded.value, &before, sizeof(before)),
+                  "material_surface_local_SIZE_MAX_before_addition");
+        }
+        CHECK(!cache_material_get_material_surface(&view, 2, 0, &guarded.value, &result) &&
+              result.error == CACHE_MATERIAL_COUNT && !memcmp(&guarded.value, &before, sizeof(before)),
+              "material_surface_material_onepast_atomic");
+        CHECK(!cache_material_get_material_surface(&view, SIZE_MAX, 0, &guarded.value, &result) &&
+              result.error == CACHE_MATERIAL_COUNT && !memcmp(&guarded.value, &before, sizeof(before)),
+              "material_surface_material_SIZE_MAX_atomic");
+        if (!phase) {
+            CHECK(cache_material_get_surface(&view, 6, &guarded.value, &result) &&
+                  !guarded.value.vertex_indices[0] && guarded.value.vertex_indices[1] == 1 &&
+                  guarded.value.vertex_indices[2] == 32767, "material_surface_onepast_is_still_valid_global6");
+            before = guarded.value;
+            CHECK(!cache_material_get_material_surface(&view, 1, 3, &guarded.value, &result) &&
+                  result.error == CACHE_MATERIAL_COUNT && !memcmp(&guarded.value, &before, sizeof(before)),
+                  "material1_local3_rejects_even_when_global6_valid");
+            CHECK(!cache_material_get_material_surface(&view, 1, 0, NULL, &result) &&
+                  result.error == CACHE_MATERIAL_ARGUMENT, "material_surface_null_output");
+            CHECK(!cache_material_get_material_surface(NULL, 1, 0, &guarded.value, &result) &&
+                  result.error == CACHE_MATERIAL_ARGUMENT && !memcmp(&guarded.value, &before, sizeof(before)),
+                  "material_surface_null_view_atomic");
+            size_t alignment_offset = (uintptr_t)bytes % _Alignof(struct cache_material_surface_projection) ? 1 : 0;
+            CHECK(!cache_material_get_material_surface(&view, 1, 0, (void *)(bytes + alignment_offset), &result) &&
+                  result.error == CACHE_MATERIAL_OVERLAP, "material_surface_source_alias");
+            CHECK(!cache_material_get_material_surface(&view, 1, 0, (void *)(storage->work + GUARD), &result) &&
+                  result.error == CACHE_MATERIAL_OVERLAP, "material_surface_workspace_alias");
+            CHECK(!cache_material_get_material_surface(&view, 1, 0, (void *)&control, &result) &&
+                  result.error == CACHE_MATERIAL_OVERLAP, "material_surface_control_alias");
+            CHECK(!cache_material_get_material_surface(&view, 1, 0, (void *)&view, &result) &&
+                  result.error == CACHE_MATERIAL_OVERLAP, "material_surface_view_alias");
+        }
+        int preserved_source = !memcmp(bytes, storage->snapshot, SLOT_BYTES) &&
+            !memcmp(storage->work, storage->work_before, WORK_BYTES + GUARD * 2);
+        CHECK(preserved_source,
+              "material_surface_queries_preserve_full_source_and_workspace");
+        int preserved_controls = !memcmp(&control, &control_before, sizeof(control)) &&
+            !memcmp(&view, &view_before, sizeof(view));
+        CHECK(preserved_controls,
+              "material_surface_queries_preserve_control_and_view");
+        if (!preserved_source || !preserved_controls)
+            return abort_case(context, "material_surface_readonly_objects_changed");
+        CHECK(guarded.before[0] == 0xa7a7 && guarded.before[1] == 0xa7a7 &&
+              guarded.after[0] == 0xa7a7 && guarded.after[1] == 0xa7a7, "material_surface_output_canaries");
+        CHECK(all_bytes(storage->placements[placement], GUARD + offset, 0xa7) &&
+              all_bytes(bytes + SLOT_BYTES, GUARD + 8 - offset, 0xa7), "material_surface_source_margin_canaries");
+        stale = view;
+        before = guarded.value;
+        int unloaded = cache_material_unload(&control, &result);
+        CHECK(unloaded, "material_surface_unload_before_source_change");
+        if (!unloaded)
+            return abort_case(context, "material_surface_unload");
+        CHECK(!cache_material_get_material_surface(&stale, 1, 0, &guarded.value, &result) &&
+              result.error == CACHE_MATERIAL_STATE && !memcmp(&guarded.value, &before, sizeof(before)),
+              "material_surface_unloaded_child_atomic");
+    }
     return 0;
 }
 
@@ -462,10 +603,17 @@ static int edges(struct context *context, struct storage *storage)
     CHECK(cache_material_unload(&control, &result), "empty_unload");
     CHECK(cache_material_bind(&control, &parent, storage->work + GUARD, WORK_BYTES, &view, &result), "empty_rebind");
     struct cache_bsp_result bsp_result;
-    CHECK(cache_bsp_unload(&bsp, &bsp_result) && storage->owner.live, "BSP_parent_unload_keeps_outer_owner_live");
+    int parent_unloaded = cache_bsp_unload(&bsp, &bsp_result) && storage->owner.live;
+    CHECK(parent_unloaded, "BSP_parent_unload_keeps_outer_owner_live");
+    if (!parent_unloaded)
+        return abort_case(context, "BSP_parent_unload_before_child_overwrite");
     memset(&control, 0x9f, sizeof(control));
     CHECK(!cache_material_get_root(&view, &root, &result) && result.error == CACHE_MATERIAL_STATE,
           "BSP_parent_epoch_rejected_before_destroyed_material_control");
+    struct cache_material_surface_projection surface = {{0x5a5a, 0xa7a7, 0xffff}}, surface_before = surface;
+    CHECK(!cache_material_get_material_surface(&view, 0, 0, &surface, &result) &&
+          result.error == CACHE_MATERIAL_STATE && !memcmp(&surface, &surface_before, sizeof(surface)),
+          "material_surface_unloaded_BSP_before_destroyed_child_control");
     return 0;
 }
 
@@ -506,13 +654,22 @@ static int arena_backing(struct context *context, struct storage *storage)
     if (!prepared) { failed = abort_case(context, "arena_material_bind"); goto cleanup; }
     struct cache_material_root_projection root;
     BACKING_CHECK(cache_material_get_root(&view, &root, &result), "live_arena_children_query");
-    BACKING_CHECK(cache_arena_owner_release(&owner, &arena), "release_arena_before_overwrite");
+    struct cache_material_surface_projection surface = {{0x5a5a, 0xa7a7, 0xffff}}, surface_before = surface;
+    prepared = cache_arena_owner_release(&owner, &arena);
+    BACKING_CHECK(prepared, "release_arena_before_overwrite");
+    if (!prepared) { failed = abort_case(context, "arena_release_before_overwrite"); goto cleanup; }
     memset(backing, 0xae, arena_bytes);
     BACKING_CHECK(!cache_material_get_root(&view, &root, &result) && result.error == CACHE_MATERIAL_STATE,
                   "overwritten_entire_parent_arena_rejected_before_both_child_controls");
+    BACKING_CHECK(!cache_material_get_material_surface(&view, 1, 0, &surface, &result) &&
+                  result.error == CACHE_MATERIAL_STATE && !memcmp(&surface, &surface_before, sizeof(surface)),
+                  "material_surface_parent_release_before_overwritten_arena_child_controls");
     BACKING_CHECK(cache_arena_owner_bind(&owner, &plan, backing, arena_bytes, &arena), "same_address_arena_rebind");
     BACKING_CHECK(!cache_material_get_root(&view, &root, &result) && result.error == CACHE_MATERIAL_STATE,
                   "same_address_rebound_arena_old_handle_rejects_before_children");
+    BACKING_CHECK(!cache_material_get_material_surface(&view, 1, 0, &surface, &result) &&
+                  result.error == CACHE_MATERIAL_STATE && !memcmp(&surface, &surface_before, sizeof(surface)),
+                  "material_surface_rebound_arena_before_overwritten_child_controls");
 cleanup:
     if (owner.live && !cache_arena_owner_release(&owner, &arena))
         failed = abort_case(context, "arena_cleanup_release");
@@ -544,7 +701,10 @@ static int lifecycle(struct context *context, struct storage *storage)
         memset(&root, 0x5a, sizeof(root));
         struct cache_material_root_projection before = root;
         struct cache_material_surface_projection surface = {{0x5a5a, 0xa7a7, 0xffff}}, surface_before = surface;
-        CHECK(cache_arena_owner_release(&storage->owner, &arena), "outer_release");
+        int released = cache_arena_owner_release(&storage->owner, &arena);
+        CHECK(released, "outer_release");
+        if (!released)
+            return abort_case(context, "outer_release_before_child_overwrite");
         /* Deliberately destroy the now-inactive child and published workspace.
          * Stale-view queries must reject on the copied parent before either. */
         memset(&control, 0x8f, sizeof(control));
@@ -554,6 +714,9 @@ static int lifecycle(struct context *context, struct storage *storage)
               !memcmp(&root, &before, sizeof(root)), "outer_release_reject_before_destroyed_child_workspace");
         CHECK(!cache_material_get_surface(&view, 0, &surface, &result) && result.error == CACHE_MATERIAL_STATE &&
               !memcmp(&surface, &surface_before, sizeof(surface)), "surface_outer_release_reject_before_destroyed_controls_workspace");
+        CHECK(!cache_material_get_material_surface(&view, 1, 0, &surface, &result) &&
+              result.error == CACHE_MATERIAL_STATE && !memcmp(&surface, &surface_before, sizeof(surface)),
+              "material_surface_outer_release_before_destroyed_controls_workspace");
         used = 77;
         CHECK(!cache_material_serialize(&view, storage->serial, SERIAL_BYTES, &used, &result) &&
               result.error == CACHE_MATERIAL_STATE && used == 77, "stale_serialize_unchanged_used");
@@ -561,6 +724,9 @@ static int lifecycle(struct context *context, struct storage *storage)
             return abort_case(context, "alternate_prepare");
         CHECK(!cache_material_get_root(&view, &root, &result) && result.error == CACHE_MATERIAL_STATE,
               "alternate_owner_placement_generation_rejects_old_view");
+        CHECK(!cache_material_get_material_surface(&view, 1, 0, &surface, &result) &&
+              result.error == CACHE_MATERIAL_STATE && !memcmp(&surface, &surface_before, sizeof(surface)),
+              "material_surface_alternate_owner_generation_atomic");
     }
     return 0;
 }
@@ -651,7 +817,10 @@ static int surface_edges(struct context *context, struct storage *storage, unsig
               !memcmp(storage->serial, bytes + ROOT_AT, 648), "surface_empty_unused_address_preserved_by_root_serialization");
     }
     struct cache_bsp_result bsp_result;
-    CHECK(cache_bsp_unload(&bsp, &bsp_result), "surface_parent_unload");
+    int parent_unloaded = cache_bsp_unload(&bsp, &bsp_result);
+    CHECK(parent_unloaded, "surface_parent_unload");
+    if (!parent_unloaded)
+        return abort_case(context, "surface_parent_unload_before_child_overwrite");
     memset(&control, 0x9f, sizeof(control));
     memset(storage->work, 0x7d, WORK_BYTES + GUARD * 2);
     CHECK(!cache_material_get_surface(&view, 0, &surface, &result) && result.error == CACHE_MATERIAL_STATE &&
@@ -763,6 +932,53 @@ static int limits(struct context *context, struct storage *storage)
                 used == req.serialized_bytes && !memcmp(serialized + 680, large + MAT_AT, 2048u * 256u),
                 "all2048_roundtrip_raw_materials");
     LIMIT_CHECK(cache_material_unload(&control, &result), "large_child_unload");
+    if (control.live) { failed = abort_case(context, "large_child_still_live"); goto cleanup; }
+    struct cache_bsp_result bsp_result;
+    prepared = cache_bsp_unload(&bsp, &bsp_result);
+    LIMIT_CHECK(prepared, "maximum_material_surface_parent_unload_before_edit");
+    if (!prepared) { failed = abort_case(context, "maximum_material_surface_parent_unload"); goto cleanup; }
+    word(large, MAT_AT + 24, 131072);
+    word(large, MAT_AT + 2047u * 256u + 20, 131071);
+    word(large, MAT_AT + 2047u * 256u + 24, 1);
+    prepared = cache_bsp_bind(&bsp, &owner, &handle, TAG_BYTES, 8u * 1048576u, 0, &parent, &bsp_result);
+    LIMIT_CHECK(prepared, "maximum_material_surface_parent_rebind");
+    if (!prepared) { failed = abort_case(context, "maximum_material_surface_parent_bind"); goto cleanup; }
+    prepared = cache_material_bind(&control, &parent, workspace, req.workspace_bytes, &view, &result);
+    LIMIT_CHECK(prepared, "maximum_material_surface_ranges_publication");
+    if (!prepared) { failed = abort_case(context, "maximum_material_surface_bind"); goto cleanup; }
+    LIMIT_CHECK(cache_material_get_material_surface(&view, 0, 0, &surface, &result) &&
+                surface.vertex_indices[0] == 65535 && surface.vertex_indices[1] == 32768 && !surface.vertex_indices[2],
+                "maximum_material_surface_range_first_record");
+    LIMIT_CHECK(cache_material_get_material_surface(&view, 0, 131071, &surface, &result) &&
+                surface.vertex_indices[0] == 1 && surface.vertex_indices[1] == 65534 && surface.vertex_indices[2] == 32767,
+                "maximum_material_surface_range_last_record");
+    LIMIT_CHECK(cache_material_get_material_surface(&view, 2047, 0, &surface, &result) &&
+                surface.vertex_indices[0] == 1 && surface.vertex_indices[1] == 65534 && surface.vertex_indices[2] == 32767,
+                "last_material_one_record_at_maximum_root_end");
+    surface_before = surface;
+    LIMIT_CHECK(!cache_material_get_material_surface(&view, 0, 131072, &surface, &result) &&
+                result.error == CACHE_MATERIAL_COUNT && !memcmp(&surface, &surface_before, sizeof(surface)),
+                "maximum_material_surface_local_onepast_atomic");
+    LIMIT_CHECK(!cache_material_get_material_surface(&view, 2047, 1, &surface, &result) &&
+                result.error == CACHE_MATERIAL_COUNT && !memcmp(&surface, &surface_before, sizeof(surface)),
+                "last_material_end_local_onepast_atomic");
+    LIMIT_CHECK(!cache_material_get_material_surface(&view, 0, SIZE_MAX, &surface, &result) &&
+                result.error == CACHE_MATERIAL_COUNT && !memcmp(&surface, &surface_before, sizeof(surface)),
+                "maximum_material_surface_SIZE_MAX_before_addition");
+    LIMIT_CHECK(!cache_material_get_material_surface(&view, 2048, 0, &surface, &result) &&
+                result.error == CACHE_MATERIAL_COUNT && !memcmp(&surface, &surface_before, sizeof(surface)),
+                "maximum_material_table_local_accessor_onepast_atomic");
+    LIMIT_CHECK(cache_material_unload(&control, &result), "maximum_material_surface_unload");
+    if (control.live) { failed = abort_case(context, "maximum_material_surface_still_live"); goto cleanup; }
+    prepared = cache_bsp_unload(&bsp, &bsp_result);
+    LIMIT_CHECK(prepared, "maximum_material_surface_parent_unload_before_restore");
+    if (!prepared) { failed = abort_case(context, "maximum_material_surface_parent_restore_unload"); goto cleanup; }
+    word(large, MAT_AT + 24, 3);
+    word(large, MAT_AT + 2047u * 256u + 20, 0);
+    word(large, MAT_AT + 2047u * 256u + 24, 3);
+    prepared = cache_bsp_bind(&bsp, &owner, &handle, TAG_BYTES, 8u * 1048576u, 0, &parent, &bsp_result);
+    LIMIT_CHECK(prepared, "maximum_material_surface_parent_restore_rebind");
+    if (!prepared) { failed = abort_case(context, "maximum_material_surface_parent_restore_bind"); goto cleanup; }
     word(large, MAT_AT + 180, 64001);
     LIMIT_CHECK(!cache_material_measure(&parent, &req, &result) && result.error == CACHE_MATERIAL_COUNT,
                 "vertex64001_reject");
@@ -810,6 +1026,9 @@ int cache_material_fixture(FILE *report, int collect)
     for (unsigned placement = 0; placement < 2 && !aborted; ++placement)
         for (unsigned offset = 0; offset < 8 && !aborted; ++offset)
             aborted = surface_edges(context, &storage, placement, offset);
+    for (unsigned placement = 0; placement < 2 && !aborted; ++placement)
+        for (unsigned offset = 0; offset < 8 && !aborted; ++offset)
+            aborted = material_surface_edges(context, &storage, placement, offset);
     static const struct mutation mutations[] = {
         {"negative_lightmaps", ROOT_AT + 260, UINT32_MAX, 4, CACHE_MATERIAL_COUNT},
         {"overmaximum_lightmaps", ROOT_AT + 260, 129, 4, CACHE_MATERIAL_COUNT},

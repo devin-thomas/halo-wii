@@ -120,6 +120,13 @@ int cache_material_get_lightmap(const struct cache_material_view *, size_t,
                                  struct cache_material_lightmap_projection *, struct cache_material_result *);
 int cache_material_get_material(const struct cache_material_view *, size_t,
                                  struct cache_material_projection *, struct cache_material_result *);
+/* Select a surface within the material's validated signed source range. Local
+ * ordinals must be below that material's count even when the corresponding root
+ * ordinal exists. Index words remain opaque; vertex origin/bounds are not inferred.
+ * Output/result and stale-view behavior match the whole-root surface getter. */
+int cache_material_get_material_surface(const struct cache_material_view *, size_t material_index,
+                                        size_t local_ordinal, struct cache_material_surface_projection *,
+                                        struct cache_material_result *);
 
 /* Selected raw spans serialize root, all lightmaps, then flattened materials.
  * Known projected numeric words are explicitly rewritten LE over opaque copies.

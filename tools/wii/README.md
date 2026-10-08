@@ -327,6 +327,14 @@ lifetimes before source access and preserves caller output on rejection. This
 qualifies numeric triangle-record interpretation only. Vertex-index origin,
 per-material vertex bounds, vertex conversion and rendering remain separate.
 
+`cache_material_get_material_surface` accepts a flattened material index and a
+local surface ordinal. It enforces the selected material's signed source range
+before composing the root ordinal, then reuses the same parent-first getter and
+LE16 projection. A local one-past ordinal rejects even when the root record
+exists. Empty, overlapping and out-of-order ranges retain their source meaning;
+no vertex-origin or topology policy is added. Layouts, workspace, reservations
+and inspection serialization remain unchanged by this accessor.
+
 The root projection grows from 24 to 36 bytes, increasing the two-half workspace
 by 24 payload bytes. For two lightmaps and 34 materials, payload is 8,856 bytes;
 an authored model using compiled PPC layouts charges 64 additional arena bytes
