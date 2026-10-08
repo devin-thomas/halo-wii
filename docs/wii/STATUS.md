@@ -167,3 +167,10 @@ count-derived environment payload extents. All lightmap vertex counts are zero;
 shader association and vertex contents remain unqualified. A separately charged
 partial native projection is proposed; no campaign decoder/runtime is implemented
 and no new extraction, SD write or target launch occurs.
+
+The [fresh campaign tag identity prerequisite](evidence/2026-10-07-campaign-tag-identity.md)
+now checks all 34 selected shader references against newly derived raw tags.
+Full datum, primary group, shader ancestry and bounded names pass, with 7,797
+independent checks and zero discrepancies. This advances metadata preparation;
+shader bodies, native target execution, geometry and ticket blockers remain open.
+No additional target launch or SD write occurs.

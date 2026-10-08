@@ -1,0 +1,64 @@
+{
+  "scope": "fresh_campaign_tag_shader_reference_identity_prerequisite",
+  "source_commit": "4f3d1d3eec3362d8a4e7713175a4fc4e243d4613",
+  "source_dirty_at_inspection": false,
+  "tag_bytes": 16995988,
+  "tag_sha256": "8501f4ad215a630d14220140e27f8a9c30a5ed18fe459ac07c686e827a0ab7bc",
+  "tag_crc32": 2283567944,
+  "tag_count": 3647,
+  "BSP_bytes": 1288192,
+  "BSP_sha256": "7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b",
+  "scenario_full_datum": 3782475776,
+  "BSP_full_datum": 4021620286,
+  "BSP_ordinal": 12,
+  "BSP_instance_unloaded_root_word": 0,
+  "shader_references": 34,
+  "shader_full_datum_primary_group_and_shdr_ancestor_match": true,
+  "both_reference_and_instance_names_bounded_NUL": true,
+  "name_bytes_exported": false,
+  "name_length_zero_preserved": true,
+  "name_address_equality": "observation_only_not_validation_policy",
+  "derivation": {
+    "inspector": "tools/wii/inspect_cache_residency.py",
+    "inspector_sha256": "1717be784889c79b8ec3bcbaa33aedf708cb434b046cb4ac050d8a6f79921bbe",
+    "output_chunk_bound": 65536,
+    "retained_tag_bound": 23068672,
+    "decoder_EOF_and_exact_declared_output": true,
+    "declared_map_bytes": 279763456,
+    "source_stat_unchanged": true,
+    "source_metadata_unchanged": true,
+    "derivation_exit_code": 0,
+    "BSP_inspector_exit_code": 0,
+    "canonical_checksum_newly_validated": false
+  },
+  "independent_audit": {
+    "checks": 7797,
+    "discrepancies": 0,
+    "sha256": "de0a4519e6af3c9b559b7dd7fe3430225e6fc834e478bc7c4dc142a5f7c99d8a",
+    "scope": "all3647_index_identities_names_groups_13_BSP_refs_34_shader_refs",
+    "whole_map_hash_and_inflate_repeated": false
+  },
+  "raw_record_sha256": {
+    "tag-inspection.json": "1cf99618796949b7623061adbc5063d112d1494baffcfc19a4a155df494d8913",
+    "shader-reference-proof.json": "b0a6942676060e35fd240b5e616c377c229939bfcec528e085caea5b847f2dfe",
+    "generic-bsp-goldens.json": "bdda1fc341fed8673211b604447061a7f27d6f223a6b3c7612127c096207fc4d",
+    "derivation-command.json": "307d579a82f3a0015be47e34efb9d8f783dc27e6bfca274aa763a2300c111649",
+    "BSP-command.json": "13e3b7f067fb81d89d04e31a7da827a29222abd838f14c710087897e3e7de6b3"
+  },
+  "new_target_runs": 0,
+  "new_SD_writes": 0,
+  "limitations": [
+    "bounded_names_not_shader_body_or_rendering_validation",
+    "metadata_identity_not_native_decoder_lifetime_or_target_execution",
+    "raw_full_BSP_goldens_differ_from_selected9416_material_concat",
+    "derivation_source_stat_equality_booleans_not_numeric_snapshots_or_filesystem_locks",
+    "independent_audit_uses_retained_map_hash_EOF_command_evidence_not_new_decompression",
+    "canonical_checksum_geometry_gameplay_physical_Wii_unqualified"
+  ],
+  "tickets": {
+    "HWI-005": "BLOCKED",
+    "HWI-006": "BLOCKED",
+    "HWI-007": "TODO",
+    "HWI-008": "TODO"
+  }
+}
