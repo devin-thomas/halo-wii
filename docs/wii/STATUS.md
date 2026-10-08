@@ -152,3 +152,11 @@ Original capacities remain, with 1,796,360 charged PPC MEM2 bytes remaining.
 Both exact-DOL Dolphin launches pass guest checks then fault naturally with
 host 0xc0000409. Earlier failures remain; engine strategy, geometry, hardware,
 gameplay and ticket blockers are unchanged.
+
+The [bounded campaign BSP inspection](evidence/2026-10-07-campaign-bsp-inspection.md)
+finds 34/34 actual descriptors and nonempty selected collision, surface,
+lightmap and cluster blocks in an authorized fallback sample. This is read-only
+extent/count inspection; nested fields and geometry remain unqualified.
+Duplicate full staging/serialization would exceed the measured PPC remainder;
+next preparation uses bounded projection with the existing tag reservation.
+No new runtime launch or SD write occurs, and ticket blockers remain.

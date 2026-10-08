@@ -1,0 +1,366 @@
+{
+  "scope": "read_only_campaign_BSP_header_and_five_root_block_extents",
+  "source_commit": "e19b2de2bfff47816a5950167d75b8f90a74a655",
+  "samples": [
+    {
+      "scope": "read_only_selected_campaign_BSP_descriptor_and_five_root_block_extent_inspection",
+      "source_commit": "e19b2de2bfff47816a5950167d75b8f90a74a655",
+      "source_dirty": false,
+      "source_metadata_sha256": "9a08e9c3f3f9b4e86e8b0c9ddd725e4874c7a1ad8e67eed0d2279cca56def2a9",
+      "source_hashes": {
+        "source/structures/structure_bsp_definitions.h": "3fb20d1232de1908c45163cff69b7271b8ce3ca502a0c4105cfd06ec8a3ee279",
+        "source/structures/structures.h": "719c3cf2f61d85ce349802aa3df7d17debafefb021a3b7de7f036a76f0e6c327",
+        "port/linux/game/tag_schema_collision.c": "8083856c54b2798b7ac8855b4ff68e5db7582506fb63cc3560f1b4fc059e07ed",
+        "port/linux/game/cache_file_formats.c": "5358af0e0ee7af59956a831a4348ac5a538a67392cecb4c08e1829b3d534bad4",
+        "source/cache/cache_files.c": "69ec94025580cf603b06b83ede8983d27163bf06e162e1cbf27611a174165ade",
+        "port/linux/game/tag_validate.c": "8e13cdb4157a9750f08e5bf851bc3ea3c665565301285090c9595778ab86a70f"
+      },
+      "map_ordinal": 14,
+      "BSP_ordinal": 9,
+      "reference": {
+        "ordinal": 9,
+        "file_offset": 53688320,
+        "bytes": 8192,
+        "encoded_address": 2174369792,
+        "tag_window_end_offset": 23068672
+      },
+      "source_map_bytes": 170405888,
+      "source_map_sha256": "7c6dccc9f928f4a44db992c4d6f5fa6191e9cfd331bb0d0b631540f0fc9bc796",
+      "declared_map_bytes": 274594816,
+      "tag_metadata_bytes": 15017804,
+      "tag_metadata_descriptor_counts_not_BSP_counts": [
+        558,
+        558
+      ],
+      "output_bytes": 8192,
+      "output_sha256": "fa15c57a0f556df8240abc4a12f38440729d0bec29c1e5f9a0dfe44d30a1b78d",
+      "output_crc32": "42eebf23",
+      "compressed_bytes_read": 22413312,
+      "compressed_bytes_consumed": 22365340,
+      "inflated_prefix_bytes_produced": 53694464,
+      "inflate_chunk_count": 975,
+      "maximum_output_chunk": 65536,
+      "inflate_chunk_bound": 65536,
+      "retained_BSP_bound": 8192,
+      "decoder_eof_observed": false,
+      "full_stream_revalidated": false,
+      "canonical_checksum_validated": false,
+      "source_stat_identity_unchanged": true,
+      "metadata_unchanged": true,
+      "inspection": {
+        "header_bytes": 24,
+        "encoded_base": 2174369792,
+        "root_span": {
+          "offset": 24,
+          "bytes": 648
+        },
+        "descriptor_counts": [
+          0,
+          0
+        ],
+        "descriptor_tables": [
+          {
+            "count": 0,
+            "span": {
+              "offset": 0,
+              "bytes": 0
+            },
+            "table_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "Data_addresses_bounded_for_bytes": 1,
+            "minimum_Data_offset": null,
+            "maximum_Data_offset": null
+          },
+          {
+            "count": 0,
+            "span": {
+              "offset": 0,
+              "bytes": 0
+            },
+            "table_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "Data_addresses_bounded_for_bytes": 1,
+            "minimum_Data_offset": null,
+            "maximum_Data_offset": null
+          }
+        ],
+        "root_blocks": [
+          {
+            "field": "collision_materials",
+            "root_field_offset": 164,
+            "stride": 20,
+            "source_validator_maximum": 512,
+            "count": 0,
+            "span": {
+              "offset": 0,
+              "bytes": 0
+            },
+            "definition_word_retained_as_opaque": 0
+          },
+          {
+            "field": "collision_bsp",
+            "root_field_offset": 176,
+            "stride": 96,
+            "source_validator_maximum": 1,
+            "count": 1,
+            "span": {
+              "offset": 672,
+              "bytes": 96
+            },
+            "definition_word_retained_as_opaque": 0
+          },
+          {
+            "field": "surfaces",
+            "root_field_offset": 248,
+            "stride": 6,
+            "source_validator_maximum": 131072,
+            "count": 0,
+            "span": {
+              "offset": 0,
+              "bytes": 0
+            },
+            "definition_word_retained_as_opaque": 0
+          },
+          {
+            "field": "lightmaps",
+            "root_field_offset": 260,
+            "stride": 32,
+            "source_validator_maximum": 128,
+            "count": 2,
+            "span": {
+              "offset": 1532,
+              "bytes": 64
+            },
+            "definition_word_retained_as_opaque": 0
+          },
+          {
+            "field": "clusters",
+            "root_field_offset": 308,
+            "stride": 104,
+            "source_validator_maximum": 512,
+            "count": 1,
+            "span": {
+              "offset": 1596,
+              "bytes": 104
+            },
+            "definition_word_retained_as_opaque": 0
+          }
+        ],
+        "native_endian_projection_performed": false,
+        "nested_block_contents_validated": false,
+        "geometry_payload_lengths_validated": false,
+        "tag_instance_full_datum_rechecked_from_raw_tags": false
+      },
+      "limitations": [
+        "metadata_reference_association_not_new_raw_tag_index_identity_proof",
+        "source_validator_maxima_not_independent_Xbox_hardcaps",
+        "read_only_stat_guard_not_filesystem_lock_or_transient_writer_exclusion",
+        "root_offsets_declaration_derived_except_explicit_lightmaps_constant",
+        "PC_uncompressed_geometry_verifier_not_applied_to_Xbox",
+        "no_engine_memory_runtime_rendering_gameplay_or_hardware_qualification"
+      ],
+      "helper_sha256": "c0bb1dd7ce7887614aadccf51fb91209b1bfdd03430995ca98889b19ebaa79b6",
+      "raw_record_sha256": "d1be3ad5693ab943f24fc1a6e33c6fb774bbe97a8bcb5eb8f87191607381b13b"
+    },
+    {
+      "scope": "read_only_selected_campaign_BSP_descriptor_and_five_root_block_extent_inspection",
+      "source_commit": "e19b2de2bfff47816a5950167d75b8f90a74a655",
+      "source_dirty": false,
+      "source_metadata_sha256": "9a08e9c3f3f9b4e86e8b0c9ddd725e4874c7a1ad8e67eed0d2279cca56def2a9",
+      "source_hashes": {
+        "source/structures/structure_bsp_definitions.h": "3fb20d1232de1908c45163cff69b7271b8ce3ca502a0c4105cfd06ec8a3ee279",
+        "source/structures/structures.h": "719c3cf2f61d85ce349802aa3df7d17debafefb021a3b7de7f036a76f0e6c327",
+        "port/linux/game/tag_schema_collision.c": "8083856c54b2798b7ac8855b4ff68e5db7582506fb63cc3560f1b4fc059e07ed",
+        "port/linux/game/cache_file_formats.c": "5358af0e0ee7af59956a831a4348ac5a538a67392cecb4c08e1829b3d534bad4",
+        "source/cache/cache_files.c": "69ec94025580cf603b06b83ede8983d27163bf06e162e1cbf27611a174165ade",
+        "port/linux/game/tag_validate.c": "8e13cdb4157a9750f08e5bf851bc3ea3c665565301285090c9595778ab86a70f"
+      },
+      "map_ordinal": 4,
+      "BSP_ordinal": 12,
+      "reference": {
+        "ordinal": 12,
+        "file_offset": 40673280,
+        "bytes": 1288192,
+        "encoded_address": 2173089792,
+        "tag_window_end_offset": 23068672
+      },
+      "source_map_bytes": 186873856,
+      "source_map_sha256": "0a7b26d6d828e7b773d36d9d5c798b9bf4b143332301a0c0e7a3d685782eab48",
+      "declared_map_bytes": 279763456,
+      "tag_metadata_bytes": 16995988,
+      "tag_metadata_descriptor_counts_not_BSP_counts": [
+        722,
+        722
+      ],
+      "output_bytes": 1288192,
+      "output_sha256": "7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b",
+      "output_crc32": "adf28ea7",
+      "compressed_bytes_read": 18022400,
+      "compressed_bytes_consumed": 17994346,
+      "inflated_prefix_bytes_produced": 41959424,
+      "inflate_chunk_count": 772,
+      "maximum_output_chunk": 65536,
+      "inflate_chunk_bound": 65536,
+      "retained_BSP_bound": 1288192,
+      "decoder_eof_observed": false,
+      "full_stream_revalidated": false,
+      "canonical_checksum_validated": false,
+      "source_stat_identity_unchanged": true,
+      "metadata_unchanged": true,
+      "inspection": {
+        "header_bytes": 24,
+        "encoded_base": 2173089792,
+        "root_span": {
+          "offset": 474080,
+          "bytes": 648
+        },
+        "descriptor_counts": [
+          34,
+          34
+        ],
+        "descriptor_tables": [
+          {
+            "count": 34,
+            "span": {
+              "offset": 24,
+              "bytes": 408
+            },
+            "table_sha256": "fb3eafeeaec5666519d7058bbb0746ee3eadb4ea50e8a40c522aea81bfb5f793",
+            "Data_addresses_bounded_for_bytes": 1,
+            "minimum_Data_offset": 864,
+            "maximum_Data_offset": 471648
+          },
+          {
+            "count": 34,
+            "span": {
+              "offset": 432,
+              "bytes": 408
+            },
+            "table_sha256": "46f40950307da1c68e012ad1c1f7b4dc6ecdaab765789a17466edbf7afff8928",
+            "Data_addresses_bounded_for_bytes": 1,
+            "minimum_Data_offset": 4192,
+            "maximum_Data_offset": 474080
+          }
+        ],
+        "root_blocks": [
+          {
+            "field": "collision_materials",
+            "root_field_offset": 164,
+            "stride": 20,
+            "source_validator_maximum": 512,
+            "count": 17,
+            "span": {
+              "offset": 474728,
+              "bytes": 340
+            },
+            "definition_word_retained_as_opaque": 0
+          },
+          {
+            "field": "collision_bsp",
+            "root_field_offset": 176,
+            "stride": 96,
+            "source_validator_maximum": 1,
+            "count": 1,
+            "span": {
+              "offset": 475068,
+              "bytes": 96
+            },
+            "definition_word_retained_as_opaque": 0
+          },
+          {
+            "field": "surfaces",
+            "root_field_offset": 248,
+            "stride": 6,
+            "source_validator_maximum": 131072,
+            "count": 8084,
+            "span": {
+              "offset": 1180616,
+              "bytes": 48504
+            },
+            "definition_word_retained_as_opaque": 0
+          },
+          {
+            "field": "lightmaps",
+            "root_field_offset": 260,
+            "stride": 32,
+            "source_validator_maximum": 128,
+            "count": 2,
+            "span": {
+              "offset": 1229120,
+              "bytes": 64
+            },
+            "definition_word_retained_as_opaque": 0
+          },
+          {
+            "field": "clusters",
+            "root_field_offset": 308,
+            "stride": 104,
+            "source_validator_maximum": 512,
+            "count": 11,
+            "span": {
+              "offset": 1238000,
+              "bytes": 1144
+            },
+            "definition_word_retained_as_opaque": 0
+          }
+        ],
+        "native_endian_projection_performed": false,
+        "nested_block_contents_validated": false,
+        "geometry_payload_lengths_validated": false,
+        "tag_instance_full_datum_rechecked_from_raw_tags": false
+      },
+      "limitations": [
+        "metadata_reference_association_not_new_raw_tag_index_identity_proof",
+        "source_validator_maxima_not_independent_Xbox_hardcaps",
+        "read_only_stat_guard_not_filesystem_lock_or_transient_writer_exclusion",
+        "root_offsets_declaration_derived_except_explicit_lightmaps_constant",
+        "PC_uncompressed_geometry_verifier_not_applied_to_Xbox",
+        "no_engine_memory_runtime_rendering_gameplay_or_hardware_qualification"
+      ],
+      "helper_sha256": "c0bb1dd7ce7887614aadccf51fb91209b1bfdd03430995ca98889b19ebaa79b6",
+      "raw_record_sha256": "f888c5beb931ba130000e141e3d40ea8bb6b13656a609c9909ce02b497da4fd9"
+    }
+  ],
+  "runtime_runs": 0,
+  "SD_writes": 0,
+  "source_capacities_reduced": false,
+  "qualification": {
+    "selected_descriptor_extents": "pass",
+    "selected_root_block_extents": "pass",
+    "nested_fields_or_geometry": "unqualified",
+    "PPC_campaign_runtime": "untested",
+    "engine_memory_strategy": "unqualified",
+    "HWI-005": "BLOCKED",
+    "HWI-006": "BLOCKED",
+    "HWI-007": "TODO",
+    "HWI-008": "TODO"
+  },
+  "memory_candidate": {
+    "resident_BSP": "existing_22MiB_tag_slot",
+    "streaming_chunk_bound": 65536,
+    "duplicate_fallback_stage_and_serialized_bytes": 2576384,
+    "replaces_current_stage_and_serialized_bytes": 4096,
+    "extra_duplicate_bytes": 2572288,
+    "current_PPC_remaining": 1796360,
+    "duplicate_exceeds_remaining_by": 775928,
+    "proposal": "direct_existing_slot_streaming_plus_bounded_projection_and_chunked_serialization",
+    "proposal_measured_on_target": false
+  },
+  "retained_failure": {
+    "initial_stat_guard": "exit1_cross_API_ctime_semantics_mismatch_no_sample_written",
+    "failed_helper_sha256": "7d616a4be4832cfc34ced1825d001682300db30fb1dd080bc7ac71463a5a781b",
+    "failed_record_sha256": "4170048ce57d5fe8be44f748670627e6b5b5cffbe7459ba4c60b5483aa875ab3",
+    "fix": "cross_API_dev_ino_size_mtime_same_API_before_after_ctime_full_stored_hash",
+    "independent_stat_reproduction": "isolated_comparison_exact_script_attempt_preempted_by_existing_output"
+  },
+  "next_scope": "bounded_named_root_lightmap_material_metadata_inspection_before_native_projection",
+  "cache_header_bytes": 2048,
+  "inflated_prefix_count_scope": "excludes_cache_header_logical_file_offsets_include_header",
+  "independent_audit": {
+    "checks": 217,
+    "inconsistencies": 0,
+    "record_sha256": "8e5e34f43e8aef39df9a38eb99c62e4d237824b936d76325df0f4834e462f09b",
+    "source_gap_found": false,
+    "additional_runtime_runs": 0,
+    "additional_inflation": 0,
+    "additional_SD_writes": 0
+  }
+}
