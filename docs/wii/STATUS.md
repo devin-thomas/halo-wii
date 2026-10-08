@@ -108,3 +108,10 @@ Private staging/read-back hashes and decompression/tag/BSP checks are recorded.
 Canonical checksums/authenticity, full conversion, Wii address/memory/endian
 loading, runtime and gameplay remain unqualified. Earlier ABI gaps/shutdown
 faults stay preserved; HWI-005/006 remain blocked and HWI-007/008 incomplete.
+
+Owned UI index/address preparation: host and emulated PPC pass 983 actual
+instances through eight owned memory round trips, plus 1,916 synthetic cases /
+8,437 checks each. A separate MEM2 copy restores its reservation; arena/heap
+observations do not qualify full peak or fragmentation. Fixed Xbox regions and
+current native capacities remain measured blockers; no full-map residency,
+nested conversion or gameplay pass. See [address evidence](evidence/2026-10-07-owned-cache-address.md).
