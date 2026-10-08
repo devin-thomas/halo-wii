@@ -1,0 +1,134 @@
+{
+  "scope": "one_corrected_original_probe_hardware_watch_startup_capture_not_shutdown_completion",
+  "source_commit": "3bca2e612cc118df5c5aa354ec7deb61aeb31ae6",
+  "build_id": "0f01e11c08c44932",
+  "raw_result_sha256": "8701f8fc33a17dab2e12420cced0aac47f8a2a56a49e3adc8d4027db62074534",
+  "MI_sha256": "cb09100433887a7c08bc7b2e32ae4feb3ee7a03fe585d5e32880ae9fe34a02d1",
+  "controller_sha256": "575f76b614824bac9c8e43eda6f7924ec8c44f6384392368b9f75a5d6ded2501",
+  "section_guard_sha256": "4391c5c1fbc889d2498aaf7135075cffb62dcb2743731f186cc0c3fd69258ff6",
+  "setup": {
+    "qualified": true,
+    "early_init_file_before_symbol_loading": true,
+    "live_ASLR_sections_instruction_prefixes_verified": true,
+    "zero_initial_compared_word": true,
+    "zero_initial_guard": true,
+    "writable_committed_MEM_IMAGE_page": true,
+    "page_protection_numeric": 8,
+    "startup_numeric_span_bytes": 20,
+    "hardware_WRITE_watchpoint_bytes": 4,
+    "PE_entry_first_after_hardware_placement": true,
+    "new_thread_coverage": "trigger observed on debugger thread69; complete new-thread coverage unqualified"
+  },
+  "capture": {
+    "total_stops": 64,
+    "PE_entry_markers": 1,
+    "reset_entries": 1,
+    "accessor_entries": 1,
+    "hardware_value_changes": 1,
+    "other_SIGSEGV_stops": 60,
+    "wall_seconds": 14.943,
+    "bound_seconds": 120,
+    "per_stop_seconds": 15,
+    "targeted_chronology": [
+      {
+        "event": 1,
+        "seconds": 0.71,
+        "kind": "PE-entry",
+        "word": 0
+      },
+      {
+        "event": 2,
+        "seconds": 4.197,
+        "kind": "known reset entry",
+        "RVA": "0x8d1860",
+        "word": 0
+      },
+      {
+        "event": 3,
+        "seconds": 4.242,
+        "kind": "accessor entry",
+        "RVA": "0x8d1450",
+        "word": 0
+      },
+      {
+        "event": 4,
+        "seconds": 4.306,
+        "kind": "hardware value change",
+        "post_PC_RVA": "0x8d15e2",
+        "old_word": 0,
+        "new_word": 32348
+      }
+    ],
+    "helper_return_observed": false,
+    "callback_observed": false,
+    "fatal_compare_observed": false,
+    "termination_observed": false,
+    "signal_PC_scope": "outside recorded main image; not classified as benign, JIT, fatal or root cause"
+  },
+  "writer": {
+    "instruction_RVA": "0x8d15df",
+    "post_PC_RVA": "0x8d15e2",
+    "instruction": "MOV DWORD [RSI+0x20],ECX",
+    "store_bytes": 4,
+    "saved_ECX": 32348,
+    "new_word": 32348,
+    "RSI_measured": false,
+    "method": "all15 bounded predecessor starts ending exact hardware post-PC yield one complete instruction; narrow forward epilogue; not full entry CFG",
+    "new_unwind_fragments": 1,
+    "combined_fragments": 22,
+    "fragment_limit": 24,
+    "selected_instruction_outcomes": 29,
+    "instruction_limit": 32,
+    "forward_instructions": 14,
+    "caller_RVAs": [
+      "0x8d0af6",
+      "0x875afa",
+      "0x87c768",
+      "0xed77f",
+      "0x145697",
+      "0x14123b"
+    ],
+    "caller_bodies_decoded": false,
+    "next_store_observed": false,
+    "review_predicates": 62,
+    "review_failures": 0,
+    "review_sha256": "d4597081fecf5c8c5f6a3624061b6c2994b409f8561341bed8e2b97cbb992320"
+  },
+  "lifecycle": {
+    "natural_Dolphin_exit": false,
+    "forced_owned_cleanup": true,
+    "all_Dolphin_absent_after": true,
+    "GDB_exit_code": 0,
+    "stop_reason": "64-event capture bound reached"
+  },
+  "preservation": {
+    "sd_backup_source_after_sha256": "46c07a154b860dfb559f890c5a8424a92d21a7be75cfe4e691b656522a98cf2f",
+    "sd_changed_files": 0,
+    "sentinel_before": 2,
+    "sentinel_after": 2,
+    "prior_log_preserved": true,
+    "new_guest_report": false,
+    "exact_inputs_three_configs_unchanged": true,
+    "profile_before_files": 25,
+    "profile_after_files": 41,
+    "profile_added_files": 16,
+    "profile_modified_existing_files": [
+      "Config/TimePlayed.ini"
+    ],
+    "other_prior_files_unchanged": 24,
+    "profile_restored_or_deleted": false
+  },
+  "saved_runtime_review": {
+    "predicates": 52,
+    "failures": 0,
+    "record_sha256": "272b0774ab36c016e2873135e8cbe6cd39530909a285eb365665bf43f387ad43"
+  },
+  "limits": [
+    "Captured startup reset/accessor/write chronology is not the shutdown reset/join/callback lifecycle",
+    "Watchpoint stops after the store; RSI effective address was not independently measured and linear entry CFG was not decoded",
+    "Nearest hid export labels do not identify source ownership; no complete writers, final shutdown writer or cause proof",
+    "Sixty SIGSEGV stops consume the64-stop bound; addresses alone do not establish handled/fatal/JIT semantics",
+    "Forced cleanup is not natural host exit; no new guest report, original two-cold qualification, ABI or physical Wii acceptance",
+    "No retry in this gate, new owned input, guest/string memory inspection, manual settings change or restoration of host session metadata"
+  ]
+}

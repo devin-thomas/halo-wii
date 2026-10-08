@@ -221,3 +221,12 @@ stop,0 lifecycle events and explicit owned-process forced cleanup are retained.
 The SD backup/source/after, sentinel/log, profile/configs and exact inputs agree.
 This setup failure does not establish debugger incapability or shutdown cause;
 HWI-005/006 blockers and prior runtime/hardware limits remain open.
+
+
+The [original probe startup watchpoint capture](evidence/2026-10-08-shutdown-startup-capture.md)
+qualifies hardware placement and sees startup reset/accessor followed by word
+0 -> 32,348. A bounded writer instruction review supports the observed store,
+without source-owner or last shutdown-writer proof. Sixty exception stops consume
+the64-stop cap before shutdown; cleanup is forced, with no new guest report.
+SD/config/input identities remain; host session/play-time metadata changes are
+retained. Original shutdown/ABI and physical-Wii qualification remain open.
