@@ -148,3 +148,52 @@ named numeric fields explicitly as LE. It preserves original encoded addresses,
 so concatenated spans are not a standalone relocated cache or durable save.
 This partial representative graph does not execute widgets or qualify complete
 UI conversion, resource/BSP loading, final memory strategy, hardware or gameplay.
+## Bounded BSP residency diagnostic
+
+Run the authored BSP cases without game files:
+
+```powershell
+python tools/wii/run_cache_address.py --cc <host-gcc> --output .local/cache-bsp-synthetic --bsp-fixture
+python -m unittest discover -s tools/wii -p test_inspect_bsp_residency.py
+```
+
+For a private raw tag blob plus a raw BSP sidecar, generate a new external
+numeric inspection record:
+
+```powershell
+python tools/wii/inspect_bsp_residency.py <external-tags> <external-BSP> --declared-map-length <inflated-map-bytes> --bsp-ordinal <ordinal> --output <new-external-JSON>
+```
+
+The inspector checks the selected scenario/reference, full datum/group,
+512-byte rounded residency, 24-byte LE BSP header, opaque 648-byte root extent,
+12-byte descriptor tables and one-byte descriptor Data address bounds. It
+exposes two valid windows only: actual retained tag bytes and actual declared
+BSP bytes. Neither the unread gap nor sector-rounding tail becomes valid data.
+Source runtime BSP count is 16; the standalone/PC tool limit 32 remains separate.
+Other roots and geometry payload lengths/content are unqualified. Metadata is
+numeric/hash-only, inputs are read-only stat guarded, and output publication
+is exclusive; these checks are not a filesystem lock.
+
+Add these arguments to a private `--stream-file` build:
+
+```text
+--private-bsp-data <external-BSP> --bsp-goldens <external-JSON> --bsp-stream-file sd:/<private-sidecar-path>
+```
+
+The raw sidecar is not embedded in the generated header. Host runs take the
+two external input paths; PPC reads the two named SD files, which must be
+privately staged and identity-checked separately. Optional `--widget-goldens`
+keeps the existing representative widget graph in the same diagnostic.
+`--bsp-fixture` is asset-free and mutually excludes private/streaming modes.
+
+The streaming diagnostic preserves the full original tag/state/sound/index/IO
+reservations and provisional reserve, then separately charges BSP staging,
+inspection serialization and native child control slots. BSP bytes occupy
+their encoded offset inside the existing tag reservation. The parent epoch
+is checked before child control access, allowing that control to live in a
+separate parent-owned slot. The second child load remains live until parent
+release; both parent and independent child lifetime failures are tested.
+Serialization copies the whole declared BSP and explicitly writes known
+header/descriptor LE words while preserving original addresses and opaque
+root/content bytes. This is an inspection round trip, not a relocated cache,
+full typed BSP conversion, engine switching behavior or geometry execution.

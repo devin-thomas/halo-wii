@@ -25,6 +25,10 @@ def main():
     parser.add_argument('--stream-file', help='stream tag bytes from this sd:/ path instead of embedding them')
     parser.add_argument('--widget-goldens', type=Path, help='external numeric goldens for a representative typed widget graph')
     parser.add_argument('--widget-fixture', action='store_true', help='run authored widget cases without private input')
+    parser.add_argument('--bsp-goldens', type=Path, help='external numeric goldens for a bounded BSP residency view')
+    parser.add_argument('--private-bsp-data', type=Path, help='external raw BSP bytes used only for numeric build goldens')
+    parser.add_argument('--bsp-stream-file', help='safe sd:/ path for the private raw BSP sidecar')
+    parser.add_argument('--bsp-fixture', action='store_true', help='run authored BSP residency cases without private input')
     args = parser.parse_args()
     if args.stream_file and (not args.private_tag_data or not re.fullmatch(r'sd:/[A-Za-z0-9_/.-]+', args.stream_file)
                              or '..' in args.stream_file.split('/')):
@@ -33,6 +37,17 @@ def main():
         parser.error('--widget-goldens requires --stream-file')
     if args.widget_fixture and (args.private_tag_data or args.stream_file or args.widget_goldens):
         parser.error('--widget-fixture runs without private input or streaming arguments')
+    bsp_arguments = (args.bsp_goldens, args.private_bsp_data, args.bsp_stream_file)
+    if any(bsp_arguments) and (not all(bsp_arguments) or not args.stream_file):
+        parser.error('BSP streaming requires --bsp-goldens, --private-bsp-data, --bsp-stream-file and --stream-file')
+    if args.bsp_stream_file and (not re.fullmatch(r'sd:/[A-Za-z0-9_/.-]+', args.bsp_stream_file)
+                                or '..' in args.bsp_stream_file.split('/')):
+        parser.error('--bsp-stream-file must be a safe sd:/ path')
+    if args.bsp_fixture and (args.private_tag_data or args.stream_file or args.widget_goldens or
+                            args.widget_fixture or any(bsp_arguments)):
+        parser.error('--bsp-fixture runs alone without private input or streaming arguments')
+    if args.widget_fixture and any(bsp_arguments):
+        parser.error('--widget-fixture cannot use BSP streaming arguments')
     root = Path.cwd().resolve()
     output = args.output.resolve()
     if not output.is_relative_to(root) or output == root:
@@ -59,6 +74,10 @@ def main():
         names += ['cache_widget_probe.c', 'cache_widget_fixture.c']
     if args.widget_fixture:
         names += ['cache_arena_plan.c']
+    if args.bsp_goldens or args.bsp_fixture:
+        names += ['cache_bsp_probe.c', 'cache_bsp_fixture.c']
+    if args.bsp_fixture:
+        names += ['cache_arena_plan.c']
     sources = [Path('tools/wii')/name for name in names]
     inputs = sources + [Path('tools/wii')/name for name in ('cache_address_probe.h', 'cache_address_fixture.h',
                                                           'cache_address_owned.h', 'run_cache_address.py',
@@ -77,6 +96,15 @@ def main():
         inputs += [Path('tools/wii/inspect_widget_graph.py')]
     if args.widget_fixture:
         inputs += [Path('tools/wii/cache_arena_plan.h')]
+    if args.bsp_goldens or args.bsp_fixture:
+        inputs += [Path('tools/wii')/name for name in ('cache_bsp_probe.h', 'cache_bsp_fixture.h')]
+        inputs += [Path('source/scenario/scenario.h'), Path('source/scenario/scenario_definitions.h'),
+                   Path('port/linux/game/tag_schema_scenario.c'), Path('port/linux/game/cache_file_formats.c'),
+                   Path('source/structures/structure_bsp_definitions.h'), Path('port/linux/game/tag_validate.c')]
+    if args.bsp_fixture:
+        inputs += [Path('tools/wii/cache_arena_plan.h')]
+    if args.bsp_goldens:
+        inputs += [Path('tools/wii/inspect_bsp_residency.py'), Path('tools/wii/inspect_widget_graph.py')]
     hashes = {p.as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     source_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     dirty = bool(subprocess.check_output(['git', 'status', '--porcelain', '--', *map(str, inputs)], text=True))
@@ -84,6 +112,9 @@ def main():
     count = table_crc = 0
     widget_goldens = None
     widget_metadata_sha256 = None
+    bsp_goldens = None
+    bsp_payload = b''
+    bsp_metadata_sha256 = None
     if args.private_tag_data:
         private_path = args.private_tag_data.resolve(strict=True)
         if private_path.is_relative_to(root):
@@ -113,6 +144,35 @@ def main():
         if (not 1 <= widget_goldens['node_count'] <= count or
                 not 1 <= widget_goldens['serialized_bytes'] <= len(payload)):
             parser.error('representative widget golden extents invalid')
+    if args.bsp_goldens:
+        private_bsp = args.private_bsp_data.resolve(strict=True)
+        metadata = args.bsp_goldens.resolve(strict=True)
+        if (private_bsp.is_relative_to(root) or metadata.is_relative_to(root) or
+                not 24 <= private_bsp.stat().st_size <= 0x1600000 or
+                not 1 <= metadata.stat().st_size <= 1048576):
+            parser.error('BSP data/metadata must be bounded external private files')
+        bsp_payload = private_bsp.read_bytes()
+        metadata_bytes = metadata.read_bytes()
+        bsp_metadata_sha256 = hashlib.sha256(metadata_bytes).hexdigest()
+        inspection = json.loads(metadata_bytes)
+        if (inspection['tag_input_sha256'] != hashlib.sha256(payload).hexdigest() or
+                inspection['bsp_input_sha256'] != hashlib.sha256(bsp_payload).hexdigest()):
+            parser.error('BSP metadata belongs to different private input')
+        bsp_goldens = inspection['goldens']
+        for key in ('scenario_datum', 'datum', 'bsp_ordinal', 'encoded_base', 'root_address',
+                    'root_offset', 'declared_map_bytes', 'file_bytes', 'rounded_reservation_bytes',
+                    'vertex_count', 'index_count', 'serialized_bytes', 'serialized_crc32'):
+            value = bsp_goldens[key]
+            if type(value) is not int or not 0 <= value <= 0xffffffff:
+                parser.error('BSP golden must be an unsigned 32-bit integer: ' + key)
+        if (bsp_goldens['bsp_ordinal'] >= 16 or bsp_goldens['file_bytes'] != len(bsp_payload) or
+                bsp_goldens['serialized_bytes'] != len(bsp_payload) or
+                bsp_goldens['serialized_crc32'] != zlib.crc32(bsp_payload) or
+                bsp_goldens['rounded_reservation_bytes'] != ((len(bsp_payload) + 511) & ~511) or
+                not 2048 <= bsp_goldens['declared_map_bytes'] <= 0x11600000 or
+                bsp_goldens['encoded_base'] < 0x803a6000 or
+                bsp_goldens['encoded_base'] - 0x803a6000 > 0x1600000 - bsp_goldens['rounded_reservation_bytes']):
+            parser.error('representative BSP golden extents invalid')
     sdk_identity = {}
     inventory = None
     if args.wii_devkitpro:
@@ -144,6 +204,16 @@ def main():
         record['widget_metadata_sha256'] = widget_metadata_sha256
     if args.widget_fixture:
         record['scope'] = 'authored_partial_widget_graph_fixture_no_private_input'
+    if args.bsp_goldens:
+        record['scope'] = 'bounded_BSP_header_root_residency_not_geometry_conversion'
+        record['bsp_goldens'] = bsp_goldens
+        record['bsp_metadata_sha256'] = bsp_metadata_sha256
+        record['private_bsp_bytes'] = len(bsp_payload)
+        record['private_bsp_sha256'] = hashlib.sha256(bsp_payload).hexdigest()
+        record['private_bsp_crc32'] = zlib.crc32(bsp_payload)
+        record['bsp_stream_file'] = args.bsp_stream_file
+    if args.bsp_fixture:
+        record['scope'] = 'authored_BSP_residency_fixture_no_private_input'
     build_id = hashlib.sha256(json.dumps(record, sort_keys=True).encode()).hexdigest()[:16]
     record['build_id'] = build_id
     output.mkdir(parents=True)
@@ -164,6 +234,15 @@ def main():
                 stream.write('#define CACHE_WIDGET_'+key.upper()+' '+str(widget_goldens[key])+'u\n')
         if args.widget_fixture:
             stream.write('#define CACHE_WIDGET_FIXTURE 1\n')
+        if args.bsp_goldens:
+            stream.write('#define CACHE_BSP_RESIDENCY 1\n')
+            stream.write('#define CACHE_BSP_FILENAME '+json.dumps(args.bsp_stream_file)+'\n')
+            for key in ('scenario_datum', 'datum', 'bsp_ordinal', 'encoded_base', 'root_address',
+                        'root_offset', 'declared_map_bytes', 'file_bytes', 'rounded_reservation_bytes',
+                        'vertex_count', 'index_count', 'serialized_bytes', 'serialized_crc32'):
+                stream.write('#define CACHE_BSP_GOLDEN_'+key.upper()+' '+str(bsp_goldens[key])+'u\n')
+        if args.bsp_fixture:
+            stream.write('#define CACHE_BSP_FIXTURE 1\n')
         if payload and not args.stream_file:
             stream.write('static const unsigned char cache_private_bytes[] = {\n')
             for i in range(0, len(payload), 24):
@@ -199,7 +278,12 @@ def main():
     else:
         exe = output/('cache_address.exe' if os.name == 'nt' else 'cache_address')
         run([str(compiler), *objects, '-o', str(exe)])
-        executed = run([str(exe), str(args.private_tag_data.resolve())] if args.stream_file else [str(exe)])
+        execution = [str(exe)]
+        if args.stream_file:
+            execution += [str(args.private_tag_data.resolve())]
+        if args.bsp_goldens:
+            execution += [str(args.private_bsp_data.resolve())]
+        executed = run(execution)
         record['report'] = executed.stdout.splitlines()
         record['state'] = 'execution_pass'
     record['artifacts_sha256'] = {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in output.iterdir()

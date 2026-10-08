@@ -11,9 +11,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef CACHE_BSP_RESIDENCY
+#include "cache_bsp_probe.h"
+#include "cache_bsp_fixture.h"
+#endif
 #ifdef CACHE_WIDGET_GRAPH
 #include "cache_widget_probe.h"
 #include "cache_widget_fixture.h"
+#endif
+#ifdef CACHE_BSP_RESIDENCY
+#define CACHE_REPORT_KIND "BSP"
+#define CACHE_REPORT_PATH "sd:/halo-wii-memory/cache-bsp.log"
+#elif defined(CACHE_WIDGET_GRAPH)
 #define CACHE_REPORT_KIND "WIDGET"
 #define CACHE_REPORT_PATH "sd:/halo-wii-memory/cache-widget.log"
 #else
@@ -31,6 +40,9 @@
 enum { TAG_SLOT, STATE_SLOT, SOUND_SLOT, INDEX_SLOT, IO0_SLOT, IO1_SLOT,
 #ifdef CACHE_WIDGET_GRAPH
        WIDGET_WORKSPACE_SLOT, WIDGET_SERIAL_SLOT,
+#endif
+#ifdef CACHE_BSP_RESIDENCY
+       BSP_STAGE_SLOT, BSP_SERIAL_SLOT, BSP_CONTROL_SLOT,
 #endif
        SLOT_COUNT };
 typedef char verify_stream_index_words[sizeof(struct cache_address_instance) == 32 ? 1 : -1];
@@ -137,6 +149,131 @@ static int widget_roundtrip(FILE *report, const struct cache_arena_owner *owner,
 }
 #endif
 
+#ifdef CACHE_BSP_RESIDENCY
+static int bsp_prepare(FILE *report, const struct cache_arena_owner *owner, const char *path,
+                       unsigned cycle, struct cache_bsp_control **control_output)
+{
+    struct cache_arena_handle tag, stage, io0, io1;
+    struct cache_arena_result arena_status;
+    struct cache_stream_result stream_status = {0};
+    struct cache_bsp_result status;
+    struct cache_bsp_reference reference;
+    struct cache_bsp_control *control = (void *)slot_view(owner, BSP_CONTROL_SLOT, sizeof(*control));
+    if (!control || !cache_arena_owner_handle(owner, TAG_SLOT, &tag, &arena_status) ||
+            !cache_arena_owner_handle(owner, BSP_STAGE_SLOT, &stage, &arena_status) ||
+            !cache_arena_owner_handle(owner, IO0_SLOT, &io0, &arena_status) ||
+            !cache_arena_owner_handle(owner, IO1_SLOT, &io1, &arena_status)) {
+        fprintf(report, "BSP FAIL preparation handles\n"); return 1;
+    }
+    memset(control, 0, sizeof(*control));
+    if (!cache_bsp_select(owner, &tag, CACHE_PRIVATE_SIZE, CACHE_BSP_GOLDEN_DECLARED_MAP_BYTES,
+                          CACHE_BSP_GOLDEN_BSP_ORDINAL, &reference, &status) ||
+            reference.datum != CACHE_BSP_GOLDEN_DATUM || reference.address != CACHE_BSP_GOLDEN_ENCODED_BASE ||
+            reference.file_size != CACHE_BSP_GOLDEN_FILE_BYTES || reference.rounded_bytes != CACHE_BSP_GOLDEN_ROUNDED_RESERVATION_BYTES) {
+        fprintf(report, "BSP FAIL selected reference cycle=%u error=%s\n", cycle, cache_bsp_error_name(status.error));
+        return 1;
+    }
+    FILE *input = fopen(path, "rb");
+    if (!input) { fprintf(report, "BSP FAIL sidecar open\n"); return 1; }
+    int result = !cache_stream_read(input, owner, &stage, &io0, &io1, CACHE_BSP_GOLDEN_FILE_BYTES,
+                                    CACHE_BSP_GOLDEN_SERIALIZED_CRC32, &stream_status);
+    if (result) fprintf(report, "BSP FAIL sidecar read error=%s bytes=%lu\n",
+                        cache_stream_error_name(stream_status.error), (unsigned long)stream_status.bytes);
+    if (fclose(input)) { fprintf(report, "BSP FAIL sidecar close\n"); result = 1; }
+    if (result) return 1;
+    unsigned char *destination = NULL;
+    unsigned char *source = slot_view(owner, BSP_STAGE_SLOT, CACHE_BSP_GOLDEN_FILE_BYTES);
+    if (!source || !cache_arena_owner_resolve(owner, &tag, reference.slot_offset,
+                                             reference.rounded_bytes, &destination, &arena_status)) {
+        fprintf(report, "BSP FAIL rounded residency span\n"); return 1;
+    }
+    /* All input rewrites precede immutable widget/BSP view acquisition. */
+    memcpy(destination, source, CACHE_BSP_GOLDEN_FILE_BYTES);
+    if (cycle == 0) fprintf(report, "BSP INPUT bytes=%lu crc32=%08lx chunks=%lu fread_calls=%lu slot_offset=%lu rounded=%lu unread_gap=%lu\n",
+        (unsigned long)stream_status.bytes, (unsigned long)stream_status.actual_crc32,
+        (unsigned long)stream_status.chunks, (unsigned long)stream_status.read_calls,
+        (unsigned long)reference.slot_offset, (unsigned long)reference.rounded_bytes,
+        (unsigned long)(reference.slot_offset - CACHE_PRIVATE_SIZE));
+    *control_output = control;
+    return 0;
+}
+
+static int bsp_roundtrip(FILE *report, const struct cache_arena_owner *owner,
+                         struct cache_bsp_control *control, unsigned cycle,
+                         struct cache_bsp_view *last, unsigned *child_release, unsigned *child_rebind)
+{
+    struct cache_arena_handle tag;
+    struct cache_arena_result arena_status;
+    struct cache_bsp_result status;
+    struct cache_bsp_view old = {0};
+    void *serialized = slot_view(owner, BSP_SERIAL_SLOT, CACHE_BSP_GOLDEN_SERIALIZED_BYTES);
+    if (!serialized || !cache_arena_owner_handle(owner, TAG_SLOT, &tag, &arena_status)) {
+        fprintf(report, "BSP FAIL roundtrip handles\n"); return 1;
+    }
+    for (unsigned load = 0; load < 2; ++load) {
+        struct cache_bsp_view view;
+        struct cache_bsp_reference reference;
+        struct cache_bsp_header header;
+        struct cache_address_span root, gap;
+        if (!cache_bsp_bind(control, owner, &tag, CACHE_PRIVATE_SIZE, CACHE_BSP_GOLDEN_DECLARED_MAP_BYTES,
+                            CACHE_BSP_GOLDEN_BSP_ORDINAL, &view, &status)) {
+            fprintf(report, "BSP FAIL bind cycle=%u load=%u error=%s offset=%lu\n", cycle, load,
+                    cache_bsp_error_name(status.error), (unsigned long)status.offset); return 1;
+        }
+        if (load) {
+            if (cache_bsp_get_root(&old, &root, &status) || status.error != CACHE_BSP_STATE) {
+                fprintf(report, "BSP FAIL child rebind invalidation\n"); return 1;
+            }
+            ++*child_rebind;
+        }
+        if (!cache_bsp_lookup(&view, &reference, &status) || reference.datum != CACHE_BSP_GOLDEN_DATUM ||
+                reference.scenario_datum != CACHE_BSP_GOLDEN_SCENARIO_DATUM ||
+                !cache_bsp_get_header(&view, &header, &status) || header.root_address != CACHE_BSP_GOLDEN_ROOT_ADDRESS ||
+                header.vertex_count != CACHE_BSP_GOLDEN_VERTEX_COUNT || header.index_count != CACHE_BSP_GOLDEN_INDEX_COUNT ||
+                !cache_bsp_get_root(&view, &root, &status) || root.length != CACHE_BSP_ROOT_BYTES ||
+                root.offset != CACHE_BSP_GOLDEN_ROOT_ADDRESS - CACHE_BSP_TAG_BASE) {
+            fprintf(report, "BSP FAIL header/root/full datum use\n"); return 1;
+        }
+        for (unsigned kind = 0; kind < 2; ++kind) {
+            size_t count = (size_t)(kind ? header.index_count : header.vertex_count);
+            for (size_t at = 0; at < count; ++at) {
+                struct cache_bsp_descriptor descriptor;
+                if (!cache_bsp_get_descriptor(&view, kind, at, &descriptor, &status)) {
+                    fprintf(report, "BSP FAIL descriptor use\n"); return 1;
+                }
+            }
+        }
+        if (reference.slot_offset > CACHE_PRIVATE_SIZE &&
+                (cache_bsp_resolve(&view, CACHE_BSP_TAG_BASE + CACHE_PRIVATE_SIZE, 1, 1, &gap, &status) ||
+                 status.error != CACHE_BSP_SPAN)) {
+            fprintf(report, "BSP FAIL unread gap became addressable\n"); return 1;
+        }
+        size_t used = 0;
+        if (!cache_bsp_serialize(&view, serialized, CACHE_BSP_GOLDEN_SERIALIZED_BYTES, &used, &status) ||
+                used != CACHE_BSP_GOLDEN_SERIALIZED_BYTES || cache_probe_crc32(serialized, used) != CACHE_BSP_GOLDEN_SERIALIZED_CRC32) {
+            fprintf(report, "BSP FAIL lossless inspection serialization\n"); return 1;
+        }
+        if (cycle == 0 && load == 0) fprintf(report, "BSP VIEW datum=%08lx root_offset=%lu root_bytes=%lu vertex_descriptors=%ld index_descriptors=%ld serialized_bytes=%lu crc32=%08lx control_bytes=%lu view_bytes=%lu scope=opaque_root_extent_not_geometry\n",
+            (unsigned long)reference.datum, (unsigned long)root.offset, (unsigned long)root.length,
+            (long)header.vertex_count, (long)header.index_count, (unsigned long)used,
+            (unsigned long)cache_probe_crc32(serialized, used), (unsigned long)sizeof(*control),
+            (unsigned long)sizeof(view));
+        old = view;
+        if (load == 0) {
+            if (!cache_bsp_unload(control, &status) || cache_bsp_get_root(&view, &root, &status) ||
+                    status.error != CACHE_BSP_STATE) {
+                fprintf(report, "BSP FAIL child unload invalidation\n"); return 1;
+            }
+            ++*child_release;
+        }
+        /* The second child stays live until parent release; stale use must
+         * reject the copied parent pin before touching released control bytes. */
+        *last = view;
+    }
+    return 0;
+}
+#endif
+
 static int controlled_fragmentation(FILE *report, uintptr_t begin, uintptr_t end,
                                     const struct cache_arena_request *requests)
 {
@@ -178,8 +315,17 @@ static int controlled_fragmentation(FILE *report, uintptr_t begin, uintptr_t end
     return failures != 0;
 }
 
-static int stream_cycles(FILE *report, const char *path)
+static int stream_cycles(FILE *report, const char *path
+#ifdef CACHE_BSP_RESIDENCY
+                         , const char *bsp_path
+#endif
+                         )
 {
+#ifdef CACHE_BSP_RESIDENCY
+    struct cache_bsp_view previous_bsp = {0};
+    unsigned bsp_completed = 0, bsp_parent_rebind = 0, bsp_parent_release = 0;
+    unsigned bsp_child_release = 0, bsp_child_rebind = 0;
+#endif
 #ifdef CACHE_WIDGET_GRAPH
     size_t workspace_bytes = 0;
     struct cache_widget_result widget_status;
@@ -195,6 +341,9 @@ static int stream_cycles(FILE *report, const char *path)
 #ifdef CACHE_WIDGET_GRAPH
         , {workspace_bytes, 64}, {CACHE_WIDGET_SERIALIZED_BYTES, 64}
 #endif
+#ifdef CACHE_BSP_RESIDENCY
+        , {CACHE_BSP_GOLDEN_FILE_BYTES, 64}, {CACHE_BSP_GOLDEN_SERIALIZED_BYTES, 64}, {sizeof(struct cache_bsp_control), 64}
+#endif
     };
     struct cache_arena_owner owner = {0};
     struct cache_arena_handle previous = {0};
@@ -208,6 +357,11 @@ static int stream_cycles(FILE *report, const char *path)
     fprintf(report, "WIDGET REQUEST workspace=%lu serialized=%lu node_workload_capacity=%lu source_block_maxima=64,32,32,32,32 source_depth=32\n",
             (unsigned long)workspace_bytes, (unsigned long)CACHE_WIDGET_SERIALIZED_BYTES,
             (unsigned long)CACHE_WIDGET_NODE_COUNT);
+#endif
+#ifdef CACHE_BSP_RESIDENCY
+    fprintf(report, "BSP REQUEST stage=%lu serialized=%lu control=%lu dynamic_projection=0 resident_bytes_already_in_tag_slot=%lu source_references_max16\n",
+        (unsigned long)CACHE_BSP_GOLDEN_FILE_BYTES, (unsigned long)CACHE_BSP_GOLDEN_SERIALIZED_BYTES,
+        (unsigned long)sizeof(struct cache_bsp_control), (unsigned long)CACHE_BSP_GOLDEN_FILE_BYTES);
 #endif
 #ifdef GEKKO
     uintptr_t initial_lo = (uintptr_t)SYS_GetArena2Lo();
@@ -245,6 +399,17 @@ static int stream_cycles(FILE *report, const char *path)
             break;
         }
         unsigned char *bad_view = NULL;
+#ifdef CACHE_BSP_RESIDENCY
+        struct cache_bsp_view bsp_view = {0};
+        struct cache_bsp_control *bsp_control = NULL;
+        struct cache_bsp_result bsp_status;
+        if (cycle) {
+            struct cache_address_span stale;
+            if (cache_bsp_get_root(&previous_bsp, &stale, &bsp_status) || bsp_status.error != CACHE_BSP_STATE) {
+                fprintf(report, "BSP FAIL parent rebind invalidation\n"); ++failures;
+            } else ++bsp_parent_rebind;
+        }
+#endif
         if (cycle) {
             if (cache_arena_owner_resolve(&owner, &previous, 0, 1, &bad_view, &arena_status) ||
                 arena_status.error != CACHE_ARENA_HANDLE) ++failures;
@@ -301,6 +466,11 @@ static int stream_cycles(FILE *report, const char *path)
             }
             if (fclose(input)) { fprintf(report, "STREAM FAIL input close\n"); ++failures; }
         }
+#ifdef CACHE_BSP_RESIDENCY
+        if (!failures && (bsp_prepare(report, &owner, bsp_path, cycle, &bsp_control) ||
+                bsp_roundtrip(report, &owner, bsp_control, cycle, &bsp_view, &bsp_child_release, &bsp_child_rebind))) ++failures;
+        else if (!failures) ++bsp_completed;
+#endif
 #ifdef CACHE_WIDGET_GRAPH
         /* Acquire immutable typed views only after the deliberate IO rewrites. */
         if (!failures) {
@@ -325,6 +495,9 @@ static int stream_cycles(FILE *report, const char *path)
 #ifdef CACHE_WIDGET_GRAPH
         previous_graph = graph;
 #endif
+#ifdef CACHE_BSP_RESIDENCY
+        previous_bsp = bsp_view;
+#endif
         if (!cache_arena_owner_release(&owner, &arena_status)) {
             fprintf(report, "STREAM FAIL release; backing retained\n");
             return 1;
@@ -332,6 +505,14 @@ static int stream_cycles(FILE *report, const char *path)
         if (cache_arena_owner_resolve(&owner, &previous, 0, 1, &bad_view, &arena_status) ||
             arena_status.error != CACHE_ARENA_STATE) ++failures;
         else ++stale_release;
+#ifdef CACHE_BSP_RESIDENCY
+        if (bsp_view.owner) {
+            struct cache_address_span stale;
+            if (cache_bsp_get_root(&bsp_view, &stale, &bsp_status) || bsp_status.error != CACHE_BSP_STATE) {
+                fprintf(report, "BSP FAIL parent release invalidation\n"); ++failures;
+            } else ++bsp_parent_release;
+        }
+#endif
 #ifdef CACHE_WIDGET_GRAPH
         if (graph.count) {
             struct cache_widget_projection stale;
@@ -364,6 +545,11 @@ static int stream_cycles(FILE *report, const char *path)
             widget_completed, widget_stale_rebind, widget_stale_release, (unsigned long)workspace_bytes,
             (unsigned long)CACHE_WIDGET_SERIALIZED_BYTES, failures);
 #endif
+#ifdef CACHE_BSP_RESIDENCY
+    fprintf(report, "BSP SUMMARY cycles=%u child_loads=%u child_release_STATE=%u child_rebind_STATE=%u parent_release_STATE=%u parent_rebind_STATE=%u serialized_bytes=%lu failures=%u gap_addressable=0 geometry=not_qualified\n",
+        bsp_completed, bsp_completed * 2u, bsp_child_release, bsp_child_rebind, bsp_parent_release,
+        bsp_parent_rebind, (unsigned long)CACHE_BSP_GOLDEN_SERIALIZED_BYTES, failures);
+#endif
     fprintf(report, "STREAM SUMMARY cycles=%u tags=%lu max_charge=%lu chunks=%lu expected_errors=%u stale_rebind=%u stale_release=%u generation=%llu failures=%u\n",
             completed, (unsigned long)CACHE_PRIVATE_COUNT, (unsigned long)maximum_charge, (unsigned long)maximum_io_chunks,
             expected_errors, stale_rebind, stale_release, (unsigned long long)owner.generation, failures);
@@ -374,6 +560,9 @@ int main(int argc, char **argv)
 {
     FILE *report = stdout;
     const char *path;
+#ifdef CACHE_BSP_RESIDENCY
+    const char *bsp_path;
+#endif
 #ifdef GEKKO
     (void)argc; (void)argv;
     VIDEO_Init(); GXRModeObj *mode = VIDEO_GetPreferredMode(NULL);
@@ -389,9 +578,21 @@ int main(int argc, char **argv)
     report = fopen(CACHE_REPORT_PATH, "a");
     if (!report) { fprintf(stderr, "STREAM log open failed\n"); return 2; }
     path = CACHE_STREAM_FILENAME;
+#ifdef CACHE_BSP_RESIDENCY
+    bsp_path = CACHE_BSP_FILENAME;
+#endif
 #else
-    if (argc != 2) { fprintf(stderr, "STREAM requires private raw tag path\n"); return 2; }
+    if (argc !=
+#ifdef CACHE_BSP_RESIDENCY
+        3
+#else
+        2
+#endif
+        ) { fprintf(stderr, "STREAM requires private raw input paths\n"); return 2; }
     path = argv[1];
+#ifdef CACHE_BSP_RESIDENCY
+    bsp_path = argv[2];
+#endif
 #endif
     if (fprintf(report, "BEGIN %s build=%s\n", CACHE_REPORT_KIND, CACHE_PROBE_BUILD_ID) < 0 || fflush(report)) return 2;
     int result = wii_cache_address_fixture(report, 1);
@@ -400,7 +601,14 @@ int main(int argc, char **argv)
 #ifdef CACHE_WIDGET_GRAPH
     result |= wii_cache_widget_fixture(report, 1);
 #endif
-    result |= stream_cycles(report, path);
+#ifdef CACHE_BSP_RESIDENCY
+    result |= wii_cache_bsp_fixture(report, 1);
+#endif
+    result |= stream_cycles(report, path
+#ifdef CACHE_BSP_RESIDENCY
+                            , bsp_path
+#endif
+                            );
     if (fprintf(report, "END %s build=%s result=%d\n", CACHE_REPORT_KIND, CACHE_PROBE_BUILD_ID, result) < 0 || fflush(report) || ferror(report)) return 2;
 #ifdef GEKKO
     if (fclose(report)) return 2;
