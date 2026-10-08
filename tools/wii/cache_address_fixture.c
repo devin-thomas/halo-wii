@@ -56,7 +56,7 @@ static int decoder_vectors(struct fixture_context *ctx,struct fixture_storage *s
         CHECK(accepted && r.error==CACHE_ADDRESS_OK,"header_explicit_le_at_all_alignments");
         CHECK(header.instances_address==SYNTHETIC_BASE+64 && header.scenario_datum==UINT32_C(0x12340000) && header.checksum==UINT32_C(0x13579bdf) && header.tag_count==3,"header_numeric_addresses_datums_checksum_count");
         CHECK(header.vertex_count==1 && header.vertex_address==SYNTHETIC_BASE+192 && header.index_count==2 && header.index_address==SYNTHETIC_BASE+204 && header.signature==UINT32_C(0x74616773),"header_buffer_counts_encoded_addresses_signature");
-        struct cache_address_instance value;accepted=cache_address_decode_instance(region.bytes,region.size,128,&value,&r);
+        struct cache_address_instance value={0};accepted=cache_address_decode_instance(region.bytes,region.size,128,&value,&r);
         CHECK(accepted && value.group==UNKNOWN_GROUP && value.parent[0]==UINT32_C(0x6f626a65) && value.parent[1]==UINT32_C(0x756e6974) && value.datum==UINT32_C(0x98760002),"instance_unknown_classes_parents_exact_datum_preserved");
         CHECK(value.name_address==SYNTHETIC_BASE+288 && value.root_address==SYNTHETIC_BASE+500 && value.unused[0]==UINT32_C(0x89abcdef) && value.unused[1]==UINT32_C(0xfedcba98),"instance_encoded_addresses_unused_preserved");
         CHECK(memcmp(s->bytes,s->before,sizeof(s->bytes))==0,"decode_input_and_guards_unchanged");
@@ -166,11 +166,12 @@ static int malformed(struct fixture_context *ctx,struct fixture_storage *s)
     };
     for(unsigned alignment=0;alignment<8;++alignment)for(size_t i=0;i<sizeof(edits)/sizeof(edits[0]);++i){++ctx->cases;struct cache_address_region region=synthetic(s,alignment);
         memcpy(s->changed,s->bytes,sizeof(s->bytes));unsigned char *blob=s->changed+FIXTURE_GUARD+alignment;put32(blob+edits[i].offset,edits[i].value);region.bytes=blob;
+        memcpy(s->before,s->changed,sizeof(s->changed));
         struct cache_address_graph before;memcpy(&before,&s->graph,sizeof(before));struct cache_address_result r;int accepted=cache_address_graph_load(&region,&s->graph,&r);
         CHECK(!accepted && r.error==edits[i].error,"malformed_exact_reason");
         CHECK(memcmp(&before,&s->graph,sizeof(before))==0,"malformed_graph_output_atomic");
         if(accepted){cache_address_graph_unload(&s->graph);return abort_fixture(ctx,"malformed_graph_unexpectedly_loaded");}
-        CHECK(memcmp(s->bytes,s->before,sizeof(s->bytes))==0,"malformed_input_baseline_guards_preserved");
+        CHECK(memcmp(s->changed,s->before,sizeof(s->changed))==0,"malformed_input_and_guards_preserved");
     }
     for(size_t length=0;length<=160;++length){++ctx->cases;struct cache_address_region region=synthetic(s,0);region.size=length;
         struct cache_address_graph before;memcpy(&before,&s->graph,sizeof(before));struct cache_address_result r;int accepted=cache_address_graph_load(&region,&s->graph,&r);
