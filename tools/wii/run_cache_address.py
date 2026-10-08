@@ -23,10 +23,16 @@ def main():
     parser.add_argument('--wii-devkitpro', type=Path)
     parser.add_argument('--private-tag-data', type=Path)
     parser.add_argument('--stream-file', help='stream tag bytes from this sd:/ path instead of embedding them')
+    parser.add_argument('--widget-goldens', type=Path, help='external numeric goldens for a representative typed widget graph')
+    parser.add_argument('--widget-fixture', action='store_true', help='run authored widget cases without private input')
     args = parser.parse_args()
     if args.stream_file and (not args.private_tag_data or not re.fullmatch(r'sd:/[A-Za-z0-9_/.-]+', args.stream_file)
                              or '..' in args.stream_file.split('/')):
         parser.error('--stream-file requires private tag goldens and a safe sd:/ path')
+    if args.widget_goldens and not args.stream_file:
+        parser.error('--widget-goldens requires --stream-file')
+    if args.widget_fixture and (args.private_tag_data or args.stream_file or args.widget_goldens):
+        parser.error('--widget-fixture runs without private input or streaming arguments')
     root = Path.cwd().resolve()
     output = args.output.resolve()
     if not output.is_relative_to(root) or output == root:
@@ -49,6 +55,10 @@ def main():
     names = ['cache_address_probe.c', 'cache_address_fixture.c', 'cache_address_owned.c']
     names += (['cache_arena_plan.c', 'cache_arena_fixture.c', 'cache_stream_io.c', 'cache_stream_fixture.c',
                'cache_stream_main.c'] if args.stream_file else ['cache_address_main.c'])
+    if args.widget_goldens or args.widget_fixture:
+        names += ['cache_widget_probe.c', 'cache_widget_fixture.c']
+    if args.widget_fixture:
+        names += ['cache_arena_plan.c']
     sources = [Path('tools/wii')/name for name in names]
     inputs = sources + [Path('tools/wii')/name for name in ('cache_address_probe.h', 'cache_address_fixture.h',
                                                           'cache_address_owned.h', 'run_cache_address.py',
@@ -58,11 +68,22 @@ def main():
     if args.stream_file:
         inputs += [Path('tools/wii')/name for name in ('cache_arena_plan.h', 'cache_arena_fixture.h',
                                                      'cache_stream_io.h', 'cache_stream_fixture.h')]
+    if args.widget_goldens or args.widget_fixture:
+        inputs += [Path('tools/wii')/name for name in ('cache_widget_probe.h', 'cache_widget_fixture.h')]
+        inputs += [Path('source/interface/ui_widget.c'), Path('source/tag_files/tag_groups.h'),
+                   Path('source/math/integer_math.h'), Path('source/math/real_math.h'),
+                   Path('port/linux/game/tag_schema_effects.c'), Path('port/linux/game/tag_validate.c')]
+    if args.widget_goldens:
+        inputs += [Path('tools/wii/inspect_widget_graph.py')]
+    if args.widget_fixture:
+        inputs += [Path('tools/wii/cache_arena_plan.h')]
     hashes = {p.as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     source_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     dirty = bool(subprocess.check_output(['git', 'status', '--porcelain', '--', *map(str, inputs)], text=True))
     payload = b''
     count = table_crc = 0
+    widget_goldens = None
+    widget_metadata_sha256 = None
     if args.private_tag_data:
         private_path = args.private_tag_data.resolve(strict=True)
         if private_path.is_relative_to(root):
@@ -75,6 +96,23 @@ def main():
         if not 1 <= count <= 65535 or offset < 36 or offset > len(payload) - count * 32:
             parser.error('private index table extent invalid')
         table_crc = zlib.crc32(payload[offset:offset + count * 32])
+    if args.widget_goldens:
+        metadata = args.widget_goldens.resolve(strict=True)
+        if metadata.is_relative_to(root) or not 1 <= metadata.stat().st_size <= 1048576:
+            parser.error('widget metadata must be a bounded external private file')
+        metadata_bytes = metadata.read_bytes()
+        widget_metadata_sha256 = hashlib.sha256(metadata_bytes).hexdigest()
+        inspection = json.loads(metadata_bytes)
+        if inspection['input_sha256'] != hashlib.sha256(payload).hexdigest():
+            parser.error('widget metadata belongs to another private tag input')
+        widget_goldens = inspection['goldens']
+        for key in ('root_datum', 'node_count', 'serialized_bytes', 'serialized_crc32'):
+            value = widget_goldens[key]
+            if type(value) is not int or not 0 <= value <= 0xffffffff:
+                parser.error('widget golden must be an unsigned 32-bit integer: ' + key)
+        if (not 1 <= widget_goldens['node_count'] <= count or
+                not 1 <= widget_goldens['serialized_bytes'] <= len(payload)):
+            parser.error('representative widget golden extents invalid')
     sdk_identity = {}
     inventory = None
     if args.wii_devkitpro:
@@ -100,6 +138,12 @@ def main():
               'commands':[], 'state':'incomplete'}
     record['private_input_embedded'] = bool(payload) and not args.stream_file
     record['stream_file'] = args.stream_file
+    if args.widget_goldens:
+        record['scope'] = 'representative_partial_typed_widget_graph_not_engine_conversion'
+        record['widget_goldens'] = widget_goldens
+        record['widget_metadata_sha256'] = widget_metadata_sha256
+    if args.widget_fixture:
+        record['scope'] = 'authored_partial_widget_graph_fixture_no_private_input'
     build_id = hashlib.sha256(json.dumps(record, sort_keys=True).encode()).hexdigest()[:16]
     record['build_id'] = build_id
     output.mkdir(parents=True)
@@ -114,6 +158,12 @@ def main():
         stream.write(f'#define CACHE_PRIVATE_TABLE_CRC {table_crc}u\n')
         if args.stream_file:
             stream.write('#define CACHE_STREAM_FILENAME '+json.dumps(args.stream_file)+'\n')
+        if args.widget_goldens:
+            stream.write('#define CACHE_WIDGET_GRAPH 1\n')
+            for key in ('root_datum', 'node_count', 'serialized_bytes', 'serialized_crc32'):
+                stream.write('#define CACHE_WIDGET_'+key.upper()+' '+str(widget_goldens[key])+'u\n')
+        if args.widget_fixture:
+            stream.write('#define CACHE_WIDGET_FIXTURE 1\n')
         if payload and not args.stream_file:
             stream.write('static const unsigned char cache_private_bytes[] = {\n')
             for i in range(0, len(payload), 24):

@@ -5,6 +5,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef CACHE_WIDGET_FIXTURE
+#include "cache_widget_fixture.h"
+#define CACHE_ADDRESS_REPORT_KIND "WIDGET_SYNTHETIC"
+#define CACHE_ADDRESS_REPORT_PATH "sd:/halo-wii-memory/cache-widget-synthetic.log"
+#else
+#define CACHE_ADDRESS_REPORT_KIND "CACHE"
+#define CACHE_ADDRESS_REPORT_PATH "sd:/halo-wii-memory/cache-address.log"
+#endif
 #ifdef GEKKO
 #include <gccore.h>
 #include <fat.h>
@@ -74,10 +82,10 @@ int main(void)
     if (mkdir("sd:/halo-wii-memory", 0777) != 0 && errno != EEXIST) {
         fprintf(stderr, "CACHE log directory failed\n"); return 2;
     }
-    report = fopen("sd:/halo-wii-memory/cache-address.log", "a");
+    report = fopen(CACHE_ADDRESS_REPORT_PATH, "a");
     if (report == NULL) { fprintf(stderr, "CACHE log open failed\n"); return 2; }
 #endif
-    if (fprintf(report, "BEGIN CACHE build=%s\n", CACHE_PROBE_BUILD_ID) < 0 || fflush(report)) return 2;
+    if (fprintf(report, "BEGIN %s build=%s\n", CACHE_ADDRESS_REPORT_KIND, CACHE_PROBE_BUILD_ID) < 0 || fflush(report)) return 2;
 #ifdef GEKKO
     arenas(report, "after_sd");
     struct mallinfo heap = mallinfo();
@@ -88,6 +96,9 @@ int main(void)
             (unsigned long)HALO_PORT_TEXTURE_CACHE_SIZE, (unsigned long)0x1600000, (unsigned long)0x400000);
 #endif
     int result = wii_cache_address_fixture(report, 1);
+#ifdef CACHE_WIDGET_FIXTURE
+    result |= wii_cache_widget_fixture(report, 1);
+#endif
 #if CACHE_PRIVATE_SIZE > 0
     result |= cache_address_owned(report, cache_private_bytes, CACHE_PRIVATE_SIZE, CACHE_PRIVATE_CRC,
                                   CACHE_PRIVATE_COUNT, CACHE_PRIVATE_TABLE_CRC);
@@ -96,7 +107,7 @@ int main(void)
     arenas(report, "after_owned_release");
 #endif
 #endif
-    if (fprintf(report, "END CACHE build=%s result=%d\n", CACHE_PROBE_BUILD_ID, result) < 0 || fflush(report) || ferror(report)) return 2;
+    if (fprintf(report, "END %s build=%s result=%d\n", CACHE_ADDRESS_REPORT_KIND, CACHE_PROBE_BUILD_ID, result) < 0 || fflush(report) || ferror(report)) return 2;
 #ifdef GEKKO
     if (fclose(report)) return 2;
     printf("Cache address diagnostic: %d\n", result);

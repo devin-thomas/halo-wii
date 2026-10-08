@@ -111,3 +111,40 @@ provide asynchronous IO. Raw CRC is not a canonical Xbox checksum. IO failures
 can leave partial or full tag writes; ownership remains live for explicit cleanup.
 Host tmpfile error fixtures are separate from actual PPC SD reads. Controlled
 free intervals and heap samples do not establish system fragmentation/full peak.
+
+## Representative typed widget graph
+
+The authored C cases also run without a game file:
+
+```powershell
+python tools/wii/run_cache_address.py --cc '<host-gcc>' --output .local/cache-widget-synthetic --widget-fixture
+python -m unittest discover -s tools/wii -p test_inspect_widget_graph.py
+```
+
+`inspect_widget_graph.py` produces numeric identity goldens from an external
+raw tag blob and a caller-selected widget ordinal. It checks a bounded partial
+UI layout and traverses the source's loaded-child/column-description edges.
+Its output contains no tag names, scripts or raw game bytes; use a new external
+output file and preserve the original blob. Workload capacity is separate from
+the source's block limits and depth policy.
+
+```powershell
+python tools/wii/inspect_widget_graph.py '<external-tag-blob>' --root-ordinal 407 --node-capacity 2 --output '<external-private-folder>/widget-goldens.json'
+python tools/wii/run_cache_address.py --cc '<host-gcc>' --output .local/cache-widget-host --private-tag-data '<external-tag-blob>' --stream-file 'sd:/<private-tag-file>' --widget-goldens '<external-private-folder>/widget-goldens.json'
+```
+
+For PPC, add the existing compiler/SDK arguments. This explicit option charges
+projection and atomic-decode scratch workspace plus inspection serialization
+storage in separate aligned arena slots. The prior capacities and provisional
+reserve stay intact. The generated header contains numeric graph goldens only;
+the actual tag file is streamed read-only. The Wii report uses a separate
+`cache-widget.log` and WIDGET build markers.
+
+The allocation-free decoder exposes named numeric fields, signed values,
+float bit patterns, references and bounded block elements; unknown byte spans
+remain opaque. Views retain their originating owner epoch and reject use after
+release/rebind. Lossless inspection serialization copies opaque bytes and writes
+named numeric fields explicitly as LE. It preserves original encoded addresses,
+so concatenated spans are not a standalone relocated cache or durable save.
+This partial representative graph does not execute widgets or qualify complete
+UI conversion, resource/BSP loading, final memory strategy, hardware or gameplay.

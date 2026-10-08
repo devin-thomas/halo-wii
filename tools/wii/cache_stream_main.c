@@ -11,6 +11,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef CACHE_WIDGET_GRAPH
+#include "cache_widget_probe.h"
+#include "cache_widget_fixture.h"
+#define CACHE_REPORT_KIND "WIDGET"
+#define CACHE_REPORT_PATH "sd:/halo-wii-memory/cache-widget.log"
+#else
+#define CACHE_REPORT_KIND "STREAM"
+#define CACHE_REPORT_PATH "sd:/halo-wii-memory/cache-stream.log"
+#endif
 #ifdef GEKKO
 #include <gccore.h>
 #include <fat.h>
@@ -19,7 +28,11 @@
 #include <malloc.h>
 #endif
 
-enum { TAG_SLOT, STATE_SLOT, SOUND_SLOT, INDEX_SLOT, IO0_SLOT, IO1_SLOT, SLOT_COUNT };
+enum { TAG_SLOT, STATE_SLOT, SOUND_SLOT, INDEX_SLOT, IO0_SLOT, IO1_SLOT,
+#ifdef CACHE_WIDGET_GRAPH
+       WIDGET_WORKSPACE_SLOT, WIDGET_SERIAL_SLOT,
+#endif
+       SLOT_COUNT };
 typedef char verify_stream_index_words[sizeof(struct cache_address_instance) == 32 ? 1 : -1];
 #define RESERVE_BYTES ((size_t)0x200000)
 #define HOST_SPAN_BYTES ((size_t)54368224)
@@ -73,6 +86,57 @@ static int decode_index(const struct cache_arena_owner *owner)
     return !scenario_found;
 }
 
+#ifdef CACHE_WIDGET_GRAPH
+static int widget_roundtrip(FILE *report, const struct cache_arena_owner *owner,
+                            size_t workspace_bytes, unsigned cycle, struct cache_widget_graph *graph)
+{
+    struct cache_arena_handle tag;
+    struct cache_arena_result arena_status;
+    struct cache_widget_result status;
+    void *workspace = slot_view(owner, WIDGET_WORKSPACE_SLOT, workspace_bytes);
+    void *serialized = slot_view(owner, WIDGET_SERIAL_SLOT, CACHE_WIDGET_SERIALIZED_BYTES);
+    if (!workspace || !serialized || !cache_arena_owner_handle(owner, TAG_SLOT, &tag, &arena_status)) {
+        fprintf(report, "WIDGET FAIL live workspace/serialization/tag handles\n"); return 1;
+    }
+    if (!cache_widget_graph_decode(owner, &tag, CACHE_PRIVATE_SIZE, UINT32_C(0x803a6000),
+            CACHE_WIDGET_ROOT_DATUM, workspace, workspace_bytes, CACHE_WIDGET_NODE_COUNT, graph, &status)) {
+        fprintf(report, "WIDGET FAIL decode cycle=%u error=%s offset=%lu node=%lu required=%lu\n",
+                cycle, cache_widget_error_name(status.error), (unsigned long)status.offset,
+                (unsigned long)status.node_index, (unsigned long)status.required);
+        return 1;
+    }
+    if (graph->count != CACHE_WIDGET_NODE_COUNT || graph->serialized_size != CACHE_WIDGET_SERIALIZED_BYTES) {
+        fprintf(report, "WIDGET FAIL graph count or serialization extent\n"); return 1;
+    }
+    size_t elements = 0;
+    for (size_t i = 0; i < graph->count; ++i) {
+        struct cache_widget_projection node;
+        if (!cache_widget_graph_node(graph, i, &node, &status)) {
+            fprintf(report, "WIDGET FAIL node use error=%s\n", cache_widget_error_name(status.error)); return 1;
+        }
+        for (unsigned kind = 0; kind < CACHE_WIDGET_BLOCKS; ++kind)
+            for (int32_t j = 0; j < node.blocks[kind].count; ++j) {
+                struct cache_widget_element element;
+                if (!cache_widget_graph_element(graph, i, (enum cache_widget_block_kind)kind,
+                                               (size_t)j, &element, &status)) {
+                    fprintf(report, "WIDGET FAIL element use error=%s\n", cache_widget_error_name(status.error)); return 1;
+                }
+                ++elements;
+            }
+    }
+    size_t used = 0;
+    if (!cache_widget_graph_serialize(graph, serialized, CACHE_WIDGET_SERIALIZED_BYTES, &used, &status) ||
+            used != CACHE_WIDGET_SERIALIZED_BYTES || cache_probe_crc32(serialized, used) != CACHE_WIDGET_SERIALIZED_CRC32) {
+        fprintf(report, "WIDGET FAIL lossless serialization or CRC\n"); return 1;
+    }
+    if (cycle == 0) fprintf(report, "WIDGET GRAPH nodes=%lu elements=%lu serialized_bytes=%lu crc32=%08lx workspace=%lu projection_bytes=%lu scope=partial_typed_representative_graph\n",
+        (unsigned long)graph->count, (unsigned long)elements, (unsigned long)used,
+        (unsigned long)cache_probe_crc32(serialized, used), (unsigned long)workspace_bytes,
+        (unsigned long)sizeof(struct cache_widget_projection));
+    return 0;
+}
+#endif
+
 static int controlled_fragmentation(FILE *report, uintptr_t begin, uintptr_t end,
                                     const struct cache_arena_request *requests)
 {
@@ -116,9 +180,21 @@ static int controlled_fragmentation(FILE *report, uintptr_t begin, uintptr_t end
 
 static int stream_cycles(FILE *report, const char *path)
 {
+#ifdef CACHE_WIDGET_GRAPH
+    size_t workspace_bytes = 0;
+    struct cache_widget_result widget_status;
+    if (!cache_widget_workspace_size(CACHE_WIDGET_NODE_COUNT, &workspace_bytes, &widget_status)) {
+        fprintf(report, "WIDGET FAIL workspace size error=%s\n", cache_widget_error_name(widget_status.error)); return 1;
+    }
+    struct cache_widget_graph previous_graph = {0};
+    unsigned widget_completed = 0, widget_stale_rebind = 0, widget_stale_release = 0;
+#endif
     const struct cache_arena_request requests[SLOT_COUNT] = {
         {0x1600000, 64}, {HALO_PORT_GAME_STATE_SIZE, 32}, {0x400000, 32},
         {65535u * 32u, 32}, {CACHE_STREAM_IO_BYTES, 64}, {CACHE_STREAM_IO_BYTES, 64}
+#ifdef CACHE_WIDGET_GRAPH
+        , {workspace_bytes, 64}, {CACHE_WIDGET_SERIALIZED_BYTES, 64}
+#endif
     };
     struct cache_arena_owner owner = {0};
     struct cache_arena_handle previous = {0};
@@ -128,6 +204,11 @@ static int stream_cycles(FILE *report, const char *path)
             (unsigned long)requests[TAG_SLOT].size, (unsigned long)requests[STATE_SLOT].size,
             (unsigned long)requests[SOUND_SLOT].size, (unsigned long)requests[INDEX_SLOT].size,
             (unsigned long)CACHE_STREAM_IO_BYTES, (unsigned long)RESERVE_BYTES);
+#ifdef CACHE_WIDGET_GRAPH
+    fprintf(report, "WIDGET REQUEST workspace=%lu serialized=%lu node_workload_capacity=%lu source_block_maxima=64,32,32,32,32 source_depth=32\n",
+            (unsigned long)workspace_bytes, (unsigned long)CACHE_WIDGET_SERIALIZED_BYTES,
+            (unsigned long)CACHE_WIDGET_NODE_COUNT);
+#endif
 #ifdef GEKKO
     uintptr_t initial_lo = (uintptr_t)SYS_GetArena2Lo();
     uintptr_t initial_hi = (uintptr_t)SYS_GetArena2Hi();
@@ -169,6 +250,17 @@ static int stream_cycles(FILE *report, const char *path)
                 arena_status.error != CACHE_ARENA_HANDLE) ++failures;
             else ++stale_rebind;
         }
+#ifdef CACHE_WIDGET_GRAPH
+        struct cache_widget_graph graph = {0};
+        if (cycle) {
+            struct cache_widget_projection stale;
+            if (cache_widget_graph_node(&previous_graph, 0, &stale, &widget_status) ||
+                    widget_status.error != CACHE_WIDGET_STATE) {
+                fprintf(report, "WIDGET FAIL stale graph rebind rejection error=%s\n",
+                        cache_widget_error_name(widget_status.error)); ++failures;
+            } else ++widget_stale_rebind;
+        }
+#endif
         struct cache_arena_handle tag = {0}, io0 = {0}, io1 = {0};
         if (!cache_arena_owner_handle(&owner, TAG_SLOT, &tag, &arena_status) ||
             !cache_arena_owner_handle(&owner, IO0_SLOT, &io0, &arena_status) ||
@@ -209,6 +301,15 @@ static int stream_cycles(FILE *report, const char *path)
             }
             if (fclose(input)) { fprintf(report, "STREAM FAIL input close\n"); ++failures; }
         }
+#ifdef CACHE_WIDGET_GRAPH
+        /* Acquire immutable typed views only after the deliberate IO rewrites. */
+        if (!failures) {
+            unsigned char *raw = slot_view(&owner, TAG_SLOT, CACHE_PRIVATE_SIZE);
+            if (!raw || cache_probe_crc32(raw, CACHE_PRIVATE_SIZE) != CACHE_PRIVATE_CRC ||
+                    widget_roundtrip(report, &owner, workspace_bytes, cycle, &graph)) ++failures;
+            else ++widget_completed;
+        }
+#endif
         for (size_t index = STATE_SLOT; index <= SOUND_SLOT; ++index) {
             unsigned char *view = slot_view(&owner, index, requests[index].size);
             if (!view || view[0] != 0xa5 || view[requests[index].size - 1] != 0xa5) ++failures;
@@ -221,6 +322,9 @@ static int stream_cycles(FILE *report, const char *path)
                               cycle, (void *)begin, (unsigned long)plan.data_end, (unsigned long)plan.reserve_size,
                               (unsigned long)plan.required, (unsigned long)charge, (unsigned long)(initial_hi - initial_lo - charge));
         previous = tag;
+#ifdef CACHE_WIDGET_GRAPH
+        previous_graph = graph;
+#endif
         if (!cache_arena_owner_release(&owner, &arena_status)) {
             fprintf(report, "STREAM FAIL release; backing retained\n");
             return 1;
@@ -228,6 +332,17 @@ static int stream_cycles(FILE *report, const char *path)
         if (cache_arena_owner_resolve(&owner, &previous, 0, 1, &bad_view, &arena_status) ||
             arena_status.error != CACHE_ARENA_STATE) ++failures;
         else ++stale_release;
+#ifdef CACHE_WIDGET_GRAPH
+        if (graph.count) {
+            struct cache_widget_projection stale;
+            if (cache_widget_graph_node(&graph, 0, &stale, &widget_status) ||
+                    widget_status.error != CACHE_WIDGET_STATE) {
+                fprintf(report, "WIDGET FAIL stale graph release rejection error=%s\n",
+                        cache_widget_error_name(widget_status.error)); ++failures;
+            } else ++widget_stale_release;
+        }
+        cache_widget_graph_release(&graph);
+#endif
 #ifdef GEKKO
         if ((uintptr_t)SYS_GetArena2Lo() != begin + plan.required || (uintptr_t)SYS_GetArena2Hi() != initial_hi) {
             fprintf(report, "STREAM FAIL arena changed; refusing restore\n"); return 1;
@@ -243,6 +358,11 @@ static int stream_cycles(FILE *report, const char *path)
             SYS_GetArena2Lo(), SYS_GetArena2Hi(), (unsigned long)SYS_GetArena2Size());
 #else
     free(storage);
+#endif
+#ifdef CACHE_WIDGET_GRAPH
+    fprintf(report, "WIDGET SUMMARY cycles=%u stale_rebind=%u stale_release=%u workspace_bytes=%lu serialized_bytes=%lu failures=%u unknown_bytes=opaque_preserved full_UI_graph=not_qualified\n",
+            widget_completed, widget_stale_rebind, widget_stale_release, (unsigned long)workspace_bytes,
+            (unsigned long)CACHE_WIDGET_SERIALIZED_BYTES, failures);
 #endif
     fprintf(report, "STREAM SUMMARY cycles=%u tags=%lu max_charge=%lu chunks=%lu expected_errors=%u stale_rebind=%u stale_release=%u generation=%llu failures=%u\n",
             completed, (unsigned long)CACHE_PRIVATE_COUNT, (unsigned long)maximum_charge, (unsigned long)maximum_io_chunks,
@@ -266,19 +386,22 @@ int main(int argc, char **argv)
     VIDEO_WaitVSync(); if (mode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
     if (!fatInitDefault()) { fprintf(stderr, "STREAM SD unavailable\n"); return 2; }
     if (mkdir("sd:/halo-wii-memory", 0777) && errno != EEXIST) { fprintf(stderr, "STREAM log directory failed\n"); return 2; }
-    report = fopen("sd:/halo-wii-memory/cache-stream.log", "a");
+    report = fopen(CACHE_REPORT_PATH, "a");
     if (!report) { fprintf(stderr, "STREAM log open failed\n"); return 2; }
     path = CACHE_STREAM_FILENAME;
 #else
     if (argc != 2) { fprintf(stderr, "STREAM requires private raw tag path\n"); return 2; }
     path = argv[1];
 #endif
-    if (fprintf(report, "BEGIN STREAM build=%s\n", CACHE_PROBE_BUILD_ID) < 0 || fflush(report)) return 2;
+    if (fprintf(report, "BEGIN %s build=%s\n", CACHE_REPORT_KIND, CACHE_PROBE_BUILD_ID) < 0 || fflush(report)) return 2;
     int result = wii_cache_address_fixture(report, 1);
     result |= wii_cache_arena_fixture(report, 1);
     result |= wii_cache_stream_fixture(report, 1);
+#ifdef CACHE_WIDGET_GRAPH
+    result |= wii_cache_widget_fixture(report, 1);
+#endif
     result |= stream_cycles(report, path);
-    if (fprintf(report, "END STREAM build=%s result=%d\n", CACHE_PROBE_BUILD_ID, result) < 0 || fflush(report) || ferror(report)) return 2;
+    if (fprintf(report, "END %s build=%s result=%d\n", CACHE_REPORT_KIND, CACHE_PROBE_BUILD_ID, result) < 0 || fflush(report) || ferror(report)) return 2;
 #ifdef GEKKO
     if (fclose(report)) return 2;
     for (unsigned i = 0; i < 60; ++i) VIDEO_WaitVSync();
