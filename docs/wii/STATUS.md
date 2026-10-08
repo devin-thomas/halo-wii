@@ -269,3 +269,11 @@ three indices before selecting compressed environment records and publishes a
 complete caller result atomically. Clean host128cases/64417checks0 and strict
 PPC compile-only checks pass. No allocation/workspace/capacity growth; lightmap
 and global ownership policy, decompression, GX and runtime acceptance stay open.
+
+
+The [packed-vector decoder](evidence/2026-10-08-packed-vector-api.md) preserves source biased midpoint
+arithmetic with explicit signed fields and atomic three-float caller output.
+Clean host133cases/91506checks0 includes all5120componentcodes and9goldens;
+strict PPC compile-only checks pass. Host float-bit agreement covers an authored
+source-order oracle under recorded GCC flags. No allocation/workspace/capacity
+growth. Original Xbox/MSVC and PPC runtime equality, full geometry and GX remain open.
