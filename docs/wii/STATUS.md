@@ -124,3 +124,13 @@ measured arena under a provisional reserve. State/sound are placeholders;
 controlled interval holes are not system fragmentation, and heap arena size
 changes. Full memory strategy, nested conversion, physical Wii and gameplay
 remain unqualified; earlier ABI/shutdown failures stay preserved.
+
+The [representative typed widget graph](evidence/2026-10-07-owned-widget-graph.md)
+passes 189 cases / 5,521 checks and 16 actual host/PPC lifetimes, serializing
+two roots and two records losslessly (2,160 bytes). A separate 485-root extent/
+count scan does not qualify the full UI graph. Original reservations remain;
+the extra PPC workspace/serialization charge leaves 1,800,624 measured MEM2
+bytes under a provisional reserve. MEM2 bounds restore; heap arena size grows.
+Independent audit passes 291 checks. This is partial named-field conversion;
+BSP/resources, engine memory strategy, widget execution, hardware and gameplay
+remain open, along with prior ABI/shutdown failures and ticket blockers.
