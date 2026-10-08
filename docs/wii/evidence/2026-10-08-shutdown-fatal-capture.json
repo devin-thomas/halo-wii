@@ -1,0 +1,178 @@
+{
+  "scope": "one_instrumented_original_probe_startup_to_fatal_exit_chronology",
+  "source_commit": "3bca2e612cc118df5c5aa354ec7deb61aeb31ae6",
+  "build_id": "0f01e11c08c44932",
+  "raw_result_sha256": "d90a37ce4ee3c92dd4de4d4a869d77aa1df91a5f381ab67cc89bd68ced625784",
+  "MI_sha256": "cf850475316d59c141a9f84deaf48181ca1080ece23af702e1a7b8205cd55519",
+  "controller_sha256": "3c08d03c683469d0ed6c89b119fb58ea0701e63414216faade59377b1afef8f3",
+  "section_guard_sha256": "4391c5c1fbc889d2498aaf7135075cffb62dcb2743731f186cc0c3fd69258ff6",
+  "setup": {
+    "qualified": true,
+    "early_init_before_symbols": true,
+    "live_policy_checked": true,
+    "committed_writable_image_page": true,
+    "zero_initial_word_and_guard": true,
+    "numeric_metadata_span_bytes": 20,
+    "hardware_watch_bytes": 4,
+    "first_marker_after_hardware_placement": true,
+    "live_code_prefix_points": 6,
+    "new_thread_coverage": "observed startup hardware change on debugger thread69; complete coverage unqualified"
+  },
+  "signal_policy": {
+    "SIGSEGV": "nostop/noprint/PASS",
+    "SIGABRT": "stop/print/PASS",
+    "SIGILL": "stop/print/PASS",
+    "individual_SIGSEGV_occurrences_logged": false,
+    "benign_JIT_classification": false
+  },
+  "capture": {
+    "loader_setup_stops": 1,
+    "structured_snapshots": 8,
+    "terminal_exit_notifications": 1,
+    "total_nonterminal_stops": 9,
+    "approved_max_nonterminal_stops": 65,
+    "max_structured_snapshots": 64,
+    "wall_seconds": 16.391,
+    "wall_bound_seconds": 120,
+    "per_stop_bound_seconds": 15,
+    "chronology": [
+      {
+        "event": 1,
+        "seconds": 0.627,
+        "kind": "PE entry marker",
+        "word": 0,
+        "PC_RVA": "0xcbb5c0"
+      },
+      {
+        "event": 2,
+        "seconds": 4.264,
+        "kind": "startup reset entry",
+        "word": 0,
+        "PC_RVA": "0x8d1860"
+      },
+      {
+        "event": 3,
+        "seconds": 4.324,
+        "kind": "accessor entry",
+        "word": 0,
+        "PC_RVA": "0x8d1450"
+      },
+      {
+        "event": 4,
+        "seconds": 4.386,
+        "kind": "hardware word change",
+        "word": 8724,
+        "PC_RVA": "0x8d15e2"
+      },
+      {
+        "event": 5,
+        "seconds": 14.237,
+        "kind": "onexit callback entry",
+        "word": 8724,
+        "PC_RVA": "0xf8e570"
+      },
+      {
+        "event": 6,
+        "seconds": 14.319,
+        "kind": "fatal comparison",
+        "word": 8724,
+        "PC_RVA": "0xf8e5b1"
+      },
+      {
+        "event": 7,
+        "seconds": 14.384,
+        "kind": "terminate CALL site",
+        "word": 8724,
+        "PC_RVA": "0xf8e5ba"
+      },
+      {
+        "event": 8,
+        "seconds": 14.396,
+        "kind": "unknown signal at Windows abort",
+        "word": 8724,
+        "signal_name": "?",
+        "saved_stack": [
+          "ucrtbase!abort",
+          "ucrtbase!terminate",
+          "main image return RVA0xf8e5c0",
+          "Windows onexit table"
+        ]
+      }
+    ],
+    "shutdown_reset_entry_observed": false,
+    "join_helper_return_observed": false,
+    "hardware_word_changes": 1,
+    "last_observed_word": 8724,
+    "all_writers_or_final_writer_proof": false
+  },
+  "lifecycle": {
+    "natural_process_completion": true,
+    "native_host_exit": "0xc0000409",
+    "native_exit_scope": "natural",
+    "forced_cleanup": false,
+    "all_Dolphin_absent_after": true,
+    "GDB_exit_code": 0,
+    "Python_controller_exit_code": 1,
+    "raw_controller_failures": [
+      "Unexpected SD file change"
+    ]
+  },
+  "preservation": {
+    "sd_before_and_backup_sha256": "46c07a154b860dfb559f890c5a8424a92d21a7be75cfe4e691b656522a98cf2f",
+    "sd_after_sha256": "c35d71203a39ea9521cc536bf11728591205f4292ad49e7faac2a55c62ff7ade",
+    "changed_authored_files": [
+      "halo-wii-probe/PROBE.LOG",
+      "halo-wii-probe/SENTINEL.TXT"
+    ],
+    "other_SD_files_unchanged": true,
+    "prior_log_prefix_preserved": true,
+    "appended_guest_report_bytes": 254,
+    "guest_END": {
+      "frames": 116,
+      "ticks": 57,
+      "connected": 1,
+      "activity": 1,
+      "exit": "pad_start",
+      "storage": 1
+    },
+    "sentinel_before": 2,
+    "sentinel_after": 3,
+    "exact_inputs_and_three_configs_unchanged": true,
+    "profile_before_files": 41,
+    "profile_after_files": 41,
+    "fresh_existing_profile_byte_backups_verified": true,
+    "profile_added_files": 16,
+    "profile_removed_files": 16,
+    "profile_modified_existing_files": 1,
+    "profile_other_existing_files_unchanged": 24,
+    "automatic_session_path_move": "16 WiiSession files move to WiiSession.backup with byte identity preserved",
+    "automatic_profile_metadata_preserved": true,
+    "manual_restore_or_delete": false
+  },
+  "post_run_oracle_issue": {
+    "raw_failure_retained": true,
+    "reason": "FAT inventory retains uppercase authored basenames while exact allowlist used lowercase; saved casefold comparison with no collisions qualifies only the two expected authored changes",
+    "runtime_repeated": false,
+    "controller_or_raw_evidence_patched": false
+  },
+  "independent_saved_reviews": [
+    {
+      "predicates": 119,
+      "review_failures": 0,
+      "record_sha256": "64f5c7bac50a243ae8e9c1bf90ac1e270beba5f121a4617a1ab91a74489c3aa4"
+    },
+    {
+      "predicates": 218,
+      "review_failures": 0,
+      "record_sha256": "7fe940859455fb21819356db546f268b1ddb9e126508db4f2257d906c38b63a7"
+    }
+  ],
+  "limits": [
+    "Instrumented timing and nonzero natural Windows status do not qualify original unmodified two-cold success",
+    "Startup word write persisted through observed fatal path; no complete hardware coverage, all writers or final shutdown writer proof",
+    "No reset or join-helper return capture during shutdown; absence of an observed breakpoint is bounded by this trace",
+    "Nearest hid exports do not establish source owner; no exact stock PDB, ABI, engine, native geometry, GX, gameplay or physical Wii qualification",
+    "Unknown fatal signal retained as question mark, not relabeled SIGABRT; individual passed SIGSEGV exceptions not logged or classified",
+    "Controller Python1 and original failed raw records retained; no further launch or data restoration"
+  ]
+}

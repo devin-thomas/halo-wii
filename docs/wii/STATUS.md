@@ -230,3 +230,12 @@ without source-owner or last shutdown-writer proof. Sixty exception stops consum
 the64-stop cap before shutdown; cleanup is forced, with no new guest report.
 SD/config/input identities remain; host session/play-time metadata changes are
 retained. Original shutdown/ABI and physical-Wii qualification remain open.
+
+
+The [original probe fatal chronology](evidence/2026-10-08-shutdown-fatal-capture.md)
+observes startup word0 -> 8,724 persisting through the onexit callback, fatal
+comparison and terminate CALL. Natural Windows status0xc0000409 is fatal;
+cleanup is not forced. Guest END/sentinel2 -> 3 and saved preservation qualify,
+while the controller's uppercase-FAT/lowercase-allowlist Python1 is retained.
+No shutdown reset/helper-return snapshot, source-owner or successful cold-run
+qualification follows; HWI-005/006 remain BLOCKED.
