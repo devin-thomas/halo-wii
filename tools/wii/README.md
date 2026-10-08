@@ -212,6 +212,44 @@ ignored output directory. Compilation and authored host execution are separate
 from PPC execution; this option does not stage SD files or launch Dolphin.
 `--material-fixture` runs alone and rejects private/streaming/widget/BSP modes.
 
+For a private material streaming build, add this option to the tag and BSP
+streaming arguments documented above:
+
+```text
+--material-goldens <external-material-JSON>
+```
+
+This requires `--private-tag-data`, `--stream-file`, `--bsp-goldens`,
+`--private-bsp-data` and `--bsp-stream-file`. It excludes `--widget-goldens`
+and every standalone fixture option. The runner bounds both external raw inputs
+to 22 MiB and both numeric metadata files to 1 MiB, compares their input hashes
+and selected BSP identities, and rejects changed descriptor/path snapshots.
+These checks are not a filesystem lock. Counts are generic aggregates, with
+128 lightmaps and 2,048 materials per lightmap; 34 materials is not an API limit.
+The selected byte count must equal 648 + 32L + 256M and fit the BSP input.
+Material mode also reuses the BSP inspector on those snapshots, checking signed
+descriptor counts, header/root/table bounds and disjointness, one-byte Data
+spans, full scenario/BSP association and placement above the retained tag bytes.
+Recomputed BSP goldens must match the supplied BSP metadata.
+
+Generated material goldens contain unsigned numeric constants and full SHA-256
+hex literals for inputs and selected serialization. The generated SHA unit
+copies the existing `p2p_crypto.c` SHA-256 section unchanged; full source,
+extracted section and generated-unit hashes are part of build identity. It
+includes the SHA fixture header to check the extracted function declaration.
+It does not import Linux platform, threading or external crypto dependencies.
+Neither raw input is embedded in this streaming mode.
+
+The material integration uses bounded direct offset streaming into the existing
+22 MiB tag reservation, with the full original state/sound/index/IO capacities
+and provisional reserve retained. Conservative widget workspace and serialization
+slots remain charged even though this mode does not run a widget graph.
+SD staging and input identity checks are separate private setup; this runner
+does not create or update SD files. A successful PPC build establishes compilation,
+not target execution, physical placement or Wii acceptance. Runtime inspection
+compares selected serialization count, CRC and full SHA-256 with the numeric
+goldens; it retains encoded addresses and makes no geometry execution claim.
+
 The numeric inspector reads external raw tags and one declared BSP sidecar:
 
 ```powershell

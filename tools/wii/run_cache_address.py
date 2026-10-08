@@ -4,16 +4,138 @@ Output must be ignored by Git. Private bytes and binaries must never be shared.
 The default diagnostic contains only authored synthetic fixtures.
 """
 import argparse
+from contextlib import ExitStack
 import hashlib
 import json
 import os
 import re
+import stat
 from pathlib import Path
 import struct
 import subprocess
 import zlib
 from build import verify_dol, verify_elf
 from check_toolchain import inspect_toolchain, toolchain_inputs
+
+
+MATERIAL_NUMERIC_KEYS = ('scenario_datum', 'bsp_datum', 'lightmap_count', 'material_count',
+                         'environment_vertices', 'lightmap_vertices', 'serialized_bytes', 'serialized_crc32')
+
+
+def read_numeric_metadata(data):
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError('duplicate metadata key')
+            result[key] = value
+        return result
+    try:
+        result = json.loads(data, object_pairs_hook=unique_object)
+    except (ValueError, UnicodeError) as error:
+        raise ValueError('metadata is not valid unique-key UTF-8 JSON') from error
+    if not isinstance(result, dict) or not isinstance(result.get('goldens'), dict):
+        raise ValueError('metadata requires a goldens object')
+    return result
+
+
+def read_material_inputs(root, paths):
+    """Bound reads and compare each open descriptor and path using the same stat API."""
+    snapshots = {}
+    identities = set()
+    def signature(value):
+        return (value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+    with ExitStack() as stack:
+        opened = []
+        for key, supplied, minimum, maximum in paths:
+            path = supplied.resolve(strict=True)
+            if path.is_relative_to(root):
+                raise ValueError('material inputs must remain external to the checkout')
+            stream = stack.enter_context(path.open('rb'))
+            before_fd, before_path = os.fstat(stream.fileno()), path.stat()
+            identity = (before_fd.st_dev, before_fd.st_ino)
+            if (not stat.S_ISREG(before_fd.st_mode) or not minimum <= before_fd.st_size <= maximum or
+                    identity != (before_path.st_dev, before_path.st_ino) or identity in identities):
+                raise ValueError('material input bounds or distinct file identity invalid')
+            identities.add(identity)
+            data = stream.read(maximum + 1)
+            if len(data) != before_fd.st_size:
+                raise ValueError('material input changed or exceeded its read bound')
+            snapshots[key] = data
+            opened.append((stream, path, before_fd, before_path))
+        for stream, path, before_fd, before_path in opened:
+            if (signature(before_fd) != signature(os.fstat(stream.fileno())) or
+                    signature(before_path) != signature(path.stat())):
+                raise ValueError('material input changed during the bounded snapshot')
+    return snapshots
+
+
+def validate_material_goldens(inspection, payload, bsp_payload, bsp_goldens):
+    if not isinstance(inspection, dict) or not isinstance(inspection.get('goldens'), dict):
+        raise ValueError('material metadata requires a numeric goldens object')
+    if (inspection.get('tag_input_sha256') != hashlib.sha256(payload).hexdigest() or
+            inspection.get('bsp_input_sha256') != hashlib.sha256(bsp_payload).hexdigest()):
+        raise ValueError('material metadata belongs to different private input')
+    goldens = inspection['goldens']
+    for key in MATERIAL_NUMERIC_KEYS:
+        if type(goldens.get(key)) is not int or not 0 <= goldens[key] <= 0xffffffff:
+            raise ValueError('material golden must be an unsigned 32-bit integer: ' + key)
+    digest = goldens.get('serialized_sha256')
+    if not isinstance(digest, str) or not re.fullmatch('[0-9a-f]{64}', digest):
+        raise ValueError('material serialization SHA-256 must be 64 lowercase hexadecimal digits')
+    for key in ('bsp_ordinal', 'declared_map_bytes', 'tag_base'):
+        if type(inspection.get(key)) is not int or not 0 <= inspection[key] <= 0xffffffff:
+            raise ValueError('material selection must be an unsigned 32-bit integer: ' + key)
+    if (goldens['scenario_datum'] != bsp_goldens['scenario_datum'] or
+            goldens['bsp_datum'] != bsp_goldens['datum'] or
+            inspection.get('bsp_ordinal') != bsp_goldens['bsp_ordinal'] or
+            inspection.get('declared_map_bytes') != bsp_goldens['declared_map_bytes'] or
+            inspection.get('tag_base') != 0x803a6000):
+        raise ValueError('material and BSP metadata identify different source selections')
+    lightmaps, materials = goldens['lightmap_count'], goldens['material_count']
+    if (lightmaps > 128 or materials > lightmaps * 2048 or
+            goldens['environment_vertices'] > materials * 64000 or
+            goldens['lightmap_vertices'] > materials * 64000 or
+            goldens['serialized_bytes'] != 648 + lightmaps * 32 + materials * 256 or
+            not goldens['serialized_bytes'] <= min(len(bsp_payload), 0x7fffffff)):
+        raise ValueError('material aggregate counts or selected serialization extent invalid')
+    return {key: goldens[key] for key in (*MATERIAL_NUMERIC_KEYS, 'serialized_sha256')}
+
+
+def validate_material_bsp(payload, bsp_payload, bsp_goldens):
+    # Reuse the same bounded association/window policy as the numeric inspector.
+    from inspect_bsp_residency import inspect_bytes, InspectionError
+    try:
+        measured = inspect_bytes(payload, bsp_payload, bsp_goldens['declared_map_bytes'],
+                                 bsp_goldens['bsp_ordinal'])['goldens']
+    except InspectionError as error:
+        raise ValueError('material BSP snapshot invalid: ' + str(error)) from error
+    for key, value in bsp_goldens.items():
+        if key in measured and value != measured[key]:
+            raise ValueError('material BSP golden disagrees with snapshot: ' + key)
+
+
+def extract_material_sha(source):
+    start_marker, end_marker = b'/* ---------- SHA-256 */', b'void p2p_hmac_sha256'
+    if source.count(start_marker) != 1 or source.count(end_marker) != 1:
+        raise ValueError('SHA extraction markers must occur exactly once')
+    start, end = source.index(start_marker), source.index(end_marker)
+    if end <= start:
+        raise ValueError('SHA extraction markers are out of order')
+    extracted = source[start:end]
+    generated = (b'#include <string.h>\n#include "cache_sha256_fixture.h"\n'
+                 b'_Static_assert(sizeof(unsigned int) == 4, "SHA word width");\n'
+                 b'_Static_assert(sizeof(unsigned long long) == 8, "SHA length width");\n' + extracted)
+    return extracted, generated
+
+
+def write_material_macros(stream, goldens, tag_sha256, bsp_sha256):
+    stream.write('#define CACHE_MATERIAL_GRAPH 1\n')
+    for key in MATERIAL_NUMERIC_KEYS:
+        stream.write('#define CACHE_MATERIAL_GOLDEN_' + key.upper() + ' ' + str(goldens[key]) + 'u\n')
+    stream.write('#define CACHE_MATERIAL_GOLDEN_SERIALIZED_SHA256 ' + json.dumps(goldens['serialized_sha256']) + '\n')
+    stream.write('#define CACHE_MATERIAL_TAG_SHA256 ' + json.dumps(tag_sha256) + '\n')
+    stream.write('#define CACHE_MATERIAL_BSP_SHA256 ' + json.dumps(bsp_sha256) + '\n')
 
 
 def main():
@@ -30,13 +152,14 @@ def main():
     parser.add_argument('--bsp-stream-file', help='safe sd:/ path for the private raw BSP sidecar')
     parser.add_argument('--bsp-fixture', action='store_true', help='run authored BSP residency cases without private input')
     parser.add_argument('--material-fixture', action='store_true', help='run authored partial material graph cases without private input')
+    parser.add_argument('--material-goldens', type=Path, help='external numeric goldens for all selected partial BSP materials')
     args = parser.parse_args()
     if args.stream_file and (not args.private_tag_data or not re.fullmatch(r'sd:/[A-Za-z0-9_/.-]+', args.stream_file)
                              or '..' in args.stream_file.split('/')):
         parser.error('--stream-file requires private tag goldens and a safe sd:/ path')
     if args.widget_goldens and not args.stream_file:
         parser.error('--widget-goldens requires --stream-file')
-    if args.widget_fixture and (args.private_tag_data or args.stream_file or args.widget_goldens):
+    if args.widget_fixture and (args.private_tag_data or args.stream_file or args.widget_goldens or args.material_goldens):
         parser.error('--widget-fixture runs without private input or streaming arguments')
     bsp_arguments = (args.bsp_goldens, args.private_bsp_data, args.bsp_stream_file)
     if any(bsp_arguments) and (not all(bsp_arguments) or not args.stream_file):
@@ -44,13 +167,15 @@ def main():
     if args.bsp_stream_file and (not re.fullmatch(r'sd:/[A-Za-z0-9_/.-]+', args.bsp_stream_file)
                                 or '..' in args.bsp_stream_file.split('/')):
         parser.error('--bsp-stream-file must be a safe sd:/ path')
+    if args.material_goldens and (not args.stream_file or not all(bsp_arguments) or args.widget_goldens):
+        parser.error('--material-goldens requires complete BSP streaming arguments and excludes --widget-goldens')
     if args.bsp_fixture and (args.private_tag_data or args.stream_file or args.widget_goldens or
-                            args.widget_fixture or any(bsp_arguments)):
+                            args.widget_fixture or args.material_goldens or any(bsp_arguments)):
         parser.error('--bsp-fixture runs alone without private input or streaming arguments')
     if args.widget_fixture and any(bsp_arguments):
         parser.error('--widget-fixture cannot use BSP streaming arguments')
     if args.material_fixture and (args.private_tag_data or args.stream_file or args.widget_goldens or
-                                 args.widget_fixture or args.bsp_fixture or any(bsp_arguments)):
+                                 args.widget_fixture or args.bsp_fixture or args.material_goldens or any(bsp_arguments)):
         parser.error('--material-fixture runs alone without private input or streaming arguments')
     root = Path.cwd().resolve()
     output = args.output.resolve()
@@ -85,6 +210,8 @@ def main():
     if args.material_fixture:
         names += ['cache_arena_plan.c', 'cache_bsp_probe.c', 'cache_material_probe.c',
                   'cache_material_fixture.c']
+    if args.material_goldens:
+        names += ['cache_material_probe.c', 'cache_material_fixture.c', 'cache_sha256_fixture.c']
     sources = [Path('tools/wii')/name for name in names]
     inputs = sources + [Path('tools/wii')/name for name in ('cache_address_probe.h', 'cache_address_fixture.h',
                                                           'cache_address_owned.h', 'run_cache_address.py',
@@ -112,7 +239,7 @@ def main():
         inputs += [Path('tools/wii/cache_arena_plan.h')]
     if args.bsp_goldens:
         inputs += [Path('tools/wii/inspect_bsp_residency.py'), Path('tools/wii/inspect_widget_graph.py')]
-    if args.material_fixture:
+    if args.material_fixture or args.material_goldens:
         inputs += [Path('tools/wii')/name for name in ('cache_arena_plan.h', 'cache_bsp_probe.h',
                                                      'cache_material_probe.h', 'cache_material_fixture.h')]
         inputs += [Path('source/scenario/scenario.h'), Path('source/scenario/scenario_definitions.h'),
@@ -120,6 +247,9 @@ def main():
                    Path('source/rasterizer/rasterizer_geometry.h'), Path('source/tag_files/tag_groups.h'),
                    Path('port/linux/game/cache_file_formats.c'), Path('port/linux/game/tag_schema_scenario.c'),
                    Path('port/linux/game/tag_schema_collision.c'), Path('port/linux/game/tag_validate.c')]
+    if args.material_goldens:
+        inputs += [Path('tools/wii/inspect_material_graph.py'), Path('tools/wii/cache_sha256_fixture.h'),
+                   Path('port/linux/src/p2p_crypto.c')]
     hashes = {p.as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     source_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     dirty = bool(subprocess.check_output(['git', 'status', '--porcelain', '--', *map(str, inputs)], text=True))
@@ -130,13 +260,30 @@ def main():
     bsp_goldens = None
     bsp_payload = b''
     bsp_metadata_sha256 = None
+    material_goldens = None
+    material_metadata_sha256 = None
+    material_snapshots = {}
+    sha_extracted = sha_generated = None
+    if args.material_goldens:
+        try:
+            material_snapshots = read_material_inputs(root, (
+                ('tags', args.private_tag_data, 36, 0x1600000),
+                ('bsp', args.private_bsp_data, 24, 0x1600000),
+                ('bsp_metadata', args.bsp_goldens, 1, 1048576),
+                ('material_metadata', args.material_goldens, 1, 1048576)))
+            sha_source = Path('port/linux/src/p2p_crypto.c').read_bytes()
+            if hashlib.sha256(sha_source).hexdigest() != hashes['port/linux/src/p2p_crypto.c']:
+                raise ValueError('SHA source changed during input fingerprinting')
+            sha_extracted, sha_generated = extract_material_sha(sha_source)
+        except (OSError, ValueError) as error:
+            parser.error(str(error) if isinstance(error, ValueError) else 'material input snapshot failed')
     if args.private_tag_data:
         private_path = args.private_tag_data.resolve(strict=True)
         if private_path.is_relative_to(root):
             parser.error('private source data must stay outside the repository')
         if not 36 <= private_path.stat().st_size <= 0x1600000:
             parser.error('private tag blob must be 36 bytes to 22 MiB')
-        payload = private_path.read_bytes()
+        payload = material_snapshots['tags'] if args.material_goldens else private_path.read_bytes()
         address, _, _, count = struct.unpack_from('<4I', payload)
         offset = address - 0x803A6000
         if not 1 <= count <= 65535 or offset < 36 or offset > len(payload) - count * 32:
@@ -166,18 +313,24 @@ def main():
                 not 24 <= private_bsp.stat().st_size <= 0x1600000 or
                 not 1 <= metadata.stat().st_size <= 1048576):
             parser.error('BSP data/metadata must be bounded external private files')
-        bsp_payload = private_bsp.read_bytes()
-        metadata_bytes = metadata.read_bytes()
+        bsp_payload = material_snapshots['bsp'] if args.material_goldens else private_bsp.read_bytes()
+        metadata_bytes = material_snapshots['bsp_metadata'] if args.material_goldens else metadata.read_bytes()
         bsp_metadata_sha256 = hashlib.sha256(metadata_bytes).hexdigest()
-        inspection = json.loads(metadata_bytes)
-        if (inspection['tag_input_sha256'] != hashlib.sha256(payload).hexdigest() or
-                inspection['bsp_input_sha256'] != hashlib.sha256(bsp_payload).hexdigest()):
+        if args.material_goldens:
+            try:
+                inspection = read_numeric_metadata(metadata_bytes)
+            except ValueError as error:
+                parser.error('BSP metadata invalid: ' + str(error))
+        else:
+            inspection = json.loads(metadata_bytes)
+        if (inspection.get('tag_input_sha256') != hashlib.sha256(payload).hexdigest() or
+                inspection.get('bsp_input_sha256') != hashlib.sha256(bsp_payload).hexdigest()):
             parser.error('BSP metadata belongs to different private input')
         bsp_goldens = inspection['goldens']
         for key in ('scenario_datum', 'datum', 'bsp_ordinal', 'encoded_base', 'root_address',
                     'root_offset', 'declared_map_bytes', 'file_bytes', 'rounded_reservation_bytes',
                     'vertex_count', 'index_count', 'serialized_bytes', 'serialized_crc32'):
-            value = bsp_goldens[key]
+            value = bsp_goldens.get(key)
             if type(value) is not int or not 0 <= value <= 0xffffffff:
                 parser.error('BSP golden must be an unsigned 32-bit integer: ' + key)
         if (bsp_goldens['bsp_ordinal'] >= 16 or bsp_goldens['file_bytes'] != len(bsp_payload) or
@@ -188,6 +341,14 @@ def main():
                 bsp_goldens['encoded_base'] < 0x803a6000 or
                 bsp_goldens['encoded_base'] - 0x803a6000 > 0x1600000 - bsp_goldens['rounded_reservation_bytes']):
             parser.error('representative BSP golden extents invalid')
+    if args.material_goldens:
+        metadata_bytes = material_snapshots['material_metadata']
+        material_metadata_sha256 = hashlib.sha256(metadata_bytes).hexdigest()
+        try:
+            validate_material_bsp(payload, bsp_payload, bsp_goldens)
+            material_goldens = validate_material_goldens(read_numeric_metadata(metadata_bytes), payload, bsp_payload, bsp_goldens)
+        except (ValueError, UnicodeError) as error:
+            parser.error('material metadata invalid: ' + str(error))
     sdk_identity = {}
     inventory = None
     if args.wii_devkitpro:
@@ -231,6 +392,17 @@ def main():
         record['scope'] = 'authored_BSP_residency_fixture_no_private_input'
     if args.material_fixture:
         record['scope'] = 'authored_partial_material_graph_fixture_no_private_input'
+    if args.material_goldens:
+        record['scope'] = 'bounded_partial_material_graph_stream_not_geometry_conversion'
+        record['material_goldens'] = material_goldens
+        record['material_metadata_sha256'] = material_metadata_sha256
+        record['material_input_guard'] = 'bounded_distinct_external_regular_files_fd_and_path_stat_snapshot_not_lock'
+        record['material_sha256_source'] = {
+            'path': 'port/linux/src/p2p_crypto.c', 'source_sha256': hashes['port/linux/src/p2p_crypto.c'],
+            'start_marker': '/* ---------- SHA-256 */', 'end_before': 'void p2p_hmac_sha256',
+            'extracted_sha256': hashlib.sha256(sha_extracted).hexdigest(),
+            'generated_unit_sha256': hashlib.sha256(sha_generated).hexdigest(),
+            'generated_unit': 'cache_sha256.c'}
     build_id = hashlib.sha256(json.dumps(record, sort_keys=True).encode()).hexdigest()[:16]
     record['build_id'] = build_id
     output.mkdir(parents=True)
@@ -238,6 +410,10 @@ def main():
     def save():
         record_path.write_text(json.dumps(record, indent=2)+'\n', encoding='utf-8')
     save()
+    if args.material_goldens:
+        generated_sha_path = output/'cache_sha256.c'
+        generated_sha_path.write_bytes(sha_generated)
+        sources.append(generated_sha_path)
     header = output/'cache_probe_payload.h'
     with header.open('w', encoding='ascii') as stream:
         stream.write(f'#define CACHE_PROBE_BUILD_ID "{build_id}"\n#define CACHE_PRIVATE_SIZE {len(payload)}\n')
@@ -262,6 +438,9 @@ def main():
             stream.write('#define CACHE_BSP_FIXTURE 1\n')
         if args.material_fixture:
             stream.write('#define CACHE_MATERIAL_FIXTURE 1\n')
+        if args.material_goldens:
+            write_material_macros(stream, material_goldens, hashlib.sha256(payload).hexdigest(),
+                                  hashlib.sha256(bsp_payload).hexdigest())
         if payload and not args.stream_file:
             stream.write('static const unsigned char cache_private_bytes[] = {\n')
             for i in range(0, len(payload), 24):

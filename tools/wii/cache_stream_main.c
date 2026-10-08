@@ -11,6 +11,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef CACHE_MATERIAL_GRAPH
+#include "cache_material_probe.h"
+#include "cache_material_fixture.h"
+#include "cache_sha256_fixture.h"
+#endif
 #ifdef CACHE_BSP_RESIDENCY
 #include "cache_bsp_probe.h"
 #include "cache_bsp_fixture.h"
@@ -19,7 +24,10 @@
 #include "cache_widget_probe.h"
 #include "cache_widget_fixture.h"
 #endif
-#ifdef CACHE_BSP_RESIDENCY
+#ifdef CACHE_MATERIAL_GRAPH
+#define CACHE_REPORT_KIND "MATERIAL"
+#define CACHE_REPORT_PATH "sd:/halo-wii-memory/cache-material.log"
+#elif defined(CACHE_BSP_RESIDENCY)
 #define CACHE_REPORT_KIND "BSP"
 #define CACHE_REPORT_PATH "sd:/halo-wii-memory/cache-bsp.log"
 #elif defined(CACHE_WIDGET_GRAPH)
@@ -41,13 +49,22 @@ enum { TAG_SLOT, STATE_SLOT, SOUND_SLOT, INDEX_SLOT, IO0_SLOT, IO1_SLOT,
 #ifdef CACHE_WIDGET_GRAPH
        WIDGET_WORKSPACE_SLOT, WIDGET_SERIAL_SLOT,
 #endif
-#ifdef CACHE_BSP_RESIDENCY
+#ifdef CACHE_MATERIAL_GRAPH
+       RETAINED_WIDGET_WORKSPACE_SLOT, RETAINED_WIDGET_SERIAL_SLOT,
+       MATERIAL_WORKSPACE_SLOT, MATERIAL_SERIAL_SLOT, BSP_CONTROL_SLOT, MATERIAL_CONTROL_SLOT,
+#elif defined(CACHE_BSP_RESIDENCY)
        BSP_STAGE_SLOT, BSP_SERIAL_SLOT, BSP_CONTROL_SLOT,
 #endif
        SLOT_COUNT };
 typedef char verify_stream_index_words[sizeof(struct cache_address_instance) == 32 ? 1 : -1];
 #define RESERVE_BYTES ((size_t)0x200000)
 #define HOST_SPAN_BYTES ((size_t)54368224)
+#ifdef CACHE_MATERIAL_GRAPH
+#define POOL_ALIGNMENT 64u
+struct material_counters { unsigned loads, child_release, child_rebind, atomic_rejections, parent_release, parent_rebind, overwritten_rebind; };
+#else
+#define POOL_ALIGNMENT 32u
+#endif
 
 static unsigned char *slot_view(const struct cache_arena_owner *owner, size_t index, size_t size)
 {
@@ -149,18 +166,118 @@ static int widget_roundtrip(FILE *report, const struct cache_arena_owner *owner,
 }
 #endif
 
+#ifdef CACHE_MATERIAL_GRAPH
+static int material_roundtrip(FILE *report, const struct cache_arena_owner *owner,
+                              const struct cache_bsp_view *parent, size_t workspace_bytes,
+                              unsigned cycle, struct cache_material_view *last,
+                              struct material_counters *counters)
+{
+    struct cache_material_control *control = (void *)slot_view(owner, MATERIAL_CONTROL_SLOT, sizeof(*control));
+    unsigned char *workspace = slot_view(owner, MATERIAL_WORKSPACE_SLOT, workspace_bytes);
+    void *serialized = slot_view(owner, MATERIAL_SERIAL_SLOT, CACHE_MATERIAL_GOLDEN_SERIALIZED_BYTES);
+    struct cache_material_result status;
+    struct cache_material_requirements req;
+    struct cache_material_view old = {0};
+    if (!control || !workspace || !serialized || !cache_material_measure(parent, &req, &status) ||
+            req.workspace_bytes != workspace_bytes || req.serialized_bytes != CACHE_MATERIAL_GOLDEN_SERIALIZED_BYTES ||
+            req.lightmap_count != CACHE_MATERIAL_GOLDEN_LIGHTMAP_COUNT || req.material_count != CACHE_MATERIAL_GOLDEN_MATERIAL_COUNT) {
+        fprintf(report, "MATERIAL FAIL measured workspace/count/serialization requirement\n"); return 1;
+    }
+    memset(control, 0, sizeof(*control));
+    for (unsigned load = 0; load < 2; ++load) {
+        struct cache_material_view view;
+        struct cache_material_root_projection root;
+        if (!cache_material_bind(control, parent, workspace, workspace_bytes, &view, &status) ||
+                !cache_material_get_root(&view, &root, &status) || root.material_count != req.material_count ||
+                root.lightmap_count != req.lightmap_count) {
+            fprintf(report, "MATERIAL FAIL bind/use cycle=%u load=%u error=%s\n", cycle, load,
+                    cache_material_error_name(status.error)); return 1;
+        }
+        if (load) {
+            struct cache_material_root_projection stale;
+            if (cache_material_get_root(&old, &stale, &status) || status.error != CACHE_MATERIAL_STATE) {
+                fprintf(report, "MATERIAL FAIL independent child rebind invalidation\n"); return 1;
+            }
+            ++counters->child_rebind;
+        }
+        size_t visited = 0;
+        uint64_t environment = 0, lightmap = 0;
+        for (size_t i = 0; i < root.lightmap_count; ++i) {
+            struct cache_material_lightmap_projection lm;
+            if (!cache_material_get_lightmap(&view, i, &lm, &status) || lm.first_material != visited) {
+                fprintf(report, "MATERIAL FAIL lightmap projection\n"); return 1;
+            }
+            for (size_t j = 0; j < lm.material_count; ++j) {
+                struct cache_material_projection material;
+                if (!cache_material_get_material(&view, visited++, &material, &status)) {
+                    fprintf(report, "MATERIAL FAIL material projection\n"); return 1;
+                }
+                environment += (uint32_t)material.vertex_buffers[0].count;
+                lightmap += (uint32_t)material.vertex_buffers[1].count;
+            }
+        }
+        char digest[65];
+        size_t used = 0;
+        if (visited != req.material_count || environment != CACHE_MATERIAL_GOLDEN_ENVIRONMENT_VERTICES ||
+                lightmap != CACHE_MATERIAL_GOLDEN_LIGHTMAP_VERTICES ||
+                !cache_material_serialize(&view, serialized, req.serialized_bytes, &used, &status) ||
+                used != req.serialized_bytes || cache_probe_crc32(serialized, used) != CACHE_MATERIAL_GOLDEN_SERIALIZED_CRC32 ||
+                !cache_sha256_hex(serialized, used, digest) || strcmp(digest, CACHE_MATERIAL_GOLDEN_SERIALIZED_SHA256)) {
+            fprintf(report, "MATERIAL FAIL aggregate or lossless selected CRC/SHA256\n"); return 1;
+        }
+        struct cache_material_control before = *control;
+        struct cache_material_view rejected = view;
+        uint32_t published_crc = cache_probe_crc32(workspace + control->published.offset, control->published.bytes);
+        if (cache_material_bind(control, parent, workspace, workspace_bytes - 1, &rejected, &status) ||
+                status.error != CACHE_MATERIAL_WORKSPACE || memcmp(control, &before, sizeof(before)) ||
+                memcmp(&rejected, &view, sizeof(view)) ||
+                published_crc != cache_probe_crc32(workspace + control->published.offset, control->published.bytes)) {
+            fprintf(report, "MATERIAL FAIL rejected publication atomicity\n"); return 1;
+        }
+        size_t rejected_used = used;
+        if (cache_material_serialize(&view, serialized, used - 1, &rejected_used, &status) ||
+                status.error != CACHE_MATERIAL_CAPACITY || rejected_used != used ||
+                cache_probe_crc32(serialized, used) != CACHE_MATERIAL_GOLDEN_SERIALIZED_CRC32) {
+            fprintf(report, "MATERIAL FAIL rejected serialization atomicity\n"); return 1;
+        }
+        ++counters->atomic_rejections;
+        ++counters->loads;
+        if (cycle == 0 && load == 0) fprintf(report, "MATERIAL VIEW lightmaps=%lu materials=%lu shader_identities=all_selected_validated environment_vertices=%lu lightmap_vertices=%lu workspace=%lu serialized_bytes=%lu crc32=%08lx sha256=%s control_bytes=%lu view_bytes=%lu scope=partial_metadata_no_geometry\n",
+            (unsigned long)root.lightmap_count, (unsigned long)root.material_count,
+            (unsigned long)environment, (unsigned long)lightmap, (unsigned long)workspace_bytes,
+            (unsigned long)used, (unsigned long)cache_probe_crc32(serialized, used), digest,
+            (unsigned long)sizeof(*control), (unsigned long)sizeof(view));
+        old = view;
+        if (load == 0) {
+            if (!cache_material_unload(control, &status) || cache_material_get_root(&view, &root, &status) ||
+                    status.error != CACHE_MATERIAL_STATE) {
+                fprintf(report, "MATERIAL FAIL independent child unload invalidation\n"); return 1;
+            }
+            ++counters->child_release;
+        }
+        *last = view;
+    }
+    return 0;
+}
+#endif
+
 #ifdef CACHE_BSP_RESIDENCY
 static int bsp_prepare(FILE *report, const struct cache_arena_owner *owner, const char *path,
                        unsigned cycle, struct cache_bsp_control **control_output)
 {
-    struct cache_arena_handle tag, stage, io0, io1;
+    struct cache_arena_handle tag, io0, io1;
+#ifndef CACHE_MATERIAL_GRAPH
+    struct cache_arena_handle stage;
+#endif
     struct cache_arena_result arena_status;
     struct cache_stream_result stream_status = {0};
     struct cache_bsp_result status;
     struct cache_bsp_reference reference;
     struct cache_bsp_control *control = (void *)slot_view(owner, BSP_CONTROL_SLOT, sizeof(*control));
     if (!control || !cache_arena_owner_handle(owner, TAG_SLOT, &tag, &arena_status) ||
+#ifndef CACHE_MATERIAL_GRAPH
             !cache_arena_owner_handle(owner, BSP_STAGE_SLOT, &stage, &arena_status) ||
+#endif
             !cache_arena_owner_handle(owner, IO0_SLOT, &io0, &arena_status) ||
             !cache_arena_owner_handle(owner, IO1_SLOT, &io1, &arena_status)) {
         fprintf(report, "BSP FAIL preparation handles\n"); return 1;
@@ -175,20 +292,46 @@ static int bsp_prepare(FILE *report, const struct cache_arena_owner *owner, cons
     }
     FILE *input = fopen(path, "rb");
     if (!input) { fprintf(report, "BSP FAIL sidecar open\n"); return 1; }
+#ifdef CACHE_MATERIAL_GRAPH
+    int result = !cache_stream_read_at(input, owner, &tag, &io0, &io1, reference.slot_offset,
+                                       CACHE_BSP_GOLDEN_FILE_BYTES, CACHE_BSP_GOLDEN_SERIALIZED_CRC32, &stream_status);
+#else
     int result = !cache_stream_read(input, owner, &stage, &io0, &io1, CACHE_BSP_GOLDEN_FILE_BYTES,
                                     CACHE_BSP_GOLDEN_SERIALIZED_CRC32, &stream_status);
+#endif
     if (result) fprintf(report, "BSP FAIL sidecar read error=%s bytes=%lu\n",
                         cache_stream_error_name(stream_status.error), (unsigned long)stream_status.bytes);
     if (fclose(input)) { fprintf(report, "BSP FAIL sidecar close\n"); result = 1; }
     if (result) return 1;
     unsigned char *destination = NULL;
+#ifndef CACHE_MATERIAL_GRAPH
     unsigned char *source = slot_view(owner, BSP_STAGE_SLOT, CACHE_BSP_GOLDEN_FILE_BYTES);
-    if (!source || !cache_arena_owner_resolve(owner, &tag, reference.slot_offset,
+    if (!source) { fprintf(report, "BSP FAIL staging view\n"); return 1; }
+#endif
+    if (!cache_arena_owner_resolve(owner, &tag, reference.slot_offset,
                                              reference.rounded_bytes, &destination, &arena_status)) {
         fprintf(report, "BSP FAIL rounded residency span\n"); return 1;
     }
     /* All input rewrites precede immutable widget/BSP view acquisition. */
+#ifndef CACHE_MATERIAL_GRAPH
     memcpy(destination, source, CACHE_BSP_GOLDEN_FILE_BYTES);
+#else
+    unsigned char *raw_tags = slot_view(owner, TAG_SLOT, CACHE_BSP_TAG_LIMIT);
+    if (!raw_tags || cache_probe_crc32(raw_tags, CACHE_PRIVATE_SIZE) != CACHE_PRIVATE_CRC ||
+            cache_probe_crc32(destination, CACHE_BSP_GOLDEN_FILE_BYTES) != CACHE_BSP_GOLDEN_SERIALIZED_CRC32) {
+        fprintf(report, "MATERIAL FAIL pre-bind raw input CRC\n"); return 1;
+    }
+    for (size_t i = CACHE_PRIVATE_SIZE; i < reference.slot_offset; ++i)
+        if (raw_tags[i] != 0xa5) { fprintf(report, "MATERIAL FAIL unread gap canary changed\n"); return 1; }
+    if (cycle == 0) {
+        char tags_sha[65], bsp_sha[65];
+        if (!cache_sha256_hex(raw_tags, CACHE_PRIVATE_SIZE, tags_sha) || strcmp(tags_sha, CACHE_MATERIAL_TAG_SHA256) ||
+                !cache_sha256_hex(destination, CACHE_BSP_GOLDEN_FILE_BYTES, bsp_sha) || strcmp(bsp_sha, CACHE_MATERIAL_BSP_SHA256)) {
+            fprintf(report, "MATERIAL FAIL raw input SHA256\n"); return 1;
+        }
+        fprintf(report, "MATERIAL INPUT tag_sha256=%s bsp_sha256=%s direct_BSP_stream=1 gap_canary=preserved\n", tags_sha, bsp_sha);
+    }
+#endif
     if (cycle == 0) fprintf(report, "BSP INPUT bytes=%lu crc32=%08lx chunks=%lu fread_calls=%lu slot_offset=%lu rounded=%lu unread_gap=%lu\n",
         (unsigned long)stream_status.bytes, (unsigned long)stream_status.actual_crc32,
         (unsigned long)stream_status.chunks, (unsigned long)stream_status.read_calls,
@@ -200,17 +343,28 @@ static int bsp_prepare(FILE *report, const struct cache_arena_owner *owner, cons
 
 static int bsp_roundtrip(FILE *report, const struct cache_arena_owner *owner,
                          struct cache_bsp_control *control, unsigned cycle,
-                         struct cache_bsp_view *last, unsigned *child_release, unsigned *child_rebind)
+                         struct cache_bsp_view *last, unsigned *child_release, unsigned *child_rebind
+#ifdef CACHE_MATERIAL_GRAPH
+                         , size_t workspace_bytes, struct cache_material_view *material_last,
+                         struct material_counters *counters
+#endif
+                         )
 {
     struct cache_arena_handle tag;
     struct cache_arena_result arena_status;
     struct cache_bsp_result status;
     struct cache_bsp_view old = {0};
+#ifdef CACHE_MATERIAL_GRAPH
+    const unsigned loads = 1;
+#else
+    const unsigned loads = 2;
     void *serialized = slot_view(owner, BSP_SERIAL_SLOT, CACHE_BSP_GOLDEN_SERIALIZED_BYTES);
-    if (!serialized || !cache_arena_owner_handle(owner, TAG_SLOT, &tag, &arena_status)) {
+    if (!serialized) { fprintf(report, "BSP FAIL serialization handle\n"); return 1; }
+#endif
+    if (!cache_arena_owner_handle(owner, TAG_SLOT, &tag, &arena_status)) {
         fprintf(report, "BSP FAIL roundtrip handles\n"); return 1;
     }
-    for (unsigned load = 0; load < 2; ++load) {
+    for (unsigned load = 0; load < loads; ++load) {
         struct cache_bsp_view view;
         struct cache_bsp_reference reference;
         struct cache_bsp_header header;
@@ -248,6 +402,23 @@ static int bsp_roundtrip(FILE *report, const struct cache_arena_owner *owner,
                  status.error != CACHE_BSP_SPAN)) {
             fprintf(report, "BSP FAIL unread gap became addressable\n"); return 1;
         }
+#ifdef CACHE_MATERIAL_GRAPH
+        const uint32_t invalid_addresses[] = {
+            CACHE_BSP_TAG_BASE + CACHE_PRIVATE_SIZE - 1u,
+            reference.address - 1u,
+            reference.address + (uint32_t)reference.file_size - 1u
+        };
+        for (size_t i = 0; i < sizeof(invalid_addresses) / sizeof(invalid_addresses[0]); ++i)
+            if (cache_bsp_resolve(&view, invalid_addresses[i], 2, 1, &gap, &status) || status.error != CACHE_BSP_SPAN) {
+                fprintf(report, "MATERIAL FAIL span crossed a valid window\n"); return 1;
+            }
+        if (reference.scenario_datum != CACHE_MATERIAL_GOLDEN_SCENARIO_DATUM ||
+                reference.datum != CACHE_MATERIAL_GOLDEN_BSP_DATUM ||
+                material_roundtrip(report, owner, &view, workspace_bytes, cycle, material_last, counters)) return 1;
+        if (cycle == 0) fprintf(report, "BSP VIEW datum=%08lx root_offset=%lu root_bytes=%lu vertex_descriptors=%ld index_descriptors=%ld control_bytes=%lu view_bytes=%lu whole_BSP_serialization=0 gap_addressable=0 scope=partial_metadata_no_geometry\n",
+            (unsigned long)reference.datum, (unsigned long)root.offset, (unsigned long)root.length,
+            (long)header.vertex_count, (long)header.index_count, (unsigned long)sizeof(*control), (unsigned long)sizeof(view));
+#else
         size_t used = 0;
         if (!cache_bsp_serialize(&view, serialized, CACHE_BSP_GOLDEN_SERIALIZED_BYTES, &used, &status) ||
                 used != CACHE_BSP_GOLDEN_SERIALIZED_BYTES || cache_probe_crc32(serialized, used) != CACHE_BSP_GOLDEN_SERIALIZED_CRC32) {
@@ -258,8 +429,9 @@ static int bsp_roundtrip(FILE *report, const struct cache_arena_owner *owner,
             (long)header.vertex_count, (long)header.index_count, (unsigned long)used,
             (unsigned long)cache_probe_crc32(serialized, used), (unsigned long)sizeof(*control),
             (unsigned long)sizeof(view));
+#endif
         old = view;
-        if (load == 0) {
+        if (load + 1 < loads) {
             if (!cache_bsp_unload(control, &status) || cache_bsp_get_root(&view, &root, &status) ||
                     status.error != CACHE_BSP_STATE) {
                 fprintf(report, "BSP FAIL child unload invalidation\n"); return 1;
@@ -321,6 +493,25 @@ static int stream_cycles(FILE *report, const char *path
 #endif
                          )
 {
+#ifdef CACHE_MATERIAL_GRAPH
+    struct cache_material_view previous_material = {0};
+    struct material_counters material_counts = {0};
+    uint64_t projection_bytes = sizeof(struct cache_material_root_projection) +
+        (uint64_t)CACHE_MATERIAL_GOLDEN_LIGHTMAP_COUNT * sizeof(struct cache_material_lightmap_projection) +
+        (uint64_t)CACHE_MATERIAL_GOLDEN_MATERIAL_COUNT * sizeof(struct cache_material_projection);
+    uint64_t serialized_bytes = CACHE_BSP_ROOT_BYTES +
+        (uint64_t)CACHE_MATERIAL_GOLDEN_LIGHTMAP_COUNT * CACHE_MATERIAL_LIGHTMAP_BYTES +
+        (uint64_t)CACHE_MATERIAL_GOLDEN_MATERIAL_COUNT * CACHE_MATERIAL_BYTES;
+    if (CACHE_MATERIAL_GOLDEN_LIGHTMAP_COUNT > CACHE_MATERIAL_MAX_LIGHTMAPS ||
+            (uint64_t)CACHE_MATERIAL_GOLDEN_MATERIAL_COUNT >
+                (uint64_t)CACHE_MATERIAL_GOLDEN_LIGHTMAP_COUNT * CACHE_MATERIAL_MAX_PER_LIGHTMAP ||
+            projection_bytes > SIZE_MAX / 2u || serialized_bytes != CACHE_MATERIAL_GOLDEN_SERIALIZED_BYTES ||
+            serialized_bytes > CACHE_BSP_GOLDEN_FILE_BYTES) {
+        fprintf(report, "MATERIAL FAIL numeric workspace/serialization bounds\n"); return 1;
+    }
+    size_t material_workspace_bytes = (size_t)projection_bytes * 2u;
+    size_t retained_widget_bytes = sizeof(void *) == 4 ? 1456u : 2048u;
+#endif
 #ifdef CACHE_BSP_RESIDENCY
     struct cache_bsp_view previous_bsp = {0};
     unsigned bsp_completed = 0, bsp_parent_rebind = 0, bsp_parent_release = 0;
@@ -336,12 +527,16 @@ static int stream_cycles(FILE *report, const char *path
     unsigned widget_completed = 0, widget_stale_rebind = 0, widget_stale_release = 0;
 #endif
     const struct cache_arena_request requests[SLOT_COUNT] = {
-        {0x1600000, 64}, {HALO_PORT_GAME_STATE_SIZE, 32}, {0x400000, 32},
-        {65535u * 32u, 32}, {CACHE_STREAM_IO_BYTES, 64}, {CACHE_STREAM_IO_BYTES, 64}
+        {0x1600000, 64}, {HALO_PORT_GAME_STATE_SIZE, POOL_ALIGNMENT}, {0x400000, POOL_ALIGNMENT},
+        {65535u * 32u, POOL_ALIGNMENT}, {CACHE_STREAM_IO_BYTES, 64}, {CACHE_STREAM_IO_BYTES, 64}
 #ifdef CACHE_WIDGET_GRAPH
         , {workspace_bytes, 64}, {CACHE_WIDGET_SERIALIZED_BYTES, 64}
 #endif
-#ifdef CACHE_BSP_RESIDENCY
+#ifdef CACHE_MATERIAL_GRAPH
+        , {retained_widget_bytes, 64}, {2160u, 64}, {material_workspace_bytes, 64},
+        {CACHE_MATERIAL_GOLDEN_SERIALIZED_BYTES, 64}, {sizeof(struct cache_bsp_control), 64},
+        {sizeof(struct cache_material_control), 64}
+#elif defined(CACHE_BSP_RESIDENCY)
         , {CACHE_BSP_GOLDEN_FILE_BYTES, 64}, {CACHE_BSP_GOLDEN_SERIALIZED_BYTES, 64}, {sizeof(struct cache_bsp_control), 64}
 #endif
     };
@@ -358,7 +553,12 @@ static int stream_cycles(FILE *report, const char *path
             (unsigned long)workspace_bytes, (unsigned long)CACHE_WIDGET_SERIALIZED_BYTES,
             (unsigned long)CACHE_WIDGET_NODE_COUNT);
 #endif
-#ifdef CACHE_BSP_RESIDENCY
+#ifdef CACHE_MATERIAL_GRAPH
+    fprintf(report, "MATERIAL REQUEST slots=%u workspace=%lu serialized=%lu BSP_control=%lu material_control=%lu retained_widget_workspace=%lu retained_widget_serial=2160 retained_widget=reservation_only_not_campaign_UI BSP_stage=0 whole_BSP_serial=0\n",
+        SLOT_COUNT, (unsigned long)material_workspace_bytes, (unsigned long)CACHE_MATERIAL_GOLDEN_SERIALIZED_BYTES,
+        (unsigned long)sizeof(struct cache_bsp_control), (unsigned long)sizeof(struct cache_material_control),
+        (unsigned long)retained_widget_bytes);
+#elif defined(CACHE_BSP_RESIDENCY)
     fprintf(report, "BSP REQUEST stage=%lu serialized=%lu control=%lu dynamic_projection=0 resident_bytes_already_in_tag_slot=%lu source_references_max16\n",
         (unsigned long)CACHE_BSP_GOLDEN_FILE_BYTES, (unsigned long)CACHE_BSP_GOLDEN_SERIALIZED_BYTES,
         (unsigned long)sizeof(struct cache_bsp_control), (unsigned long)CACHE_BSP_GOLDEN_FILE_BYTES);
@@ -399,6 +599,17 @@ static int stream_cycles(FILE *report, const char *path
             break;
         }
         unsigned char *bad_view = NULL;
+#ifdef CACHE_MATERIAL_GRAPH
+        struct cache_material_view material_view = {0};
+        struct cache_material_result material_status;
+        struct cache_material_root_projection stale_material;
+        if (cycle) {
+            if (cache_material_get_root(&previous_material, &stale_material, &material_status) ||
+                    material_status.error != CACHE_MATERIAL_STATE) {
+                fprintf(report, "MATERIAL FAIL parent rebind invalidation\n"); ++failures;
+            } else ++material_counts.parent_rebind;
+        }
+#endif
 #ifdef CACHE_BSP_RESIDENCY
         struct cache_bsp_view bsp_view = {0};
         struct cache_bsp_control *bsp_control = NULL;
@@ -434,6 +645,14 @@ static int stream_cycles(FILE *report, const char *path
         }
         /* Entire requested backing is owned, but engine pools remain canary placeholders. */
         memset((void *)begin, 0xa5, plan.required);
+#ifdef CACHE_MATERIAL_GRAPH
+        if (cycle) {
+            if (cache_material_get_root(&previous_material, &stale_material, &material_status) ||
+                    material_status.error != CACHE_MATERIAL_STATE) {
+                fprintf(report, "MATERIAL FAIL stale query after backing overwrite\n"); ++failures;
+            } else ++material_counts.overwritten_rebind;
+        }
+#endif
         FILE *input = fopen(path, "rb");
         struct cache_stream_result stream_status = {0};
         if (!input) { fprintf(report, "STREAM FAIL open owned raw input\n"); ++failures; }
@@ -463,13 +682,39 @@ static int stream_cycles(FILE *report, const char *path
                     if (ok || stream_status.error != errors[test]) ++failures;
                     else ++expected_errors;
                 }
+#ifdef CACHE_MATERIAL_GRAPH
+                rewind(input);
+                stream_status = (struct cache_stream_result){0};
+                if (!cache_stream_read(input, &owner, &tag, &io0, &io1, CACHE_PRIVATE_SIZE,
+                                        CACHE_PRIVATE_CRC, &stream_status) || decode_index(&owner)) {
+                    fprintf(report, "MATERIAL FAIL valid reload after deliberate IO errors\n"); ++failures;
+                }
+#endif
             }
             if (fclose(input)) { fprintf(report, "STREAM FAIL input close\n"); ++failures; }
         }
 #ifdef CACHE_BSP_RESIDENCY
         if (!failures && (bsp_prepare(report, &owner, bsp_path, cycle, &bsp_control) ||
-                bsp_roundtrip(report, &owner, bsp_control, cycle, &bsp_view, &bsp_child_release, &bsp_child_rebind))) ++failures;
+                bsp_roundtrip(report, &owner, bsp_control, cycle, &bsp_view, &bsp_child_release, &bsp_child_rebind
+#ifdef CACHE_MATERIAL_GRAPH
+                    , material_workspace_bytes, &material_view, &material_counts
+#endif
+                    ))) ++failures;
         else if (!failures) ++bsp_completed;
+#endif
+#ifdef CACHE_MATERIAL_GRAPH
+        if (!failures && (cycle == 0 || cycle == 15)) {
+            unsigned char *raw = slot_view(&owner, TAG_SLOT, CACHE_BSP_TAG_LIMIT);
+            size_t bsp_offset = CACHE_BSP_GOLDEN_ENCODED_BASE - CACHE_BSP_TAG_BASE;
+            if (!raw || cache_probe_crc32(raw, CACHE_PRIVATE_SIZE) != CACHE_PRIVATE_CRC ||
+                    cache_probe_crc32(raw + bsp_offset, CACHE_BSP_GOLDEN_FILE_BYTES) != CACHE_BSP_GOLDEN_SERIALIZED_CRC32) {
+                fprintf(report, "MATERIAL FAIL post-use raw input CRC\n"); ++failures;
+            } else {
+                for (size_t i = CACHE_PRIVATE_SIZE; i < bsp_offset; ++i)
+                    if (raw[i] != 0xa5) { fprintf(report, "MATERIAL FAIL post-use unread gap canary\n"); ++failures; break; }
+                fprintf(report, "MATERIAL IMMUTABLE cycle=%u raw_inputs_crc_checked=1 gap_canary_checked=1\n", cycle);
+            }
+        }
 #endif
 #ifdef CACHE_WIDGET_GRAPH
         /* Acquire immutable typed views only after the deliberate IO rewrites. */
@@ -492,6 +737,9 @@ static int stream_cycles(FILE *report, const char *path
                               cycle, (void *)begin, (unsigned long)plan.data_end, (unsigned long)plan.reserve_size,
                               (unsigned long)plan.required, (unsigned long)charge, (unsigned long)(initial_hi - initial_lo - charge));
         previous = tag;
+#ifdef CACHE_MATERIAL_GRAPH
+        previous_material = material_view;
+#endif
 #ifdef CACHE_WIDGET_GRAPH
         previous_graph = graph;
 #endif
@@ -505,6 +753,14 @@ static int stream_cycles(FILE *report, const char *path
         if (cache_arena_owner_resolve(&owner, &previous, 0, 1, &bad_view, &arena_status) ||
             arena_status.error != CACHE_ARENA_STATE) ++failures;
         else ++stale_release;
+#ifdef CACHE_MATERIAL_GRAPH
+        if (material_view.parent.owner) {
+            if (cache_material_get_root(&material_view, &stale_material, &material_status) ||
+                    material_status.error != CACHE_MATERIAL_STATE) {
+                fprintf(report, "MATERIAL FAIL parent release invalidation\n"); ++failures;
+            } else ++material_counts.parent_release;
+        }
+#endif
 #ifdef CACHE_BSP_RESIDENCY
         if (bsp_view.owner) {
             struct cache_address_span stale;
@@ -545,7 +801,18 @@ static int stream_cycles(FILE *report, const char *path
             widget_completed, widget_stale_rebind, widget_stale_release, (unsigned long)workspace_bytes,
             (unsigned long)CACHE_WIDGET_SERIALIZED_BYTES, failures);
 #endif
-#ifdef CACHE_BSP_RESIDENCY
+#ifdef CACHE_MATERIAL_GRAPH
+    if (completed != 16 || bsp_completed != 16 || bsp_parent_release != 16 || bsp_parent_rebind != 15 || material_counts.loads != 32 ||
+            material_counts.child_release != 16 || material_counts.child_rebind != 16 ||
+            material_counts.atomic_rejections != 32 || material_counts.parent_release != 16 ||
+            material_counts.parent_rebind != 15 || material_counts.overwritten_rebind != 15) ++failures;
+    fprintf(report, "MATERIAL SUMMARY parent_cycles=%u BSP_loads=%u BSP_parent_release_STATE=%u BSP_parent_rebind_STATE=%u child_loads=%u child_release_STATE=%u child_rebind_STATE=%u atomic_rejections=%u parent_release_STATE=%u parent_rebind_STATE=%u overwritten_rebind_STATE=%u lightmaps=%lu materials=%lu environment_vertices=%lu lightmap_vertices=%lu serialized_bytes=%lu failures=%u geometry=not_qualified\n",
+        completed, bsp_completed, bsp_parent_release, bsp_parent_rebind, material_counts.loads, material_counts.child_release, material_counts.child_rebind,
+        material_counts.atomic_rejections, material_counts.parent_release, material_counts.parent_rebind,
+        material_counts.overwritten_rebind, (unsigned long)CACHE_MATERIAL_GOLDEN_LIGHTMAP_COUNT,
+        (unsigned long)CACHE_MATERIAL_GOLDEN_MATERIAL_COUNT, (unsigned long)CACHE_MATERIAL_GOLDEN_ENVIRONMENT_VERTICES,
+        (unsigned long)CACHE_MATERIAL_GOLDEN_LIGHTMAP_VERTICES, (unsigned long)CACHE_MATERIAL_GOLDEN_SERIALIZED_BYTES, failures);
+#elif defined(CACHE_BSP_RESIDENCY)
     fprintf(report, "BSP SUMMARY cycles=%u child_loads=%u child_release_STATE=%u child_rebind_STATE=%u parent_release_STATE=%u parent_rebind_STATE=%u serialized_bytes=%lu failures=%u gap_addressable=0 geometry=not_qualified\n",
         bsp_completed, bsp_completed * 2u, bsp_child_release, bsp_child_rebind, bsp_parent_release,
         bsp_parent_rebind, (unsigned long)CACHE_BSP_GOLDEN_SERIALIZED_BYTES, failures);
@@ -603,6 +870,10 @@ int main(int argc, char **argv)
 #endif
 #ifdef CACHE_BSP_RESIDENCY
     result |= wii_cache_bsp_fixture(report, 1);
+#endif
+#ifdef CACHE_MATERIAL_GRAPH
+    result |= cache_sha256_fixture(report);
+    result |= cache_material_fixture(report, 1);
 #endif
     result |= stream_cycles(report, path
 #ifdef CACHE_BSP_RESIDENCY

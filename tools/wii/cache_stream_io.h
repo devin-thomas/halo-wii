@@ -14,7 +14,8 @@ enum cache_stream_error {
     CACHE_STREAM_SHORT,
     CACHE_STREAM_TRAILING,
     CACHE_STREAM_IO,
-    CACHE_STREAM_CRC
+    CACHE_STREAM_CRC,
+    CACHE_STREAM_OVERFLOW
 };
 
 struct cache_stream_result {
@@ -48,4 +49,20 @@ int cache_stream_read(FILE *input, const struct cache_arena_owner *owner,
                       const struct cache_arena_handle *io1,
                       size_t expected_bytes, uint32_t expected_crc32,
                       struct cache_stream_result *result);
+
+/* Offset form of the same operation. Only [destination_offset,
+ * destination_offset + expected_bytes) in the tag slot is written. Prefix,
+ * suffix and reserve bytes are retained; an empty write may start at slot end.
+ * Offset/length overflow, inaccessible spans and writable ranges intersecting
+ * owner/handle/result controls or IO slots reject before reading the file.
+ * Controls/results remain disjoint from one another. On read/CRC/EOF failure
+ * the unbound destination may retain partial/full writes; this does not publish
+ * a BSP/tag graph or change owner generation. The caller binds only after OK.
+ * cache_stream_read delegates here with destination_offset zero. */
+int cache_stream_read_at(FILE *input, const struct cache_arena_owner *owner,
+                         const struct cache_arena_handle *tag,
+                         const struct cache_arena_handle *io0,
+                         const struct cache_arena_handle *io1,
+                         size_t destination_offset, size_t expected_bytes,
+                         uint32_t expected_crc32, struct cache_stream_result *result);
 #endif
