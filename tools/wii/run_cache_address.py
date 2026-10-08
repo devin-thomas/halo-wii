@@ -29,6 +29,7 @@ def main():
     parser.add_argument('--private-bsp-data', type=Path, help='external raw BSP bytes used only for numeric build goldens')
     parser.add_argument('--bsp-stream-file', help='safe sd:/ path for the private raw BSP sidecar')
     parser.add_argument('--bsp-fixture', action='store_true', help='run authored BSP residency cases without private input')
+    parser.add_argument('--material-fixture', action='store_true', help='run authored partial material graph cases without private input')
     args = parser.parse_args()
     if args.stream_file and (not args.private_tag_data or not re.fullmatch(r'sd:/[A-Za-z0-9_/.-]+', args.stream_file)
                              or '..' in args.stream_file.split('/')):
@@ -48,6 +49,9 @@ def main():
         parser.error('--bsp-fixture runs alone without private input or streaming arguments')
     if args.widget_fixture and any(bsp_arguments):
         parser.error('--widget-fixture cannot use BSP streaming arguments')
+    if args.material_fixture and (args.private_tag_data or args.stream_file or args.widget_goldens or
+                                 args.widget_fixture or args.bsp_fixture or any(bsp_arguments)):
+        parser.error('--material-fixture runs alone without private input or streaming arguments')
     root = Path.cwd().resolve()
     output = args.output.resolve()
     if not output.is_relative_to(root) or output == root:
@@ -78,6 +82,9 @@ def main():
         names += ['cache_bsp_probe.c', 'cache_bsp_fixture.c']
     if args.bsp_fixture:
         names += ['cache_arena_plan.c']
+    if args.material_fixture:
+        names += ['cache_arena_plan.c', 'cache_bsp_probe.c', 'cache_material_probe.c',
+                  'cache_material_fixture.c']
     sources = [Path('tools/wii')/name for name in names]
     inputs = sources + [Path('tools/wii')/name for name in ('cache_address_probe.h', 'cache_address_fixture.h',
                                                           'cache_address_owned.h', 'run_cache_address.py',
@@ -105,6 +112,14 @@ def main():
         inputs += [Path('tools/wii/cache_arena_plan.h')]
     if args.bsp_goldens:
         inputs += [Path('tools/wii/inspect_bsp_residency.py'), Path('tools/wii/inspect_widget_graph.py')]
+    if args.material_fixture:
+        inputs += [Path('tools/wii')/name for name in ('cache_arena_plan.h', 'cache_bsp_probe.h',
+                                                     'cache_material_probe.h', 'cache_material_fixture.h')]
+        inputs += [Path('source/scenario/scenario.h'), Path('source/scenario/scenario_definitions.h'),
+                   Path('source/structures/structure_bsp_definitions.h'), Path('source/structures/structures.h'),
+                   Path('source/rasterizer/rasterizer_geometry.h'), Path('source/tag_files/tag_groups.h'),
+                   Path('port/linux/game/cache_file_formats.c'), Path('port/linux/game/tag_schema_scenario.c'),
+                   Path('port/linux/game/tag_schema_collision.c'), Path('port/linux/game/tag_validate.c')]
     hashes = {p.as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     source_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     dirty = bool(subprocess.check_output(['git', 'status', '--porcelain', '--', *map(str, inputs)], text=True))
@@ -214,6 +229,8 @@ def main():
         record['bsp_stream_file'] = args.bsp_stream_file
     if args.bsp_fixture:
         record['scope'] = 'authored_BSP_residency_fixture_no_private_input'
+    if args.material_fixture:
+        record['scope'] = 'authored_partial_material_graph_fixture_no_private_input'
     build_id = hashlib.sha256(json.dumps(record, sort_keys=True).encode()).hexdigest()[:16]
     record['build_id'] = build_id
     output.mkdir(parents=True)
@@ -243,6 +260,8 @@ def main():
                 stream.write('#define CACHE_BSP_GOLDEN_'+key.upper()+' '+str(bsp_goldens[key])+'u\n')
         if args.bsp_fixture:
             stream.write('#define CACHE_BSP_FIXTURE 1\n')
+        if args.material_fixture:
+            stream.write('#define CACHE_MATERIAL_FIXTURE 1\n')
         if payload and not args.stream_file:
             stream.write('static const unsigned char cache_private_bytes[] = {\n')
             for i in range(0, len(payload), 24):

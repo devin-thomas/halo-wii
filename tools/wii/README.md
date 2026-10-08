@@ -197,3 +197,49 @@ Serialization copies the whole declared BSP and explicitly writes known
 header/descriptor LE words while preserving original addresses and opaque
 root/content bytes. This is an inspection round trip, not a relocated cache,
 full typed BSP conversion, engine switching behavior or geometry execution.
+
+## Partial material graph
+
+Run the authored material cases with no game files:
+
+```powershell
+python tools/wii/run_cache_address.py --cc <host-gcc> --output .local/cache-material-synthetic --material-fixture
+python -m unittest discover -s tools/wii -p test_inspect_material_graph.py
+```
+
+For strict PPC compilation, use the existing compiler/SDK arguments with a new
+ignored output directory. Compilation and authored host execution are separate
+from PPC execution; this option does not stage SD files or launch Dolphin.
+`--material-fixture` runs alone and rejects private/streaming/widget/BSP modes.
+
+The numeric inspector reads external raw tags and one declared BSP sidecar:
+
+```powershell
+python tools/wii/inspect_material_graph.py <external-tags> <external-BSP> --declared-map-length <inflated-map-bytes> --bsp-ordinal <ordinal> --output <new-external-JSON>
+```
+
+Every selected lightmap/material is validated, retaining source limits of
+128 lightmaps, 2,048 materials per lightmap and 64,000 vertices per material.
+Output is compact numeric summaries and hashes, bounded to 1 MiB; no tag names,
+asset bytes or private paths are exported. Full salted shader identity, primary
+group and shader ancestry are checked. NONE skips meaningless reference words;
+name-length words remain opaque. Names must terminate within actual tags.
+Material surface ranges use signed bounds, without a global ordering policy.
+Non-null hardware words identify proper-kind 12-byte descriptors; count-derived
+payload extents use type strides 56/32/20/8. NULL does not establish a payload
+extent. Empty counts preserve words without following payloads. Xbox compressed
+tag-data minimum is 32N + 8M, distinct from those hardware type strides.
+
+The allocation-free C API measures actual aggregate workspace requirements,
+then publishes into one of two caller-owned halves. Failures retain the prior
+publication. Views validate their copied BSP/arena parent before child storage
+access, then validate the independent material generation. Unload requires an
+accessible control; active unload advances generation and inactive unload is
+idempotent. Controls, truthful buffers and sources require immutable single-caller use.
+
+Partial projections retain signed numeric fields and float bit patterns; unknown
+bytes stay opaque. Inspection serialization copies the whole 648-byte root,
+complete lightmap table, then each material table in lightmap order, rewriting
+known LE words and retaining encoded addresses. It excludes payloads and shader
+bodies. It is not a standalone relocated cache or save, full typed BSP/geometry
+conversion, GX registration, engine memory strategy, gameplay or Wii acceptance.

@@ -5,7 +5,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef CACHE_BSP_FIXTURE
+#ifdef CACHE_MATERIAL_FIXTURE
+#include "cache_material_fixture.h"
+#define CACHE_ADDRESS_REPORT_KIND "MATERIAL_SYNTHETIC"
+#define CACHE_ADDRESS_REPORT_PATH "sd:/halo-wii-memory/cache-material-synthetic.log"
+#elif defined(CACHE_BSP_FIXTURE)
 #include "cache_bsp_fixture.h"
 #define CACHE_ADDRESS_REPORT_KIND "BSP_SYNTHETIC"
 #define CACHE_ADDRESS_REPORT_PATH "sd:/halo-wii-memory/cache-bsp-synthetic.log"
@@ -105,6 +109,9 @@ int main(void)
 #endif
 #ifdef CACHE_BSP_FIXTURE
     result |= wii_cache_bsp_fixture(report, 1);
+#endif
+#ifdef CACHE_MATERIAL_FIXTURE
+    result |= cache_material_fixture(report, 1);
 #endif
 #if CACHE_PRIVATE_SIZE > 0
     result |= cache_address_owned(report, cache_private_bytes, CACHE_PRIVATE_SIZE, CACHE_PRIVATE_CRC,
