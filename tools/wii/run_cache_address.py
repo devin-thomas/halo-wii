@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import struct
 import subprocess
@@ -21,7 +22,11 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--wii-devkitpro', type=Path)
     parser.add_argument('--private-tag-data', type=Path)
+    parser.add_argument('--stream-file', help='stream tag bytes from this sd:/ path instead of embedding them')
     args = parser.parse_args()
+    if args.stream_file and (not args.private_tag_data or not re.fullmatch(r'sd:/[A-Za-z0-9_/.-]+', args.stream_file)
+                             or '..' in args.stream_file.split('/')):
+        parser.error('--stream-file requires private tag goldens and a safe sd:/ path')
     root = Path.cwd().resolve()
     output = args.output.resolve()
     if not output.is_relative_to(root) or output == root:
@@ -41,13 +46,18 @@ def main():
     target = subprocess.check_output([str(compiler), '-dumpmachine'], env=environment, text=True).strip()
     if (target == 'powerpc-eabi') != bool(args.wii_devkitpro):
         parser.error('PowerPC requires --wii-devkitpro; host compiler must omit it')
-    sources = [Path('tools/wii')/name for name in ('cache_address_probe.c', 'cache_address_fixture.c',
-                                                 'cache_address_owned.c', 'cache_address_main.c')]
+    names = ['cache_address_probe.c', 'cache_address_fixture.c', 'cache_address_owned.c']
+    names += (['cache_arena_plan.c', 'cache_arena_fixture.c', 'cache_stream_io.c', 'cache_stream_fixture.c',
+               'cache_stream_main.c'] if args.stream_file else ['cache_address_main.c'])
+    sources = [Path('tools/wii')/name for name in names]
     inputs = sources + [Path('tools/wii')/name for name in ('cache_address_probe.h', 'cache_address_fixture.h',
                                                           'cache_address_owned.h', 'run_cache_address.py',
                                                           'build.py', 'check_toolchain.py')]
     inputs += [Path('source/cache/cache_files.c'), Path('source/cache/physical_memory_map.c'),
                Path('source/cache/physical_memory_map.h'), Path('port/linux/include/halo_port_capacity.h')]
+    if args.stream_file:
+        inputs += [Path('tools/wii')/name for name in ('cache_arena_plan.h', 'cache_arena_fixture.h',
+                                                     'cache_stream_io.h', 'cache_stream_fixture.h')]
     hashes = {p.as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     source_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     dirty = bool(subprocess.check_output(['git', 'status', '--porcelain', '--', *map(str, inputs)], text=True))
@@ -88,6 +98,8 @@ def main():
               'compiler_sha256':hashlib.sha256(compiler.read_bytes()).hexdigest(), 'target':target,
               'cleared_child_environment_overrides':list(overrides), 'sdk_identity':sdk_identity,
               'commands':[], 'state':'incomplete'}
+    record['private_input_embedded'] = bool(payload) and not args.stream_file
+    record['stream_file'] = args.stream_file
     build_id = hashlib.sha256(json.dumps(record, sort_keys=True).encode()).hexdigest()[:16]
     record['build_id'] = build_id
     output.mkdir(parents=True)
@@ -100,7 +112,9 @@ def main():
         stream.write(f'#define CACHE_PROBE_BUILD_ID "{build_id}"\n#define CACHE_PRIVATE_SIZE {len(payload)}\n')
         stream.write(f'#define CACHE_PRIVATE_CRC {zlib.crc32(payload)}u\n#define CACHE_PRIVATE_COUNT {count}u\n')
         stream.write(f'#define CACHE_PRIVATE_TABLE_CRC {table_crc}u\n')
-        if payload:
+        if args.stream_file:
+            stream.write('#define CACHE_STREAM_FILENAME '+json.dumps(args.stream_file)+'\n')
+        if payload and not args.stream_file:
             stream.write('static const unsigned char cache_private_bytes[] = {\n')
             for i in range(0, len(payload), 24):
                 stream.write(','.join(str(b) for b in payload[i:i+24])+',\n')
@@ -135,7 +149,7 @@ def main():
     else:
         exe = output/('cache_address.exe' if os.name == 'nt' else 'cache_address')
         run([str(compiler), *objects, '-o', str(exe)])
-        executed = run([str(exe)])
+        executed = run([str(exe), str(args.private_tag_data.resolve())] if args.stream_file else [str(exe)])
         record['report'] = executed.stdout.splitlines()
         record['state'] = 'execution_pass'
     record['artifacts_sha256'] = {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in output.iterdir()

@@ -93,3 +93,21 @@ nested tag bodies, unloaded BSP contents, floats, geometry, scripts, assets,
 canonical checksums, conversion and gameplay. Its round trip is a memory
 snapshot, not a durable save-file format. Immutable truthful buffers and no
 concurrent mutation are required; size/mtime checks are not writer exclusion.
+
+`run_cache_address.py --stream-file 'sd:/<new-private-tag-file>'` selects the
+bounded arena/streaming diagnostic. It requires `--private-tag-data` for numeric
+CRC/count goldens, and generates no embedded raw byte array. The host executable
+receives that external raw file as an argument; Wii opens the separately staged
+private SD file read-only. Stage a new file with exclusive creation/read-back
+while Dolphin is stopped; preserve prior SD files and profile settings.
+
+The experimental profile requests 22 MiB tags, current 20 MiB state, 4 MiB
+sound, 65,535 index records, two synchronous 64 KiB IO buffers and a provisional
+2 MiB reserve. State/sound are canary placeholders, not engine pools. The generic
+planner charges actual alignment and rejects oversized/fragmented spans; tagged
+handles reject old generations after release/rebind. Returned native views are
+temporary and must be discarded before release. Alternating buffers do not
+provide asynchronous IO. Raw CRC is not a canonical Xbox checksum. IO failures
+can leave partial or full tag writes; ownership remains live for explicit cleanup.
+Host tmpfile error fixtures are separate from actual PPC SD reads. Controlled
+free intervals and heap samples do not establish system fragmentation/full peak.
