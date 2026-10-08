@@ -1,0 +1,745 @@
+{
+  "scope": "implemented_partial_material_API_authored_host_and_PPC_compile_gate",
+  "source_commit": "840c64007bbfaf0428d96daa248471d46e3669dc",
+  "native_partial_API_implemented": true,
+  "source_layout": {
+    "root": 648,
+    "lightmap": 32,
+    "material": 256,
+    "root_surfaces": 248,
+    "root_lightmaps": 260,
+    "lightmap_materials": 20,
+    "material_shader": 0,
+    "permutation": 16,
+    "flags": 18,
+    "surface_range": 20,
+    "centroid_bits": 28,
+    "vertex_buffers": [
+      176,
+      196
+    ],
+    "tag_data": [
+      216,
+      236
+    ]
+  },
+  "policy": {
+    "lightmaps": 128,
+    "materials_per_lightmap": 2048,
+    "vertices_per_material": 64000,
+    "surfaces": 131072,
+    "tag_data_maxima": [
+      4864000,
+      2560000
+    ],
+    "hardware_type_strides": [
+      56,
+      32,
+      20,
+      8
+    ],
+    "Xbox_compressed_minimum": "32N_plus8M",
+    "surface_ranges": "signed_nonnegative_in_bounds_no_global_order_requirement",
+    "shader_reference": "NONE_skip_else_full_datum_primary_group_shdr_ancestor_tag_NUL_names",
+    "name_length": "opaque_word_no_positive_length_requirement",
+    "empty_counts": "retain_words_no_payload_follow",
+    "NULL_hardware": "accepted_without_resource_extent_proof",
+    "root_surface_count_and_span": "validated_even_empty_material_graph"
+  },
+  "publication": {
+    "workspace": "two_actual_aggregate_halves_checked_request_no_truncation",
+    "failed_bind": "prior_control_view_publication_source_unchanged_scratch_may_change",
+    "parent_first": "copied_arena_and_BSP_pins_before_material_control_workspace",
+    "child_generation": "active_unload_advances_inactive_idempotent_exhaustion_atomic",
+    "contract": "truthful_disjoint_immutable_accessible_single_caller_controls_buffers"
+  },
+  "serialization": "opaque_root_then_complete_lightmaps_then_material_tables_known_LE_words_encoded_addresses_retained",
+  "authored_host": {
+    "material_cases": 64,
+    "material_checks": 48752,
+    "failures": 0,
+    "aborts": 0,
+    "address_cases": 1916,
+    "address_checks": 8437,
+    "source_offsets": "0_through7",
+    "native_placements": 2,
+    "lifetime_cycles": 64
+  },
+  "Python_tests": {
+    "material": 46,
+    "BSP_regression": 36,
+    "widget_regression": 30,
+    "failures": 0
+  },
+  "runner_incompatible_modes_rejected_without_output": 7,
+  "builds": {
+    "host": {
+      "source_commit": "840c64007bbfaf0428d96daa248471d46e3669dc",
+      "source_dirty": false,
+      "build_id": "58e3199e84412960",
+      "state": "execution_pass",
+      "compiler": "gcc.exe (Rev3, Built by MSYS2 project) 16.2.0",
+      "compiler_sha256": "75e87953e9d04e8a5d81225397292e9f8ae599a0ed85f70ed175767577aaa9f6",
+      "target": "x86_64-w64-mingw32",
+      "cleared_child_environment_overrides": [
+        "GCC_EXEC_PREFIX",
+        "COMPILER_PATH",
+        "LIBRARY_PATH",
+        "CPATH",
+        "C_INCLUDE_PATH",
+        "CPLUS_INCLUDE_PATH",
+        "OBJC_INCLUDE_PATH",
+        "DEPENDENCIES_OUTPUT",
+        "SUNPRO_DEPENDENCIES"
+      ],
+      "sdk_identity": {},
+      "inputs_sha256": {
+        "tools/wii/cache_address_probe.c": "b8f87e3a1cbdb4eae72f4695e04ecd85a9f346b92413d6215fcd5dadd17aa9a9",
+        "tools/wii/cache_address_fixture.c": "8ce0b9b1f201626038ec2621ab5b8e0b8abd6d68298b1d8a010b24adabf2522c",
+        "tools/wii/cache_address_owned.c": "15db730e67d56881d35a349d69dc9538cbec4b6dacdafb50e062cecc73f016f9",
+        "tools/wii/cache_address_main.c": "d4bfbbf664a82805acb9428eef7981ac7d3725cce2dbc6e3e82f67c851452445",
+        "tools/wii/cache_arena_plan.c": "7c0e26625fcdec0c9a1372b6fd6801b8158dbb15f062f94d4a5cdc8567abd0b2",
+        "tools/wii/cache_bsp_probe.c": "7b4d068b8433c3ca85d8b703ad7e10aaa679c3f3ac3dce673c7c151a1d2d446d",
+        "tools/wii/cache_material_probe.c": "19bcb58bd034f1c86646ec51dfa55172e304032374e08af5c46df71d226c7085",
+        "tools/wii/cache_material_fixture.c": "c32fae6409bacab2a70e19264091a538191afe3233cbe1d4eb7e59857c7cf916",
+        "tools/wii/cache_address_probe.h": "b12006e37e0bf92c265e4c7dd7cdc275f6dd5952296fc1428ef4263e3cf044b7",
+        "tools/wii/cache_address_fixture.h": "1b6c2e41c46a589e146accce457d11356937aeb57167fbe89639c8ecb5c87f81",
+        "tools/wii/cache_address_owned.h": "7d689728316022605468e931b6502140a8e62ced0a1c68f00424f09327c30751",
+        "tools/wii/run_cache_address.py": "2e16256c9188b0301228b46ae31eede61b0775791eb88ff3a32a3fb37518df90",
+        "tools/wii/build.py": "dc426a9068782e9f4d593fa4d5b241c966a61caad6860e766b8dbd4ddee9d48a",
+        "tools/wii/check_toolchain.py": "04b53c1e4f6bc534430062d57ef2fa12f508c43489a4228c5dffb49cdbd8a50c",
+        "source/cache/cache_files.c": "69ec94025580cf603b06b83ede8983d27163bf06e162e1cbf27611a174165ade",
+        "source/cache/physical_memory_map.c": "e68bed26b70dff2860d2d463a6a7871a383284fef9762c6f6b7f5bf1bf89023a",
+        "source/cache/physical_memory_map.h": "ec343ab913c4e7a1fa7ce441cb46cdc9e6cdfa9fae8096fccba8bd9dc3253b63",
+        "port/linux/include/halo_port_capacity.h": "5970e9fca8186435460fc273f21b7c6fcc8b54523231257a95cc0037d1457666",
+        "tools/wii/cache_arena_plan.h": "32989ed97be742b9beb1e1e03cbe8ccf7c66b8fb41772b0d3f99dbd0eb6dffbf",
+        "tools/wii/cache_bsp_probe.h": "0a68bbdc7ddb7c95c747850dc3875052e4cced75bd6449d4584d514904d701d5",
+        "tools/wii/cache_material_probe.h": "837e66d66e76c3c5833292e60ab32e5038682fb0f52ed85934bd7fbdf5bfd323",
+        "tools/wii/cache_material_fixture.h": "f06db030706b40aba4fcab668751b602bf187f0358c1cb946c330e8de15de62c",
+        "source/scenario/scenario.h": "006629dda0ab08738b844aaffe450749514d0983072acb63cdd58afb7ef78b26",
+        "source/scenario/scenario_definitions.h": "8dad5efc959caba2db342f6a4a299cccf1d81025e3ae026115d5df3b0a3d7c1a",
+        "source/structures/structure_bsp_definitions.h": "3fb20d1232de1908c45163cff69b7271b8ce3ca502a0c4105cfd06ec8a3ee279",
+        "source/structures/structures.h": "719c3cf2f61d85ce349802aa3df7d17debafefb021a3b7de7f036a76f0e6c327",
+        "source/rasterizer/rasterizer_geometry.h": "e576fff6ed22ff92ad8e719f4e701dfea70b0d49dc9f8b2d01bfa5321f2df707",
+        "source/tag_files/tag_groups.h": "c90f89d53bb2feea6219091d7c665678fd45e49e9f7a81ad4391b1c0ed58eb07",
+        "port/linux/game/cache_file_formats.c": "5358af0e0ee7af59956a831a4348ac5a538a67392cecb4c08e1829b3d534bad4",
+        "port/linux/game/tag_schema_scenario.c": "b0480e21315e303d91ca8b9df1f78e139c3a1c226f66bbd81abf52f71cf47612",
+        "port/linux/game/tag_schema_collision.c": "8083856c54b2798b7ac8855b4ff68e5db7582506fb63cc3560f1b4fc059e07ed",
+        "port/linux/game/tag_validate.c": "8e13cdb4157a9750f08e5bf851bc3ea3c665565301285090c9595778ab86a70f"
+      },
+      "artifacts_sha256": {
+        "cache_address.exe": "f92765fb85db6ac0c65697417ae9e8080859f7915dfaa0c0f0f9304ab82ba05d",
+        "cache_address_fixture.o": "285c22de2c79a6627acfa48c43ba9291b735a1cfd13aec51ed5d40d14fc2609b",
+        "cache_address_fixture.su": "6bdc1f22d58e9bb117e5f1dd0850ee7edb8a5fd3531c3fe1011665bb5a317043",
+        "cache_address_main.o": "feeb56cdcea7479454a430068f38fe6ecc65d9b1c8144e36e5c8a13fb59b484f",
+        "cache_address_main.su": "077a8ae083bd75c7f0f61a2cb5011cb2fbd46f9f1d951cb73509febaf4759199",
+        "cache_address_owned.o": "3c9128d0f71f0d2992c666d1c3b94a42a8adf666f4ea4b0307402ce96dda9add",
+        "cache_address_owned.su": "9b6a857968bab808a2236676bb817ffa712a94b8daf3ac5577a32c5e77f63392",
+        "cache_address_probe.o": "04e0003abb68b1070e93d8a39593e756eb4bee299be8e7c80253f5eaa142dc0b",
+        "cache_address_probe.su": "dd5decc08a2fc672a6ab5f0a0bbf97156ddcbfb5c1d687cab95eeadda1dbe599",
+        "cache_arena_plan.o": "963a0d505d5f26267e108d2a0e0cabfc6abba520760c747a50252ba9ed3c3a03",
+        "cache_arena_plan.su": "c15f2bed0ff8d6898248036003d9a7fc3cd66d9fcb19af325e25e19a394f510e",
+        "cache_bsp_probe.o": "4d580bbe2035d3711e69396dac7b7fff27d5c835cfdd26e984312027e58f5c3c",
+        "cache_bsp_probe.su": "296fcb30e097a8676b4dd8411ac209e4d62a4e72742e7fa446a81603770ccf23",
+        "cache_material_fixture.o": "de4b7c393a56e6672b16c3019b0db32be935a2b0a6be5a549ac3d1bfb1c6eeea",
+        "cache_material_fixture.su": "49c505721c663aef2d4c50f1a0bd9bbf0d43d65518895cd7c6807bac9cda4ebe",
+        "cache_material_probe.o": "e446eace7fae01f0269e7b22b8d85ec305c8c5bab04e1ea2b466f07965154d40",
+        "cache_material_probe.su": "8ad627c76599c8cdd4ae7f9a4ee4d27b7c1acb34018ec92019b97e2a28848fc0"
+      },
+      "generated_payload_sha256": "a28e9471c2b638a1acb59b28c1ff5768edc01951bd39b587149aa8553469b255",
+      "strict_units": 8,
+      "recorded_commands": 10,
+      "all_command_exits_zero": true,
+      "record_sha256": "3ac2aa55c8615267b291655a8201dc6ee5cedf2bcdd12b311330fb50d7e1d150"
+    },
+    "ppc": {
+      "source_commit": "840c64007bbfaf0428d96daa248471d46e3669dc",
+      "source_dirty": false,
+      "build_id": "3d3fac94df8c1fce",
+      "state": "compile_pass",
+      "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+      "compiler_sha256": "692e3f84b35b7622f90d9fa2eae47c21cab88d3d95f857fc2381c4593765e814",
+      "target": "powerpc-eabi",
+      "cleared_child_environment_overrides": [
+        "GCC_EXEC_PREFIX",
+        "COMPILER_PATH",
+        "LIBRARY_PATH",
+        "CPATH",
+        "C_INCLUDE_PATH",
+        "CPLUS_INCLUDE_PATH",
+        "OBJC_INCLUDE_PATH",
+        "DEPENDENCIES_OUTPUT",
+        "SUNPRO_DEPENDENCIES"
+      ],
+      "sdk_identity": {
+        "toolchain_tree_sha256": "d0ca79f317d44426f5563ff60121b344cb3a1148e5ec7a901ad5739b73ba6441"
+      },
+      "inputs_sha256": {
+        "tools/wii/cache_address_probe.c": "b8f87e3a1cbdb4eae72f4695e04ecd85a9f346b92413d6215fcd5dadd17aa9a9",
+        "tools/wii/cache_address_fixture.c": "8ce0b9b1f201626038ec2621ab5b8e0b8abd6d68298b1d8a010b24adabf2522c",
+        "tools/wii/cache_address_owned.c": "15db730e67d56881d35a349d69dc9538cbec4b6dacdafb50e062cecc73f016f9",
+        "tools/wii/cache_address_main.c": "d4bfbbf664a82805acb9428eef7981ac7d3725cce2dbc6e3e82f67c851452445",
+        "tools/wii/cache_arena_plan.c": "7c0e26625fcdec0c9a1372b6fd6801b8158dbb15f062f94d4a5cdc8567abd0b2",
+        "tools/wii/cache_bsp_probe.c": "7b4d068b8433c3ca85d8b703ad7e10aaa679c3f3ac3dce673c7c151a1d2d446d",
+        "tools/wii/cache_material_probe.c": "19bcb58bd034f1c86646ec51dfa55172e304032374e08af5c46df71d226c7085",
+        "tools/wii/cache_material_fixture.c": "c32fae6409bacab2a70e19264091a538191afe3233cbe1d4eb7e59857c7cf916",
+        "tools/wii/cache_address_probe.h": "b12006e37e0bf92c265e4c7dd7cdc275f6dd5952296fc1428ef4263e3cf044b7",
+        "tools/wii/cache_address_fixture.h": "1b6c2e41c46a589e146accce457d11356937aeb57167fbe89639c8ecb5c87f81",
+        "tools/wii/cache_address_owned.h": "7d689728316022605468e931b6502140a8e62ced0a1c68f00424f09327c30751",
+        "tools/wii/run_cache_address.py": "2e16256c9188b0301228b46ae31eede61b0775791eb88ff3a32a3fb37518df90",
+        "tools/wii/build.py": "dc426a9068782e9f4d593fa4d5b241c966a61caad6860e766b8dbd4ddee9d48a",
+        "tools/wii/check_toolchain.py": "04b53c1e4f6bc534430062d57ef2fa12f508c43489a4228c5dffb49cdbd8a50c",
+        "source/cache/cache_files.c": "69ec94025580cf603b06b83ede8983d27163bf06e162e1cbf27611a174165ade",
+        "source/cache/physical_memory_map.c": "e68bed26b70dff2860d2d463a6a7871a383284fef9762c6f6b7f5bf1bf89023a",
+        "source/cache/physical_memory_map.h": "ec343ab913c4e7a1fa7ce441cb46cdc9e6cdfa9fae8096fccba8bd9dc3253b63",
+        "port/linux/include/halo_port_capacity.h": "5970e9fca8186435460fc273f21b7c6fcc8b54523231257a95cc0037d1457666",
+        "tools/wii/cache_arena_plan.h": "32989ed97be742b9beb1e1e03cbe8ccf7c66b8fb41772b0d3f99dbd0eb6dffbf",
+        "tools/wii/cache_bsp_probe.h": "0a68bbdc7ddb7c95c747850dc3875052e4cced75bd6449d4584d514904d701d5",
+        "tools/wii/cache_material_probe.h": "837e66d66e76c3c5833292e60ab32e5038682fb0f52ed85934bd7fbdf5bfd323",
+        "tools/wii/cache_material_fixture.h": "f06db030706b40aba4fcab668751b602bf187f0358c1cb946c330e8de15de62c",
+        "source/scenario/scenario.h": "006629dda0ab08738b844aaffe450749514d0983072acb63cdd58afb7ef78b26",
+        "source/scenario/scenario_definitions.h": "8dad5efc959caba2db342f6a4a299cccf1d81025e3ae026115d5df3b0a3d7c1a",
+        "source/structures/structure_bsp_definitions.h": "3fb20d1232de1908c45163cff69b7271b8ce3ca502a0c4105cfd06ec8a3ee279",
+        "source/structures/structures.h": "719c3cf2f61d85ce349802aa3df7d17debafefb021a3b7de7f036a76f0e6c327",
+        "source/rasterizer/rasterizer_geometry.h": "e576fff6ed22ff92ad8e719f4e701dfea70b0d49dc9f8b2d01bfa5321f2df707",
+        "source/tag_files/tag_groups.h": "c90f89d53bb2feea6219091d7c665678fd45e49e9f7a81ad4391b1c0ed58eb07",
+        "port/linux/game/cache_file_formats.c": "5358af0e0ee7af59956a831a4348ac5a538a67392cecb4c08e1829b3d534bad4",
+        "port/linux/game/tag_schema_scenario.c": "b0480e21315e303d91ca8b9df1f78e139c3a1c226f66bbd81abf52f71cf47612",
+        "port/linux/game/tag_schema_collision.c": "8083856c54b2798b7ac8855b4ff68e5db7582506fb63cc3560f1b4fc059e07ed",
+        "port/linux/game/tag_validate.c": "8e13cdb4157a9750f08e5bf851bc3ea3c665565301285090c9595778ab86a70f"
+      },
+      "artifacts_sha256": {
+        "cache_address.dol": "c85c357aaa4d539a60a8ba992e2ac15fa35466571ca9f11a2c9d4c3ace031119",
+        "cache_address.elf": "f208d25f14f54001c6b488ece5e51b175363d22733e269b4317e736de964e268",
+        "cache_address.map": "fbdec87111836bad2fb8f88d540cdf0bf41205adf93e9ff031c492a2b7db4752",
+        "cache_address_fixture.o": "59b00cf2b355e8cf5f8a185ad355e89d0926bae6d3213c1bf73b0486ab57c68e",
+        "cache_address_fixture.su": "3ac0f027e2a6ee303668a91effed8527a73624fad5152d9984773bf642e3e226",
+        "cache_address_main.o": "63b6d6bcba444b8831eeee7e2e5091412550c3ad5d176203b1b13f658717d394",
+        "cache_address_main.su": "a96bce0ae662f8c2c53d51be33987eef7c811290e901bea88d1a6cc5325cc4e8",
+        "cache_address_owned.o": "9543785be8f9406c4ee90be4fd9a4d29ece0f336d3f767735e2eafb484fc9167",
+        "cache_address_owned.su": "2d9b0f9eacdf389a969e60bdff4e5e43afe8196284328aff393efeb869962ae9",
+        "cache_address_probe.o": "a9ba2353d34521de709e8cef55543bcd3eb6d22ce6058d5ac938ed105036b51f",
+        "cache_address_probe.su": "717aca6d1f4de59f2f0ecfd7beaca862fd9923b3fd99d830e51b12b729bd051e",
+        "cache_arena_plan.o": "b56f77971d28b0f2db2680f83d8881798201ed5f0c8475833829e3ba9e66431e",
+        "cache_arena_plan.su": "099423558acf66d4b0c45094b6c0b72345662ab8c62d87fde9e89137c0e35a07",
+        "cache_bsp_probe.o": "2621da61b106878e2d72679e8a4b42d54cc074a46d977eb7baf016401fd13e77",
+        "cache_bsp_probe.su": "965685b2f9438a2f613b9dc29775c99a3f588855f48348b9e52d8a6c7a101f75",
+        "cache_material_fixture.o": "65b8f86e26e88056f020dd300d16fab64da4d2138b60a016b7cfcefe80e866aa",
+        "cache_material_fixture.su": "faf25710ca3d7ea28a3e555d346ec28dc0e0849a4135db462a890d8bcd7c0cce",
+        "cache_material_probe.o": "5e28c74d68ed55060b4c6fc23d48c38af594263c8f633d52c2a11f1a428f2d7a",
+        "cache_material_probe.su": "fd2ccf59a8c4d32012529b9fcc2bdcd58efc9004a52492b80a0a7e003762a83d"
+      },
+      "generated_payload_sha256": "50a22a3b2264d81c98d7c75be940148828c7829cdbe274763793345292c25c9a",
+      "strict_units": 8,
+      "recorded_commands": 10,
+      "all_command_exits_zero": true,
+      "record_sha256": "253fae4aee758dbed4a3abeda4d686339ddf01f564b7a5d6fb71601648de8db7"
+    }
+  },
+  "PPC_execution": false,
+  "new_target_launches": 0,
+  "new_SD_writes": 0,
+  "retained_campaign_numeric_inspection": {
+    "goldens": {
+      "bsp_datum": 4021620286,
+      "environment_vertices": 14788,
+      "lightmap_count": 2,
+      "lightmap_vertices": 0,
+      "material_count": 34,
+      "scenario_datum": 3782475776,
+      "serialized_bytes": 9416,
+      "serialized_crc32": 2135278324,
+      "serialized_sha256": "e58ffaeb6e7e82553d1d770a6e21e585d0246f3a0febb3dbba8ec3169e614022"
+    },
+    "totals": {
+      "centroid_nonzero_bit_words": 27,
+      "compressed_data_bytes": 473216,
+      "environment_payload_bytes": 473216,
+      "environment_vertices": 14788,
+      "hardware_identity_checked": 68,
+      "hardware_null": 0,
+      "lightmap_payload_bytes": 0,
+      "lightmap_vertices": 0,
+      "shader_NONE": 0,
+      "shader_identity_checked": 34,
+      "surface_count": 8084,
+      "uncompressed_data_bytes": 0,
+      "zero_count_payloads": 34
+    },
+    "input_tag_sha256": "8501f4ad215a630d14220140e27f8a9c30a5ed18fe459ac07c686e827a0ab7bc",
+    "input_BSP_sha256": "7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b",
+    "inspector_sha256": "ef6d6a28ae69b9c2a29a244504f6c60d61aeba8148058a3fa7d900d8e67c7865",
+    "inputs_unchanged": true,
+    "record_sha256": "ac2c559b918edf13c43ae20b42ae188d4d90a903e3140101ede39b27a0f9103c",
+    "command_record_sha256": "1fa2cf033715c1334c11040871c7dcb19f82f1757c2b6cbdb2a4258a438874a3",
+    "scope": "Python_metadata_only_not_C_owned_target_execution"
+  },
+  "actual_API_arena_plan": {
+    "scope": "actual_public_material_API_ABI_and_arena_plan_only",
+    "source_commit": "77aacc701f9ab135a03dfb809f81d4225f9b8f2b",
+    "source_branch": "wii",
+    "source_dirty_before": true,
+    "source_dirty_after": true,
+    "expected_frozen_header_sha256": "837e66d66e76c3c5833292e60ab32e5038682fb0f52ed85934bd7fbdf5bfd323",
+    "original_inputs_sha256": {
+      "tools/wii/cache_material_probe.h": "837e66d66e76c3c5833292e60ab32e5038682fb0f52ed85934bd7fbdf5bfd323",
+      "tools/wii/cache_bsp_probe.h": "0a68bbdc7ddb7c95c747850dc3875052e4cced75bd6449d4584d514904d701d5",
+      "tools/wii/cache_address_probe.h": "b12006e37e0bf92c265e4c7dd7cdc275f6dd5952296fc1428ef4263e3cf044b7",
+      "tools/wii/cache_arena_plan.h": "32989ed97be742b9beb1e1e03cbe8ccf7c66b8fb41772b0d3f99dbd0eb6dffbf",
+      "tools/wii/cache_arena_plan.c": "7c0e26625fcdec0c9a1372b6fd6801b8158dbb15f062f94d4a5cdc8567abd0b2"
+    },
+    "snapshot_inputs_sha256": {
+      "cache_address_probe.h": "b12006e37e0bf92c265e4c7dd7cdc275f6dd5952296fc1428ef4263e3cf044b7",
+      "cache_arena_plan.c": "7c0e26625fcdec0c9a1372b6fd6801b8158dbb15f062f94d4a5cdc8567abd0b2",
+      "cache_arena_plan.h": "32989ed97be742b9beb1e1e03cbe8ccf7c66b8fb41772b0d3f99dbd0eb6dffbf",
+      "cache_bsp_probe.h": "0a68bbdc7ddb7c95c747850dc3875052e4cced75bd6449d4584d514904d701d5",
+      "cache_material_probe.h": "837e66d66e76c3c5833292e60ab32e5038682fb0f52ed85934bd7fbdf5bfd323"
+    },
+    "authored_inputs_sha256": {
+      "measurement.c": "10a32ee03049f69db073fe04bc076d736fe114691a53b8e536139133469b6e47",
+      "planner.c": "05575883bec10b2b5a791589af64818a33ebe3a619523a1ba39417e107594332",
+      "run_plan.py": "0bc6fd447d542d7246834c874de38c33bfaed9b0635aebec022cc0bab242e939"
+    },
+    "compiler_tool_sha256": {
+      "gcc.exe": "75e87953e9d04e8a5d81225397292e9f8ae599a0ed85f70ed175767577aaa9f6",
+      "powerpc-eabi-gcc.exe": "692e3f84b35b7622f90d9fa2eae47c21cab88d3d95f857fc2381c4593765e814",
+      "powerpc-eabi-nm.exe": "be254592369331d2341984de4f37cccb3812eff9f077dbc65d9426c559f301b8"
+    },
+    "PPC_execution": false,
+    "DOL_built": false,
+    "asset_access": false,
+    "SD_or_Dolphin_access": false,
+    "limitations": [
+      "Actual header structs, not original game disk/native layouts.",
+      "PPC object symbols and numeric placement arithmetic, not target execution or physical storage proof.",
+      "View sizeof is caller-owned observation, not arena slot or full stack charge.",
+      "State/sound remain canary placeholders; textures, initialized pools, call-chain/system peak excluded.",
+      "Full source capacities and provisional reserve retained; no geometry or shader execution."
+    ],
+    "host_compiler_version": "gcc.exe (Rev3, Built by MSYS2 project) 16.2.0",
+    "host_target": "x86_64-w64-mingw32",
+    "ppc_compiler_version": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+    "ppc_target": "powerpc-eabi",
+    "PPC_sizes_from_ELF_symbol_sizes": {
+      "bsp_control": 152,
+      "control": 80,
+      "control_align": 8,
+      "data": 20,
+      "lightmap": 20,
+      "material": 128,
+      "material_align": 4,
+      "parent_view": 40,
+      "pointer": 4,
+      "requirements": 16,
+      "result": 16,
+      "root": 24,
+      "size_t": 4,
+      "vertex": 20,
+      "view": 56,
+      "view_align": 8
+    },
+    "PPC_offsets_from_ELF_symbols": {
+      "centroid_bits": 28,
+      "control_generation": 40,
+      "control_lightmap_count": 52,
+      "control_live": 48,
+      "control_material_count": 56,
+      "control_parent": 0,
+      "control_published": 60,
+      "control_workspace": 68,
+      "control_workspace_bytes": 72,
+      "data_fields": 80,
+      "first_surface": 20,
+      "flags": 18,
+      "permutation": 16,
+      "shader_words": 0,
+      "source": 120,
+      "surface_count": 24,
+      "vertex_buffers": 40,
+      "view_control": 40,
+      "view_generation": 48,
+      "view_parent": 0
+    },
+    "PPC_ELF": {
+      "class": 32,
+      "endian": "big",
+      "machine": 20,
+      "execution": false
+    },
+    "host_sizes_from_execution": {
+      "material": 128,
+      "material_align": 4,
+      "root": 24,
+      "lightmap": 20,
+      "vertex": 20,
+      "data": 20,
+      "control": 88,
+      "control_align": 8,
+      "view": 56,
+      "view_align": 8,
+      "parent_view": 40,
+      "bsp_control": 200,
+      "requirements": 32,
+      "result": 32,
+      "pointer": 8,
+      "size_t": 8
+    },
+    "workspace_bytes": {
+      "host": 8832,
+      "PPC": 8832
+    },
+    "actual_workload": {
+      "lightmaps": 2,
+      "materials": 34,
+      "serialized_bytes": 9416,
+      "source_root_bytes": 648,
+      "source_lightmap_bytes": 32,
+      "source_material_bytes": 256
+    },
+    "PPC_placement_budget": {
+      "original_capacity": 54368224,
+      "alternate_offset": 4096,
+      "maximum_arena_charge": 52586192,
+      "minimum_arena_remaining": 1782032
+    },
+    "original_inputs_unchanged": true,
+    "snapshots_unchanged": true,
+    "artifacts_sha256": {
+      "host-measurement.o": "47f1dc02c3e63a5fe65b5630dc0d245086137bf547069ca7af64a126471b2cec",
+      "ppc-arena.o": "b56f77971d28b0f2db2680f83d8881798201ed5f0c8475833829e3ba9e66431e",
+      "ppc-measurement.o": "e4fe2359169a1cac1d68d1d2e6736c0239b99659ba5d6c9f4ea98da92a5874fe",
+      "ppc-planner.o": "ca6a3bfec967ca5717aa7120217f504f6893e30c11aa5546f67b8ed8150aa24a",
+      "host-measurement.su": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "planner-cache_arena_plan.su": "de29418eaec5083282197e6f0db965c6e1277424f93edfae2e588ef84323f277",
+      "planner-planner.su": "ce68d1938a076ef192584e10668a49d385e17b121080ec1cd1b43738c81e6eac",
+      "ppc-arena.su": "89f99e76c3eaee1243357bcae25888ff7fdb5c0508378462edbb0f953754fce4",
+      "ppc-measurement.su": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ppc-planner.su": "43daec74449b66af9d8faf9b6d9b64bd013e0136d040f1dd7ede3e231eecfd0c",
+      "planner.exe": "32d9281e8e5a95cb7ee38dec55d50b57f9b7419e47a1c4827e3a1e8aa098f044"
+    },
+    "slot_alignment": 64,
+    "strict_compile_exits": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "compile_diagnostics": [],
+    "raw_record_sha256": "9069ea80f411b0a243efaf74e442f01a12410495b6531110dd8094ba91a7db42",
+    "plans": [
+      {
+        "label": "host_actual_allocated_span",
+        "capacity": 54368224,
+        "required": 52582744,
+        "remaining": 1785480,
+        "original_arena_capacity": 54368224,
+        "placement_offset": 0,
+        "arena_charge": 52582744,
+        "arena_remaining": 1785480,
+        "reserve_offset": 50485592,
+        "reserve_bytes": 2097152,
+        "slots": [
+          {
+            "name": "tags",
+            "offset": 0,
+            "bytes": 23068672,
+            "alignment": 64
+          },
+          {
+            "name": "state_placeholder",
+            "offset": 23068672,
+            "bytes": 20971520,
+            "alignment": 64
+          },
+          {
+            "name": "sound_placeholder",
+            "offset": 44040192,
+            "bytes": 4194304,
+            "alignment": 64
+          },
+          {
+            "name": "maximum_index",
+            "offset": 48234496,
+            "bytes": 2097120,
+            "alignment": 64
+          },
+          {
+            "name": "io_a",
+            "offset": 50331648,
+            "bytes": 65536,
+            "alignment": 64
+          },
+          {
+            "name": "io_b",
+            "offset": 50397184,
+            "bytes": 65536,
+            "alignment": 64
+          },
+          {
+            "name": "retained_widget_workspace",
+            "offset": 50462720,
+            "bytes": 2048,
+            "alignment": 64
+          },
+          {
+            "name": "retained_widget_serial",
+            "offset": 50464768,
+            "bytes": 2160,
+            "alignment": 64
+          },
+          {
+            "name": "material_workspace",
+            "offset": 50466944,
+            "bytes": 8832,
+            "alignment": 64
+          },
+          {
+            "name": "material_serial",
+            "offset": 50475776,
+            "bytes": 9416,
+            "alignment": 64
+          },
+          {
+            "name": "existing_bsp_control",
+            "offset": 50485248,
+            "bytes": 200,
+            "alignment": 64
+          },
+          {
+            "name": "material_control",
+            "offset": 50485504,
+            "bytes": 88,
+            "alignment": 64
+          }
+        ],
+        "base_kind": "actual_accessible_malloc_span_alignment_dependent"
+      },
+      {
+        "label": "ppc_numeric_90002000",
+        "base": "0x90002000",
+        "capacity": 54368224,
+        "required": 52582096,
+        "remaining": 1786128,
+        "original_arena_capacity": 54368224,
+        "placement_offset": 0,
+        "arena_charge": 52582096,
+        "arena_remaining": 1786128,
+        "reserve_offset": 50484944,
+        "reserve_bytes": 2097152,
+        "slots": [
+          {
+            "name": "tags",
+            "offset": 0,
+            "bytes": 23068672,
+            "alignment": 64
+          },
+          {
+            "name": "state_placeholder",
+            "offset": 23068672,
+            "bytes": 20971520,
+            "alignment": 64
+          },
+          {
+            "name": "sound_placeholder",
+            "offset": 44040192,
+            "bytes": 4194304,
+            "alignment": 64
+          },
+          {
+            "name": "maximum_index",
+            "offset": 48234496,
+            "bytes": 2097120,
+            "alignment": 64
+          },
+          {
+            "name": "io_a",
+            "offset": 50331648,
+            "bytes": 65536,
+            "alignment": 64
+          },
+          {
+            "name": "io_b",
+            "offset": 50397184,
+            "bytes": 65536,
+            "alignment": 64
+          },
+          {
+            "name": "retained_widget_workspace",
+            "offset": 50462720,
+            "bytes": 1456,
+            "alignment": 64
+          },
+          {
+            "name": "retained_widget_serial",
+            "offset": 50464192,
+            "bytes": 2160,
+            "alignment": 64
+          },
+          {
+            "name": "material_workspace",
+            "offset": 50466368,
+            "bytes": 8832,
+            "alignment": 64
+          },
+          {
+            "name": "material_serial",
+            "offset": 50475200,
+            "bytes": 9416,
+            "alignment": 64
+          },
+          {
+            "name": "existing_bsp_control",
+            "offset": 50484672,
+            "bytes": 152,
+            "alignment": 64
+          },
+          {
+            "name": "material_control",
+            "offset": 50484864,
+            "bytes": 80,
+            "alignment": 64
+          }
+        ],
+        "base_kind": "numeric_PPC_arithmetic_only_no_target_storage_access"
+      },
+      {
+        "label": "ppc_numeric_90003000",
+        "base": "0x90003000",
+        "capacity": 54364128,
+        "required": 52582096,
+        "remaining": 1782032,
+        "original_arena_capacity": 54368224,
+        "placement_offset": 4096,
+        "arena_charge": 52586192,
+        "arena_remaining": 1782032,
+        "reserve_offset": 50484944,
+        "reserve_bytes": 2097152,
+        "slots": [
+          {
+            "name": "tags",
+            "offset": 0,
+            "bytes": 23068672,
+            "alignment": 64
+          },
+          {
+            "name": "state_placeholder",
+            "offset": 23068672,
+            "bytes": 20971520,
+            "alignment": 64
+          },
+          {
+            "name": "sound_placeholder",
+            "offset": 44040192,
+            "bytes": 4194304,
+            "alignment": 64
+          },
+          {
+            "name": "maximum_index",
+            "offset": 48234496,
+            "bytes": 2097120,
+            "alignment": 64
+          },
+          {
+            "name": "io_a",
+            "offset": 50331648,
+            "bytes": 65536,
+            "alignment": 64
+          },
+          {
+            "name": "io_b",
+            "offset": 50397184,
+            "bytes": 65536,
+            "alignment": 64
+          },
+          {
+            "name": "retained_widget_workspace",
+            "offset": 50462720,
+            "bytes": 1456,
+            "alignment": 64
+          },
+          {
+            "name": "retained_widget_serial",
+            "offset": 50464192,
+            "bytes": 2160,
+            "alignment": 64
+          },
+          {
+            "name": "material_workspace",
+            "offset": 50466368,
+            "bytes": 8832,
+            "alignment": 64
+          },
+          {
+            "name": "material_serial",
+            "offset": 50475200,
+            "bytes": 9416,
+            "alignment": 64
+          },
+          {
+            "name": "existing_bsp_control",
+            "offset": 50484672,
+            "bytes": 152,
+            "alignment": 64
+          },
+          {
+            "name": "material_control",
+            "offset": 50484864,
+            "bytes": 80,
+            "alignment": 64
+          }
+        ],
+        "base_kind": "numeric_PPC_arithmetic_only_no_target_storage_access"
+      }
+    ]
+  },
+  "preflight": {
+    "source_commit": "77aacc701f9ab135a03dfb809f81d4225f9b8f2b",
+    "source_dirty": true,
+    "host_build_id": "c049903ff9d729b1",
+    "PPC_build_id": "6349feea153df133",
+    "both_passed": true,
+    "full_source_snapshots_retained": true
+  },
+  "earlier_test_failures": {
+    "first": "overflow_error_regex_too_narrow_37tests1failure",
+    "second": "Windows_open_FD_path_replacement_denied_42tests1error",
+    "record_sha256": {
+      "v1": "5806eb40f3afb35f190e4d8ff4562acaa34d74c89cebdbe6785c4ccf72d863ed",
+      "v2": "e263ad155248e6cac114fa32d8795d5f2e334ee353eba75be86067583db37921"
+    },
+    "superseded_test_sources_snapshotted": false
+  },
+  "limitations": [
+    "PPC_compilation_ELF_symbols_not_PPC_execution_or_physical_placement",
+    "partial_projections_not_full_original_disk_native_ABI_geometry_or_shader_execution",
+    "float_bits_no_arithmetic_and_payload_extents_no_triangle_vertex_contents",
+    "selected_concat_not_relocated_cache_or_durable_save",
+    "state_sound_canary_placeholders_not_initialized_engine_pools",
+    "textures_system_peak_library_callchain_stack_hardware_gameplay_unqualified",
+    "prior_host_shutdown_and_ABI_failures_remain"
+  ],
+  "tickets": {
+    "HWI-005": "BLOCKED",
+    "HWI-006": "BLOCKED",
+    "HWI-007": "TODO",
+    "HWI-008": "TODO"
+  },
+  "independent_C_review": {
+    "findings": 0,
+    "supplemental_checks": 27,
+    "failures": 0,
+    "corrected_record_sha256": "fd4c7dfd19499c00a7229295f5f7094d52a3c3268bbbfe21fc88d9479fef84f1",
+    "initial_supplemental_setup": "unrounded_BSP_backing_exit1_corrected512rounded_exit0",
+    "initial_binary_and_command_retained": true,
+    "initial_source_superseded": true
+  },
+  "actual_plan_build_publication_independent_review": {
+    "checks": 753,
+    "discrepancies": 0,
+    "record_sha256": "36bc56d030987aecfd500386987c0393de51c654b7e57478db90f1c99ca25aed",
+    "scope": "retained_ABI_symbols_12slot_math_clean_build_hashes_publication_consistency",
+    "PPC_execution": false,
+    "owned_input_bytes_reread": false
+  }
+}

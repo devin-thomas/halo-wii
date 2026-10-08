@@ -163,10 +163,10 @@ No new runtime launch or SD write occurs, and ticket blockers remain.
 
 The [retained campaign material metadata](evidence/2026-10-07-campaign-material-metadata.md)
 checks all 34 materials, 68 descriptor relationships and 473,216 bytes of
-count-derived environment payload extents. All lightmap vertex counts are zero;
-shader association and vertex contents remain unqualified. A separately charged
-partial native projection is proposed; no campaign decoder/runtime is implemented
-and no new extraction, SD write or target launch occurs.
+count-derived environment payload extents. All lightmap vertex counts are zero.
+At that checkpoint, shader association and vertex contents were unqualified,
+and a separately charged partial native projection was proposed. That checkpoint
+involved no campaign decoder/runtime, new extraction, SD write or target launch.
 
 The [fresh campaign tag identity prerequisite](evidence/2026-10-07-campaign-tag-identity.md)
 now checks all 34 selected shader references against newly derived raw tags.
@@ -174,3 +174,12 @@ Full datum, primary group, shader ancestry and bounded names pass, with 7,797
 independent checks and zero discrepancies. This advances metadata preparation;
 shader bodies, native target execution, geometry and ticket blockers remain open.
 No additional target launch or SD write occurs.
+
+The [partial material API gate](evidence/2026-10-07-material-api.md) implements
+transactional root/lightmap/material projections and parent-first generations.
+Authored host 64 cases / 48,752 checks and 46 Python tests pass; clean strict PPC
+compilation passes, without PPC execution. The actual twelve-slot plan leaves
+1,782,032 conservative PPC arena bytes while retaining original reservations.
+Retained campaign Python metadata matches 34 materials and the 9,416-byte selected
+concatenation. Owned C target execution, engine pools, geometry/GX, gameplay and
+ticket acceptance remain open; no additional SD write or target launch occurs.
