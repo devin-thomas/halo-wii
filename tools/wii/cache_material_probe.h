@@ -48,7 +48,10 @@ struct cache_material_projection {
 struct cache_material_root_projection {
     struct cache_material_span source, lightmaps;
     uint32_t material_count, lightmap_count;
+    struct cache_material_span surfaces;
+    uint32_t surface_count;
 };
+struct cache_material_surface_projection { uint16_t vertex_indices[3]; };
 struct cache_material_lightmap_projection {
     int16_t bitmap_index;
     uint16_t pad;
@@ -76,9 +79,10 @@ const char *cache_material_error_name(enum cache_material_error);
 
 /* Partial Xbox LE projection only: root lightmaps, all their materials, numeric
  * shader references, vertex-buffer metadata and tag-data metadata. The rest of
- * each root/lightmap/material stays opaque. Root surface count and its 6-byte
- * element span are checked, without reading triangle contents. Float words retain their bits.
- * No geometry/shader body conversion, engine pools, or standalone cache save.
+ * each root/lightmap/material stays opaque. Root surfaces are 6-byte records;
+ * their three unsigned index words may be inspected explicitly LE. No vertex
+ * indexing origin or per-material index limit is inferred. Float words retain their bits.
+ * No vertex/shader body conversion, engine pools, or standalone cache save.
  * Source counts retain their maxima; workspace uses the actual aggregate.
  * measure performs complete selected validation without allocating or writing
  * source. Results, outputs, controls and source are truthful and disjoint.
@@ -106,6 +110,12 @@ int cache_material_bind(struct cache_material_control *, const struct cache_bsp_
                          struct cache_material_result *);
 int cache_material_get_root(const struct cache_material_view *, struct cache_material_root_projection *,
                              struct cache_material_result *);
+/* Ordinal addresses the whole root surface block, not a material-local vertex
+ * buffer. Span coordinates are relative to the shared TAG slot. An invalid
+ * ordinal, stale parent/child or aliased output rejects without publishing any
+ * output bytes; output/result obey the same disjoint truthful-object contract. */
+int cache_material_get_surface(const struct cache_material_view *, size_t ordinal,
+                                struct cache_material_surface_projection *, struct cache_material_result *);
 int cache_material_get_lightmap(const struct cache_material_view *, size_t,
                                  struct cache_material_lightmap_projection *, struct cache_material_result *);
 int cache_material_get_material(const struct cache_material_view *, size_t,

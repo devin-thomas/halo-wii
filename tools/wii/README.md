@@ -319,3 +319,21 @@ complete lightmap table, then each material table in lightmap order, rewriting
 known LE words and retaining encoded addresses. It excludes payloads and shader
 bodies. It is not a standalone relocated cache or save, full typed BSP/geometry
 conversion, GX registration, engine memory strategy, gameplay or Wii acceptance.
+
+The root also exposes the checked surface count and slot-relative surface span.
+`cache_material_get_surface` returns one six-byte record as three explicitly
+decoded LE unsigned 16-bit indices. It checks the copied parent/BSP/material
+lifetimes before source access and preserves caller output on rejection. This
+qualifies numeric triangle-record interpretation only. Vertex-index origin,
+per-material vertex bounds, vertex conversion and rendering remain separate.
+
+The root projection grows from 24 to 36 bytes, increasing the two-half workspace
+by 24 payload bytes. For two lightmaps and 34 materials, payload is 8,856 bytes;
+an authored model using compiled PPC layouts charges 64 additional arena bytes
+after alignment, leaving 1,781,968 bytes after the provisional reserve. This
+models planner placement and does not establish target execution. The six-byte output is caller
+storage and adds no arena slot. Existing reservations and source capacities
+remain. Selected serialization still copies only root/lightmap/material records,
+retaining original surface count/address words and excluding triangle payloads.
+Authored host cases and strict PPC compilation are separate from owned-data or
+PPC execution; earlier streaming evidence applies to its recorded source build.

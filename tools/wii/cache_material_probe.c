@@ -7,7 +7,8 @@
 _Static_assert(sizeof(struct cache_material_vertex_metadata) == 20, "vertex metadata");
 _Static_assert(sizeof(struct cache_material_data_metadata) == 20, "data metadata");
 _Static_assert(sizeof(struct cache_material_projection) == 128, "material projection");
-_Static_assert(sizeof(struct cache_material_root_projection) == 24, "root projection");
+_Static_assert(sizeof(struct cache_material_root_projection) == 36, "root projection");
+_Static_assert(sizeof(struct cache_material_surface_projection) == 6, "surface projection");
 _Static_assert(sizeof(struct cache_material_lightmap_projection) == 20, "lightmap projection");
 
 struct material_reader {
@@ -291,7 +292,8 @@ static int scan(const struct material_reader *reader, struct cache_material_requ
         return 0;
     if (scratch) {
         struct cache_material_root_projection value = {{(uint32_t)root, 648},
-            {(uint32_t)lightmaps.offset, (uint32_t)lightmaps.length}, (uint32_t)total, (uint32_t)lc};
+            {(uint32_t)lightmaps.offset, (uint32_t)lightmaps.length}, (uint32_t)total, (uint32_t)lc,
+            {(uint32_t)surface_span.offset, (uint32_t)surface_span.length}, (uint32_t)surface_count};
         memcpy(scratch, &value, sizeof(value));
     }
     result->material_index = SIZE_MAX;
@@ -454,6 +456,32 @@ int cache_material_get_lightmap(const struct cache_material_view *view, size_t i
     if (!output_object(view, &reader, output, sizeof(*output), result))
         return 0;
     memcpy(output, published + sizeof(struct cache_material_root_projection) + index * sizeof(*output), sizeof(*output));
+    return 1;
+}
+
+int cache_material_get_surface(const struct cache_material_view *view, size_t ordinal,
+                               struct cache_material_surface_projection *output, struct cache_material_result *result)
+{
+    if (!start(result))
+        return 0;
+    if (!output)
+        return fail(result, CACHE_MATERIAL_ARGUMENT, 0);
+    struct material_reader reader;
+    const unsigned char *published;
+    if (!graph_open(view, &reader, &published, result))
+        return 0;
+    struct cache_material_root_projection root;
+    memcpy(&root, published, sizeof(root));
+    if (ordinal >= root.surface_count)
+        return fail(result, CACHE_MATERIAL_COUNT, ordinal);
+    if (!output_object(view, &reader, output, sizeof(*output), result))
+        return 0;
+    /* The complete count*6 span was validated before immutable publication. */
+    const unsigned char *source = reader.bytes + root.surfaces.offset + ordinal * 6;
+    struct cache_material_surface_projection value;
+    for (unsigned i = 0; i < 3; ++i)
+        value.vertex_indices[i] = le16(source + i * 2);
+    *output = value;
     return 1;
 }
 

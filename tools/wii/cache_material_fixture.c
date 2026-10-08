@@ -6,7 +6,7 @@
 enum { GUARD = 32, TAG_BYTES = 4096, SLOT_BYTES = 65536, BSP_AT = 8192,
        BSP_BYTES = 57344, ROOT_AT = BSP_AT + 24, LM_AT = BSP_AT + 800,
        MAT_AT = BSP_AT + 2048, VERTEX_TABLE = BSP_AT + 720,
-       INDEX_TABLE = BSP_AT + 744, DATA_AT = BSP_AT + 8192,
+       INDEX_TABLE = BSP_AT + 744, SURFACE_AT = BSP_AT + 1600, DATA_AT = BSP_AT + 8192,
        WORK_BYTES = 4096, SERIAL_BYTES = 4096 };
 #define BASE CACHE_BSP_TAG_BASE
 #define SCNR UINT32_C(0x73636e72)
@@ -144,7 +144,11 @@ static void author(unsigned char *p, size_t slot_bytes)
             word(p, at + 8, UINT32_C(0xe2345678) + i + kind);
         }
     word(p, ROOT_AT + 248, 12);
-    word(p, ROOT_AT + 252, BASE + BSP_AT + 1600);
+    word(p, ROOT_AT + 252, BASE + SURFACE_AT);
+    static const uint16_t indices[] = {0, 1, 32767, 32768, 65534, 65535};
+    for (unsigned ordinal = 0; ordinal < 12; ++ordinal)
+        for (unsigned i = 0; i < 3; ++i)
+            half(p, SURFACE_AT + ordinal * 6 + i * 2, indices[(ordinal + i) % 6]);
     word(p, ROOT_AT + 260, 2);
     word(p, ROOT_AT + 264, BASE + LM_AT);
     word(p, ROOT_AT + 268, UINT32_C(0xfeedbabe));
@@ -207,7 +211,7 @@ static int valid_case(struct context *context, struct storage *storage, unsigned
     CHECK(measured, "measure");
     if (!measured)
         return abort_case(context, "measure_failed");
-    CHECK(req.lightmap_count == 2 && req.material_count == 2 && req.workspace_bytes == 640 &&
+    CHECK(req.lightmap_count == 2 && req.material_count == 2 && req.workspace_bytes == 664 &&
           req.serialized_bytes == 1224, "independent_numeric_requirements");
     int bound = cache_material_bind(&control, &parent, storage->work + GUARD, WORK_BYTES, &view, &result);
     CHECK(bound, "bind");
@@ -215,8 +219,34 @@ static int valid_case(struct context *context, struct storage *storage, unsigned
         return abort_case(context, "bind_failed");
     struct cache_material_root_projection root;
     CHECK(cache_material_get_root(&view, &root, &result) && root.source.offset == ROOT_AT && root.source.bytes == 648 &&
-          root.lightmaps.offset == LM_AT && root.lightmaps.bytes == 64 && root.material_count == 2 && root.lightmap_count == 2,
+          root.lightmaps.offset == LM_AT && root.lightmaps.bytes == 64 && root.material_count == 2 && root.lightmap_count == 2 &&
+          root.surface_count == 12 && root.surfaces.offset == SURFACE_AT && root.surfaces.bytes == 72,
           "root_fields");
+    struct {
+        uint16_t before[2];
+        struct cache_material_surface_projection value;
+        uint16_t after[2];
+    } surface_guard = {{0xa7a7, 0xa7a7}, {{0x5a5a, 0x5a5a, 0x5a5a}}, {0xa7a7, 0xa7a7}};
+    static const uint16_t indices[] = {0, 1, 32767, 32768, 65534, 65535};
+    for (unsigned ordinal = 0; ordinal < 12; ++ordinal) {
+        int obtained = cache_material_get_surface(&view, ordinal, &surface_guard.value, &result);
+        CHECK(obtained, "surface_whole_root_ordinal_get");
+        if (!obtained)
+            return abort_case(context, "surface_get_failed");
+        unsigned char encoded[6];
+        for (unsigned i = 0; i < 3; ++i) {
+            CHECK(surface_guard.value.vertex_indices[i] == indices[(ordinal + i) % 6], "surface_unsigned_word_independent_golden");
+            half(encoded, i * 2, surface_guard.value.vertex_indices[i]);
+        }
+        CHECK(!memcmp(encoded, bytes + SURFACE_AT + ordinal * 6, sizeof(encoded)), "surface_numeric_LE_reencode_matches_raw_six_bytes");
+        CHECK(surface_guard.before[0] == 0xa7a7 && surface_guard.before[1] == 0xa7a7 &&
+              surface_guard.after[0] == 0xa7a7 && surface_guard.after[1] == 0xa7a7, "surface_output_full_guards");
+    }
+    struct cache_material_surface_projection surface_before = surface_guard.value;
+    CHECK(!cache_material_get_surface(&view, 12, &surface_guard.value, &result) && result.error == CACHE_MATERIAL_COUNT &&
+          !memcmp(&surface_guard.value, &surface_before, sizeof(surface_before)), "surface_onepast_atomic_output");
+    CHECK(!cache_material_get_surface(&view, SIZE_MAX, &surface_guard.value, &result) && result.error == CACHE_MATERIAL_COUNT &&
+          !memcmp(&surface_guard.value, &surface_before, sizeof(surface_before)), "surface_negative_cast_ordinal_atomic_output");
     for (unsigned i = 0; i < 2; ++i) {
         struct cache_material_lightmap_projection lm;
         struct cache_material_projection m = {0};
@@ -250,6 +280,8 @@ static int valid_case(struct context *context, struct storage *storage, unsigned
     size_t used = 99;
     CHECK(cache_material_serialize(&view, storage->serial + GUARD + offset, expected, &used, &result) && used == expected &&
           !memcmp(storage->serial + GUARD + offset, storage->golden, expected), "selected_order_independent_raw_golden_and_numeric_rewrite");
+    CHECK(!memcmp(storage->serial + GUARD + offset + 248, bytes + ROOT_AT + 248, 12),
+          "selected_serialization_retains_surface_count_address_definition_without_payload");
     for (unsigned i = 0; i < GUARD + offset; ++i)
         CHECK(storage->serial[i] == 0xa7, "serial_prefix_canary");
     for (size_t i = GUARD + offset + expected; i < SERIAL_BYTES + GUARD * 2 + 8; ++i)
@@ -262,8 +294,12 @@ static int valid_case(struct context *context, struct storage *storage, unsigned
     CHECK(cache_material_bind(&control, &parent, storage->work + GUARD, WORK_BYTES, &view, &result) &&
           control.published.offset != old_offset && control.generation == 2, "transactional_alternate_half_publish");
     CHECK(!cache_material_get_root(&stale, &root, &result) && result.error == CACHE_MATERIAL_STATE, "stale_child_after_rebind");
+    CHECK(!cache_material_get_surface(&stale, 0, &surface_guard.value, &result) && result.error == CACHE_MATERIAL_STATE &&
+          !memcmp(&surface_guard.value, &surface_before, sizeof(surface_before)), "surface_stale_child_rebind_atomic_output");
     CHECK(cache_material_unload(&control, &result), "unload");
     CHECK(!cache_material_get_root(&view, &root, &result) && result.error == CACHE_MATERIAL_STATE, "stale_child_after_unload");
+    CHECK(!cache_material_get_surface(&view, 0, &surface_guard.value, &result) && result.error == CACHE_MATERIAL_STATE &&
+          !memcmp(&surface_guard.value, &surface_before, sizeof(surface_before)), "surface_stale_child_unload_atomic_output");
     uint64_t generation = control.generation;
     CHECK(cache_material_unload(&control, &result) && control.generation == generation, "inactive_idempotent");
     return 0;
@@ -323,8 +359,8 @@ static int edges(struct context *context, struct storage *storage)
     struct cache_material_root_projection root;
     memset(storage->work, 0xa7, WORK_BYTES + GUARD * 2);
     memcpy(storage->work_before, storage->work, WORK_BYTES + GUARD * 2);
-    CHECK(!cache_material_bind(&control, &parent, storage->work + GUARD, 639, &view, &result) &&
-          result.error == CACHE_MATERIAL_WORKSPACE && result.required == 640, "workspace_one_short_no_publication");
+    CHECK(!cache_material_bind(&control, &parent, storage->work + GUARD, 663, &view, &result) &&
+          result.error == CACHE_MATERIAL_WORKSPACE && result.required == 664, "workspace_one_short_no_publication");
     CHECK(!memcmp(storage->work, storage->work_before, WORK_BYTES + GUARD * 2) && !control.live, "capacity_atomic");
     CHECK(!cache_material_bind(&control, &parent, storage->work + GUARD + 1, WORK_BYTES, &view, &result) &&
           result.error == CACHE_MATERIAL_WORKSPACE, "workspace_unaligned_reject");
@@ -357,7 +393,7 @@ static int edges(struct context *context, struct storage *storage)
     memcpy(storage->work_before, storage->work, WORK_BYTES + GUARD * 2);
     struct cache_material_control live_before = control;
     struct cache_material_view live_view_before = view;
-    CHECK(!cache_material_bind(&control, &parent, storage->work + GUARD, 639, &view, &result) &&
+    CHECK(!cache_material_bind(&control, &parent, storage->work + GUARD, 663, &view, &result) &&
           result.error == CACHE_MATERIAL_WORKSPACE && !memcmp(&control, &live_before, sizeof(control)) &&
           !memcmp(&view, &live_view_before, sizeof(view)) &&
           !memcmp(storage->work, storage->work_before, WORK_BYTES + GUARD * 2), "live_publication_capacity_failure_atomic");
@@ -372,7 +408,7 @@ static int edges(struct context *context, struct storage *storage)
           result.error == CACHE_MATERIAL_CAPACITY && used == 71 && storage->serial[0] == 0x5a, "serializer_one_short_atomic");
     CHECK(!cache_material_serialize(&view, bytes + SLOT_BYTES - 1224, 1224, &used, &result) &&
           result.error == CACHE_MATERIAL_OVERLAP && used == 71, "serializer_full_TAG_reservation_overlap");
-    CHECK(!cache_material_serialize(&view, storage->work + GUARD + 640, 1224, &used, &result) &&
+    CHECK(!cache_material_serialize(&view, storage->work + GUARD + 664, 1224, &used, &result) &&
           result.error == CACHE_MATERIAL_OVERLAP, "serializer_unused_workspace_overlap");
     CHECK(!cache_material_serialize(&view, &control, sizeof(control), &used, &result) &&
           result.error == CACHE_MATERIAL_OVERLAP, "serializer_control_overlap");
@@ -401,7 +437,7 @@ static int edges(struct context *context, struct storage *storage)
         word(bytes, LM_AT + i * 32 + 24, UINT32_MAX);
     }
     CHECK(cache_material_measure(&parent, &req, &result) && req.material_count == 0 && req.lightmap_count == 2 &&
-          req.workspace_bytes == 128 && req.serialized_bytes == 712, "empty_material_blocks_ignore_addresses");
+          req.workspace_bytes == 152 && req.serialized_bytes == 712, "empty_material_blocks_ignore_addresses");
     word(bytes, ROOT_AT + 260, 0);
     word(bytes, ROOT_AT + 264, UINT32_MAX);
     word(bytes, ROOT_AT + 248, UINT32_MAX);
@@ -417,9 +453,10 @@ static int edges(struct context *context, struct storage *storage)
     word(bytes, ROOT_AT + 248, 0);
     word(bytes, ROOT_AT + 252, UINT32_MAX);
     CHECK(cache_material_measure(&parent, &req, &result) && req.material_count == 0 && req.lightmap_count == 0 &&
-          req.workspace_bytes == 48 && req.serialized_bytes == 648, "empty_root_does_not_follow_empty_block_addresses");
+          req.workspace_bytes == 72 && req.serialized_bytes == 648, "empty_root_does_not_follow_empty_block_addresses");
     CHECK(cache_material_bind(&control, &parent, storage->work + GUARD, WORK_BYTES, &view, &result) &&
-          cache_material_get_root(&view, &root, &result) && !root.lightmaps.offset && !root.lightmaps.bytes, "empty_root_projection");
+          cache_material_get_root(&view, &root, &result) && !root.lightmaps.offset && !root.lightmaps.bytes &&
+          !root.surface_count && !root.surfaces.offset && !root.surfaces.bytes, "empty_root_projection");
     CHECK(cache_material_serialize(&view, storage->serial, 648, &used, &result) && used == 648 &&
           !memcmp(storage->serial, bytes + ROOT_AT, 648), "empty_root_retains_unused_address");
     CHECK(cache_material_unload(&control, &result), "empty_unload");
@@ -506,6 +543,7 @@ static int lifecycle(struct context *context, struct storage *storage)
         struct cache_material_root_projection root;
         memset(&root, 0x5a, sizeof(root));
         struct cache_material_root_projection before = root;
+        struct cache_material_surface_projection surface = {{0x5a5a, 0xa7a7, 0xffff}}, surface_before = surface;
         CHECK(cache_arena_owner_release(&storage->owner, &arena), "outer_release");
         /* Deliberately destroy the now-inactive child and published workspace.
          * Stale-view queries must reject on the copied parent before either. */
@@ -514,6 +552,8 @@ static int lifecycle(struct context *context, struct storage *storage)
         memset(storage->work, 0x7d, WORK_BYTES + GUARD * 2);
         CHECK(!cache_material_get_root(&view, &root, &result) && result.error == CACHE_MATERIAL_STATE &&
               !memcmp(&root, &before, sizeof(root)), "outer_release_reject_before_destroyed_child_workspace");
+        CHECK(!cache_material_get_surface(&view, 0, &surface, &result) && result.error == CACHE_MATERIAL_STATE &&
+              !memcmp(&surface, &surface_before, sizeof(surface)), "surface_outer_release_reject_before_destroyed_controls_workspace");
         used = 77;
         CHECK(!cache_material_serialize(&view, storage->serial, SERIAL_BYTES, &used, &result) &&
               result.error == CACHE_MATERIAL_STATE && used == 77, "stale_serialize_unchanged_used");
@@ -522,6 +562,102 @@ static int lifecycle(struct context *context, struct storage *storage)
         CHECK(!cache_material_get_root(&view, &root, &result) && result.error == CACHE_MATERIAL_STATE,
               "alternate_owner_placement_generation_rejects_old_view");
     }
+    return 0;
+}
+
+static int surface_edges(struct context *context, struct storage *storage, unsigned placement, unsigned offset)
+{
+    context->name = "six_byte_surface_end_boundary_alias_empty_and_atomic_rejection";
+    ++context->cases;
+    unsigned char *bytes;
+    struct cache_bsp_control bsp;
+    struct cache_bsp_view parent;
+    if (!prepare(storage, placement, offset, &bytes, &bsp, &parent))
+        return abort_case(context, "surface_edges_prepare");
+    word(bytes, ROOT_AT + 260, 0);
+    word(bytes, ROOT_AT + 264, UINT32_MAX);
+    word(bytes, ROOT_AT + 248, 1);
+    word(bytes, ROOT_AT + 252, BASE + SLOT_BYTES - 6);
+    half(bytes, SLOT_BYTES - 6, 65535);
+    half(bytes, SLOT_BYTES - 4, 32768);
+    half(bytes, SLOT_BYTES - 2, 0);
+    memcpy(storage->snapshot, bytes, SLOT_BYTES);
+    struct cache_material_control control = {0};
+    struct cache_material_view view = {0};
+    struct cache_material_result result;
+    int bound = cache_material_bind(&control, &parent, storage->work + GUARD, WORK_BYTES, &view, &result);
+    CHECK(bound, "surface_exact_six_bytes_at_BSP_end_bind");
+    if (!bound)
+        return abort_case(context, "surface_edges_bind");
+    struct cache_material_root_projection root = {0};
+    CHECK(cache_material_get_root(&view, &root, &result) && root.surface_count == 1 &&
+          root.surfaces.offset == SLOT_BYTES - 6 && root.surfaces.bytes == 6, "surface_end_span_metadata");
+    struct cache_material_surface_projection surface = {{0x5a5a, 0x5a5a, 0x5a5a}};
+    CHECK(cache_material_get_surface(&view, 0, &surface, &result) && surface.vertex_indices[0] == 65535 &&
+          surface.vertex_indices[1] == 32768 && !surface.vertex_indices[2], "surface_last_six_bytes_unsigned_values");
+    struct cache_material_surface_projection before = surface;
+    CHECK(!cache_material_get_surface(&view, 1, &surface, &result) && result.error == CACHE_MATERIAL_COUNT &&
+          !memcmp(&surface, &before, sizeof(surface)), "surface_end_onepast_preserves_output");
+    CHECK(!cache_material_get_surface(&view, SIZE_MAX, &surface, &result) && result.error == CACHE_MATERIAL_COUNT &&
+          !memcmp(&surface, &before, sizeof(surface)), "surface_signed_negative_ordinal_preserves_output");
+    CHECK(!cache_material_get_surface(&view, 0, NULL, &result) && result.error == CACHE_MATERIAL_ARGUMENT,
+          "surface_null_output_reject");
+    CHECK(!cache_material_get_surface(NULL, 0, &surface, &result) && result.error == CACHE_MATERIAL_ARGUMENT &&
+          !memcmp(&surface, &before, sizeof(surface)), "surface_null_view_preserves_output");
+    memcpy(storage->work_before, storage->work, WORK_BYTES + GUARD * 2);
+    size_t alignment_offset = (uintptr_t)bytes % _Alignof(struct cache_material_surface_projection) ? 1 : 0;
+    CHECK(!cache_material_get_surface(&view, 0, (void *)(bytes + alignment_offset), &result) &&
+          result.error == CACHE_MATERIAL_OVERLAP, "surface_source_output_alias");
+    CHECK(!cache_material_get_surface(&view, 0, (void *)(storage->work + GUARD), &result) &&
+          result.error == CACHE_MATERIAL_OVERLAP, "surface_workspace_output_alias");
+    CHECK(!cache_material_get_surface(&view, 0, (void *)&control, &result) &&
+          result.error == CACHE_MATERIAL_OVERLAP, "surface_control_output_alias");
+    CHECK(!cache_material_get_surface(&view, 0, (void *)&view, &result) &&
+          result.error == CACHE_MATERIAL_OVERLAP, "surface_view_output_alias");
+    CHECK(!memcmp(bytes, storage->snapshot, SLOT_BYTES) &&
+          !memcmp(storage->work, storage->work_before, WORK_BYTES + GUARD * 2), "surface_alias_failures_preserve_source_and_workspace");
+    struct cache_material_control control_before = control;
+    struct cache_material_view view_before = view;
+    /* Fault injection precedes attempted publication. Restore source before
+     * accessing the old view, whose immutable-input contract remains in force. */
+    word(bytes, ROOT_AT + 252, BASE + SLOT_BYTES - 5);
+    memcpy(storage->snapshot, bytes, SLOT_BYTES);
+    CHECK(!cache_material_bind(&control, &parent, storage->work + GUARD, WORK_BYTES, &view, &result) &&
+          result.error == CACHE_MATERIAL_SPAN, "surface_six_byte_record_one_byte_truncated_reject");
+    CHECK(!memcmp(&control, &control_before, sizeof(control)) && !memcmp(&view, &view_before, sizeof(view)) &&
+          !memcmp(storage->work, storage->work_before, WORK_BYTES + GUARD * 2) &&
+          !memcmp(bytes, storage->snapshot, SLOT_BYTES), "surface_truncation_publication_source_atomic");
+    word(bytes, ROOT_AT + 252, BASE + SLOT_BYTES - 6);
+    word(bytes, ROOT_AT + 248, UINT32_MAX);
+    memcpy(storage->snapshot, bytes, SLOT_BYTES);
+    CHECK(!cache_material_bind(&control, &parent, storage->work + GUARD, WORK_BYTES, &view, &result) &&
+          result.error == CACHE_MATERIAL_COUNT, "surface_negative_signed_count_reject");
+    CHECK(!memcmp(&control, &control_before, sizeof(control)) && !memcmp(&view, &view_before, sizeof(view)) &&
+          !memcmp(storage->work, storage->work_before, WORK_BYTES + GUARD * 2) &&
+          !memcmp(bytes, storage->snapshot, SLOT_BYTES), "surface_negative_count_publication_source_atomic");
+    for (unsigned ignored = 0; ignored < 2; ++ignored) {
+        word(bytes, ROOT_AT + 248, 0);
+        word(bytes, ROOT_AT + 252, ignored ? UINT32_MAX : 0);
+        bound = cache_material_bind(&control, &parent, storage->work + GUARD, WORK_BYTES, &view, &result);
+        CHECK(bound, "surface_empty_ignores_zero_or_NONE_address");
+        if (!bound)
+            return abort_case(context, "surface_empty_bind");
+        CHECK(cache_material_get_root(&view, &root, &result) && !root.surface_count &&
+              !root.surfaces.offset && !root.surfaces.bytes, "surface_empty_normalized_numeric_span");
+        CHECK(!cache_material_get_surface(&view, 0, &surface, &result) && result.error == CACHE_MATERIAL_COUNT &&
+              !memcmp(&surface, &before, sizeof(surface)), "surface_empty_ordinal_zero_atomic_output");
+        size_t used = 71;
+        CHECK(cache_material_serialize(&view, storage->serial, SERIAL_BYTES, &used, &result) && used == 648 &&
+              !memcmp(storage->serial, bytes + ROOT_AT, 648), "surface_empty_unused_address_preserved_by_root_serialization");
+    }
+    struct cache_bsp_result bsp_result;
+    CHECK(cache_bsp_unload(&bsp, &bsp_result), "surface_parent_unload");
+    memset(&control, 0x9f, sizeof(control));
+    memset(storage->work, 0x7d, WORK_BYTES + GUARD * 2);
+    CHECK(!cache_material_get_surface(&view, 0, &surface, &result) && result.error == CACHE_MATERIAL_STATE &&
+          !memcmp(&surface, &before, sizeof(surface)), "surface_BSP_parent_first_before_overwritten_child_workspace");
+    CHECK(all_bytes(storage->placements[placement], GUARD + offset, 0xa7) &&
+          all_bytes(bytes + SLOT_BYTES, GUARD + 8 - offset, 0xa7), "surface_source_full_outer_guards");
     return 0;
 }
 
@@ -543,7 +679,7 @@ static int limits(struct context *context, struct storage *storage)
     struct cache_material_requirements req;
     struct cache_material_result result;
     CHECK(cache_material_measure(&parent, &req, &result) && req.lightmap_count == 128 && !req.material_count &&
-          req.workspace_bytes == 5168 && req.serialized_bytes == 4744, "all128_lightmaps_no_capacity_cut");
+          req.workspace_bytes == 5192 && req.serialized_bytes == 4744, "all128_lightmaps_no_capacity_cut");
     word(bytes, ROOT_AT + 260, 129);
     CHECK(!cache_material_measure(&parent, &req, &result) && result.error == CACHE_MATERIAL_COUNT, "lightmap129_reject");
 
@@ -556,6 +692,14 @@ static int limits(struct context *context, struct storage *storage)
         return abort_case(context, "large_allocation");
 #define LIMIT_CHECK(value, label) do { if (!check(context, (value), (label))) { failed = 1; goto cleanup; } } while (0)
     author(large, large_bytes);
+    word(large, ROOT_AT + 248, 131072);
+    word(large, ROOT_AT + 252, BASE + 3u * 1048576u);
+    half(large, 3u * 1048576u, 65535);
+    half(large, 3u * 1048576u + 2, 32768);
+    half(large, 3u * 1048576u + 4, 0);
+    half(large, 3u * 1048576u + 131071u * 6u, 1);
+    half(large, 3u * 1048576u + 131071u * 6u + 2, 65534);
+    half(large, 3u * 1048576u + 131071u * 6u + 4, 32767);
     word(large, ROOT_AT + 260, 1);
     word(large, LM_AT + 20, 2048);
     word(large, LM_AT + 24, BASE + MAT_AT);
@@ -587,7 +731,7 @@ static int limits(struct context *context, struct storage *storage)
     LIMIT_CHECK(prepared, "large_bsp_bind");
     if (!prepared) { failed = abort_case(context, "large_bsp"); goto cleanup; }
     prepared = cache_material_measure(&parent, &req, &result);
-    LIMIT_CHECK(prepared && req.material_count == 2048 && req.workspace_bytes == 524376 &&
+    LIMIT_CHECK(prepared && req.material_count == 2048 && req.workspace_bytes == 524400 &&
                 req.serialized_bytes == 524968, "2048_materials_and64000_vertices_measure");
     if (!prepared) { failed = abort_case(context, "large_measure"); goto cleanup; }
     workspace = malloc(req.workspace_bytes);
@@ -598,6 +742,17 @@ static int limits(struct context *context, struct storage *storage)
     prepared = cache_material_bind(&control, &parent, workspace, req.workspace_bytes, &view, &result);
     LIMIT_CHECK(prepared, "2048_materials_complete_publication");
     if (!prepared) { failed = abort_case(context, "large_publication"); goto cleanup; }
+    struct cache_material_root_projection root;
+    struct cache_material_surface_projection surface = {{0, 0, 0}};
+    LIMIT_CHECK(cache_material_get_root(&view, &root, &result) && root.surface_count == 131072 &&
+                root.surfaces.bytes == 786432, "all131072_root_surfaces_no_capacity_cut");
+    LIMIT_CHECK(cache_material_get_surface(&view, 0, &surface, &result) && surface.vertex_indices[0] == 65535 &&
+                surface.vertex_indices[1] == 32768 && !surface.vertex_indices[2], "maximum_surface_span_first_record");
+    LIMIT_CHECK(cache_material_get_surface(&view, 131071, &surface, &result) && surface.vertex_indices[0] == 1 &&
+                surface.vertex_indices[1] == 65534 && surface.vertex_indices[2] == 32767, "maximum_surface_span_last_record");
+    struct cache_material_surface_projection surface_before = surface;
+    LIMIT_CHECK(!cache_material_get_surface(&view, 131072, &surface, &result) && result.error == CACHE_MATERIAL_COUNT &&
+                !memcmp(&surface, &surface_before, sizeof(surface)), "maximum_surface_ordinal_onepast_atomic");
     struct cache_material_projection m;
     LIMIT_CHECK(cache_material_get_material(&view, 0, &m, &result) && m.vertex_buffers[0].count == 64000,
                 "64000_count_retained");
@@ -645,13 +800,16 @@ int cache_material_fixture(FILE *report, int collect)
         aborted = abort_case(context, "allocation");
         goto cleanup;
     }
-    if (fprintf(report, "CACHE_MATERIAL BEGIN scope=authored_partial_root_lightmap_material_no_geometry\n") < 0) {
+    if (fprintf(report, "CACHE_MATERIAL BEGIN scope=authored_partial_root_lightmap_material_surface_words_no_vertex_conversion\n") < 0) {
         aborted = 1;
         goto cleanup;
     }
     for (unsigned placement = 0; placement < 2 && !aborted; ++placement)
         for (unsigned offset = 0; offset < 8 && !aborted; ++offset)
             aborted = valid_case(context, &storage, placement, offset);
+    for (unsigned placement = 0; placement < 2 && !aborted; ++placement)
+        for (unsigned offset = 0; offset < 8 && !aborted; ++offset)
+            aborted = surface_edges(context, &storage, placement, offset);
     static const struct mutation mutations[] = {
         {"negative_lightmaps", ROOT_AT + 260, UINT32_MAX, 4, CACHE_MATERIAL_COUNT},
         {"overmaximum_lightmaps", ROOT_AT + 260, 129, 4, CACHE_MATERIAL_COUNT},
