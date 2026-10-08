@@ -9,6 +9,7 @@ _Static_assert(sizeof(struct cache_material_data_metadata) == 20, "data metadata
 _Static_assert(sizeof(struct cache_material_projection) == 128, "material projection");
 _Static_assert(sizeof(struct cache_material_root_projection) == 36, "root projection");
 _Static_assert(sizeof(struct cache_material_surface_projection) == 6, "surface projection");
+_Static_assert(sizeof(struct cache_material_compressed_vertex_projection) == 32, "compressed vertex projection");
 _Static_assert(sizeof(struct cache_material_lightmap_projection) == 20, "lightmap projection");
 
 struct material_reader {
@@ -523,6 +524,42 @@ int cache_material_get_material_surface(const struct cache_material_view *view, 
     if (local_ordinal > SIZE_MAX - first)
         return fail(result, CACHE_MATERIAL_OVERFLOW, local_ordinal);
     return cache_material_get_surface(view, first + local_ordinal, output, result);
+}
+
+int cache_material_get_compressed_vertex(const struct cache_material_view *view, size_t material_index,
+                                         size_t ordinal, struct cache_material_compressed_vertex_projection *output,
+                                         struct cache_material_result *result)
+{
+    if (!start(result))
+        return 0;
+    if (!output)
+        return fail(result, CACHE_MATERIAL_ARGUMENT, 0);
+    struct cache_material_projection material;
+    if (!cache_material_get_material(view, material_index, &material, result))
+        return 0;
+    if (ordinal >= (size_t)material.vertex_buffers[0].count)
+        return fail(result, CACHE_MATERIAL_COUNT, ordinal);
+    struct material_reader reader;
+    const unsigned char *published;
+    if (!graph_open(view, &reader, &published, result) ||
+        !output_object(view, &reader, output, sizeof(*output), result))
+        return 0;
+    struct cache_address_span span;
+    /* Xbox compressed tag data stores environment records before lightmaps. */
+    if (!bsp_span(&reader, material.data_fields[1].address, material.vertex_buffers[0].count,
+                  CACHE_MATERIAL_COMPRESSED_VERTEX_BYTES, &span, result))
+        return 0;
+    const unsigned char *source = reader.bytes + span.offset + ordinal * CACHE_MATERIAL_COMPRESSED_VERTEX_BYTES;
+    struct cache_material_compressed_vertex_projection value;
+    for (unsigned i = 0; i < 3; ++i)
+        value.position_bits[i] = le32(source + i * 4);
+    value.normal_packed = le32(source + 12);
+    value.binormal_packed = le32(source + 16);
+    value.tangent_packed = le32(source + 20);
+    for (unsigned i = 0; i < 2; ++i)
+        value.texcoord_bits[i] = le32(source + 24 + i * 4);
+    *output = value;
+    return 1;
 }
 
 static void write_material(unsigned char *p, const struct cache_material_projection *m)

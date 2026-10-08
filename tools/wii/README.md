@@ -335,6 +335,16 @@ exists. Empty, overlapping and out-of-order ranges retain their source meaning;
 no vertex-origin or topology policy is added. Layouts, workspace, reservations
 and inspection serialization remain unchanged by this accessor.
 
+`cache_material_get_compressed_vertex` selects one 32-byte environment vertex
+from a material's compressed tag-data address and validated environment count.
+It returns three position bit words, three packed vector words and two texture
+coordinate bit words, explicitly decoded LE32. Hardware descriptor Data,
+buffer offset and base address do not select this source. Float bits, including
+NaNs and negative zero, remain uninterpreted; vector decompression, triangle
+index association and rendering remain separate. The getter preserves the
+same parent-first pins and atomic output rejection without allocating or
+growing persistent projections, workspace, source reservations or arena slots.
+
 The root projection grows from 24 to 36 bytes, increasing the two-half workspace
 by 24 payload bytes. For two lightmaps and 34 materials, payload is 8,856 bytes;
 an authored model using compiled PPC layouts charges 64 additional arena bytes

@@ -446,6 +446,209 @@ static int material_surface_edges(struct context *context, struct storage *stora
     return 0;
 }
 
+static uint32_t compressed_word(unsigned material, unsigned ordinal, unsigned word_index)
+{
+    static const uint32_t words[8] = {UINT32_C(0x80000000), UINT32_C(0x00000001),
+        UINT32_C(0x7fc12345), UINT32_C(0x01234567), UINT32_C(0x89abcdef),
+        UINT32_C(0xfedcba98), UINT32_C(0xff800000), UINT32_C(0x3f812345)};
+    return words[word_index] ^ ((material * 3u + ordinal) << 8);
+}
+
+static int compressed_vertices(struct context *context, struct storage *storage,
+                                unsigned placement, unsigned offset)
+{
+    context->name = "compressed_vertex_words_bounds_aliases_and_lifetime";
+    ++context->cases;
+    unsigned char *bytes;
+    struct cache_bsp_control bsp;
+    struct cache_bsp_view parent;
+    if (!prepare(storage, placement, offset, &bytes, &bsp, &parent))
+        return abort_case(context, "compressed_vertex_prepare");
+    struct cache_bsp_result bsp_result;
+    int ready = cache_bsp_unload(&bsp, &bsp_result);
+    CHECK(ready, "compressed_parent_unload_before_authoring");
+    if (!ready)
+        return abort_case(context, "compressed_parent_unload");
+    for (unsigned material = 0; material < 2; ++material) {
+        size_t data_at = DATA_AT + 1024 + material * 512;
+        word(bytes, MAT_AT + material * 256 + 248, BASE + (uint32_t)data_at);
+        for (unsigned ordinal = 0; ordinal < 3; ++ordinal)
+            for (unsigned i = 0; i < 8; ++i)
+                word(bytes, data_at + ordinal * 32 + i * 4, compressed_word(material, ordinal, i));
+    }
+    ready = cache_bsp_bind(&bsp, &storage->owner, &storage->handle,
+                           TAG_BYTES, 1048576, 0, &parent, &bsp_result);
+    CHECK(ready, "compressed_parent_rebind");
+    if (!ready)
+        return abort_case(context, "compressed_parent_bind");
+    memset(storage->work, 0xa7, WORK_BYTES + GUARD * 2);
+    struct cache_material_control control = {0};
+    struct cache_material_view view = {0};
+    struct cache_material_result result;
+    ready = cache_material_bind(&control, &parent, storage->work + GUARD, WORK_BYTES, &view, &result);
+    CHECK(ready, "compressed_vertex_publication");
+    if (!ready)
+        return abort_case(context, "compressed_vertex_bind");
+    struct {
+        uint32_t before[2];
+        struct cache_material_compressed_vertex_projection value;
+        uint32_t after[2];
+    } guarded;
+    memset(&guarded, 0xa7, sizeof(guarded));
+    CHECK(sizeof(guarded.value) == 32 && CACHE_MATERIAL_COMPRESSED_VERTEX_BYTES == 32,
+          "compressed_vertex_exact_eight_word_record");
+    memcpy(storage->snapshot, bytes, SLOT_BYTES);
+    memcpy(storage->work_before, storage->work, WORK_BYTES + GUARD * 2);
+    struct cache_material_control control_before;
+    struct cache_material_view view_before;
+    struct cache_arena_owner owner_before;
+    struct cache_bsp_control bsp_before;
+    memcpy(&control_before, &control, sizeof(control));
+    memcpy(&view_before, &view, sizeof(view));
+    memcpy(&owner_before, &storage->owner, sizeof(owner_before));
+    memcpy(&bsp_before, &bsp, sizeof(bsp));
+    for (unsigned material = 0; material < 2; ++material) {
+        for (unsigned ordinal = 0; ordinal < 3; ++ordinal) {
+            ready = cache_material_get_compressed_vertex(&view, material, ordinal, &guarded.value, &result);
+            CHECK(ready, "compressed_first_middle_last_both_materials");
+            if (!ready)
+                return abort_case(context, "compressed_vertex_get");
+            const uint32_t projected[8] = {guarded.value.position_bits[0], guarded.value.position_bits[1],
+                guarded.value.position_bits[2], guarded.value.normal_packed, guarded.value.binormal_packed,
+                guarded.value.tangent_packed, guarded.value.texcoord_bits[0], guarded.value.texcoord_bits[1]};
+            unsigned char encoded[32];
+            for (unsigned i = 0; i < 8; ++i) {
+                CHECK(projected[i] == compressed_word(material, ordinal, i), "compressed_named_words_independent_numeric_golden");
+                word(encoded, i * 4, projected[i]);
+            }
+            CHECK(!memcmp(encoded, bytes + DATA_AT + 1024 + material * 512 + ordinal * 32, sizeof(encoded)),
+                  "compressed_explicit_LE_reencode_selected_tagdata_not_hardware");
+        }
+        struct cache_material_compressed_vertex_projection before = guarded.value;
+        CHECK(!cache_material_get_compressed_vertex(&view, material, 3, &guarded.value, &result) &&
+              result.error == CACHE_MATERIAL_COUNT && !memcmp(&before, &guarded.value, sizeof(before)),
+              "compressed_ordinal_onepast_atomic");
+        CHECK(!cache_material_get_compressed_vertex(&view, material, SIZE_MAX, &guarded.value, &result) &&
+              result.error == CACHE_MATERIAL_COUNT && !memcmp(&before, &guarded.value, sizeof(before)),
+              "compressed_ordinal_SIZE_MAX_before_arithmetic");
+    }
+    struct cache_material_compressed_vertex_projection before = guarded.value;
+    CHECK(!cache_material_get_compressed_vertex(&view, 2, 0, &guarded.value, &result) &&
+          result.error == CACHE_MATERIAL_COUNT && !memcmp(&before, &guarded.value, sizeof(before)),
+          "compressed_material_onepast_atomic");
+    CHECK(!cache_material_get_compressed_vertex(&view, SIZE_MAX, 0, &guarded.value, &result) &&
+          result.error == CACHE_MATERIAL_COUNT && !memcmp(&before, &guarded.value, sizeof(before)),
+          "compressed_material_SIZE_MAX_atomic");
+    CHECK(!cache_material_get_compressed_vertex(&view, 0, 0, NULL, &result) &&
+          result.error == CACHE_MATERIAL_ARGUMENT, "compressed_null_output");
+    CHECK(!cache_material_get_compressed_vertex(NULL, 0, 0, &guarded.value, &result) &&
+          result.error == CACHE_MATERIAL_ARGUMENT && !memcmp(&before, &guarded.value, sizeof(before)),
+          "compressed_null_view_atomic");
+    size_t alignment = _Alignof(struct cache_material_compressed_vertex_projection);
+    size_t align_offset = (alignment - (uintptr_t)bytes % alignment) % alignment;
+    void *aliases[] = {bytes + align_offset, storage->work + GUARD, &control, &view, &storage->owner, &bsp};
+    const char *labels[] = {"compressed_source_alias", "compressed_workspace_alias", "compressed_control_alias",
+        "compressed_view_alias", "compressed_owner_alias", "compressed_BSP_control_alias"};
+    for (unsigned i = 0; i < sizeof(aliases) / sizeof(aliases[0]); ++i) {
+        CHECK(!cache_material_get_compressed_vertex(&view, 0, 0, aliases[i], &result) &&
+              result.error == CACHE_MATERIAL_OVERLAP, labels[i]);
+        int unchanged = !memcmp(bytes, storage->snapshot, SLOT_BYTES) &&
+            !memcmp(storage->work, storage->work_before, WORK_BYTES + GUARD * 2) &&
+            !memcmp(&control, &control_before, sizeof(control)) && !memcmp(&view, &view_before, sizeof(view)) &&
+            !memcmp(&storage->owner, &owner_before, sizeof(owner_before)) && !memcmp(&bsp, &bsp_before, sizeof(bsp));
+        CHECK(unchanged, "compressed_queries_preserve_all_source_workspace_and_controls");
+        if (!unchanged)
+            return abort_case(context, "compressed_query_changed_borrowed_objects");
+    }
+    CHECK(guarded.before[0] == UINT32_C(0xa7a7a7a7) && guarded.before[1] == UINT32_C(0xa7a7a7a7) &&
+          guarded.after[0] == UINT32_C(0xa7a7a7a7) && guarded.after[1] == UINT32_C(0xa7a7a7a7),
+          "compressed_output_whole_canaries");
+    CHECK(all_bytes(storage->placements[placement], GUARD + offset, 0xa7) &&
+          all_bytes(bytes + SLOT_BYTES, GUARD + 8 - offset, 0xa7), "compressed_source_full_margin_canaries");
+    struct cache_material_view stale = view;
+    ready = cache_material_bind(&control, &parent, storage->work + GUARD, WORK_BYTES, &view, &result);
+    CHECK(ready, "compressed_child_rebind");
+    if (!ready)
+        return abort_case(context, "compressed_child_rebind");
+    CHECK(!cache_material_get_compressed_vertex(&stale, 0, 0, &guarded.value, &result) &&
+          result.error == CACHE_MATERIAL_STATE && !memcmp(&before, &guarded.value, sizeof(before)),
+          "compressed_rebound_child_epoch_atomic");
+    ready = cache_material_unload(&control, &result);
+    CHECK(ready, "compressed_child_unload_before_source_change");
+    if (!ready)
+        return abort_case(context, "compressed_child_unload");
+    CHECK(!cache_material_get_compressed_vertex(&view, 0, 0, &guarded.value, &result) &&
+          result.error == CACHE_MATERIAL_STATE && !memcmp(&before, &guarded.value, sizeof(before)),
+          "compressed_unloaded_child_atomic");
+    ready = cache_bsp_unload(&bsp, &bsp_result);
+    CHECK(ready, "compressed_parent_unload_before_empty_source");
+    if (!ready)
+        return abort_case(context, "compressed_empty_parent_unload");
+    word(bytes, MAT_AT + 180, 0);
+    word(bytes, MAT_AT + 236, 16);
+    word(bytes, MAT_AT + 248, BASE + SLOT_BYTES - 16);
+    ready = cache_bsp_bind(&bsp, &storage->owner, &storage->handle,
+                           TAG_BYTES, 1048576, 0, &parent, &bsp_result) &&
+        cache_material_bind(&control, &parent, storage->work + GUARD, WORK_BYTES, &view, &result);
+    CHECK(ready, "compressed_zero_environment_with_two_lightmap_records_bind");
+    if (!ready)
+        return abort_case(context, "compressed_empty_bind");
+    CHECK(!cache_material_get_compressed_vertex(&view, 0, 0, &guarded.value, &result) &&
+          result.error == CACHE_MATERIAL_COUNT && !memcmp(&before, &guarded.value, sizeof(before)),
+          "compressed_zero_environment_does_not_read_lightmap_data");
+    ready = cache_material_unload(&control, &result) && cache_bsp_unload(&bsp, &bsp_result);
+    CHECK(ready, "compressed_unload_before_truncated_record");
+    if (!ready)
+        return abort_case(context, "compressed_truncated_unload");
+    word(bytes, MAT_AT + 180, 1);
+    word(bytes, MAT_AT + 200, 0);
+    word(bytes, MAT_AT + 236, 32);
+    word(bytes, MAT_AT + 248, BASE + SLOT_BYTES - 32);
+    for (unsigned i = 0; i < 8; ++i)
+        word(bytes, SLOT_BYTES - 32 + i * 4, compressed_word(0, 0, i));
+    ready = cache_bsp_bind(&bsp, &storage->owner, &storage->handle,
+                           TAG_BYTES, 1048576, 0, &parent, &bsp_result) &&
+        cache_material_bind(&control, &parent, storage->work + GUARD, WORK_BYTES, &view, &result);
+    CHECK(ready, "compressed_full_32_byte_record_at_window_end_bind");
+    if (!ready)
+        return abort_case(context, "compressed_exact_tail_bind");
+    ready = cache_material_get_compressed_vertex(&view, 0, 0, &guarded.value, &result);
+    CHECK(ready, "compressed_full_32_byte_record_at_window_end_get");
+    if (!ready)
+        return abort_case(context, "compressed_exact_tail_get");
+    const uint32_t tail_words[8] = {guarded.value.position_bits[0], guarded.value.position_bits[1],
+        guarded.value.position_bits[2], guarded.value.normal_packed, guarded.value.binormal_packed,
+        guarded.value.tangent_packed, guarded.value.texcoord_bits[0], guarded.value.texcoord_bits[1]};
+    for (unsigned i = 0; i < 8; ++i)
+        CHECK(tail_words[i] == compressed_word(0, 0, i), "compressed_exact_tail_named_numeric_words");
+    ready = cache_material_unload(&control, &result) && cache_bsp_unload(&bsp, &bsp_result);
+    CHECK(ready, "compressed_unload_before_31_byte_tail");
+    if (!ready)
+        return abort_case(context, "compressed_31_byte_tail_unload");
+    word(bytes, MAT_AT + 248, BASE + SLOT_BYTES - 31);
+    ready = cache_bsp_bind(&bsp, &storage->owner, &storage->handle,
+                           TAG_BYTES, 1048576, 0, &parent, &bsp_result);
+    CHECK(ready, "compressed_truncated_parent_bind");
+    if (!ready)
+        return abort_case(context, "compressed_truncated_parent_bind");
+    memcpy(storage->snapshot, bytes, SLOT_BYTES);
+    memcpy(storage->work_before, storage->work, WORK_BYTES + GUARD * 2);
+    memcpy(&control_before, &control, sizeof(control));
+    memcpy(&view_before, &view, sizeof(view));
+    CHECK(!cache_material_bind(&control, &parent, storage->work + GUARD, WORK_BYTES, &view, &result) &&
+          result.error == CACHE_MATERIAL_SPAN, "compressed_31_byte_window_tail_rejects_before_accessor");
+    CHECK(!memcmp(&control, &control_before, sizeof(control)) && !memcmp(&view, &view_before, sizeof(view)) &&
+          !memcmp(bytes, storage->snapshot, SLOT_BYTES) &&
+          !memcmp(storage->work, storage->work_before, WORK_BYTES + GUARD * 2),
+          "compressed_truncated_prescan_preserves_controls_source_and_workspace");
+    CHECK(guarded.before[0] == UINT32_C(0xa7a7a7a7) && guarded.before[1] == UINT32_C(0xa7a7a7a7) &&
+          guarded.after[0] == UINT32_C(0xa7a7a7a7) && guarded.after[1] == UINT32_C(0xa7a7a7a7),
+          "compressed_tail_and_rejection_output_canaries");
+    CHECK(all_bytes(storage->placements[placement], GUARD + offset, 0xa7) &&
+          all_bytes(bytes + SLOT_BYTES, GUARD + 8 - offset, 0xa7), "compressed_tail_source_margin_canaries");
+    return 0;
+}
+
 struct mutation { const char *name; size_t at; uint32_t value; unsigned width; enum cache_material_error error; };
 static int invalid_case(struct context *context, struct storage *storage, const struct mutation *mutation)
 {
@@ -655,6 +858,9 @@ static int arena_backing(struct context *context, struct storage *storage)
     struct cache_material_root_projection root;
     BACKING_CHECK(cache_material_get_root(&view, &root, &result), "live_arena_children_query");
     struct cache_material_surface_projection surface = {{0x5a5a, 0xa7a7, 0xffff}}, surface_before = surface;
+    struct cache_material_compressed_vertex_projection vertex, vertex_before;
+    memset(&vertex, 0x5a, sizeof(vertex));
+    vertex_before = vertex;
     prepared = cache_arena_owner_release(&owner, &arena);
     BACKING_CHECK(prepared, "release_arena_before_overwrite");
     if (!prepared) { failed = abort_case(context, "arena_release_before_overwrite"); goto cleanup; }
@@ -664,12 +870,18 @@ static int arena_backing(struct context *context, struct storage *storage)
     BACKING_CHECK(!cache_material_get_material_surface(&view, 1, 0, &surface, &result) &&
                   result.error == CACHE_MATERIAL_STATE && !memcmp(&surface, &surface_before, sizeof(surface)),
                   "material_surface_parent_release_before_overwritten_arena_child_controls");
+    BACKING_CHECK(!cache_material_get_compressed_vertex(&view, 0, 0, &vertex, &result) &&
+                  result.error == CACHE_MATERIAL_STATE && !memcmp(&vertex, &vertex_before, sizeof(vertex)),
+                  "compressed_parent_release_before_overwritten_arena_child_controls");
     BACKING_CHECK(cache_arena_owner_bind(&owner, &plan, backing, arena_bytes, &arena), "same_address_arena_rebind");
     BACKING_CHECK(!cache_material_get_root(&view, &root, &result) && result.error == CACHE_MATERIAL_STATE,
                   "same_address_rebound_arena_old_handle_rejects_before_children");
     BACKING_CHECK(!cache_material_get_material_surface(&view, 1, 0, &surface, &result) &&
                   result.error == CACHE_MATERIAL_STATE && !memcmp(&surface, &surface_before, sizeof(surface)),
                   "material_surface_rebound_arena_before_overwritten_child_controls");
+    BACKING_CHECK(!cache_material_get_compressed_vertex(&view, 0, 0, &vertex, &result) &&
+                  result.error == CACHE_MATERIAL_STATE && !memcmp(&vertex, &vertex_before, sizeof(vertex)),
+                  "compressed_rebound_arena_before_overwritten_child_controls");
 cleanup:
     if (owner.live && !cache_arena_owner_release(&owner, &arena))
         failed = abort_case(context, "arena_cleanup_release");
@@ -701,6 +913,9 @@ static int lifecycle(struct context *context, struct storage *storage)
         memset(&root, 0x5a, sizeof(root));
         struct cache_material_root_projection before = root;
         struct cache_material_surface_projection surface = {{0x5a5a, 0xa7a7, 0xffff}}, surface_before = surface;
+        struct cache_material_compressed_vertex_projection vertex, vertex_before;
+        memset(&vertex, 0x5a, sizeof(vertex));
+        vertex_before = vertex;
         int released = cache_arena_owner_release(&storage->owner, &arena);
         CHECK(released, "outer_release");
         if (!released)
@@ -717,6 +932,9 @@ static int lifecycle(struct context *context, struct storage *storage)
         CHECK(!cache_material_get_material_surface(&view, 1, 0, &surface, &result) &&
               result.error == CACHE_MATERIAL_STATE && !memcmp(&surface, &surface_before, sizeof(surface)),
               "material_surface_outer_release_before_destroyed_controls_workspace");
+        CHECK(!cache_material_get_compressed_vertex(&view, 0, 0, &vertex, &result) &&
+              result.error == CACHE_MATERIAL_STATE && !memcmp(&vertex, &vertex_before, sizeof(vertex)),
+              "compressed_outer_release_before_destroyed_controls_workspace");
         used = 77;
         CHECK(!cache_material_serialize(&view, storage->serial, SERIAL_BYTES, &used, &result) &&
               result.error == CACHE_MATERIAL_STATE && used == 77, "stale_serialize_unchanged_used");
@@ -727,6 +945,9 @@ static int lifecycle(struct context *context, struct storage *storage)
         CHECK(!cache_material_get_material_surface(&view, 1, 0, &surface, &result) &&
               result.error == CACHE_MATERIAL_STATE && !memcmp(&surface, &surface_before, sizeof(surface)),
               "material_surface_alternate_owner_generation_atomic");
+        CHECK(!cache_material_get_compressed_vertex(&view, 0, 0, &vertex, &result) &&
+              result.error == CACHE_MATERIAL_STATE && !memcmp(&vertex, &vertex_before, sizeof(vertex)),
+              "compressed_alternate_owner_generation_atomic");
     }
     return 0;
 }
@@ -885,6 +1106,10 @@ static int limits(struct context *context, struct storage *storage)
     word(large, MAT_AT + 180, 64000);
     word(large, MAT_AT + 236, 2048000);
     word(large, MAT_AT + 248, BASE + 1048576);
+    for (unsigned i = 0; i < 8; ++i) {
+        word(large, 1048576 + i * 4, compressed_word(0, 0, i));
+        word(large, 1048576 + 63999u * 32u + i * 4, compressed_word(0, 63999, i));
+    }
     struct cache_arena_owner owner = {0};
     struct cache_arena_handle handle;
     struct cache_arena_plan plan;
@@ -927,6 +1152,29 @@ static int limits(struct context *context, struct storage *storage)
                 "64000_count_retained");
     LIMIT_CHECK(cache_material_get_material(&view, 2047, &m, &result) && m.source.offset == MAT_AT + 2047u * 256u,
                 "last_source_maximum_material_not_truncated");
+    struct cache_material_compressed_vertex_projection vertex;
+    memset(&vertex, 0x5a, sizeof(vertex));
+    const unsigned vertex_ordinals[] = {0, 63999};
+    for (unsigned record = 0; record < 2; ++record) {
+        unsigned ordinal = vertex_ordinals[record];
+        prepared = cache_material_get_compressed_vertex(&view, 0, ordinal, &vertex, &result);
+        LIMIT_CHECK(prepared, "compressed_64000_source_maximum_first_and_last_get");
+        if (!prepared) { failed = abort_case(context, "maximum_compressed_vertex_get"); goto cleanup; }
+        const uint32_t values[8] = {vertex.position_bits[0], vertex.position_bits[1], vertex.position_bits[2],
+            vertex.normal_packed, vertex.binormal_packed, vertex.tangent_packed, vertex.texcoord_bits[0], vertex.texcoord_bits[1]};
+        for (unsigned i = 0; i < 8; ++i)
+            LIMIT_CHECK(values[i] == compressed_word(0, ordinal, i), "compressed_64000_first_last_all_named_words");
+    }
+    struct cache_material_compressed_vertex_projection vertex_before = vertex;
+    LIMIT_CHECK(!cache_material_get_compressed_vertex(&view, 0, 64000, &vertex, &result) &&
+                result.error == CACHE_MATERIAL_COUNT && !memcmp(&vertex, &vertex_before, sizeof(vertex)),
+                "compressed_64000_onepast_atomic");
+    LIMIT_CHECK(!cache_material_get_compressed_vertex(&view, 0, SIZE_MAX, &vertex, &result) &&
+                result.error == CACHE_MATERIAL_COUNT && !memcmp(&vertex, &vertex_before, sizeof(vertex)),
+                "compressed_64000_SIZE_MAX_atomic");
+    LIMIT_CHECK(!cache_material_get_compressed_vertex(&view, 2047, 0, &vertex, &result) &&
+                result.error == CACHE_MATERIAL_COUNT && !memcmp(&vertex, &vertex_before, sizeof(vertex)),
+                "compressed_last_material_zero_environment_no_pointer_follow");
     size_t used;
     LIMIT_CHECK(cache_material_serialize(&view, serialized, req.serialized_bytes, &used, &result) &&
                 used == req.serialized_bytes && !memcmp(serialized + 680, large + MAT_AT, 2048u * 256u),
@@ -1016,7 +1264,7 @@ int cache_material_fixture(FILE *report, int collect)
         aborted = abort_case(context, "allocation");
         goto cleanup;
     }
-    if (fprintf(report, "CACHE_MATERIAL BEGIN scope=authored_partial_root_lightmap_material_surface_words_no_vertex_conversion\n") < 0) {
+    if (fprintf(report, "CACHE_MATERIAL BEGIN scope=authored_partial_root_lightmap_material_surface_compressed_vertex_words_no_native_conversion\n") < 0) {
         aborted = 1;
         goto cleanup;
     }
@@ -1029,6 +1277,9 @@ int cache_material_fixture(FILE *report, int collect)
     for (unsigned placement = 0; placement < 2 && !aborted; ++placement)
         for (unsigned offset = 0; offset < 8 && !aborted; ++offset)
             aborted = material_surface_edges(context, &storage, placement, offset);
+    for (unsigned placement = 0; placement < 2 && !aborted; ++placement)
+        for (unsigned offset = 0; offset < 8 && !aborted; ++offset)
+            aborted = compressed_vertices(context, &storage, placement, offset);
     static const struct mutation mutations[] = {
         {"negative_lightmaps", ROOT_AT + 260, UINT32_MAX, 4, CACHE_MATERIAL_COUNT},
         {"overmaximum_lightmaps", ROOT_AT + 260, 129, 4, CACHE_MATERIAL_COUNT},

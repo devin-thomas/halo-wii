@@ -8,6 +8,7 @@
 #define CACHE_MATERIAL_MAX_VERTICES 64000u
 #define CACHE_MATERIAL_BYTES 256u
 #define CACHE_MATERIAL_LIGHTMAP_BYTES 32u
+#define CACHE_MATERIAL_COMPRESSED_VERTEX_BYTES 32u
 
 enum cache_material_error {
     CACHE_MATERIAL_OK, CACHE_MATERIAL_ARGUMENT, CACHE_MATERIAL_STATE,
@@ -52,6 +53,11 @@ struct cache_material_root_projection {
     uint32_t surface_count;
 };
 struct cache_material_surface_projection { uint16_t vertex_indices[3]; };
+struct cache_material_compressed_vertex_projection {
+    uint32_t position_bits[3];
+    uint32_t normal_packed, binormal_packed, tangent_packed;
+    uint32_t texcoord_bits[2];
+};
 struct cache_material_lightmap_projection {
     int16_t bitmap_index;
     uint16_t pad;
@@ -82,7 +88,8 @@ const char *cache_material_error_name(enum cache_material_error);
  * each root/lightmap/material stays opaque. Root surfaces are 6-byte records;
  * their three unsigned index words may be inspected explicitly LE. No vertex
  * indexing origin or per-material index limit is inferred. Float words retain their bits.
- * No vertex/shader body conversion, engine pools, or standalone cache save.
+ * Compressed environment records expose eight LE32 words without decompression.
+ * No native vertex/shader conversion, engine pools, or standalone cache save.
  * Source counts retain their maxima; workspace uses the actual aggregate.
  * measure performs complete selected validation without allocating or writing
  * source. Results, outputs, controls and source are truthful and disjoint.
@@ -127,6 +134,14 @@ int cache_material_get_material(const struct cache_material_view *, size_t,
 int cache_material_get_material_surface(const struct cache_material_view *, size_t material_index,
                                         size_t local_ordinal, struct cache_material_surface_projection *,
                                         struct cache_material_result *);
+/* Ordinal selects the compressed environment records at compressed tag-data
+ * address, bounded by that material's environment count. Hardware descriptor
+ * Data/offset/base are not used. Position/texcoord bits and packed vectors are
+ * preserved without float interpretation, decompression or triangle association.
+ * Parent pins, output/result disjointness and rejection atomicity match getters. */
+int cache_material_get_compressed_vertex(const struct cache_material_view *, size_t material_index,
+                                         size_t ordinal, struct cache_material_compressed_vertex_projection *,
+                                         struct cache_material_result *);
 
 /* Selected raw spans serialize root, all lightmaps, then flattened materials.
  * Known projected numeric words are explicitly rewritten LE over opaque copies.
