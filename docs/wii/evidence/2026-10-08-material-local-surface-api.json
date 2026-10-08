@@ -1,0 +1,125 @@
+{
+  "scope": "authored_material_local_surface_accessor_host_execution_and_PPC_compile_only",
+  "source_commit": "7618ff9f9fc1204623a655c41fcbb8c4d75a86b0",
+  "API": "cache_material_get_material_surface",
+  "implementation": {
+    "composes_existing_material_and_root_surface_getters": true,
+    "copied_parent_validated_before_child": true,
+    "local_ordinal_checked_before_addition": true,
+    "checked_size_t_addition": true,
+    "signed_source_fields_preserved": true,
+    "output_atomic_on_rejection": true,
+    "no_allocation": true,
+    "no_layout_workspace_reservation_or_serialization_growth": true
+  },
+  "authored_cases": [
+    "two placements and source offsets0..7",
+    "nonzero material start and local onepast despite valid global record",
+    "material and local SIZE_MAX/onepast",
+    "empty range at root end",
+    "overlapping and out-of-order ranges",
+    "unsigned LE16 extremes",
+    "source/workspace/control/view aliases and canaries",
+    "stale child and stale parent before overwritten backing",
+    "full131072 root range and last material2047"
+  ],
+  "representations": {
+    "surface_bytes": 6,
+    "root_bytes": 36,
+    "material_bytes": 128,
+    "lightmap_bytes": 20,
+    "two_lightmap_34_material_workspace_bytes": 8856,
+    "selected_prior_serialization_bytes": 9416,
+    "prior_owned_serialization_reexecuted": false
+  },
+  "builds": {
+    "host": {
+      "build_id": "70c1d8dc6b2bcf85",
+      "source_clean": true,
+      "strict_C11_units": 8,
+      "commands": 10,
+      "failed_commands": 0,
+      "state": "execution_pass",
+      "cache_info_sha256": "145cda954539fd4e59558be6f789dde94319b14ea37dcd465ac8b99f1580c900",
+      "command_record_sha256": "19105e1c5266087e83cca253b5bb1ac69812ed5b92cdcd105a140061d1c7b97a",
+      "own_static_stack_frame_bytes": 208,
+      "stack_report_sha256": "c13617664639c696db43437531f72cff6e27e70390e873ae1644dee86fb79a5c",
+      "artifact_sha256": {
+        "cache_address.exe": "4ee2d842f7ca7148def53c79bd86fc9b3cbd25ef089977f83a61f0f9a5bce54a",
+        "cache_address_fixture.o": "285c22de2c79a6627acfa48c43ba9291b735a1cfd13aec51ed5d40d14fc2609b",
+        "cache_address_fixture.su": "6bdc1f22d58e9bb117e5f1dd0850ee7edb8a5fd3531c3fe1011665bb5a317043",
+        "cache_address_main.o": "2bfae5b81111235644e1b13d200eeedc356f4d6d60911b42e80e173183eb935e",
+        "cache_address_main.su": "077a8ae083bd75c7f0f61a2cb5011cb2fbd46f9f1d951cb73509febaf4759199",
+        "cache_address_owned.o": "3c9128d0f71f0d2992c666d1c3b94a42a8adf666f4ea4b0307402ce96dda9add",
+        "cache_address_owned.su": "9b6a857968bab808a2236676bb817ffa712a94b8daf3ac5577a32c5e77f63392",
+        "cache_address_probe.o": "04e0003abb68b1070e93d8a39593e756eb4bee299be8e7c80253f5eaa142dc0b",
+        "cache_address_probe.su": "dd5decc08a2fc672a6ab5f0a0bbf97156ddcbfb5c1d687cab95eeadda1dbe599",
+        "cache_arena_plan.o": "963a0d505d5f26267e108d2a0e0cabfc6abba520760c747a50252ba9ed3c3a03",
+        "cache_arena_plan.su": "c15f2bed0ff8d6898248036003d9a7fc3cd66d9fcb19af325e25e19a394f510e",
+        "cache_bsp_probe.o": "4d580bbe2035d3711e69396dac7b7fff27d5c835cfdd26e984312027e58f5c3c",
+        "cache_bsp_probe.su": "296fcb30e097a8676b4dd8411ac209e4d62a4e72742e7fa446a81603770ccf23",
+        "cache_material_fixture.o": "d1915fb0881ec19e4d6c9b7ad8197e596e79f14a4551ec73ba7637e2daf87c00",
+        "cache_material_fixture.su": "33d371ddaf268412105c6337fb5afdb3e41d3b3fb73f5df97c6246525b399175",
+        "cache_material_probe.o": "4ff15c0c60c58d725d32085a4297eb126e5299e1f0dce99eaa242d7e96db85cd",
+        "cache_material_probe.su": "c13617664639c696db43437531f72cff6e27e70390e873ae1644dee86fb79a5c"
+      },
+      "material_cases": 96,
+      "material_checks": 52548,
+      "material_failures": 0,
+      "address_cases": 1916,
+      "address_checks": 8437,
+      "address_failures": 0
+    },
+    "ppc": {
+      "build_id": "28d6a0a8ef80f0d5",
+      "source_clean": true,
+      "strict_C11_units": 8,
+      "commands": 10,
+      "failed_commands": 0,
+      "state": "compile_pass",
+      "cache_info_sha256": "8a561c9a229030a3fcd5eaf832769e6503f37e8fa579df3808276ac9d56b1457",
+      "command_record_sha256": "7db83d5f9744eef771f52c0da428f174b1d35af9fa4fa151777578ac37ea4146",
+      "own_static_stack_frame_bytes": 160,
+      "stack_report_sha256": "d69bd4222369e05dd83150e46c904deed1f4370800b2882c49865d4f5fbb6015",
+      "artifact_sha256": {
+        "cache_address.dol": "3c07a923c7b5fe58cafa84b37221faf4cbc0a3aa7b975fca99a4e25df6a65d82",
+        "cache_address.elf": "b388b69fca63c49d552e4e9df557a71787de62bbb3d6c0b677df568a6a03ae7c",
+        "cache_address.map": "0d7bfbb3bc57d032334f82103cef5d29f958c8ab5076fbe745320f84faf5f540",
+        "cache_address_fixture.o": "59b00cf2b355e8cf5f8a185ad355e89d0926bae6d3213c1bf73b0486ab57c68e",
+        "cache_address_fixture.su": "3ac0f027e2a6ee303668a91effed8527a73624fad5152d9984773bf642e3e226",
+        "cache_address_main.o": "5ffae840824127f804851d2361823da3d13f2216b54130a0b2e0f6448e73aa5f",
+        "cache_address_main.su": "a96bce0ae662f8c2c53d51be33987eef7c811290e901bea88d1a6cc5325cc4e8",
+        "cache_address_owned.o": "9543785be8f9406c4ee90be4fd9a4d29ece0f336d3f767735e2eafb484fc9167",
+        "cache_address_owned.su": "2d9b0f9eacdf389a969e60bdff4e5e43afe8196284328aff393efeb869962ae9",
+        "cache_address_probe.o": "a9ba2353d34521de709e8cef55543bcd3eb6d22ce6058d5ac938ed105036b51f",
+        "cache_address_probe.su": "717aca6d1f4de59f2f0ecfd7beaca862fd9923b3fd99d830e51b12b729bd051e",
+        "cache_arena_plan.o": "b56f77971d28b0f2db2680f83d8881798201ed5f0c8475833829e3ba9e66431e",
+        "cache_arena_plan.su": "099423558acf66d4b0c45094b6c0b72345662ab8c62d87fde9e89137c0e35a07",
+        "cache_bsp_probe.o": "2621da61b106878e2d72679e8a4b42d54cc074a46d977eb7baf016401fd13e77",
+        "cache_bsp_probe.su": "965685b2f9438a2f613b9dc29775c99a3f588855f48348b9e52d8a6c7a101f75",
+        "cache_material_fixture.o": "60fe94252dd95bee94166c00d56a8deffcd9b5a12f72f1e8b8c223cf8a99170e",
+        "cache_material_fixture.su": "3c7fba7eeaf3531f5488549afa45c991ca982bcb9646a391a2309242cca9872a",
+        "cache_material_probe.o": "1c3b3e6ee3dc7520280e7cb03d9c5b4eb5d68ce2cc1ffffb3ec5ed738719a098",
+        "cache_material_probe.su": "d69bd4222369e05dd83150e46c904deed1f4370800b2882c49865d4f5fbb6015"
+      },
+      "target_executed": false
+    }
+  },
+  "manual_source_review": {
+    "predicates": 28,
+    "failures": 0,
+    "record_sha256": "d67001fc11e6572410fb6fe408e031098908309eef9a2e8b764f3898dd9c7e7c",
+    "initial_finding": "inherited fixture could overwrite child backing after failed parent unload; explicit abort guard closes collect-mode failure path",
+    "initial_record_retained": true
+  },
+  "saved_build_review": {
+    "record_sha256": "38f4b6ea54dee2971e7ff8fe35608baf9da0d8d1f1c6e21d824d03584ead2be5"
+  },
+  "limits": [
+    "Material-local surface association does not qualify vertex index origin, per-material vertex bounds, topology, native vertex conversion or GX",
+    "Own compiler static stack frames are not combined call-stack peak or fragmentation measurements",
+    "Existing workspace and arena model unchanged; no new planner, owned-byte, SD or target-memory run",
+    "PPC compilation/link/elf2dol is not PPC execution, original cold-run shutdown, engine/gameplay or physical Wii acceptance",
+    "HWI-005/006 remain BLOCKED and HWI-007/008 remain TODO"
+  ]
+}

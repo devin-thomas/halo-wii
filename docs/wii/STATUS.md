@@ -239,3 +239,10 @@ cleanup is not forced. Guest END/sentinel2 -> 3 and saved preservation qualify,
 while the controller's uppercase-FAT/lowercase-allowlist Python1 is retained.
 No shutdown reset/helper-return snapshot, source-owner or successful cold-run
 qualification follows; HWI-005/006 remain BLOCKED.
+
+
+The [material-local surface accessor](evidence/2026-10-08-material-local-surface-api.md)
+enforces selected material range before composing a whole-root ordinal, reusing
+parent-first LE16 getters without layout/workspace/reservation growth. Clean
+source passes authored host96cases/52548checks0 and strict PPC compile only.
+No owned-data/SD/target/planner run, vertex semantics or ticket acceptance follows.
