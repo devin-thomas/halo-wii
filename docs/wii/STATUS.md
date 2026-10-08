@@ -262,3 +262,10 @@ Clean authored host 112 cases / 54459 checks pass;
 PPC compilation passes without execution. No allocation/workspace/capacity growth,
 decompression, triangle-origin policy, GX or owned-input/SD/target operation.
 Ticket acceptance and the original shutdown blockers remain unchanged.
+
+
+The [explicit material triangle vertex accessor](evidence/2026-10-08-surface-vertices-api.md) checks all
+three indices before selecting compressed environment records and publishes a
+complete caller result atomically. Clean host128cases/64417checks0 and strict
+PPC compile-only checks pass. No allocation/workspace/capacity growth; lightmap
+and global ownership policy, decompression, GX and runtime acceptance stay open.

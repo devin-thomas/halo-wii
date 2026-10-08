@@ -1,0 +1,123 @@
+{
+  "scope": "authored_explicit_material_triangle_to_compressed_environment_records",
+  "source_commit": "d789e28e1fb6a9f3b08ffb12a64efadbe538f7b6",
+  "API": "cache_material_get_surface_vertices",
+  "caller_result_bytes": 96,
+  "source_rule": {
+    "selected_material_explicit": true,
+    "local_surface_range_checked": true,
+    "unsigned_indices_direct_zero_based_environment_ordinals": true,
+    "all_three_indices_below_environment_count_before_payload_reads": true,
+    "staged_three_record_output": true,
+    "stored_corner_order_preserved": true,
+    "global_ownership_order_and_lightmap_policy_not_inferred": true,
+    "hardware_offset_base_not_used": true
+  },
+  "no_allocation_or_persistent_layout_workspace_reservation_serialization_growth": true,
+  "representations": {
+    "root": 36,
+    "material": 128,
+    "lightmap": 20,
+    "surface": 6,
+    "compressed_vertex": 32,
+    "prior_two_lightmap_34_material_workspace": 8856,
+    "prior_owned_serialization": 9416,
+    "prior_owned_serialization_reexecuted": false
+  },
+  "builds": {
+    "host": {
+      "build_id": "edf3832c7325ddfd",
+      "source_clean": true,
+      "strict_C11_units": 8,
+      "commands": 10,
+      "failed_commands": 0,
+      "state": "execution_pass",
+      "cache_info_sha256": "c9a3218e3e22bf983f86f84e9370317c42da1458eed2885fe2cff654e16ce2c6",
+      "command_record_sha256": "7014856d371116f202dac62828b26924ddb75d8e9c40114170954734a0c13fa6",
+      "own_static_frame_bytes": 544,
+      "stack_report_sha256": "8492ecc79e96937d4cf8dbd80ce4afebc58e7782274d6001d781181883b03336",
+      "artifacts_sha256": {
+        "cache_address.exe": "3927f5178972f35eddf51a7c5449749e54961924bbdf2c6f753387594bce2440",
+        "cache_address_fixture.o": "285c22de2c79a6627acfa48c43ba9291b735a1cfd13aec51ed5d40d14fc2609b",
+        "cache_address_fixture.su": "6bdc1f22d58e9bb117e5f1dd0850ee7edb8a5fd3531c3fe1011665bb5a317043",
+        "cache_address_main.o": "a5ee2ec5be720d976be213f2015fdf36736823ce48a3de00522ad105e670f613",
+        "cache_address_main.su": "077a8ae083bd75c7f0f61a2cb5011cb2fbd46f9f1d951cb73509febaf4759199",
+        "cache_address_owned.o": "3c9128d0f71f0d2992c666d1c3b94a42a8adf666f4ea4b0307402ce96dda9add",
+        "cache_address_owned.su": "9b6a857968bab808a2236676bb817ffa712a94b8daf3ac5577a32c5e77f63392",
+        "cache_address_probe.o": "04e0003abb68b1070e93d8a39593e756eb4bee299be8e7c80253f5eaa142dc0b",
+        "cache_address_probe.su": "dd5decc08a2fc672a6ab5f0a0bbf97156ddcbfb5c1d687cab95eeadda1dbe599",
+        "cache_arena_plan.o": "963a0d505d5f26267e108d2a0e0cabfc6abba520760c747a50252ba9ed3c3a03",
+        "cache_arena_plan.su": "c15f2bed0ff8d6898248036003d9a7fc3cd66d9fcb19af325e25e19a394f510e",
+        "cache_bsp_probe.o": "4d580bbe2035d3711e69396dac7b7fff27d5c835cfdd26e984312027e58f5c3c",
+        "cache_bsp_probe.su": "296fcb30e097a8676b4dd8411ac209e4d62a4e72742e7fa446a81603770ccf23",
+        "cache_material_fixture.o": "709093195b90e340047adadbbef4bd5272428b131117fe75376301e81bb400b6",
+        "cache_material_fixture.su": "625fc8344d00b272124e4eb48a48dac0aa1f2bbe0b70bb4809d745250690ced9",
+        "cache_material_probe.o": "77b657c53c7109cfa2d183e32708940b404f63167ef2ef0df23c9a93a7708a2c",
+        "cache_material_probe.su": "8492ecc79e96937d4cf8dbd80ce4afebc58e7782274d6001d781181883b03336"
+      },
+      "material_cases": 128,
+      "material_checks": 64417,
+      "material_failures": 0,
+      "address_cases": 1916,
+      "address_checks": 8437,
+      "address_failures": 0
+    },
+    "ppc": {
+      "build_id": "3386c8f15e023829",
+      "source_clean": true,
+      "strict_C11_units": 8,
+      "commands": 10,
+      "failed_commands": 0,
+      "state": "compile_pass",
+      "cache_info_sha256": "7d5d8f83e72c52edc97bf39a50670181d795e0cb2db0002b476cb2e4e95ea26e",
+      "command_record_sha256": "099e6c02f4f1d9502674b5db372fb0445065e10022cd99d6c719456c7fd1f28c",
+      "own_static_frame_bytes": 424,
+      "stack_report_sha256": "02571d0856cc79b2fa5fad4cbb56969d64a70a68034b7aa30636ab3c47b999c2",
+      "artifacts_sha256": {
+        "cache_address.dol": "a829e89639d171c54a9dd478458bc8a50f14a9f7e0470a91ad1125e3ae3c2682",
+        "cache_address.elf": "fd218c76bc03ca4ea6c43c179965f488553926eb90335fe384f4025becfbcfb6",
+        "cache_address.map": "90e558c7a5bfe8bb266c3171d9a8b46155413333317530c77fbb77b249919d9a",
+        "cache_address_fixture.o": "59b00cf2b355e8cf5f8a185ad355e89d0926bae6d3213c1bf73b0486ab57c68e",
+        "cache_address_fixture.su": "3ac0f027e2a6ee303668a91effed8527a73624fad5152d9984773bf642e3e226",
+        "cache_address_main.o": "f4e5c650f0250e200d2d8d1d8c7a5fa28f30d32527fc4f19936c0cbb1ed9210d",
+        "cache_address_main.su": "a96bce0ae662f8c2c53d51be33987eef7c811290e901bea88d1a6cc5325cc4e8",
+        "cache_address_owned.o": "9543785be8f9406c4ee90be4fd9a4d29ece0f336d3f767735e2eafb484fc9167",
+        "cache_address_owned.su": "2d9b0f9eacdf389a969e60bdff4e5e43afe8196284328aff393efeb869962ae9",
+        "cache_address_probe.o": "a9ba2353d34521de709e8cef55543bcd3eb6d22ce6058d5ac938ed105036b51f",
+        "cache_address_probe.su": "717aca6d1f4de59f2f0ecfd7beaca862fd9923b3fd99d830e51b12b729bd051e",
+        "cache_arena_plan.o": "b56f77971d28b0f2db2680f83d8881798201ed5f0c8475833829e3ba9e66431e",
+        "cache_arena_plan.su": "099423558acf66d4b0c45094b6c0b72345662ab8c62d87fde9e89137c0e35a07",
+        "cache_bsp_probe.o": "2621da61b106878e2d72679e8a4b42d54cc074a46d977eb7baf016401fd13e77",
+        "cache_bsp_probe.su": "965685b2f9438a2f613b9dc29775c99a3f588855f48348b9e52d8a6c7a101f75",
+        "cache_material_fixture.o": "291b9a8623b2c6ea0b3cbba737a959e69d1e7d31fd19077103af2fa43ea73df4",
+        "cache_material_fixture.su": "4e4696b6b5cc576ed405c7c3996d2a357f4f14441e871f95bdb1419751ccdc63",
+        "cache_material_probe.o": "23d7a92cf072fc52aa2c0113b3c6dc958f38a994f7e4da7b87f88ff53a0cce6b",
+        "cache_material_probe.su": "02571d0856cc79b2fa5fad4cbb56969d64a70a68034b7aa30636ab3c47b999c2"
+      },
+      "target_executed": false
+    }
+  },
+  "origin_source_review": {
+    "predicate_count": 20,
+    "failures": 0,
+    "sha256": "3f0e2df4866a60c28dd473cc262939e2a86e4ea0163abc67505be221fd0d7909"
+  },
+  "manual_source_review": {
+    "predicate_count": 36,
+    "failures": 0,
+    "sha256": "6d8ef0a7fe5b2e0e980a0442527867249d26465b396bbb1e66ae0d05926c903d"
+  },
+  "saved_build_review": {
+    "predicate_count": 377,
+    "failures": 0,
+    "sha256": "9d42465932842f3c8ed67b05fbe64bfa6d19c1c71b0bfef28efd00aae019cec2"
+  },
+  "limits": [
+    "Environment-only association does not implement lightmap-count/bitmap limits or full rendering validation",
+    "No global material owner lookup, unique range assignment or ordering policy",
+    "Float and packed words remain uninterpreted; no decompression, native geometry or GX qualification",
+    "Own compiler static frame is not total call-stack peak or fragmentation",
+    "No owned input, planner, SD, profile, emulator or PPC execution",
+    "HWI-005/006 BLOCKED; HWI-007/008 TODO"
+  ]
+}
