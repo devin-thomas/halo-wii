@@ -16,7 +16,7 @@ and [build setup](BUILDING.md). Dolphin and physical Wii remain separate gates.
 | Wii LAN | Untested | Untested | Untested |
 | OpenCE mixed-port play | Untested | Untested | Untested |
 
-No clean Dolphin or physical Wii pass exists. Guest observations and the host-teardown failure are recorded in [Dolphin evidence](evidence/2026-10-07-dolphin-probe.md). Synthetic C host/PPC results are [separate](evidence/2026-10-07-abi-fixtures.md). `Dolphin: ✅ | Hardware: ❌` is an acceptable **future** compact status once a specified build/scenario really passes Dolphin and has no current hardware pass. Underlying records distinguish untested, failed and blocked.
+The original probe's clean Dolphin exit remains blocked; physical Wii is untested. Guest observations and the host-teardown failure are recorded in [Dolphin evidence](evidence/2026-10-07-dolphin-probe.md). Later scoped diagnostic clean exits are recorded separately in the follow-ups on this page. Synthetic C host/PPC results are [separate](evidence/2026-10-07-abi-fixtures.md). Compact pass labels must identify their specified build/scenario and distinguish untested, failed and blocked hardware results.
 
 Physical Wii validation gates 1.0, not source publication or alpha development. Wii 1.0 does not close the later required cross-port milestone. See [test policy](TESTING.md) and machine-readable [status](status.json).
 
@@ -134,3 +134,11 @@ bytes under a provisional reserve. MEM2 bounds restore; heap arena size grows.
 Independent audit passes 291 checks. This is partial named-field conversion;
 BSP/resources, engine memory strategy, widget execution, hardware and gameplay
 remain open, along with prior ABI/shutdown failures and ticket blockers.
+
+The [exact original probe closure retest](evidence/2026-10-07-original-probe-closure.md)
+reproduces its original build/DOL hashes, then two cold stock-profile launches
+both pass guest video/timer/arena/input/SD checks and sentinel 0 -> 1 -> 2.
+Both naturally exit with host `0xc0000409`; HWI-005 remains BLOCKED on clean
+process exit. Later scoped diagnostic clean exits remain valid; general
+recovery is unqualified. Next shutdown work is matching-symbol callback-owner
+diagnosis, separate from active asset/address/BSP preparation.

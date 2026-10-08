@@ -1,0 +1,141 @@
+{
+  "scope": "exact_original_asset_free_probe_closure_retest",
+  "result": "BLOCKED",
+  "source_commit": "3bca2e612cc118df5c5aa354ec7deb61aeb31ae6",
+  "build_id": "0f01e11c08c44932",
+  "reproduction": {
+    "exact_original_build_id_and_DOL": true,
+    "source_dirty": false,
+    "inputs_sha256": {
+      "configure.py": "cbb299d7b90655bccb856f2bf28cff1f0343ce611a12fba4d8eb84ea46c6e01c",
+      "tools/wii_build.py": "3d2a4963d3f30a48a2085c99d89e85d62f08fad5fef7e380ff65838f57edbe23",
+      "tools/wii/build.py": "dc426a9068782e9f4d593fa4d5b241c966a61caad6860e766b8dbd4ddee9d48a",
+      "tools/wii/check_toolchain.py": "24303b4249b2aad639fc65e4a638218335bd08401eff1405db033b7307693a2b",
+      "port/wii/probe/main.c": "7f92f133517ccac17edad4951e34fd92e21ebadfe52000005870210702f2912d"
+    },
+    "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+    "compiler_target": "powerpc-eabi",
+    "binutils": "GNU ld (GNU Binutils) 2.46.0.20260210",
+    "toolchain_sha256": "d0ca79f317d44426f5563ff60121b344cb3a1148e5ec7a901ad5739b73ba6441",
+    "libraries_sha256": {
+      "libfat.a": "683dd7d75d557820b260d2998d4e6c9c1ff4f1382830b137777392046ecaae90",
+      "libwiiuse.a": "5adbaaf3246ca265cec9bf2a4227cc7241fc2e3a44b96d659ff0e73d4fbd93db",
+      "libbte.a": "ecae1939433b2ce86e525b1f2185b61b27eaa1334bc27c5e4731cae0ac37efe1",
+      "libogc.a": "fb0c956ee3b5d08fede5240472205102ebe1fde94197d36705cf2b44f3eeb906"
+    },
+    "artifacts": {
+      "probe.elf": {
+        "sha256": "f07b78b6902ef9fadd7012b362a1903e981e6f3693aafbf5881b01432ff7dfe2",
+        "bytes": 2270256
+      },
+      "probe.dol": {
+        "sha256": "9dddaa796a0207bc60d9a260ffa6e4680a116e9b23a410dd2b5ebddbf50da4d5",
+        "bytes": 451872
+      },
+      "probe.map": {
+        "sha256": "169bc5d12f838e24f4da95602c9a9aafc995ab55f0c081b1bd1058981e37a1be",
+        "bytes": 759756
+      }
+    },
+    "input_endings": "configure.py_CRLF_other_four_manifest_inputs_LF",
+    "initial_porcelain_anomaly_preserved": true,
+    "index_refresh": "local_info_attributes_and_renormalize_exact_five_paths_no_tracked_byte_changes",
+    "index_tree_equals_HEAD_tree": "bcd9970ee3a18142fd7b151e54030e6713c3a945",
+    "porcelain_after_refresh": "",
+    "global_settings_changed": false,
+    "record_sha256": "012c14dc2a3a3270b4ba9f5d5ed269dd4064371c31c2786a102e81193a82d67a"
+  },
+  "runtime": {
+    "Dolphin_version": "2609",
+    "Dolphin_executable_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+    "backend": "D3D",
+    "profile": "new_isolated_clean_profile_with_fresh_stock_created_SD",
+    "movie_sha256": "6d411c4cdf6f2b6f52935eb9ceb65d4b21fb2dcfa699106d1d21f39e9e74978a",
+    "movie_scope": "authored_asset_free_PAD_input",
+    "settings": {
+      "CPUThread": false,
+      "EnableCheats": false,
+      "OverclockEnable": false,
+      "Overclock": 1.0,
+      "VIOverclockEnable": false,
+      "RAMOverrideEnable": false,
+      "EmulationSpeed": 1.0,
+      "InternalResolution": 1,
+      "SIDevice0": 6,
+      "SIDevice1": 0,
+      "SIDevice2": 0,
+      "SIDevice3": 0,
+      "WiiSDCard": true,
+      "WiiSDCardAllowWrites": true,
+      "WiiSDCardEnableFolderSync": false
+    },
+    "requested_cold_launches": 2,
+    "root_executed_cold_launches": 1,
+    "root_run": {
+      "number": 1,
+      "cold_process": true,
+      "process_id": 11056,
+      "timeout": false,
+      "host_exit_unsigned": 3221226505,
+      "host_exit_hex": "0xc0000409",
+      "elapsed_seconds": 7.532,
+      "SD_bytes": 134217728,
+      "sentinel_text": "halo-wii-probe-v1 1\n",
+      "sentinel_sha256": "b8be899fb8dd8c529e33f339be87f61d1306782abddc67c4a83f24a6f0230ee9",
+      "guest_log_sha256": "52c7e93f4b98eb8b71bea573236ff9c349259e8f1bdafb5fc3bf448f4353ef13",
+      "new_guest_report": [
+        "BEGIN build=0f01e11c08c44932 previous_runs=0 video=640x480 mode=0",
+        "ARENAS mem1=0x801c5000..0x81800000 bytes=23310336 mem2=0x90002000..0x933c6f60 bytes=54284128",
+        "END build=0f01e11c08c44932 frames=116 ticks=57 connected=1 activity=1 exit=pad_start storage=1"
+      ],
+      "failures": [
+        "host_process_did_not_exit_naturally_zero"
+      ]
+    },
+    "root_record_sha256": "3381100f43e0675fef789a72572f6076776b8750e8a7e24acdf88ee5fc0dc5bf",
+    "second_launch": {
+      "owner": "coordinator_independent_attempt",
+      "process_id": 4956,
+      "cold_process": true,
+      "host_exit_unsigned": 3221226505,
+      "host_exit_hex": "0xc0000409",
+      "natural_exit": true,
+      "timeout": false,
+      "forced_kill": false,
+      "elapsed_seconds": 8.6738795,
+      "guest_report": [
+        "BEGIN build=0f01e11c08c44932 previous_runs=1 video=640x480 mode=0",
+        "ARENAS mem1=0x801c5000..0x81800000 bytes=23310336 mem2=0x90002000..0x933c6f60 bytes=54284128",
+        "END build=0f01e11c08c44932 frames=116 ticks=57 connected=1 activity=1 exit=pad_start storage=1"
+      ],
+      "sentinel_text": "halo-wii-probe-v1 2\n",
+      "raw_record_sha256": "5506d31c41081b674d9932742e7d68768a7cf58d04f9e9e56b5fa45b6000fbfb",
+      "guest_file_sha256": "950762b95ff08c6b4de6c529d2a47cf2c8d9d3108a042fb0def3d97b9a8c3630"
+    },
+    "total_executed_cold_launches": 2
+  },
+  "qualification": {
+    "original_probe_guest_scope": "pass_both_runs",
+    "original_probe_natural_zero_exit": "failed_both_runs",
+    "two_natural_zero_cold_launches_with_persistence": "not_passed",
+    "HWI-005": "BLOCKED",
+    "general_Dolphin_recovery": "unqualified",
+    "physical_Wii": "untested",
+    "gameplay": "untested",
+    "later_group_native_address_stream_widget_clean_exits": "retained_separate_scopes",
+    "caller_DOL_fault_0xc0000409": "retained_separate_unresolved_fault",
+    "cold_process_SD_restart_persistence": "pass_sentinel_0_to1_to2"
+  },
+  "next_decisive_work": "matching_symbol_callback_owner_diagnosis_no_completed_settings_matrix_repeat",
+  "independent_audit": {
+    "checks": 64,
+    "audit_discrepancies": 0,
+    "actual_acceptance_failures": 2,
+    "record_sha256": "a13ea6a7036fbe30e1b749b1cba1ff427cc87f00f0216887e6bc6478de9d1846",
+    "additional_runtime_runs": 0,
+    "SD_writes": 0,
+    "SDK_files_rehashed": 850,
+    "combined_guest_log_sha256": "c4375e6f008fd9bd4ef2373465708cc7dd10b0f0bb414589fb8d20eb3a38a7dc",
+    "final_sentinel_sha256": "09d554bd625ce2522ab6cd72e021b8a20d1438f30f0992520a44ffc0b9de619b"
+  }
+}
