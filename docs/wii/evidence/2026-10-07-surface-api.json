@@ -1,0 +1,1141 @@
+{
+  "schema_version": 1,
+  "scope": "authored_partial_triangle_surface_word_API_host_execution_PPC_compile_and_numeric_arena_model",
+  "source_commit": "e29f8ffdbbbf6cdc073013f56e27dc5b0ee324ef",
+  "source_inputs_sha256": {
+    "tools/wii/cache_material_probe.h": "3e68ec61f0024eaf95fc8213a38a6da0911ce30e45218de01f2f6f88e26ab2d7",
+    "tools/wii/cache_material_probe.c": "75525cbfc76e734b02674f7863e5028ded631ad8617e8f2049069a2b47e2be25",
+    "tools/wii/cache_material_fixture.c": "ff07afb91cfe9e55073195049edd0ebee62cc0a4d02bf60af707a4ae182a0fcb"
+  },
+  "host": {
+    "record_sha256": "85563a9b92183f9d87664cc204b421f4a19ba7d16d7e6d36370b91b9f8341fcf",
+    "wrapper_record_sha256": "eb45c3cbc8a5f8635cbf98d8fe08a4a6ce2a04d17ee0cdf7fa0a8eae4c1d590b",
+    "build_id": "15c3a1cdac2b73ae",
+    "source_commit": "e29f8ffdbbbf6cdc073013f56e27dc5b0ee324ef",
+    "source_dirty": false,
+    "state": "execution_pass",
+    "target": "x86_64-w64-mingw32",
+    "compiler": "gcc.exe (Rev3, Built by MSYS2 project) 16.2.0",
+    "compiler_sha256": "75e87953e9d04e8a5d81225397292e9f8ae599a0ed85f70ed175767577aaa9f6",
+    "strict_flags": [
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-fstack-usage"
+    ],
+    "compiled_units": 8,
+    "command_count": 10,
+    "command_exit_codes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "artifacts_sha256": {
+      "cache_address.exe": "c92802322f578e414ba9d42d1b747bc6aa20604ea13d39ccdd721684e276c9eb",
+      "cache_address_fixture.o": "285c22de2c79a6627acfa48c43ba9291b735a1cfd13aec51ed5d40d14fc2609b",
+      "cache_address_fixture.su": "6bdc1f22d58e9bb117e5f1dd0850ee7edb8a5fd3531c3fe1011665bb5a317043",
+      "cache_address_main.o": "cfb601c0e085887e3c0abba3d0e7d4c37ca3c87fc91d93de54ed8c30a2781cad",
+      "cache_address_main.su": "077a8ae083bd75c7f0f61a2cb5011cb2fbd46f9f1d951cb73509febaf4759199",
+      "cache_address_owned.o": "3c9128d0f71f0d2992c666d1c3b94a42a8adf666f4ea4b0307402ce96dda9add",
+      "cache_address_owned.su": "9b6a857968bab808a2236676bb817ffa712a94b8daf3ac5577a32c5e77f63392",
+      "cache_address_probe.o": "04e0003abb68b1070e93d8a39593e756eb4bee299be8e7c80253f5eaa142dc0b",
+      "cache_address_probe.su": "dd5decc08a2fc672a6ab5f0a0bbf97156ddcbfb5c1d687cab95eeadda1dbe599",
+      "cache_arena_plan.o": "963a0d505d5f26267e108d2a0e0cabfc6abba520760c747a50252ba9ed3c3a03",
+      "cache_arena_plan.su": "c15f2bed0ff8d6898248036003d9a7fc3cd66d9fcb19af325e25e19a394f510e",
+      "cache_bsp_probe.o": "4d580bbe2035d3711e69396dac7b7fff27d5c835cfdd26e984312027e58f5c3c",
+      "cache_bsp_probe.su": "296fcb30e097a8676b4dd8411ac209e4d62a4e72742e7fa446a81603770ccf23",
+      "cache_material_fixture.o": "3e9c42dcc68b473777200c8462d19bdf7f11a9a8fe4c4218d7dd57a7a9d7c301",
+      "cache_material_fixture.su": "56e36e1514359fdb240bdea7add45d27a83e3661818870fe4549f82d55001c80",
+      "cache_material_probe.o": "0bf53c08dec9f254579b35387d911c1f25de481b7418e440f865f6299bb1f90f",
+      "cache_material_probe.su": "25ce4c8f0c0ee9d39f8ac3066bb139747b3664414f925dd69692edab4f8951dc"
+    },
+    "generated_payload_sha256": "24c58f4d7fad04544f710aea6e56b2c58f5c1e888e41f8a9f1fe0a339d934fc3",
+    "private_input_bytes": 0,
+    "report": [
+      "BEGIN MATERIAL_SYNTHETIC build=15c3a1cdac2b73ae",
+      "CACHE_ADDRESS SUMMARY cases=1916 checks=8437 failures=0 aborted=0 scope=synthetic_index_name_root_address_only source_mutation=none nested_tag_BSP_body_conversion=not_performed",
+      "CACHE_MATERIAL BEGIN scope=authored_partial_root_lightmap_material_surface_words_no_vertex_conversion",
+      "CACHE_MATERIAL SUMMARY cases=80 checks=50484 failures=0 aborted=0 material=128 root=36 lightmap=20 control=88 view=56 lifetime=parent_first geometry=not_qualified",
+      "END MATERIAL_SYNTHETIC build=15c3a1cdac2b73ae result=0"
+    ]
+  },
+  "PPC": {
+    "record_sha256": "c6032e369c8ac471bab4a5e1ab16c98c0d31c37d61909d85151a32d227e20891",
+    "wrapper_record_sha256": "6ab553c53c7b624bab6aa26e7baad8c0c0e470c6cdefaa27593b3968ca18ad29",
+    "build_id": "5aa6d83a4b07e6f1",
+    "source_commit": "e29f8ffdbbbf6cdc073013f56e27dc5b0ee324ef",
+    "source_dirty": false,
+    "state": "compile_pass",
+    "target": "powerpc-eabi",
+    "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+    "compiler_sha256": "692e3f84b35b7622f90d9fa2eae47c21cab88d3d95f857fc2381c4593765e814",
+    "strict_flags": [
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-fstack-usage",
+      "-DGEKKO",
+      "-mrvl",
+      "-mcpu=750",
+      "-meabi",
+      "-mhard-float"
+    ],
+    "compiled_units": 8,
+    "command_count": 10,
+    "command_exit_codes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "artifacts_sha256": {
+      "cache_address.dol": "c528178edbacc28a67c9b6ba68ecc9ace560fbc1df4f8b8e076f680dcd771f88",
+      "cache_address.elf": "111bf49fca11f218dcd1ddf4e806b08545990914a3a7119499cde6e404af4b5b",
+      "cache_address.map": "a74bd85b242d88d676a353f3f37af9d36754c67f5c3144a5b4f0a42fb74dec96",
+      "cache_address_fixture.o": "59b00cf2b355e8cf5f8a185ad355e89d0926bae6d3213c1bf73b0486ab57c68e",
+      "cache_address_fixture.su": "3ac0f027e2a6ee303668a91effed8527a73624fad5152d9984773bf642e3e226",
+      "cache_address_main.o": "37e293ef69d5d7f50f0da1a1ffc13460bc36d7fb790d4f794091a55b4283b1e8",
+      "cache_address_main.su": "a96bce0ae662f8c2c53d51be33987eef7c811290e901bea88d1a6cc5325cc4e8",
+      "cache_address_owned.o": "9543785be8f9406c4ee90be4fd9a4d29ece0f336d3f767735e2eafb484fc9167",
+      "cache_address_owned.su": "2d9b0f9eacdf389a969e60bdff4e5e43afe8196284328aff393efeb869962ae9",
+      "cache_address_probe.o": "a9ba2353d34521de709e8cef55543bcd3eb6d22ce6058d5ac938ed105036b51f",
+      "cache_address_probe.su": "717aca6d1f4de59f2f0ecfd7beaca862fd9923b3fd99d830e51b12b729bd051e",
+      "cache_arena_plan.o": "b56f77971d28b0f2db2680f83d8881798201ed5f0c8475833829e3ba9e66431e",
+      "cache_arena_plan.su": "099423558acf66d4b0c45094b6c0b72345662ab8c62d87fde9e89137c0e35a07",
+      "cache_bsp_probe.o": "2621da61b106878e2d72679e8a4b42d54cc074a46d977eb7baf016401fd13e77",
+      "cache_bsp_probe.su": "965685b2f9438a2f613b9dc29775c99a3f588855f48348b9e52d8a6c7a101f75",
+      "cache_material_fixture.o": "f470ff52b9f0948107cb057639116acf01eff24fe1eac2d5d7de38818e2d2f4b",
+      "cache_material_fixture.su": "c95c51a558cf8c6857dda2a8ddacff1aea7c770629e855e0038214ba1b49122c",
+      "cache_material_probe.o": "04dc59eaedaa80390020eaa39bd0f5f3c87429fc7f2ba4972b1e5693bd856013",
+      "cache_material_probe.su": "1f3fa76e32288176412e2fb18050f6ef5eb0ba7e80e9903ebae9091cad1e90af"
+    },
+    "generated_payload_sha256": "773202475aacb7efc6bf3c67bea68f2a19051334df190e534cf390c5d258a1e2",
+    "private_input_bytes": 0,
+    "report": []
+  },
+  "host_fixture": {
+    "material": {
+      "cases": 80,
+      "checks": 50484,
+      "failures": 0,
+      "aborted": 0
+    },
+    "address": {
+      "cases": 1916,
+      "checks": 8437,
+      "failures": 0,
+      "aborted": 0
+    }
+  },
+  "API_policy": {
+    "record_bytes": 6,
+    "index_words": 3,
+    "index_width_bits": 16,
+    "index_signed": false,
+    "source_order": "little_endian",
+    "ordinal_scope": "whole_root_surface_block",
+    "maximum_root_records": 131072,
+    "parent_pinned_before_child_access": true,
+    "rejected_output_unchanged": true,
+    "selected_serialization_adds_surface_payload": false,
+    "root_projection_bytes": 36,
+    "source_requires_truthful_disjoint_immutable_single_caller_buffers": true
+  },
+  "independent_source_review": {
+    "record_sha256": "09d4bc48039edfd2f1846aec1098a403fcd4f67c465c9b384d73c12815cdc48b",
+    "manual_assessments": 18,
+    "frozen_identity_checks": 3,
+    "actionable_findings": 0,
+    "builds_or_fixture_runs_by_reviewer": false
+  },
+  "prior_dirty_preflight": [
+    {
+      "target": "host",
+      "record_sha256": "9500380c1d473b5ac5cac1aaf0047c3c051e8d1439aec2eb73da8f49362193c8",
+      "build_id": "f58caed171b9469e",
+      "source_commit": "2aeb6aa4db6f8b8f2f3f498dbfd91db7fd5afc2b",
+      "source_dirty": true,
+      "state": "execution_pass",
+      "same_three_source_inputs": true,
+      "command_exit_codes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "target": "ppc",
+      "record_sha256": "610f70bc3d63fd4a2079296ef706970f73de03f2ccb0e2371c554224f504c589",
+      "build_id": "3a3266f03121c339",
+      "source_commit": "2aeb6aa4db6f8b8f2f3f498dbfd91db7fd5afc2b",
+      "source_dirty": true,
+      "state": "compile_pass",
+      "same_three_source_inputs": true,
+      "command_exit_codes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "arena_model": {
+    "review_record_sha256": "c0ac5fe51876d664d70193b640c72627bc8da92162107fb2a135cef4dd796816",
+    "retained_execution_record_sha256": "c26c0e90dce101fcc5a69e0942a31a5d1182c59139e09d756b7b87d6248e414b",
+    "corrected_review_checks": 182,
+    "corrected_review_failures": 0,
+    "host_planner_model_invocations": 8,
+    "PPC_execution": false,
+    "PPC_layout_evidence": "strict_compiled_sizeof_constants",
+    "host_layout": {
+      "pointer": 8,
+      "root": 36,
+      "surface": 6,
+      "lightmap": 20,
+      "material": 128,
+      "bsp_control": 200,
+      "material_control": 88,
+      "material_view": 56
+    },
+    "PPC_layout": {
+      "state": 20971520,
+      "material_view": 56,
+      "material_control": 80,
+      "bsp_control": 152,
+      "material": 128,
+      "lightmap": 20,
+      "surface": 6,
+      "root": 36,
+      "pointer": 4
+    },
+    "original_arena_capacity": 54368224,
+    "slot_count": 12,
+    "slot_alignment": 64,
+    "reserve_bytes": 2097152,
+    "new_workspace_payload_bytes": 8856,
+    "previous_workspace_payload_bytes": 8832,
+    "models": [
+      {
+        "abi_model": "PPC_layout_numeric_host_plan",
+        "workspace_version": "old",
+        "placement": 0,
+        "accessible_capacity": 54368224,
+        "payload_bytes": 50484784,
+        "data_end": 50484944,
+        "padding_bytes": 160,
+        "reserve_bytes": 2097152,
+        "required_relative": 52582096,
+        "original_arena_charge": 52582096,
+        "remaining": 1786128,
+        "slots": [
+          {
+            "index": 0,
+            "offset": 0,
+            "size": 23068672,
+            "alignment": 64,
+            "name": "tags"
+          },
+          {
+            "index": 1,
+            "offset": 23068672,
+            "size": 20971520,
+            "alignment": 64,
+            "name": "state"
+          },
+          {
+            "index": 2,
+            "offset": 44040192,
+            "size": 4194304,
+            "alignment": 64,
+            "name": "sound"
+          },
+          {
+            "index": 3,
+            "offset": 48234496,
+            "size": 2097120,
+            "alignment": 64,
+            "name": "index"
+          },
+          {
+            "index": 4,
+            "offset": 50331648,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO0"
+          },
+          {
+            "index": 5,
+            "offset": 50397184,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO1"
+          },
+          {
+            "index": 6,
+            "offset": 50462720,
+            "size": 1456,
+            "alignment": 64,
+            "name": "retained_widget_workspace"
+          },
+          {
+            "index": 7,
+            "offset": 50464192,
+            "size": 2160,
+            "alignment": 64,
+            "name": "retained_widget_serial"
+          },
+          {
+            "index": 8,
+            "offset": 50466368,
+            "size": 8832,
+            "alignment": 64,
+            "name": "material_workspace"
+          },
+          {
+            "index": 9,
+            "offset": 50475200,
+            "size": 9416,
+            "alignment": 64,
+            "name": "material_serial"
+          },
+          {
+            "index": 10,
+            "offset": 50484672,
+            "size": 152,
+            "alignment": 64,
+            "name": "BSP_control"
+          },
+          {
+            "index": 11,
+            "offset": 50484864,
+            "size": 80,
+            "alignment": 64,
+            "name": "material_control"
+          }
+        ]
+      },
+      {
+        "abi_model": "PPC_layout_numeric_host_plan",
+        "workspace_version": "new",
+        "placement": 0,
+        "accessible_capacity": 54368224,
+        "payload_bytes": 50484808,
+        "data_end": 50485008,
+        "padding_bytes": 200,
+        "reserve_bytes": 2097152,
+        "required_relative": 52582160,
+        "original_arena_charge": 52582160,
+        "remaining": 1786064,
+        "slots": [
+          {
+            "index": 0,
+            "offset": 0,
+            "size": 23068672,
+            "alignment": 64,
+            "name": "tags"
+          },
+          {
+            "index": 1,
+            "offset": 23068672,
+            "size": 20971520,
+            "alignment": 64,
+            "name": "state"
+          },
+          {
+            "index": 2,
+            "offset": 44040192,
+            "size": 4194304,
+            "alignment": 64,
+            "name": "sound"
+          },
+          {
+            "index": 3,
+            "offset": 48234496,
+            "size": 2097120,
+            "alignment": 64,
+            "name": "index"
+          },
+          {
+            "index": 4,
+            "offset": 50331648,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO0"
+          },
+          {
+            "index": 5,
+            "offset": 50397184,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO1"
+          },
+          {
+            "index": 6,
+            "offset": 50462720,
+            "size": 1456,
+            "alignment": 64,
+            "name": "retained_widget_workspace"
+          },
+          {
+            "index": 7,
+            "offset": 50464192,
+            "size": 2160,
+            "alignment": 64,
+            "name": "retained_widget_serial"
+          },
+          {
+            "index": 8,
+            "offset": 50466368,
+            "size": 8856,
+            "alignment": 64,
+            "name": "material_workspace"
+          },
+          {
+            "index": 9,
+            "offset": 50475264,
+            "size": 9416,
+            "alignment": 64,
+            "name": "material_serial"
+          },
+          {
+            "index": 10,
+            "offset": 50484736,
+            "size": 152,
+            "alignment": 64,
+            "name": "BSP_control"
+          },
+          {
+            "index": 11,
+            "offset": 50484928,
+            "size": 80,
+            "alignment": 64,
+            "name": "material_control"
+          }
+        ]
+      },
+      {
+        "abi_model": "host_native_layout",
+        "workspace_version": "old",
+        "placement": 0,
+        "accessible_capacity": 54368224,
+        "payload_bytes": 50485432,
+        "data_end": 50485592,
+        "padding_bytes": 160,
+        "reserve_bytes": 2097152,
+        "required_relative": 52582744,
+        "original_arena_charge": 52582744,
+        "remaining": 1785480,
+        "slots": [
+          {
+            "index": 0,
+            "offset": 0,
+            "size": 23068672,
+            "alignment": 64,
+            "name": "tags"
+          },
+          {
+            "index": 1,
+            "offset": 23068672,
+            "size": 20971520,
+            "alignment": 64,
+            "name": "state"
+          },
+          {
+            "index": 2,
+            "offset": 44040192,
+            "size": 4194304,
+            "alignment": 64,
+            "name": "sound"
+          },
+          {
+            "index": 3,
+            "offset": 48234496,
+            "size": 2097120,
+            "alignment": 64,
+            "name": "index"
+          },
+          {
+            "index": 4,
+            "offset": 50331648,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO0"
+          },
+          {
+            "index": 5,
+            "offset": 50397184,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO1"
+          },
+          {
+            "index": 6,
+            "offset": 50462720,
+            "size": 2048,
+            "alignment": 64,
+            "name": "retained_widget_workspace"
+          },
+          {
+            "index": 7,
+            "offset": 50464768,
+            "size": 2160,
+            "alignment": 64,
+            "name": "retained_widget_serial"
+          },
+          {
+            "index": 8,
+            "offset": 50466944,
+            "size": 8832,
+            "alignment": 64,
+            "name": "material_workspace"
+          },
+          {
+            "index": 9,
+            "offset": 50475776,
+            "size": 9416,
+            "alignment": 64,
+            "name": "material_serial"
+          },
+          {
+            "index": 10,
+            "offset": 50485248,
+            "size": 200,
+            "alignment": 64,
+            "name": "BSP_control"
+          },
+          {
+            "index": 11,
+            "offset": 50485504,
+            "size": 88,
+            "alignment": 64,
+            "name": "material_control"
+          }
+        ]
+      },
+      {
+        "abi_model": "host_native_layout",
+        "workspace_version": "new",
+        "placement": 0,
+        "accessible_capacity": 54368224,
+        "payload_bytes": 50485456,
+        "data_end": 50485656,
+        "padding_bytes": 200,
+        "reserve_bytes": 2097152,
+        "required_relative": 52582808,
+        "original_arena_charge": 52582808,
+        "remaining": 1785416,
+        "slots": [
+          {
+            "index": 0,
+            "offset": 0,
+            "size": 23068672,
+            "alignment": 64,
+            "name": "tags"
+          },
+          {
+            "index": 1,
+            "offset": 23068672,
+            "size": 20971520,
+            "alignment": 64,
+            "name": "state"
+          },
+          {
+            "index": 2,
+            "offset": 44040192,
+            "size": 4194304,
+            "alignment": 64,
+            "name": "sound"
+          },
+          {
+            "index": 3,
+            "offset": 48234496,
+            "size": 2097120,
+            "alignment": 64,
+            "name": "index"
+          },
+          {
+            "index": 4,
+            "offset": 50331648,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO0"
+          },
+          {
+            "index": 5,
+            "offset": 50397184,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO1"
+          },
+          {
+            "index": 6,
+            "offset": 50462720,
+            "size": 2048,
+            "alignment": 64,
+            "name": "retained_widget_workspace"
+          },
+          {
+            "index": 7,
+            "offset": 50464768,
+            "size": 2160,
+            "alignment": 64,
+            "name": "retained_widget_serial"
+          },
+          {
+            "index": 8,
+            "offset": 50466944,
+            "size": 8856,
+            "alignment": 64,
+            "name": "material_workspace"
+          },
+          {
+            "index": 9,
+            "offset": 50475840,
+            "size": 9416,
+            "alignment": 64,
+            "name": "material_serial"
+          },
+          {
+            "index": 10,
+            "offset": 50485312,
+            "size": 200,
+            "alignment": 64,
+            "name": "BSP_control"
+          },
+          {
+            "index": 11,
+            "offset": 50485568,
+            "size": 88,
+            "alignment": 64,
+            "name": "material_control"
+          }
+        ]
+      },
+      {
+        "abi_model": "PPC_layout_numeric_host_plan",
+        "workspace_version": "old",
+        "placement": 4096,
+        "accessible_capacity": 54364128,
+        "payload_bytes": 50484784,
+        "data_end": 50484944,
+        "padding_bytes": 160,
+        "reserve_bytes": 2097152,
+        "required_relative": 52582096,
+        "original_arena_charge": 52586192,
+        "remaining": 1782032,
+        "slots": [
+          {
+            "index": 0,
+            "offset": 0,
+            "size": 23068672,
+            "alignment": 64,
+            "name": "tags"
+          },
+          {
+            "index": 1,
+            "offset": 23068672,
+            "size": 20971520,
+            "alignment": 64,
+            "name": "state"
+          },
+          {
+            "index": 2,
+            "offset": 44040192,
+            "size": 4194304,
+            "alignment": 64,
+            "name": "sound"
+          },
+          {
+            "index": 3,
+            "offset": 48234496,
+            "size": 2097120,
+            "alignment": 64,
+            "name": "index"
+          },
+          {
+            "index": 4,
+            "offset": 50331648,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO0"
+          },
+          {
+            "index": 5,
+            "offset": 50397184,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO1"
+          },
+          {
+            "index": 6,
+            "offset": 50462720,
+            "size": 1456,
+            "alignment": 64,
+            "name": "retained_widget_workspace"
+          },
+          {
+            "index": 7,
+            "offset": 50464192,
+            "size": 2160,
+            "alignment": 64,
+            "name": "retained_widget_serial"
+          },
+          {
+            "index": 8,
+            "offset": 50466368,
+            "size": 8832,
+            "alignment": 64,
+            "name": "material_workspace"
+          },
+          {
+            "index": 9,
+            "offset": 50475200,
+            "size": 9416,
+            "alignment": 64,
+            "name": "material_serial"
+          },
+          {
+            "index": 10,
+            "offset": 50484672,
+            "size": 152,
+            "alignment": 64,
+            "name": "BSP_control"
+          },
+          {
+            "index": 11,
+            "offset": 50484864,
+            "size": 80,
+            "alignment": 64,
+            "name": "material_control"
+          }
+        ]
+      },
+      {
+        "abi_model": "PPC_layout_numeric_host_plan",
+        "workspace_version": "new",
+        "placement": 4096,
+        "accessible_capacity": 54364128,
+        "payload_bytes": 50484808,
+        "data_end": 50485008,
+        "padding_bytes": 200,
+        "reserve_bytes": 2097152,
+        "required_relative": 52582160,
+        "original_arena_charge": 52586256,
+        "remaining": 1781968,
+        "slots": [
+          {
+            "index": 0,
+            "offset": 0,
+            "size": 23068672,
+            "alignment": 64,
+            "name": "tags"
+          },
+          {
+            "index": 1,
+            "offset": 23068672,
+            "size": 20971520,
+            "alignment": 64,
+            "name": "state"
+          },
+          {
+            "index": 2,
+            "offset": 44040192,
+            "size": 4194304,
+            "alignment": 64,
+            "name": "sound"
+          },
+          {
+            "index": 3,
+            "offset": 48234496,
+            "size": 2097120,
+            "alignment": 64,
+            "name": "index"
+          },
+          {
+            "index": 4,
+            "offset": 50331648,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO0"
+          },
+          {
+            "index": 5,
+            "offset": 50397184,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO1"
+          },
+          {
+            "index": 6,
+            "offset": 50462720,
+            "size": 1456,
+            "alignment": 64,
+            "name": "retained_widget_workspace"
+          },
+          {
+            "index": 7,
+            "offset": 50464192,
+            "size": 2160,
+            "alignment": 64,
+            "name": "retained_widget_serial"
+          },
+          {
+            "index": 8,
+            "offset": 50466368,
+            "size": 8856,
+            "alignment": 64,
+            "name": "material_workspace"
+          },
+          {
+            "index": 9,
+            "offset": 50475264,
+            "size": 9416,
+            "alignment": 64,
+            "name": "material_serial"
+          },
+          {
+            "index": 10,
+            "offset": 50484736,
+            "size": 152,
+            "alignment": 64,
+            "name": "BSP_control"
+          },
+          {
+            "index": 11,
+            "offset": 50484928,
+            "size": 80,
+            "alignment": 64,
+            "name": "material_control"
+          }
+        ]
+      },
+      {
+        "abi_model": "host_native_layout",
+        "workspace_version": "old",
+        "placement": 4096,
+        "accessible_capacity": 54364128,
+        "payload_bytes": 50485432,
+        "data_end": 50485592,
+        "padding_bytes": 160,
+        "reserve_bytes": 2097152,
+        "required_relative": 52582744,
+        "original_arena_charge": 52586840,
+        "remaining": 1781384,
+        "slots": [
+          {
+            "index": 0,
+            "offset": 0,
+            "size": 23068672,
+            "alignment": 64,
+            "name": "tags"
+          },
+          {
+            "index": 1,
+            "offset": 23068672,
+            "size": 20971520,
+            "alignment": 64,
+            "name": "state"
+          },
+          {
+            "index": 2,
+            "offset": 44040192,
+            "size": 4194304,
+            "alignment": 64,
+            "name": "sound"
+          },
+          {
+            "index": 3,
+            "offset": 48234496,
+            "size": 2097120,
+            "alignment": 64,
+            "name": "index"
+          },
+          {
+            "index": 4,
+            "offset": 50331648,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO0"
+          },
+          {
+            "index": 5,
+            "offset": 50397184,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO1"
+          },
+          {
+            "index": 6,
+            "offset": 50462720,
+            "size": 2048,
+            "alignment": 64,
+            "name": "retained_widget_workspace"
+          },
+          {
+            "index": 7,
+            "offset": 50464768,
+            "size": 2160,
+            "alignment": 64,
+            "name": "retained_widget_serial"
+          },
+          {
+            "index": 8,
+            "offset": 50466944,
+            "size": 8832,
+            "alignment": 64,
+            "name": "material_workspace"
+          },
+          {
+            "index": 9,
+            "offset": 50475776,
+            "size": 9416,
+            "alignment": 64,
+            "name": "material_serial"
+          },
+          {
+            "index": 10,
+            "offset": 50485248,
+            "size": 200,
+            "alignment": 64,
+            "name": "BSP_control"
+          },
+          {
+            "index": 11,
+            "offset": 50485504,
+            "size": 88,
+            "alignment": 64,
+            "name": "material_control"
+          }
+        ]
+      },
+      {
+        "abi_model": "host_native_layout",
+        "workspace_version": "new",
+        "placement": 4096,
+        "accessible_capacity": 54364128,
+        "payload_bytes": 50485456,
+        "data_end": 50485656,
+        "padding_bytes": 200,
+        "reserve_bytes": 2097152,
+        "required_relative": 52582808,
+        "original_arena_charge": 52586904,
+        "remaining": 1781320,
+        "slots": [
+          {
+            "index": 0,
+            "offset": 0,
+            "size": 23068672,
+            "alignment": 64,
+            "name": "tags"
+          },
+          {
+            "index": 1,
+            "offset": 23068672,
+            "size": 20971520,
+            "alignment": 64,
+            "name": "state"
+          },
+          {
+            "index": 2,
+            "offset": 44040192,
+            "size": 4194304,
+            "alignment": 64,
+            "name": "sound"
+          },
+          {
+            "index": 3,
+            "offset": 48234496,
+            "size": 2097120,
+            "alignment": 64,
+            "name": "index"
+          },
+          {
+            "index": 4,
+            "offset": 50331648,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO0"
+          },
+          {
+            "index": 5,
+            "offset": 50397184,
+            "size": 65536,
+            "alignment": 64,
+            "name": "IO1"
+          },
+          {
+            "index": 6,
+            "offset": 50462720,
+            "size": 2048,
+            "alignment": 64,
+            "name": "retained_widget_workspace"
+          },
+          {
+            "index": 7,
+            "offset": 50464768,
+            "size": 2160,
+            "alignment": 64,
+            "name": "retained_widget_serial"
+          },
+          {
+            "index": 8,
+            "offset": 50466944,
+            "size": 8856,
+            "alignment": 64,
+            "name": "material_workspace"
+          },
+          {
+            "index": 9,
+            "offset": 50475840,
+            "size": 9416,
+            "alignment": 64,
+            "name": "material_serial"
+          },
+          {
+            "index": 10,
+            "offset": 50485312,
+            "size": 200,
+            "alignment": 64,
+            "name": "BSP_control"
+          },
+          {
+            "index": 11,
+            "offset": 50485568,
+            "size": 88,
+            "alignment": 64,
+            "name": "material_control"
+          }
+        ]
+      }
+    ],
+    "deltas": [
+      {
+        "abi_model": "PPC_layout_numeric_host_plan",
+        "placement": 0,
+        "workspace_payload_delta": 24,
+        "alignment_padding_delta": 40,
+        "charged_delta": 64
+      },
+      {
+        "abi_model": "PPC_layout_numeric_host_plan",
+        "placement": 4096,
+        "workspace_payload_delta": 24,
+        "alignment_padding_delta": 40,
+        "charged_delta": 64
+      },
+      {
+        "abi_model": "host_native_layout",
+        "placement": 0,
+        "workspace_payload_delta": 24,
+        "alignment_padding_delta": 40,
+        "charged_delta": 64
+      },
+      {
+        "abi_model": "host_native_layout",
+        "placement": 4096,
+        "workspace_payload_delta": 24,
+        "alignment_padding_delta": 40,
+        "charged_delta": 64
+      }
+    ],
+    "source_provenance": "planner captured source snapshots and input hashes; no clean-source commit provenance is inferred beyond those snapshots",
+    "inputs_sha256": {
+      "tools/wii/cache_material_probe.h": "3e68ec61f0024eaf95fc8213a38a6da0911ce30e45218de01f2f6f88e26ab2d7",
+      "tools/wii/cache_bsp_probe.h": "0a68bbdc7ddb7c95c747850dc3875052e4cced75bd6449d4584d514904d701d5",
+      "tools/wii/cache_address_probe.h": "b12006e37e0bf92c265e4c7dd7cdc275f6dd5952296fc1428ef4263e3cf044b7",
+      "tools/wii/cache_arena_plan.h": "32989ed97be742b9beb1e1e03cbe8ccf7c66b8fb41772b0d3f99dbd0eb6dffbf",
+      "tools/wii/cache_arena_plan.c": "7c0e26625fcdec0c9a1372b6fd6801b8158dbb15f062f94d4a5cdc8567abd0b2",
+      "tools/wii/cache_stream_main.c": "85a0f2a23f22636b8a4f32a32b0dd6a350018e7c1ad133fb3b35c0353aa8b5c1",
+      "port/linux/include/halo_port_capacity.h": "5970e9fca8186435460fc273f21b7c6fcc8b54523231257a95cc0037d1457666"
+    },
+    "artifacts_sha256": {
+      "cache_address_probe.h": "b12006e37e0bf92c265e4c7dd7cdc275f6dd5952296fc1428ef4263e3cf044b7",
+      "cache_arena_plan.c": "7c0e26625fcdec0c9a1372b6fd6801b8158dbb15f062f94d4a5cdc8567abd0b2",
+      "cache_arena_plan.h": "32989ed97be742b9beb1e1e03cbe8ccf7c66b8fb41772b0d3f99dbd0eb6dffbf",
+      "cache_bsp_probe.h": "0a68bbdc7ddb7c95c747850dc3875052e4cced75bd6449d4584d514904d701d5",
+      "cache_material_probe.h": "3e68ec61f0024eaf95fc8213a38a6da0911ce30e45218de01f2f6f88e26ab2d7",
+      "cache_stream_main.c": "85a0f2a23f22636b8a4f32a32b0dd6a350018e7c1ad133fb3b35c0353aa8b5c1",
+      "halo_port_capacity.h": "5970e9fca8186435460fc273f21b7c6fcc8b54523231257a95cc0037d1457666",
+      "measured_ppc.h": "01c3ed9083c62660408c309d48bde3a400dd6fcbfe7b7a1ac427ad995345bf48",
+      "measurement.c": "7951db253c00792dc460913c22f543a0d0d6e98c50810458e1037a75341ecdd0",
+      "planner.c": "7bbb9f02d33c70539bfc65d9e30104d0b7cbbcfc62ec70fb610d7723ce5e19f6",
+      "measurement-ppc.o": "37cc1899cc897860e823127e705b5ece94743d2e712f461aa42ae31536f02dcd",
+      "measurement-ppc.su": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "planner-cache_arena_plan.su": "9d761ba6825cf6ad0bc7da1606a6d2b18acc797de150d1ea45983fdfbda90d81",
+      "planner-planner.su": "4e0bb39c63315f8fcdfc5736de5ba7057c51bd7ef3450ff0f3f1d3649201b521",
+      "planner.exe": "2dd362718036f2ea94f112841f93ee95d97afdfeeb5073b837986244deef3993"
+    },
+    "initial_failures": [
+      {
+        "record_sha256": "e73dc1e5eb6829b7c09b933d309103c6865a2c723840aeb91cfc6f98eafadee2",
+        "classification": "ignored_harness_host_GCC_PATH_setup",
+        "exit_code": 1,
+        "reason": "GCC bin PATH prefix omitted; failing command and empty outputs retained."
+      },
+      {
+        "record_sha256": "c26c0e90dce101fcc5a69e0942a31a5d1182c59139e09d756b7b87d6248e414b",
+        "classification": "ignored_harness_incorrect_expected_host_BSP_size",
+        "original_checks": 175,
+        "failed_assertions": 1,
+        "incorrect_expected_bytes": 184,
+        "compiled_actual_bytes": 200,
+        "planner_used_actual_size": true,
+        "corrected_validation_only_no_reexecution": true
+      }
+    ]
+  },
+  "prior_owned_result": {
+    "source_commit": "b6f589916ece139183fde2928a18977346200132",
+    "selected_inspection_serialized_bytes": 9416,
+    "new_owned_result": false,
+    "qualification": "historical material-stream result; unchanged serialization order and authored fixtures do not repeat owned-byte proof"
+  },
+  "new_target_runtime": false,
+  "new_owned_input_access": false,
+  "new_SD_or_settings_actions": false,
+  "qualification": {
+    "HWI_005": "BLOCKED",
+    "HWI_006": "BLOCKED",
+    "HWI_007": "TODO",
+    "HWI_008": "TODO"
+  },
+  "limits": [
+    "Unsigned words expose literals only; vertex indexing origin, per-material index validity and global range ordering are not inferred.",
+    "No native vertex conversion, triangles topology, shader bodies, float arithmetic, geometry, GX rendering, engine publication or gameplay qualification.",
+    "PPC compilation and a host-executed PPC numeric request model are not PPC execution or physical placement proof.",
+    "State and sound remain full-capacity placeholders; conservative widget slots remain charged without new widget execution.",
+    "Available bytes follow all slot/alignment charges and the provisional2MiB reserve; they are not a system allocator peak or fragmentation measurement.",
+    "Prior packet semantic failures, native ABI gaps and shutdown fault observations remain unchanged.",
+    "No new extraction, proprietary bytes in public inputs, Dolphin launch or physical Wii acceptance."
+  ]
+}

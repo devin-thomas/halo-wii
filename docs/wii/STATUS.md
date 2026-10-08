@@ -203,3 +203,12 @@ review links initialization to onexit registration and corrects a retained
 mid-instruction disassembly; source/thread ownership and shutdown cause remain
 unresolved. No new Dolphin/SD/settings/asset operation occurs; ticket states
 and prior runtime/hardware limits remain unchanged.
+
+
+The [authored triangle word accessor](evidence/2026-10-07-surface-api.md) passes
+80 host cases / 50,484 checks; eight strict PPC units compile without execution.
+Whole-root ordinals expose bounded unsigned LE16 triples with parent-first
+lifetimes and atomic output. Workspace growth adds 24 payload / 64 charged bytes;
+the twelve-slot PPC numeric model retains 1,781,968 bytes after its reserve.
+This model does not repeat target memory or owned-byte qualification. Vertex
+semantics, geometry/GX, gameplay, hardware and ticket blockers remain open.
