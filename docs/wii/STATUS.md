@@ -183,3 +183,14 @@ compilation passes, without PPC execution. The actual twelve-slot plan leaves
 Retained campaign Python metadata matches 34 materials and the 9,416-byte selected
 concatenation. Owned C target execution, engine pools, geometry/GX, gameplay and
 ticket acceptance remain open; no additional SD write or target launch occurs.
+
+The [selected campaign material stream](evidence/2026-10-07-material-stream.md) passes 64 material
+cases / 48,752 authored checks and 16 owned host/emulated PPC parent cycles with
+32 material loads. All 34 selected materials serialize 9,416 bytes with matching
+CRC and full SHA; original reservations remain, leaving 1,782,032 PPC arena
+bytes after the provisional reserve is charged. State/sound are placeholders
+and widget storage is reservation only. Identical guest result-zero reports
+precede natural Dolphin host 0xc0000409 faults at 59.866 and independently
+59.6373275 seconds. Matching heap counters and restored bounds do not qualify
+system peak, engine strategy, geometry/GX, gameplay, physical Wii or clear prior
+shutdown/ABI blockers.

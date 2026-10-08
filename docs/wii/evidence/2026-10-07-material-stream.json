@@ -1,0 +1,1557 @@
+{
+  "scope": "selected_campaign_partial_material_metadata_direct_stream_and_lifetime_diagnostic",
+  "source_commit": "b6f589916ece139183fde2928a18977346200132",
+  "production_integrated": false,
+  "qualification": {
+    "host_owned_diagnostic": "pass",
+    "emulated_PPC_guest": "pass",
+    "Dolphin_host_exit": "failed_natural_exit",
+    "general_host_recovery": "unqualified",
+    "physical_Wii": "untested",
+    "geometry_GX": "unqualified",
+    "gameplay": "untested",
+    "engine_memory_strategy": "unqualified",
+    "HWI-005": "BLOCKED",
+    "HWI-006": "BLOCKED",
+    "HWI-007": "TODO",
+    "HWI-008": "TODO"
+  },
+  "input": {
+    "tag_bytes": 16995988,
+    "tag_sha256": "8501f4ad215a630d14220140e27f8a9c30a5ed18fe459ac07c686e827a0ab7bc",
+    "tag_raw_crc32": "881c7b48",
+    "instances": 3647,
+    "BSP_bytes": 1288192,
+    "BSP_sha256": "7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b",
+    "BSP_raw_crc32": "adf28ea7",
+    "embedded_in_build": false
+  },
+  "BSP_goldens": {
+    "bsp_ordinal": 12,
+    "datum": 4021620286,
+    "declared_map_bytes": 279763456,
+    "encoded_base": 2173089792,
+    "file_bytes": 1288192,
+    "index_count": 34,
+    "root_address": 2173563872,
+    "root_offset": 474080,
+    "rounded_reservation_bytes": 1288192,
+    "scenario_datum": 3782475776,
+    "serialized_bytes": 1288192,
+    "serialized_crc32": 2918354599,
+    "serialized_sha256": "7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b",
+    "vertex_count": 34
+  },
+  "material_goldens": {
+    "scenario_datum": 3782475776,
+    "bsp_datum": 4021620286,
+    "lightmap_count": 2,
+    "material_count": 34,
+    "environment_vertices": 14788,
+    "lightmap_vertices": 0,
+    "serialized_bytes": 9416,
+    "serialized_crc32": 2135278324,
+    "serialized_sha256": "e58ffaeb6e7e82553d1d770a6e21e585d0246f3a0febb3dbba8ec3169e614022"
+  },
+  "metadata_record_hashes": {
+    "BSP": "bdda1fc341fed8673211b604447061a7f27d6f223a6b3c7612127c096207fc4d",
+    "material": "ac2c559b918edf13c43ae20b42ae188d4d90a903e3140101ede39b27a0f9103c"
+  },
+  "source_limits": {
+    "lightmaps": 128,
+    "materials_per_lightmap": 2048,
+    "vertices_per_material": 64000,
+    "surfaces": 131072,
+    "tag_data_maxima": [
+      4864000,
+      2560000
+    ],
+    "hardware_type_strides": [
+      56,
+      32,
+      20,
+      8
+    ]
+  },
+  "policy": {
+    "all_selected_nodes": "validate_or_atomic_rejection_no_workload_hardcap",
+    "native_workspace": "two_actual_aggregate_halves",
+    "failed_bind": "prior_control_view_publication_source_preserved_scratch_may_change",
+    "lifetime": "copied_arena_and_BSP_epochs_before_child_control_workspace_then_child_generation",
+    "shader": "NONE_skip_else_full_datum_primary_group_shdr_ancestry_tag_window_NUL_names",
+    "surface_ranges": "signed_in_bounds_no_global_ordering_policy",
+    "hardware_NULL": "accepted_without_payload_extent_proof",
+    "empty_payload": "retain_words_do_not_follow",
+    "floats": "uint32_bits_no_arithmetic",
+    "serialization": "root648_whole_LM_tables32_whole_material_tables256_known_LE_rewrites_opaque_bytes_and_encoded_addresses_retained",
+    "runtime_SHA256": "full_input_SHA_first_parent_cycle_selected_serialization_SHA_every_material_load",
+    "contract": "truthful_disjoint_immutable_pinned_accessible_single_caller_objects",
+    "read_guard": "same_API_fd_and_path_stat_snapshots_not_filesystem_lock"
+  },
+  "reservations": {
+    "tag_bytes": 23068672,
+    "state_bytes": 20971520,
+    "sound_bytes": 4194304,
+    "maximum_index_count": 65535,
+    "index_stride": 32,
+    "index_bytes": 2097120,
+    "IO_buffers": 2,
+    "IO_bytes_each": 65536,
+    "provisional_reserve": 2097152,
+    "source_capacities_reduced": false,
+    "state_sound": "edge_canary_placeholders_not_initialized_engine_pools",
+    "material_workspace": 8832,
+    "selected_serialization": 9416,
+    "BSP_stage": 0,
+    "whole_BSP_serial_slot": 0,
+    "widget_slots": "conservative_reservation_only_no_campaign_widget_execution",
+    "original_MEM2_span": 54368224,
+    "alternate_placement_offset": 4096,
+    "controlled_holes": "three_owned_intervals_not_system_allocator_fragmentation",
+    "controlled_aggregate_free": 54237152,
+    "controlled_largest_free_span": 18122720
+  },
+  "tests": {
+    "material_cases_each": 64,
+    "material_checks_each": 48752,
+    "BSP_cases_each": 75,
+    "BSP_checks_each": 5432,
+    "address_cases_each": 1916,
+    "address_checks_each": 8437,
+    "arena_cases_this_run": 1407,
+    "arena_checks_this_run": 2981,
+    "arena_alignment_dependent": true,
+    "SHA_vectors_each": 8,
+    "SHA_checks_each": 42,
+    "host_tmpfile_IO_cases": 120,
+    "host_tmpfile_IO_checks": 1962,
+    "PPC_tmpfile_IO": "not_executed",
+    "authored_failures": 0,
+    "authored_aborts": 0,
+    "runtime_ferror_injection": false
+  },
+  "host_numeric_report": [
+    "CACHE_ADDRESS SUMMARY cases=1916 checks=8437 failures=0 aborted=0 scope=synthetic_index_name_root_address_only source_mutation=none nested_tag_BSP_body_conversion=not_performed",
+    "CACHE_ARENA SUMMARY cases=1407 checks=2981 failures=0 aborted=0 scope=generic_budget_owner_and_synthetic_placements engine_capacity_reduced=0 system_fragmentation_measured=0",
+    "STREAM SUMMARY cases=120 checks=1962 failures=0 aborted=0 runtime_io_error_injection=not_performed",
+    "CACHE_BSP SUMMARY cases=75 checks=5432 failures=0 aborted=0 control_size=200 view_size=40 reference_size=64 header_size=24 descriptor_size=32 dynamic_projection_bytes=0 root=648 full_geometry=not_qualified",
+    "CACHE_SHA256 SUMMARY vectors=8 checks=42 failures=0 aborted=0 limit_bytes=23068672 authored_heap_released=1",
+    "CACHE_MATERIAL SUMMARY cases=64 checks=48752 failures=0 aborted=0 material=128 root=24 lightmap=20 control=88 view=56 lifetime=parent_first geometry=not_qualified",
+    "STREAM REQUEST tags=23068672 state=20971520 sound=4194304 max_index=2097120 io_each=65536 reserve=2097152 state_sound=canary_placeholders_not_engine_pools",
+    "MATERIAL REQUEST slots=12 workspace=8832 serialized=9416 BSP_control=200 material_control=88 retained_widget_workspace=2048 retained_widget_serial=2160 retained_widget=reservation_only_not_campaign_UI BSP_stage=0 whole_BSP_serial=0",
+    "STREAM FRAGMENT controlled_intervals=3 guard_bytes=131072 aggregate_free=54237152 largest_free=18122720 requested=52582744 rejected=3 failures=0 scope=owned_intervals_not_system_heap",
+    "STREAM IO bytes=16995988 chunks=260 fread_calls=261 crc32=881c7b48",
+    "MATERIAL INPUT tag_sha256=8501f4ad215a630d14220140e27f8a9c30a5ed18fe459ac07c686e827a0ab7bc bsp_sha256=7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b direct_BSP_stream=1 gap_canary=preserved",
+    "BSP INPUT bytes=1288192 crc32=adf28ea7 chunks=20 fread_calls=21 slot_offset=21780480 rounded=1288192 unread_gap=4784492",
+    "MATERIAL VIEW lightmaps=2 materials=34 shader_identities=all_selected_validated environment_vertices=14788 lightmap_vertices=0 workspace=8832 serialized_bytes=9416 crc32=7f45c2f4 sha256=e58ffaeb6e7e82553d1d770a6e21e585d0246f3a0febb3dbba8ec3169e614022 control_bytes=88 view_bytes=56 scope=partial_metadata_no_geometry",
+    "BSP VIEW datum=efb50e3e root_offset=22254560 root_bytes=648 vertex_descriptors=34 index_descriptors=34 control_bytes=200 view_bytes=40 whole_BSP_serialization=0 gap_addressable=0 scope=partial_metadata_no_geometry",
+    "STREAM PLAN placement=0 base=00000215A369E040 data_end=50485592 reserve=2097152 required=52582744 arena_charge=52582744 remaining=1785480",
+    "STREAM PLAN placement=1 base=00000215A369F040 data_end=50485592 reserve=2097152 required=52582744 arena_charge=52586840 remaining=1781384",
+    "MATERIAL SUMMARY parent_cycles=16 BSP_loads=16 BSP_parent_release_STATE=16 BSP_parent_rebind_STATE=15 child_loads=32 child_release_STATE=16 child_rebind_STATE=16 atomic_rejections=32 parent_release_STATE=16 parent_rebind_STATE=15 overwritten_rebind_STATE=15 lightmaps=2 materials=34 environment_vertices=14788 lightmap_vertices=0 serialized_bytes=9416 failures=0 geometry=not_qualified",
+    "STREAM SUMMARY cycles=16 tags=3647 max_charge=52586840 chunks=260 expected_errors=3 stale_rebind=15 stale_release=16 generation=32 failures=0"
+  ],
+  "builds": {
+    "host": {
+      "source_commit": "b6f589916ece139183fde2928a18977346200132",
+      "source_dirty": false,
+      "build_id": "bd6484638e89fc44",
+      "state": "execution_pass",
+      "compiler": "gcc.exe (Rev3, Built by MSYS2 project) 16.2.0",
+      "compiler_sha256": "75e87953e9d04e8a5d81225397292e9f8ae599a0ed85f70ed175767577aaa9f6",
+      "target": "x86_64-w64-mingw32",
+      "sdk_identity": {},
+      "cleared_child_environment_overrides": [
+        "GCC_EXEC_PREFIX",
+        "COMPILER_PATH",
+        "LIBRARY_PATH",
+        "CPATH",
+        "C_INCLUDE_PATH",
+        "CPLUS_INCLUDE_PATH",
+        "OBJC_INCLUDE_PATH",
+        "DEPENDENCIES_OUTPUT",
+        "SUNPRO_DEPENDENCIES"
+      ],
+      "inputs_sha256": {
+        "tools/wii/cache_address_probe.c": "b8f87e3a1cbdb4eae72f4695e04ecd85a9f346b92413d6215fcd5dadd17aa9a9",
+        "tools/wii/cache_address_fixture.c": "8ce0b9b1f201626038ec2621ab5b8e0b8abd6d68298b1d8a010b24adabf2522c",
+        "tools/wii/cache_address_owned.c": "15db730e67d56881d35a349d69dc9538cbec4b6dacdafb50e062cecc73f016f9",
+        "tools/wii/cache_arena_plan.c": "7c0e26625fcdec0c9a1372b6fd6801b8158dbb15f062f94d4a5cdc8567abd0b2",
+        "tools/wii/cache_arena_fixture.c": "c2a7f4d408ff4ae9dfc49fdb3ae406c3feb5d95d85fd21404a550644064ab9e1",
+        "tools/wii/cache_stream_io.c": "f33993e210437659b1c1186ce175c45a39385052d7284a87dc967c9f80e7e631",
+        "tools/wii/cache_stream_fixture.c": "82c5497284c2f696fb285e326cc91a97b551e0993fab7518e1e5f6e1e862f526",
+        "tools/wii/cache_stream_main.c": "85a0f2a23f22636b8a4f32a32b0dd6a350018e7c1ad133fb3b35c0353aa8b5c1",
+        "tools/wii/cache_bsp_probe.c": "7b4d068b8433c3ca85d8b703ad7e10aaa679c3f3ac3dce673c7c151a1d2d446d",
+        "tools/wii/cache_bsp_fixture.c": "d7396e8adc014adbfc69f0c9bf09009dddcbf84b341b4ec1189c8556d045a1c2",
+        "tools/wii/cache_material_probe.c": "19bcb58bd034f1c86646ec51dfa55172e304032374e08af5c46df71d226c7085",
+        "tools/wii/cache_material_fixture.c": "c32fae6409bacab2a70e19264091a538191afe3233cbe1d4eb7e59857c7cf916",
+        "tools/wii/cache_sha256_fixture.c": "b5a9928f636fe749540f72f39971d1d5350509edb0b585c037299b1eb8187a90",
+        "tools/wii/cache_address_probe.h": "b12006e37e0bf92c265e4c7dd7cdc275f6dd5952296fc1428ef4263e3cf044b7",
+        "tools/wii/cache_address_fixture.h": "1b6c2e41c46a589e146accce457d11356937aeb57167fbe89639c8ecb5c87f81",
+        "tools/wii/cache_address_owned.h": "7d689728316022605468e931b6502140a8e62ced0a1c68f00424f09327c30751",
+        "tools/wii/run_cache_address.py": "41ca04545342f5e2c733f26252a1eb225be6a7d86e232b23d8409030a2333a47",
+        "tools/wii/build.py": "dc426a9068782e9f4d593fa4d5b241c966a61caad6860e766b8dbd4ddee9d48a",
+        "tools/wii/check_toolchain.py": "04b53c1e4f6bc534430062d57ef2fa12f508c43489a4228c5dffb49cdbd8a50c",
+        "source/cache/cache_files.c": "69ec94025580cf603b06b83ede8983d27163bf06e162e1cbf27611a174165ade",
+        "source/cache/physical_memory_map.c": "e68bed26b70dff2860d2d463a6a7871a383284fef9762c6f6b7f5bf1bf89023a",
+        "source/cache/physical_memory_map.h": "ec343ab913c4e7a1fa7ce441cb46cdc9e6cdfa9fae8096fccba8bd9dc3253b63",
+        "port/linux/include/halo_port_capacity.h": "5970e9fca8186435460fc273f21b7c6fcc8b54523231257a95cc0037d1457666",
+        "tools/wii/cache_arena_plan.h": "32989ed97be742b9beb1e1e03cbe8ccf7c66b8fb41772b0d3f99dbd0eb6dffbf",
+        "tools/wii/cache_arena_fixture.h": "a1a1ff746598a7759b5c66997cb274696f0a33afdc129d8efb4498394a888956",
+        "tools/wii/cache_stream_io.h": "722fe9186b8d4e0f909f5a47f9935b48a759b5b30ffe773dcb86cd61a6e714f9",
+        "tools/wii/cache_stream_fixture.h": "8cb1177eaadaffb0e8ac122d7c985b0d2a7985f6b775bda6f28e3b7384d38db7",
+        "tools/wii/cache_bsp_probe.h": "0a68bbdc7ddb7c95c747850dc3875052e4cced75bd6449d4584d514904d701d5",
+        "tools/wii/cache_bsp_fixture.h": "4ae0c404a766227e2cd92e299d720aad6571d08e48c049f9efcda20d3273e213",
+        "source/scenario/scenario.h": "006629dda0ab08738b844aaffe450749514d0983072acb63cdd58afb7ef78b26",
+        "source/scenario/scenario_definitions.h": "8dad5efc959caba2db342f6a4a299cccf1d81025e3ae026115d5df3b0a3d7c1a",
+        "port/linux/game/tag_schema_scenario.c": "b0480e21315e303d91ca8b9df1f78e139c3a1c226f66bbd81abf52f71cf47612",
+        "port/linux/game/cache_file_formats.c": "5358af0e0ee7af59956a831a4348ac5a538a67392cecb4c08e1829b3d534bad4",
+        "source/structures/structure_bsp_definitions.h": "3fb20d1232de1908c45163cff69b7271b8ce3ca502a0c4105cfd06ec8a3ee279",
+        "port/linux/game/tag_validate.c": "8e13cdb4157a9750f08e5bf851bc3ea3c665565301285090c9595778ab86a70f",
+        "tools/wii/inspect_bsp_residency.py": "db12a3b81f563c5cf3ed5e56d840a820172321a77a4560e2111ff5e0688275df",
+        "tools/wii/inspect_widget_graph.py": "d8c11f0076a93eed16ff1706dd600892acabf88db5031d7b059e0538a8cac79c",
+        "tools/wii/cache_material_probe.h": "837e66d66e76c3c5833292e60ab32e5038682fb0f52ed85934bd7fbdf5bfd323",
+        "tools/wii/cache_material_fixture.h": "f06db030706b40aba4fcab668751b602bf187f0358c1cb946c330e8de15de62c",
+        "source/structures/structures.h": "719c3cf2f61d85ce349802aa3df7d17debafefb021a3b7de7f036a76f0e6c327",
+        "source/rasterizer/rasterizer_geometry.h": "e576fff6ed22ff92ad8e719f4e701dfea70b0d49dc9f8b2d01bfa5321f2df707",
+        "source/tag_files/tag_groups.h": "c90f89d53bb2feea6219091d7c665678fd45e49e9f7a81ad4391b1c0ed58eb07",
+        "port/linux/game/tag_schema_collision.c": "8083856c54b2798b7ac8855b4ff68e5db7582506fb63cc3560f1b4fc059e07ed",
+        "tools/wii/inspect_material_graph.py": "ef6d6a28ae69b9c2a29a244504f6c60d61aeba8148058a3fa7d900d8e67c7865",
+        "tools/wii/cache_sha256_fixture.h": "f52913dff816b93e2041c2ece8c65d36f79c0bb97129f2a63f0a9d378f807087",
+        "port/linux/src/p2p_crypto.c": "5a90c188cef935c70e09e5c7d37340cde56a4d2e74859afc2f2cbb4f6de4a963"
+      },
+      "artifacts_sha256": {
+        "cache_address.exe": "39e64e80131667bd79f954eb4cdf38880143f148c47caa745d71ec467c4a6633",
+        "cache_address_fixture.o": "285c22de2c79a6627acfa48c43ba9291b735a1cfd13aec51ed5d40d14fc2609b",
+        "cache_address_fixture.su": "6bdc1f22d58e9bb117e5f1dd0850ee7edb8a5fd3531c3fe1011665bb5a317043",
+        "cache_address_owned.o": "3c9128d0f71f0d2992c666d1c3b94a42a8adf666f4ea4b0307402ce96dda9add",
+        "cache_address_owned.su": "9b6a857968bab808a2236676bb817ffa712a94b8daf3ac5577a32c5e77f63392",
+        "cache_address_probe.o": "04e0003abb68b1070e93d8a39593e756eb4bee299be8e7c80253f5eaa142dc0b",
+        "cache_address_probe.su": "dd5decc08a2fc672a6ab5f0a0bbf97156ddcbfb5c1d687cab95eeadda1dbe599",
+        "cache_arena_fixture.o": "34fa138377d959e5950d8719764323f2d020bcc1094dbdebf5b2c7da3662d1ae",
+        "cache_arena_fixture.su": "f9ab247c9309f68193009a6d892a2ff73b92f04d320a6efd056b85dbdabceaaf",
+        "cache_arena_plan.o": "963a0d505d5f26267e108d2a0e0cabfc6abba520760c747a50252ba9ed3c3a03",
+        "cache_arena_plan.su": "c15f2bed0ff8d6898248036003d9a7fc3cd66d9fcb19af325e25e19a394f510e",
+        "cache_bsp_fixture.o": "d349eaf1d6f36738d980de0511c09d30834ddfb8061b809db021cbf5a10fee65",
+        "cache_bsp_fixture.su": "cadefb1dccb232aba63e579f055748c68b566eb1aed8d7cab4de89f767d7cfeb",
+        "cache_bsp_probe.o": "4d580bbe2035d3711e69396dac7b7fff27d5c835cfdd26e984312027e58f5c3c",
+        "cache_bsp_probe.su": "296fcb30e097a8676b4dd8411ac209e4d62a4e72742e7fa446a81603770ccf23",
+        "cache_material_fixture.o": "de4b7c393a56e6672b16c3019b0db32be935a2b0a6be5a549ac3d1bfb1c6eeea",
+        "cache_material_fixture.su": "49c505721c663aef2d4c50f1a0bd9bbf0d43d65518895cd7c6807bac9cda4ebe",
+        "cache_material_probe.o": "e446eace7fae01f0269e7b22b8d85ec305c8c5bab04e1ea2b466f07965154d40",
+        "cache_material_probe.su": "8ad627c76599c8cdd4ae7f9a4ee4d27b7c1acb34018ec92019b97e2a28848fc0",
+        "cache_sha256.o": "b72bd43265f07b8377c33df4c179440bd4d0a758b068e415a460442e2657bc0a",
+        "cache_sha256.su": "05a99004d5e78d4f4a7b2dc8df3c16943b1644ba6f177c775b6daa795213c082",
+        "cache_sha256_fixture.o": "6c86e3c79bd33f4313269e9aad0e5872ae972f51b0d9ce787725a343809e481d",
+        "cache_sha256_fixture.su": "37c029c87d29e8e2d22e5f3e23a00836bf6b25a75bc4955af27dbffd18dd7a7f",
+        "cache_stream_fixture.o": "6c57dcf38a9fbed7bc2343175f27c771964ac145fe66a05662f8b3bdeeebe598",
+        "cache_stream_fixture.su": "ec10c50140508b50a986baa627be494c0806c875ecb289779748ce8a695b0a45",
+        "cache_stream_io.o": "22a901e50fa8eb8b6f517ec19fd290619230afd86e8a08bbf2b43ff1aad952a7",
+        "cache_stream_io.su": "02e31dab05d611b1ba6b1998108d5005358833bf64017d80e799e2b81508829f",
+        "cache_stream_main.o": "a13d49b84e94f0505a6aaee2a8305c193619ecbb2aabf0bedc9b0bba0fbcba43",
+        "cache_stream_main.su": "a00570327d910f9b2de79d93c4abeb24d341e3ebdca321d4ea254b1e387a95e6"
+      },
+      "generated_payload_sha256": "1d0c8dcef2fedbdff5ee5c54d8f7b2f42b1288356c91473a80900305b0937b03",
+      "material_sha256_source": {
+        "path": "port/linux/src/p2p_crypto.c",
+        "source_sha256": "5a90c188cef935c70e09e5c7d37340cde56a4d2e74859afc2f2cbb4f6de4a963",
+        "start_marker": "/* ---------- SHA-256 */",
+        "end_before": "void p2p_hmac_sha256",
+        "extracted_sha256": "71da86b190e044f7cb7924bfd5a71cef411be9970f594b27f7d9870163a273db",
+        "generated_unit_sha256": "38d5670b14c2e4213d10135493de7aeb077e1dccbf06bb0341c4bed1204d6ae7",
+        "generated_unit": "cache_sha256.c"
+      },
+      "record_sha256": "96e524cd275f8964bd92243746c186db9197221785168a7af5a3e9881248aca5",
+      "strict_units": 14,
+      "recorded_commands": 16,
+      "all_command_exits_zero": true,
+      "compile_diagnostics": 0,
+      "flags": [
+        "-std=c11",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-fstack-usage"
+      ],
+      "per_function_stack": [
+        {
+          "function": "check",
+          "bytes": 64,
+          "kind": "static"
+        },
+        {
+          "function": "lookup_failure",
+          "bytes": 224,
+          "kind": "static"
+        },
+        {
+          "function": "synthetic",
+          "bytes": 64,
+          "kind": "static"
+        },
+        {
+          "function": "resolver_vectors",
+          "bytes": 848,
+          "kind": "static"
+        },
+        {
+          "function": "malformed",
+          "bytes": 592,
+          "kind": "static"
+        },
+        {
+          "function": "wii_cache_address_fixture",
+          "bytes": 560,
+          "kind": "static"
+        },
+        {
+          "function": "cache_probe_crc32",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_owned",
+          "bytes": 432,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_decode_instance.part.0.constprop",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "region_valid.constprop",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_error_name",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_resolve",
+          "bytes": 24,
+          "kind": "static"
+        },
+        {
+          "function": "references",
+          "bytes": 128,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_decode_header.part.0",
+          "bytes": 112,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_decode_instance",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_decode_header",
+          "bytes": 48,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_graph_load",
+          "bytes": 304,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_graph_lookup",
+          "bytes": 176,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_graph_bytes",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_graph_unload",
+          "bytes": 48,
+          "kind": "static"
+        },
+        {
+          "function": "arena_check",
+          "bytes": 64,
+          "kind": "static"
+        },
+        {
+          "function": "reject_resolution",
+          "bytes": 128,
+          "kind": "static"
+        },
+        {
+          "function": "wii_cache_arena_fixture",
+          "bytes": 2304,
+          "kind": "static"
+        },
+        {
+          "function": "cache_arena_error_name",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_arena_plan_build",
+          "bytes": 528,
+          "kind": "static"
+        },
+        {
+          "function": "cache_arena_owner_bind",
+          "bytes": 1056,
+          "kind": "static"
+        },
+        {
+          "function": "cache_arena_owner_release",
+          "bytes": 64,
+          "kind": "static"
+        },
+        {
+          "function": "cache_arena_owner_handle",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_arena_owner_resolve",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "check",
+          "bytes": 64,
+          "kind": "static"
+        },
+        {
+          "function": "author",
+          "bytes": 320,
+          "kind": "static"
+        },
+        {
+          "function": "prepare",
+          "bytes": 608,
+          "kind": "static"
+        },
+        {
+          "function": "wii_cache_bsp_fixture",
+          "bytes": 3056,
+          "kind": "static"
+        },
+        {
+          "function": "live.part.0.constprop",
+          "bytes": 112,
+          "kind": "static"
+        },
+        {
+          "function": "address_span",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_select.part.0.constprop",
+          "bytes": 480,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_error_name",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_select",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_bind",
+          "bytes": 464,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_unload",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_lookup",
+          "bytes": 64,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_get_header",
+          "bytes": 64,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_get_root",
+          "bytes": 64,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_get_descriptor",
+          "bytes": 64,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_resolve",
+          "bytes": 160,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_serialize",
+          "bytes": 160,
+          "kind": "static"
+        },
+        {
+          "function": "author_material",
+          "bytes": 160,
+          "kind": "static"
+        },
+        {
+          "function": "check",
+          "bytes": 64,
+          "kind": "static"
+        },
+        {
+          "function": "author",
+          "bytes": 240,
+          "kind": "static"
+        },
+        {
+          "function": "prepare",
+          "bytes": 656,
+          "kind": "static"
+        },
+        {
+          "function": "valid_case",
+          "bytes": 832,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_fixture",
+          "bytes": 2544,
+          "kind": "static"
+        },
+        {
+          "function": "claim",
+          "bytes": 40,
+          "kind": "static"
+        },
+        {
+          "function": "sizes",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "bsp_span",
+          "bytes": 80,
+          "kind": "static"
+        },
+        {
+          "function": "tag_string",
+          "bytes": 128,
+          "kind": "static"
+        },
+        {
+          "function": "scan",
+          "bytes": 2784,
+          "kind": "static"
+        },
+        {
+          "function": "parent_open.constprop",
+          "bytes": 160,
+          "kind": "static"
+        },
+        {
+          "function": "graph_open.constprop",
+          "bytes": 64,
+          "kind": "static"
+        },
+        {
+          "function": "output_object.isra",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_error_name",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_measure",
+          "bytes": 288,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_bind",
+          "bytes": 320,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_get_root",
+          "bytes": 272,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_get_lightmap",
+          "bytes": 288,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_get_material",
+          "bytes": 304,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_serialize",
+          "bytes": 528,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_unload",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "sha256_block",
+          "bytes": 480,
+          "kind": "static"
+        },
+        {
+          "function": "p2p_sha256",
+          "bytes": 320,
+          "kind": "static"
+        },
+        {
+          "function": "cache_sha256_hex",
+          "bytes": 160,
+          "kind": "static"
+        },
+        {
+          "function": "vector",
+          "bytes": 256,
+          "kind": "static"
+        },
+        {
+          "function": "cache_sha256_fixture",
+          "bytes": 960,
+          "kind": "static"
+        },
+        {
+          "function": "run_case",
+          "bytes": 1968,
+          "kind": "static"
+        },
+        {
+          "function": "wii_cache_stream_fixture",
+          "bytes": 160,
+          "kind": "static"
+        },
+        {
+          "function": "control_alias",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_stream_read_at.part.0",
+          "bytes": 192,
+          "kind": "static"
+        },
+        {
+          "function": "cache_stream_error_name",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_stream_read_at",
+          "bytes": 24,
+          "kind": "static"
+        },
+        {
+          "function": "cache_stream_read",
+          "bytes": 96,
+          "kind": "static"
+        },
+        {
+          "function": "slot_view",
+          "bytes": 144,
+          "kind": "static"
+        },
+        {
+          "function": "decode_index",
+          "bytes": 368,
+          "kind": "static"
+        },
+        {
+          "function": "stream_cycles",
+          "bytes": 3088,
+          "kind": "static"
+        },
+        {
+          "function": "main",
+          "bytes": 96,
+          "kind": "static"
+        }
+      ],
+      "stack_scope": "per_function_compiler_records_not_full_call_chain_or_system_peak"
+    },
+    "PPC": {
+      "source_commit": "b6f589916ece139183fde2928a18977346200132",
+      "source_dirty": false,
+      "build_id": "6e98590c95a2aa94",
+      "state": "compile_pass",
+      "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+      "compiler_sha256": "692e3f84b35b7622f90d9fa2eae47c21cab88d3d95f857fc2381c4593765e814",
+      "target": "powerpc-eabi",
+      "sdk_identity": {
+        "toolchain_tree_sha256": "d0ca79f317d44426f5563ff60121b344cb3a1148e5ec7a901ad5739b73ba6441"
+      },
+      "cleared_child_environment_overrides": [
+        "GCC_EXEC_PREFIX",
+        "COMPILER_PATH",
+        "LIBRARY_PATH",
+        "CPATH",
+        "C_INCLUDE_PATH",
+        "CPLUS_INCLUDE_PATH",
+        "OBJC_INCLUDE_PATH",
+        "DEPENDENCIES_OUTPUT",
+        "SUNPRO_DEPENDENCIES"
+      ],
+      "inputs_sha256": {
+        "tools/wii/cache_address_probe.c": "b8f87e3a1cbdb4eae72f4695e04ecd85a9f346b92413d6215fcd5dadd17aa9a9",
+        "tools/wii/cache_address_fixture.c": "8ce0b9b1f201626038ec2621ab5b8e0b8abd6d68298b1d8a010b24adabf2522c",
+        "tools/wii/cache_address_owned.c": "15db730e67d56881d35a349d69dc9538cbec4b6dacdafb50e062cecc73f016f9",
+        "tools/wii/cache_arena_plan.c": "7c0e26625fcdec0c9a1372b6fd6801b8158dbb15f062f94d4a5cdc8567abd0b2",
+        "tools/wii/cache_arena_fixture.c": "c2a7f4d408ff4ae9dfc49fdb3ae406c3feb5d95d85fd21404a550644064ab9e1",
+        "tools/wii/cache_stream_io.c": "f33993e210437659b1c1186ce175c45a39385052d7284a87dc967c9f80e7e631",
+        "tools/wii/cache_stream_fixture.c": "82c5497284c2f696fb285e326cc91a97b551e0993fab7518e1e5f6e1e862f526",
+        "tools/wii/cache_stream_main.c": "85a0f2a23f22636b8a4f32a32b0dd6a350018e7c1ad133fb3b35c0353aa8b5c1",
+        "tools/wii/cache_bsp_probe.c": "7b4d068b8433c3ca85d8b703ad7e10aaa679c3f3ac3dce673c7c151a1d2d446d",
+        "tools/wii/cache_bsp_fixture.c": "d7396e8adc014adbfc69f0c9bf09009dddcbf84b341b4ec1189c8556d045a1c2",
+        "tools/wii/cache_material_probe.c": "19bcb58bd034f1c86646ec51dfa55172e304032374e08af5c46df71d226c7085",
+        "tools/wii/cache_material_fixture.c": "c32fae6409bacab2a70e19264091a538191afe3233cbe1d4eb7e59857c7cf916",
+        "tools/wii/cache_sha256_fixture.c": "b5a9928f636fe749540f72f39971d1d5350509edb0b585c037299b1eb8187a90",
+        "tools/wii/cache_address_probe.h": "b12006e37e0bf92c265e4c7dd7cdc275f6dd5952296fc1428ef4263e3cf044b7",
+        "tools/wii/cache_address_fixture.h": "1b6c2e41c46a589e146accce457d11356937aeb57167fbe89639c8ecb5c87f81",
+        "tools/wii/cache_address_owned.h": "7d689728316022605468e931b6502140a8e62ced0a1c68f00424f09327c30751",
+        "tools/wii/run_cache_address.py": "41ca04545342f5e2c733f26252a1eb225be6a7d86e232b23d8409030a2333a47",
+        "tools/wii/build.py": "dc426a9068782e9f4d593fa4d5b241c966a61caad6860e766b8dbd4ddee9d48a",
+        "tools/wii/check_toolchain.py": "04b53c1e4f6bc534430062d57ef2fa12f508c43489a4228c5dffb49cdbd8a50c",
+        "source/cache/cache_files.c": "69ec94025580cf603b06b83ede8983d27163bf06e162e1cbf27611a174165ade",
+        "source/cache/physical_memory_map.c": "e68bed26b70dff2860d2d463a6a7871a383284fef9762c6f6b7f5bf1bf89023a",
+        "source/cache/physical_memory_map.h": "ec343ab913c4e7a1fa7ce441cb46cdc9e6cdfa9fae8096fccba8bd9dc3253b63",
+        "port/linux/include/halo_port_capacity.h": "5970e9fca8186435460fc273f21b7c6fcc8b54523231257a95cc0037d1457666",
+        "tools/wii/cache_arena_plan.h": "32989ed97be742b9beb1e1e03cbe8ccf7c66b8fb41772b0d3f99dbd0eb6dffbf",
+        "tools/wii/cache_arena_fixture.h": "a1a1ff746598a7759b5c66997cb274696f0a33afdc129d8efb4498394a888956",
+        "tools/wii/cache_stream_io.h": "722fe9186b8d4e0f909f5a47f9935b48a759b5b30ffe773dcb86cd61a6e714f9",
+        "tools/wii/cache_stream_fixture.h": "8cb1177eaadaffb0e8ac122d7c985b0d2a7985f6b775bda6f28e3b7384d38db7",
+        "tools/wii/cache_bsp_probe.h": "0a68bbdc7ddb7c95c747850dc3875052e4cced75bd6449d4584d514904d701d5",
+        "tools/wii/cache_bsp_fixture.h": "4ae0c404a766227e2cd92e299d720aad6571d08e48c049f9efcda20d3273e213",
+        "source/scenario/scenario.h": "006629dda0ab08738b844aaffe450749514d0983072acb63cdd58afb7ef78b26",
+        "source/scenario/scenario_definitions.h": "8dad5efc959caba2db342f6a4a299cccf1d81025e3ae026115d5df3b0a3d7c1a",
+        "port/linux/game/tag_schema_scenario.c": "b0480e21315e303d91ca8b9df1f78e139c3a1c226f66bbd81abf52f71cf47612",
+        "port/linux/game/cache_file_formats.c": "5358af0e0ee7af59956a831a4348ac5a538a67392cecb4c08e1829b3d534bad4",
+        "source/structures/structure_bsp_definitions.h": "3fb20d1232de1908c45163cff69b7271b8ce3ca502a0c4105cfd06ec8a3ee279",
+        "port/linux/game/tag_validate.c": "8e13cdb4157a9750f08e5bf851bc3ea3c665565301285090c9595778ab86a70f",
+        "tools/wii/inspect_bsp_residency.py": "db12a3b81f563c5cf3ed5e56d840a820172321a77a4560e2111ff5e0688275df",
+        "tools/wii/inspect_widget_graph.py": "d8c11f0076a93eed16ff1706dd600892acabf88db5031d7b059e0538a8cac79c",
+        "tools/wii/cache_material_probe.h": "837e66d66e76c3c5833292e60ab32e5038682fb0f52ed85934bd7fbdf5bfd323",
+        "tools/wii/cache_material_fixture.h": "f06db030706b40aba4fcab668751b602bf187f0358c1cb946c330e8de15de62c",
+        "source/structures/structures.h": "719c3cf2f61d85ce349802aa3df7d17debafefb021a3b7de7f036a76f0e6c327",
+        "source/rasterizer/rasterizer_geometry.h": "e576fff6ed22ff92ad8e719f4e701dfea70b0d49dc9f8b2d01bfa5321f2df707",
+        "source/tag_files/tag_groups.h": "c90f89d53bb2feea6219091d7c665678fd45e49e9f7a81ad4391b1c0ed58eb07",
+        "port/linux/game/tag_schema_collision.c": "8083856c54b2798b7ac8855b4ff68e5db7582506fb63cc3560f1b4fc059e07ed",
+        "tools/wii/inspect_material_graph.py": "ef6d6a28ae69b9c2a29a244504f6c60d61aeba8148058a3fa7d900d8e67c7865",
+        "tools/wii/cache_sha256_fixture.h": "f52913dff816b93e2041c2ece8c65d36f79c0bb97129f2a63f0a9d378f807087",
+        "port/linux/src/p2p_crypto.c": "5a90c188cef935c70e09e5c7d37340cde56a4d2e74859afc2f2cbb4f6de4a963"
+      },
+      "artifacts_sha256": {
+        "cache_address.dol": "0a646518633f6678770112fc4bd5762fb2910908298113940ebd4d029014ca99",
+        "cache_address.elf": "d67fd0cb14b56396e17cfa97508cb22da12269ccbdc9eb97d93318f4774f8f87",
+        "cache_address.map": "e04c735f2bf062ab433691d6f98fbf19fe7656a82f11af31313b0d80ec81f645",
+        "cache_address_fixture.o": "59b00cf2b355e8cf5f8a185ad355e89d0926bae6d3213c1bf73b0486ab57c68e",
+        "cache_address_fixture.su": "3ac0f027e2a6ee303668a91effed8527a73624fad5152d9984773bf642e3e226",
+        "cache_address_owned.o": "9543785be8f9406c4ee90be4fd9a4d29ece0f336d3f767735e2eafb484fc9167",
+        "cache_address_owned.su": "2d9b0f9eacdf389a969e60bdff4e5e43afe8196284328aff393efeb869962ae9",
+        "cache_address_probe.o": "a9ba2353d34521de709e8cef55543bcd3eb6d22ce6058d5ac938ed105036b51f",
+        "cache_address_probe.su": "717aca6d1f4de59f2f0ecfd7beaca862fd9923b3fd99d830e51b12b729bd051e",
+        "cache_arena_fixture.o": "9c1ea7fcb633da36fb0e67d1f2ea4505ef453bbf69235c8c4c799dc2f533d646",
+        "cache_arena_fixture.su": "1f1fae64c65175526daaafd0ac69f298cd254abb7173f28cf13d64ed340abfc7",
+        "cache_arena_plan.o": "b56f77971d28b0f2db2680f83d8881798201ed5f0c8475833829e3ba9e66431e",
+        "cache_arena_plan.su": "099423558acf66d4b0c45094b6c0b72345662ab8c62d87fde9e89137c0e35a07",
+        "cache_bsp_fixture.o": "2c7981921a2090f733568938dd7189c9a791c9df81b1a275ccd62ad525728865",
+        "cache_bsp_fixture.su": "80f1089dd3423ae14670de60e06c17b03786570979da4920e1258711cc194e11",
+        "cache_bsp_probe.o": "2621da61b106878e2d72679e8a4b42d54cc074a46d977eb7baf016401fd13e77",
+        "cache_bsp_probe.su": "965685b2f9438a2f613b9dc29775c99a3f588855f48348b9e52d8a6c7a101f75",
+        "cache_material_fixture.o": "65b8f86e26e88056f020dd300d16fab64da4d2138b60a016b7cfcefe80e866aa",
+        "cache_material_fixture.su": "faf25710ca3d7ea28a3e555d346ec28dc0e0849a4135db462a890d8bcd7c0cce",
+        "cache_material_probe.o": "5e28c74d68ed55060b4c6fc23d48c38af594263c8f633d52c2a11f1a428f2d7a",
+        "cache_material_probe.su": "fd2ccf59a8c4d32012529b9fcc2bdcd58efc9004a52492b80a0a7e003762a83d",
+        "cache_sha256.o": "8a180e91ed214aa3cddaf53b11d6174184df5d842e6c263dd4eb6d581ebceb42",
+        "cache_sha256.su": "d07682537d6dbf63709ddfb3f73ba55148666faf201886140f911eba55ef6f2e",
+        "cache_sha256_fixture.o": "5824531cecdf083ba133e08408923bcca28f8cd55ea94bef90b162d65b40f27d",
+        "cache_sha256_fixture.su": "b1c64e9c555c9dbd2bab51acc0a2df89ac87ece8950bc3b70f3bef4e24511367",
+        "cache_stream_fixture.o": "75f2080f255f39e0a60240f7d4c91947841b8c248927a17ac8e764f7be5f7bb9",
+        "cache_stream_fixture.su": "1f3e32747c8341ab819aa12a8ac2de90991bcc3f13139689f6b3ebd2364c9fa3",
+        "cache_stream_io.o": "50bb9c4d518a4444bb1069a1afab3751d5a7ef6a4b143c6a1e9f69edd6c37f98",
+        "cache_stream_io.su": "4d8d94ca9bc4db7f12bb0458724fcb5b6fff96f09c66b92a41e0812abf1aaa6b",
+        "cache_stream_main.o": "9a69e9d053e7fa67cb45304da295ea814ee1196c7ca6d66013ba005fd15bc195",
+        "cache_stream_main.su": "7e9ae6a23caf8a6efbe8c881ffdbb4148b684af97b458101484477705be1f6e5"
+      },
+      "generated_payload_sha256": "c942303de31bb66ce831c7af1af8c34ead8866611511e214e3c162f88ea836ce",
+      "material_sha256_source": {
+        "path": "port/linux/src/p2p_crypto.c",
+        "source_sha256": "5a90c188cef935c70e09e5c7d37340cde56a4d2e74859afc2f2cbb4f6de4a963",
+        "start_marker": "/* ---------- SHA-256 */",
+        "end_before": "void p2p_hmac_sha256",
+        "extracted_sha256": "71da86b190e044f7cb7924bfd5a71cef411be9970f594b27f7d9870163a273db",
+        "generated_unit_sha256": "38d5670b14c2e4213d10135493de7aeb077e1dccbf06bb0341c4bed1204d6ae7",
+        "generated_unit": "cache_sha256.c"
+      },
+      "record_sha256": "94dea7035eaa3f86e046be23191557c809826116a266438fe0c2f9278288cbd8",
+      "strict_units": 14,
+      "recorded_commands": 16,
+      "all_command_exits_zero": true,
+      "compile_diagnostics": 0,
+      "flags": [
+        "-std=c11",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-fstack-usage",
+        "-DGEKKO",
+        "-mrvl",
+        "-mcpu=750",
+        "-meabi",
+        "-mhard-float"
+      ],
+      "per_function_stack": [
+        {
+          "function": "check",
+          "bytes": 16,
+          "kind": "static"
+        },
+        {
+          "function": "lookup_failure",
+          "bytes": 144,
+          "kind": "static"
+        },
+        {
+          "function": "synthetic",
+          "bytes": 16,
+          "kind": "static"
+        },
+        {
+          "function": "resolver_vectors",
+          "bytes": 496,
+          "kind": "static"
+        },
+        {
+          "function": "malformed",
+          "bytes": 392,
+          "kind": "static"
+        },
+        {
+          "function": "wii_cache_address_fixture",
+          "bytes": 312,
+          "kind": "static"
+        },
+        {
+          "function": "cache_probe_crc32",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_owned",
+          "bytes": 272,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_decode_instance.part.0.constprop",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "region_valid.constprop",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_error_name",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_resolve",
+          "bytes": 16,
+          "kind": "static"
+        },
+        {
+          "function": "references",
+          "bytes": 40,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_decode_header.part.0",
+          "bytes": 80,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_decode_instance",
+          "bytes": 16,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_decode_header",
+          "bytes": 24,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_graph_load",
+          "bytes": 160,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_graph_lookup",
+          "bytes": 80,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_graph_bytes",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_address_graph_unload",
+          "bytes": 16,
+          "kind": "static"
+        },
+        {
+          "function": "arena_check",
+          "bytes": 16,
+          "kind": "static"
+        },
+        {
+          "function": "reject_resolution",
+          "bytes": 40,
+          "kind": "static"
+        },
+        {
+          "function": "wii_cache_arena_fixture",
+          "bytes": 1184,
+          "kind": "static"
+        },
+        {
+          "function": "cache_arena_error_name",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_arena_plan_build",
+          "bytes": 280,
+          "kind": "static"
+        },
+        {
+          "function": "cache_arena_owner_bind",
+          "bytes": 528,
+          "kind": "static"
+        },
+        {
+          "function": "cache_arena_owner_release",
+          "bytes": 16,
+          "kind": "static"
+        },
+        {
+          "function": "cache_arena_owner_handle",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_arena_owner_resolve",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "check",
+          "bytes": 16,
+          "kind": "static"
+        },
+        {
+          "function": "author",
+          "bytes": 192,
+          "kind": "static"
+        },
+        {
+          "function": "prepare",
+          "bytes": 280,
+          "kind": "static"
+        },
+        {
+          "function": "wii_cache_bsp_fixture",
+          "bytes": 1952,
+          "kind": "static"
+        },
+        {
+          "function": "live.part.0.constprop",
+          "bytes": 40,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_select.part.0.constprop",
+          "bytes": 272,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_error_name",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_select",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_bind",
+          "bytes": 320,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_unload",
+          "bytes": 16,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_lookup",
+          "bytes": 40,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_get_header",
+          "bytes": 32,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_get_root",
+          "bytes": 32,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_get_descriptor",
+          "bytes": 48,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_resolve",
+          "bytes": 56,
+          "kind": "static"
+        },
+        {
+          "function": "cache_bsp_serialize",
+          "bytes": 64,
+          "kind": "static"
+        },
+        {
+          "function": "author_material",
+          "bytes": 16,
+          "kind": "static"
+        },
+        {
+          "function": "check",
+          "bytes": 16,
+          "kind": "static"
+        },
+        {
+          "function": "author",
+          "bytes": 176,
+          "kind": "static"
+        },
+        {
+          "function": "prepare",
+          "bytes": 304,
+          "kind": "static"
+        },
+        {
+          "function": "valid_case",
+          "bytes": 624,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_fixture",
+          "bytes": 1480,
+          "kind": "static"
+        },
+        {
+          "function": "claim",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "sizes",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "bsp_span",
+          "bytes": 40,
+          "kind": "static"
+        },
+        {
+          "function": "tag_string",
+          "bytes": 56,
+          "kind": "static"
+        },
+        {
+          "function": "scan",
+          "bytes": 1528,
+          "kind": "static"
+        },
+        {
+          "function": "parent_open.constprop",
+          "bytes": 56,
+          "kind": "static"
+        },
+        {
+          "function": "graph_open.constprop",
+          "bytes": 24,
+          "kind": "static"
+        },
+        {
+          "function": "output_object.isra",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_error_name",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_measure",
+          "bytes": 184,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_bind",
+          "bytes": 368,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_get_root",
+          "bytes": 168,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_get_lightmap",
+          "bytes": 168,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_get_material",
+          "bytes": 176,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_serialize",
+          "bytes": 392,
+          "kind": "static"
+        },
+        {
+          "function": "cache_material_unload",
+          "bytes": 16,
+          "kind": "static"
+        },
+        {
+          "function": "sha256_block",
+          "bytes": 320,
+          "kind": "static"
+        },
+        {
+          "function": "p2p_sha256",
+          "bytes": 168,
+          "kind": "static"
+        },
+        {
+          "function": "cache_sha256_hex",
+          "bytes": 128,
+          "kind": "static"
+        },
+        {
+          "function": "vector",
+          "bytes": 192,
+          "kind": "static"
+        },
+        {
+          "function": "cache_sha256_fixture",
+          "bytes": 528,
+          "kind": "static"
+        },
+        {
+          "function": "wii_cache_stream_fixture",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "control_alias",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_stream_read_at.part.0",
+          "bytes": 80,
+          "kind": "static"
+        },
+        {
+          "function": "cache_stream_error_name",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_stream_read_at",
+          "bytes": 8,
+          "kind": "static"
+        },
+        {
+          "function": "cache_stream_read",
+          "bytes": 16,
+          "kind": "static"
+        },
+        {
+          "function": "slot_view",
+          "bytes": 48,
+          "kind": "static"
+        },
+        {
+          "function": "decode_index",
+          "bytes": 240,
+          "kind": "static"
+        },
+        {
+          "function": "stream_cycles.constprop",
+          "bytes": 1880,
+          "kind": "static"
+        },
+        {
+          "function": "main",
+          "bytes": 24,
+          "kind": "static"
+        }
+      ],
+      "stack_scope": "per_function_compiler_records_not_full_call_chain_or_system_peak"
+    }
+  },
+  "measured_memory": {
+    "host": {
+      "placements": [
+        {
+          "placement": 0,
+          "base": "00000215A369E040",
+          "data_end": 50485592,
+          "reserve": 2097152,
+          "required": 52582744,
+          "arena_charge": 52582744,
+          "remaining": 1785480
+        },
+        {
+          "placement": 1,
+          "base": "00000215A369F040",
+          "data_end": 50485592,
+          "reserve": 2097152,
+          "required": 52582744,
+          "arena_charge": 52586840,
+          "remaining": 1781384
+        }
+      ],
+      "max_charge": 52586840,
+      "minimum_remaining": 1781384,
+      "heap_and_arena_observations": []
+    },
+    "PPC": {
+      "placements": [
+        {
+          "placement": 0,
+          "base": "0x90002000",
+          "data_end": 50484944,
+          "reserve": 2097152,
+          "required": 52582096,
+          "arena_charge": 52582096,
+          "remaining": 1786128
+        },
+        {
+          "placement": 1,
+          "base": "0x90003000",
+          "data_end": 50484944,
+          "reserve": 2097152,
+          "required": 52582096,
+          "arena_charge": 52586192,
+          "remaining": 1782032
+        }
+      ],
+      "max_charge": 52586192,
+      "minimum_remaining": 1782032,
+      "heap_and_arena_observations": [
+        "STREAM ARENAS mem1_lo=0x8017a000 mem1_hi=0x81800000 mem1_bytes=23617536 mem2_lo=0x90002000 mem2_hi=0x933db7e0 mem2_bytes=54368224",
+        "STREAM HEAP before in_use=783272 arena=851616 free=68344",
+        "STREAM HEAP released in_use=783272 arena=851616 free=68344",
+        "STREAM ARENAS released mem2_lo=0x90002000 mem2_hi=0x933db7e0 mem2_bytes=54368224"
+      ]
+    }
+  },
+  "independent_build_audit": {
+    "checks": 923,
+    "failures": 0,
+    "unresolved_findings": 0,
+    "record_sha256": "820440bf486b9c0e1112c8d6568f4b7e332c2c316f188b726b0a8d6eb1d6a214",
+    "scope": "read_only_clean_inputs_artifacts_ELF_ABI_stack_charged_memory_no_owned_bytes_runtime_or_SD_access",
+    "review_correction": {
+      "retained_initial_record_sha256": "425de63f2e38f1c01e49764a21e99bb481bf404c70d85a331276120f8b8c7909",
+      "reason": "Reviewer initial comparison normalized the CRLF section to LF although runner correctly fingerprints exact raw bytes. Corrected raw-byte comparison passes for both builds; no product/source change."
+    },
+    "PPC_sizes_from_ELF": {
+      "bsp_control": 152,
+      "control": 80,
+      "control_align": 8,
+      "data": 20,
+      "lightmap": 20,
+      "material": 128,
+      "material_align": 4,
+      "parent_view": 40,
+      "pointer": 4,
+      "requirements": 16,
+      "result": 16,
+      "root": 24,
+      "size_t": 4,
+      "vertex": 20,
+      "view": 56,
+      "view_align": 8
+    },
+    "stack_usage": {
+      "host": {
+        "units": 14,
+        "functions": 84,
+        "max_single_frame": 3088,
+        "selected_frames": [
+          {
+            "unit": "cache_material_probe.su",
+            "function": "scan",
+            "bytes": 2784
+          },
+          {
+            "unit": "cache_material_probe.su",
+            "function": "cache_material_bind",
+            "bytes": 320
+          },
+          {
+            "unit": "cache_sha256.su",
+            "function": "p2p_sha256",
+            "bytes": 320
+          },
+          {
+            "unit": "cache_sha256_fixture.su",
+            "function": "cache_sha256_fixture",
+            "bytes": 960
+          },
+          {
+            "unit": "cache_stream_main.su",
+            "function": "stream_cycles",
+            "bytes": 3088
+          }
+        ]
+      },
+      "ppc": {
+        "units": 14,
+        "functions": 82,
+        "max_single_frame": 1952,
+        "selected_frames": [
+          {
+            "unit": "cache_material_probe.su",
+            "function": "scan",
+            "bytes": 1528
+          },
+          {
+            "unit": "cache_material_probe.su",
+            "function": "cache_material_bind",
+            "bytes": 368
+          },
+          {
+            "unit": "cache_sha256.su",
+            "function": "p2p_sha256",
+            "bytes": 168
+          },
+          {
+            "unit": "cache_sha256_fixture.su",
+            "function": "cache_sha256_fixture",
+            "bytes": 528
+          },
+          {
+            "unit": "cache_stream_main.su",
+            "function": "stream_cycles.constprop",
+            "bytes": 1880
+          }
+        ]
+      }
+    },
+    "charged_memory": {
+      "slots": 12,
+      "PPC_required": 52582096,
+      "PPC_alternate_original_arena_charge": 52586192,
+      "PPC_min_remaining": 1782032,
+      "host_first_required": 52582744,
+      "host_alternate_charge": 52586840,
+      "host_min_remaining": 1781384,
+      "workspace": 8832,
+      "selected_serialization": 9416,
+      "PPC_retained_widget_workspace": 1456
+    },
+    "additional_builds": 0,
+    "additional_runtime_launches": 0,
+    "additional_SD_writes": 0
+  },
+  "staging": {
+    "scope": "two_exclusive_private_inputs_staged_separately_no_asset_embedding",
+    "record_sha256": "080191cea333189a0e42993d2c555654dbfb183fefcaa9115993de67e2c91b6b",
+    "prior_file_count": 17,
+    "new_input_files": 2,
+    "prior_files_preserved": true,
+    "settings_unchanged": true,
+    "readback_matches_build_hashes": true
+  },
+  "independent_runtime_reproduction": {
+    "status": "completed",
+    "raw_result_sha256": "b2666eedc0f4790fcb6b1932b6bef8715a5c283995145664027f65605015163f",
+    "guest_lf_sha256": "536f48f2677f1779402cf5d5e86fd4ccece38e94a191d009fb22309a4327f3b2",
+    "guest_bytes": 5925,
+    "guest_matches_root_byte_for_byte": true,
+    "build_id_from_guest": "6e98590c95a2aa94",
+    "guest_result": 0,
+    "host_exit_signed": -1073740791,
+    "host_exit_unsigned": 3221226505,
+    "host_exit_hex": "0xc0000409",
+    "elapsed_seconds": 59.6373275,
+    "forced_stop": false,
+    "natural_exit": true,
+    "prior_files_preserved": true,
+    "settings_preserved": true,
+    "scope": "serialized_authorized_repeat_same_guest_report_no_general_recovery_or_hardware_claim"
+  },
+  "saved_first_runtime_consistency_review": {
+    "checks": 323,
+    "failures": 0,
+    "unresolved_findings": 0,
+    "record_sha256": "2a2a6b84755847f2910117f9f9b029060110aa078e87fd45f9bcbd9b350a7cab",
+    "scope": "saved_first_runtime_metadata_guest_build_hash_and_report_consistency",
+    "independent_repeat_included": false,
+    "fresh_FAT_or_settings_reread": false,
+    "additional_runtime_launches": 0,
+    "additional_SD_or_owned_input_reads": 0
+  },
+  "retained_preflight_failure": {
+    "host": {
+      "source_commit": "a9200c051dcb7926bd0428915fcafbff89e4f16f",
+      "source_dirty": true,
+      "build_id": "5859c953676b0dc2",
+      "failed_unit": "cache_stream_main.c",
+      "compile_exit_code": 1,
+      "diagnostic": "unused_but_set_bsp_parent_release_and_bsp_parent_rebind_Werror",
+      "exact_argv_stdout_stderr_retained_privately": true,
+      "full_source_snapshots_retained": true,
+      "build_record_sha256": "da5c21415b16ecb72d64abff59c900f6b84772c951014cbb390ab9fa8d3b2f64",
+      "command_record_sha256": "82d2ad40d4dba44317817f2dcb4ec40937fc861bc4c0b749644478098cbc6ff3",
+      "snapshot_file_count": 65,
+      "snapshot_inventory_sha256": "19102c2273479d53ad41bf036b6cbfc13e7325b5965700b00e12bb09e47d354c",
+      "failed_main_source_sha256": "f005f28eac19128cfe965c30da4199ebf9c90333398d033d7008d82a57f7a578"
+    },
+    "PPC": {
+      "source_commit": "a9200c051dcb7926bd0428915fcafbff89e4f16f",
+      "source_dirty": true,
+      "build_id": "b42448a273969d9a",
+      "failed_unit": "cache_stream_main.c",
+      "compile_exit_code": 1,
+      "diagnostic": "unused_but_set_bsp_parent_release_and_bsp_parent_rebind_Werror",
+      "exact_argv_stdout_stderr_retained_privately": true,
+      "full_source_snapshots_retained": true,
+      "build_record_sha256": "ab0df9b9b3e355c608cd34438c2e56733b16bcc3283e908efa8dcb2472bd084c",
+      "command_record_sha256": "5411ac9f278d462796cea87b5221714a40fcaa3822a8d67988c67b625e4c4724",
+      "snapshot_file_count": 65,
+      "snapshot_inventory_sha256": "19102c2273479d53ad41bf036b6cbfc13e7325b5965700b00e12bb09e47d354c",
+      "failed_main_source_sha256": "f005f28eac19128cfe965c30da4199ebf9c90333398d033d7008d82a57f7a578"
+    },
+    "fix": "report_and_assert_BSP_parent_rejection_counters_not_warning_suppression"
+  },
+  "independent_source_review_fixes": [
+    "sticky_CRC_stream_status_reset_before_valid_reload_fixed_before_executed_preflight1_no_recorded_runtime_failure",
+    "generated_SHA_include_declaration_header",
+    "material_mode_reinspect_signed_BSP_header_root_descriptor_spans_and_rounded_retained_tag_placement"
+  ],
+  "mocked_runner_checks": {
+    "tests": 28,
+    "failures": 0,
+    "evidence_sha256": "087998155d7150c13dc79eed5d04cb075be8aeacbe1616f90a8e910d19ba26cb",
+    "scope": "authored_helpers_and_driver_with_compile_link_runtime_calls_mocked_not_build_evidence"
+  },
+  "runtime": {
+    "source_commit": "b6f589916ece139183fde2928a18977346200132",
+    "build_id": "6e98590c95a2aa94",
+    "dol_sha256": "0a646518633f6678770112fc4bd5762fb2910908298113940ebd4d029014ca99",
+    "runtime_record_sha256": "a493da7d318f45f17747f3bb0fd9695ccc36c91b544d51adeb2322f1c79eb891",
+    "guest_lf_sha256": "536f48f2677f1779402cf5d5e86fd4ccece38e94a191d009fb22309a4327f3b2",
+    "guest_completed": true,
+    "guest_result": 0,
+    "host_exit_unsigned": 3221226505,
+    "host_exit_hex": "0xc0000409",
+    "elapsed_seconds": 59.866,
+    "deadline_seconds": 180,
+    "timeout": false,
+    "process_killed": false,
+    "natural_exit": true,
+    "launch_count": 1,
+    "stock_profile_setting_matrix_attempted": false,
+    "Dolphin_executable_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+    "settings_file_sha256": "95d231a8d9ce93799e45965614e9e3f548fe14f04ada91d6c34593f059bd25a8",
+    "settings_unchanged": true,
+    "prior_file_count": 19,
+    "all_prior_SD_files_preserved": true,
+    "both_private_inputs_preserved": true,
+    "new_log_count": 1,
+    "numeric_report": [
+      "CACHE_ADDRESS SUMMARY cases=1916 checks=8437 failures=0 aborted=0 scope=synthetic_index_name_root_address_only source_mutation=none nested_tag_BSP_body_conversion=not_performed",
+      "CACHE_ARENA SUMMARY cases=1407 checks=2981 failures=0 aborted=0 scope=generic_budget_owner_and_synthetic_placements engine_capacity_reduced=0 system_fragmentation_measured=0",
+      "STREAM SYNTHETIC not_executed target=PPC reason=host_tmpfile_only",
+      "CACHE_BSP SUMMARY cases=75 checks=5432 failures=0 aborted=0 control_size=152 view_size=40 reference_size=48 header_size=24 descriptor_size=20 dynamic_projection_bytes=0 root=648 full_geometry=not_qualified",
+      "CACHE_SHA256 SUMMARY vectors=8 checks=42 failures=0 aborted=0 limit_bytes=23068672 authored_heap_released=1",
+      "CACHE_MATERIAL SUMMARY cases=64 checks=48752 failures=0 aborted=0 material=128 root=24 lightmap=20 control=80 view=56 lifetime=parent_first geometry=not_qualified",
+      "STREAM REQUEST tags=23068672 state=20971520 sound=4194304 max_index=2097120 io_each=65536 reserve=2097152 state_sound=canary_placeholders_not_engine_pools",
+      "MATERIAL REQUEST slots=12 workspace=8832 serialized=9416 BSP_control=152 material_control=80 retained_widget_workspace=1456 retained_widget_serial=2160 retained_widget=reservation_only_not_campaign_UI BSP_stage=0 whole_BSP_serial=0",
+      "STREAM ARENAS mem1_lo=0x8017a000 mem1_hi=0x81800000 mem1_bytes=23617536 mem2_lo=0x90002000 mem2_hi=0x933db7e0 mem2_bytes=54368224",
+      "STREAM HEAP before in_use=783272 arena=851616 free=68344",
+      "STREAM FRAGMENT controlled_intervals=3 guard_bytes=131072 aggregate_free=54237152 largest_free=18122720 requested=52582096 rejected=3 failures=0 scope=owned_intervals_not_system_heap",
+      "STREAM IO bytes=16995988 chunks=260 fread_calls=261 crc32=881c7b48",
+      "MATERIAL INPUT tag_sha256=8501f4ad215a630d14220140e27f8a9c30a5ed18fe459ac07c686e827a0ab7bc bsp_sha256=7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b direct_BSP_stream=1 gap_canary=preserved",
+      "BSP INPUT bytes=1288192 crc32=adf28ea7 chunks=20 fread_calls=21 slot_offset=21780480 rounded=1288192 unread_gap=4784492",
+      "MATERIAL VIEW lightmaps=2 materials=34 shader_identities=all_selected_validated environment_vertices=14788 lightmap_vertices=0 workspace=8832 serialized_bytes=9416 crc32=7f45c2f4 sha256=e58ffaeb6e7e82553d1d770a6e21e585d0246f3a0febb3dbba8ec3169e614022 control_bytes=80 view_bytes=56 scope=partial_metadata_no_geometry",
+      "BSP VIEW datum=efb50e3e root_offset=22254560 root_bytes=648 vertex_descriptors=34 index_descriptors=34 control_bytes=152 view_bytes=40 whole_BSP_serialization=0 gap_addressable=0 scope=partial_metadata_no_geometry",
+      "STREAM PLAN placement=0 base=0x90002000 data_end=50484944 reserve=2097152 required=52582096 arena_charge=52582096 remaining=1786128",
+      "STREAM PLAN placement=1 base=0x90003000 data_end=50484944 reserve=2097152 required=52582096 arena_charge=52586192 remaining=1782032",
+      "STREAM HEAP released in_use=783272 arena=851616 free=68344",
+      "STREAM ARENAS released mem2_lo=0x90002000 mem2_hi=0x933db7e0 mem2_bytes=54368224",
+      "MATERIAL SUMMARY parent_cycles=16 BSP_loads=16 BSP_parent_release_STATE=16 BSP_parent_rebind_STATE=15 child_loads=32 child_release_STATE=16 child_rebind_STATE=16 atomic_rejections=32 parent_release_STATE=16 parent_rebind_STATE=15 overwritten_rebind_STATE=15 lightmaps=2 materials=34 environment_vertices=14788 lightmap_vertices=0 serialized_bytes=9416 failures=0 geometry=not_qualified",
+      "STREAM SUMMARY cycles=16 tags=3647 max_charge=52586192 chunks=260 expected_errors=3 stale_rebind=15 stale_release=16 generation=32 failures=0"
+    ]
+  },
+  "limitations": [
+    "no_asset_bytes_names_or_private_paths_published",
+    "no_new_map_extraction_in_this_gate",
+    "selected_metadata_not_geometry_vertex_contents_triangle_bodies_shader_execution",
+    "encoded_addresses_not_relocated_cache_or_durable_save",
+    "CRC_SHA_byte_identity_not_canonical_Xbox_checksum",
+    "conservative_widget_reservation_not_campaign_UI_qualification",
+    "state_sound_placeholders_not_engine_pools",
+    "textures_callchain_stack_allocator_overhead_system_peak_unqualified",
+    "heap_inuse_and_arena_bounds_observations_not_complete_heap_state_restoration",
+    "old_ABI_and_shutdown_failures_remain_distinct",
+    "emulated_PPC_not_physical_Wii"
+  ]
+}
