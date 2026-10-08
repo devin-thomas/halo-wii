@@ -390,5 +390,102 @@
       "Method execution, live worker state and later successful shutdown in the fault run are unknown",
       "No emulator clone/fork/build/runtime/settings/SD/asset operation"
     ]
+  },
+  "bounded_global_lifecycle_crossreference": {
+    "phase1_record_sha256": "3619f29c919b4b537d82f53e3d639e1fcc2e1f24d3525c8ec3eebf2df5bdc09c",
+    "phase2_record_sha256": "a40d56f47876ba96a6d6b89012e06e40122c563002b03167507941b2bb6e03c0",
+    "helper_record_sha256": "f55c8f380991c4d957e72175dc91ac387d2e4378df8da364c8869a903a3da22e",
+    "phase_review_predicates": [
+      5,
+      9,
+      7
+    ],
+    "failed_predicates": 0,
+    "combined_distinct_unwind_fragments": 21,
+    "fragment_limit": 24,
+    "stock_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+    "object_base_rva": "0x01f50128",
+    "thread_record_offset": 24,
+    "thread_record_bytes": 16,
+    "compared_word_rva": "0x01f50148",
+    "compared_word_bytes": 4,
+    "direct_span_scan": {
+      "raw_candidates": 4,
+      "verified_references": 2,
+      "rejected_byte_candidates": 2,
+      "initializer_write_rva": "0x008d14b1",
+      "initializer_write_bytes": 16,
+      "fatal_compare_rva": "0x00f8e5b1"
+    },
+    "accessor_rva": "0x008d1450",
+    "verified_accessor_call_rvas": [
+      "0x008d1667",
+      "0x008d1790",
+      "0x008d1880",
+      "0x008d18a4"
+    ],
+    "phase2_candidates": {
+      "raw": 16,
+      "verified_accessor_calls": 4,
+      "verified_object_base_references": 5,
+      "decoded_outside_base": 5,
+      "unmapped_leaf_unqualified": 2
+    },
+    "reset_function_root_rva": "0x008d1860",
+    "reset_flag_exchange_rva": "0x008d18b1",
+    "reset_flag_offset": 16,
+    "reset_flag_bytes": 1,
+    "reset_word_test_rva": "0x008d18b4",
+    "helper_call_rva": "0x008d18c3",
+    "reset_retest_rva": "0x008d18c8",
+    "reset_span_clear_rva": "0x008d18d8",
+    "helper": {
+      "rva": "0x000acc90",
+      "end_rva": "0x000accfa",
+      "bytes": 106,
+      "instructions": 32,
+      "chained_fragments": 3,
+      "bounded_objdump_exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "exact_imports": [
+        {
+          "dll": "MSVCP140.dll",
+          "name": "_Thrd_id"
+        },
+        {
+          "dll": "MSVCP140.dll",
+          "name": "_Thrd_join"
+        },
+        {
+          "dll": "MSVCP140.dll",
+          "name": "?_Throw_Cpp_error@std@@YAXH@Z"
+        }
+      ],
+      "zero_id_rejected": true,
+      "self_id_rejected": true,
+      "argument_record_copy_bytes": 16,
+      "join_second_argument_zero": true,
+      "successful_join_clears_original_16_bytes": true,
+      "imported_function_bodies_followed": false
+    },
+    "source_owner_identified": false,
+    "creator_identified": false,
+    "all_writers_enumerated": false,
+    "actual_reset_or_join_execution_in_fault_run_known": false,
+    "shutdown_cause_proved": false,
+    "retained_audit_history": [
+      "First span classifier failed on a cross-instruction byte hit; final classification rejects it",
+      "Initial two-fragment helper bound stopped before interpretation; extended to its complete three-fragment/106-byte closure within combined bound",
+      "Initial helper review displayed-VA typo predicate failed; corrected call/branch RVAs derive from instruction bytes"
+    ],
+    "limits": [
+      "Byte displacement candidates require verified instruction boundaries; raw hits and unmapped leaf code remain unqualified",
+      "Base-relative and indirect writers can evade the direct scan; this is not a whole-program writer proof",
+      "Static import/control/argument relations qualify join mechanics, not executed shutdown or source ownership",
+      "No source/network/runtime/profile/SD/asset operation or ordinary callee recursion"
+    ]
   }
 }
