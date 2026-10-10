@@ -10,7 +10,10 @@ engine entry points the Wii build wraps (tools/wii/engine_build.py WRAPPED):
 - game_tick, game_frame and update_client_get_maximum_possible_server_time:
   the engine's own while no fixed-step scenario is armed; the scenario's
   tick, frame and scripted input source while one is
-  (fixed_step_scenario.h).
+  (fixed_step_scenario.h). After the engine's own game_tick, a real map's
+  run digests the game state (real_map_scenario.h, HWI-015B).
+- update_client_local_ticks: a real map's run hands its scripted input to
+  the update server before each tick's update is built.
 
 Compiled as an engine unit.
 */
@@ -25,6 +28,7 @@ Compiled as an engine unit.
 
 #include "engine_hooks.h"
 #include "fixed_step_scenario.h"
+#include "real_map_scenario.h"
 #include "wii_platform.h"
 
 /* the engine's (source/shell, source/main, source/cseries ...) */
@@ -38,6 +42,7 @@ void console_initialize(void);
 void game_initialize(void);
 void game_dispose(void);
 void real_math_dispose(void);
+void tag_files_open(void);
 void tag_files_close(void);
 void errors_dispose(void);
 void shell_platform_dispose(void);
@@ -45,15 +50,15 @@ void cseries_dispose(void);
 char *error_get(void);
 
 /* source/shell/shell.c shell_initialize, step by step, without
-tag_files_open and rasterizer_initialize, each reported unsupported.
-tag_files_open sets up the Xbox's hard-disk cache (six cache files on z:\,
-about 0.9 GB, into which maps are copied from the DVD), which the Wii build
-does not have; unmodified, it halts the engine ("setup for new cache file
-failed"), which the full-game mode shows. Wii maps are to be read from the
-derived cache on the SD card instead (HWI-016 with HWI-008), whose tags must
-first be converted to the PowerPC's byte order. rasterizer_initialize
-without a Direct3D device halts the engine too (below). */
+rasterizer_initialize, which is reported unsupported: without a Direct3D
+device it halts the engine (below). tag_files_open is the engine's: its
+cache layer on the Wii is cache_files_wii.c (HWI-015B), which reads maps
+staged on the SD card in the PowerPC's byte order, in place of the Xbox's
+hard-disk cache (six cache files on z:\, about 0.9 GB, which the
+unmodified layer fails to create on the card: the full-game mode shows
+it). */
 static boolean shell_initialized_steps;
+static boolean tag_files_opened;
 
 int wii_engine_shell_initialize(
 	void)
@@ -68,7 +73,8 @@ int wii_engine_shell_initialize(
 		return FALSE;
 	}
 	errors_initialize();
-	wii_unsupported("cache", "tag_files_open (Xbox hard-disk cache files on z:)");
+	tag_files_open();
+	tag_files_opened = TRUE;
 	real_math_initialize();
 	game_state_initialize();
 	/* rasterizer_initialize without a Direct3D device halts the engine
@@ -84,9 +90,15 @@ int wii_engine_shell_initialize(
 int wii_engine_game_initialize(
 	void)
 {
+	int allocated;
+
 	console_initialize();
+	/* the game state's allocations, for the real map's digests */
+	real_map_record_allocations(TRUE);
 	game_initialize();
-	return fixed_step_scenario_allocate();
+	allocated = fixed_step_scenario_allocate();
+	real_map_record_allocations(FALSE);
+	return allocated;
 }
 
 void wii_engine_shutdown(
@@ -98,6 +110,11 @@ void wii_engine_shutdown(
 	if (shell_initialized_steps)
 	{
 		real_math_dispose();
+		if (tag_files_opened)
+		{
+			tag_files_close();
+			tag_files_opened = FALSE;
+		}
 		errors_dispose();
 		shell_platform_dispose();
 		cseries_dispose();
@@ -175,9 +192,14 @@ void __wrap_game_tick(
 	void)
 {
 	if (fixed_step_scenario_armed())
+	{
 		fixed_step_scenario_tick();
+	}
 	else
+	{
 		__real_game_tick();
+		real_map_after_tick();
+	}
 }
 
 void __wrap_game_frame(
@@ -197,7 +219,11 @@ void __real_update_client_local_ticks(short ticks);
 void __wrap_update_client_local_ticks(
 	short ticks)
 {
-	if (!fixed_step_scenario_armed())
+	/* (a real map's run: its script is the local player's input, tick by
+	tick, real_map_scenario.c) */
+	if (real_map_armed())
+		real_map_local_ticks(ticks);
+	else if (!fixed_step_scenario_armed())
 		__real_update_client_local_ticks(ticks);
 }
 
@@ -229,6 +255,87 @@ void __wrap_rasterizer_decals_dispose(
 	void)
 {
 	wii_unsupported("render", "rasterizer_decals_dispose");
+}
+
+/* (per map, HWI-015B) its vertex cache's flush, which the decals' own
+unlocking (game state: their locked and permanent flags) comes first in;
+that half is kept */
+void decals_unlock(boolean permanent);
+
+void __wrap__rasterizer_decals_dispose_from_old_map(
+	void)
+{
+	wii_unsupported("render", "rasterizer_decals_dispose_from_old_map (vertex cache flush)");
+	decals_unlock(TRUE);
+}
+
+/* ---------- the texture cache (HWI-015B)
+
+The Xbox texture cache (source/cache/xbox_texture_cache.c) is made by
+rasterizer_initialize (texture_cache_new), which the Wii build does not run:
+it has no Direct3D device, and neither memory bank holds the Xbox texture
+cache beside the required reservations (ADR-015 record; HWI-032 owns texture
+residency). Opening and closing it with a map (scenario_tags_load,
+scenario_tags_unload) would use its data array, which does not exist: they
+are reported unsupported and do nothing. Bitmap pixels are not staged on the
+card either (cache_files_wii.c). */
+
+void __wrap_texture_cache_open(
+	void)
+{
+	wii_unsupported("render", "texture_cache_open (no texture cache: no rasterizer)");
+}
+
+void __wrap_texture_cache_close(
+	void)
+{
+	wii_unsupported("render", "texture_cache_close (no texture cache: no rasterizer)");
+}
+
+/* A bitmap's texture (texture_cache.h _texture_cache_bitmap_get_hardware_format,
+which loads it when asked): with no texture cache there is none, and the
+engine takes its own path for a texture not available. The draw paths draw
+nothing of it; a transient decal (decals.c decal_new_from_collision) is not
+made, so a shot leaves no mark in the game state's decals: a measured gap
+until the Wii has a texture cache (HWI-032). */
+struct bitmap_data;
+
+void *__wrap__texture_cache_bitmap_get_hardware_format(
+	struct bitmap_data *bitmap,
+	boolean block,
+	boolean load)
+{
+	wii_unsupported("render", "texture_cache_bitmap_get_hardware_format (no texture cache: none)");
+	return NULL;
+}
+
+/* The sound cache likewise (source/cache/xbox_sound_cache.c) is made by
+sound_initialize, which shell_initialize starts only after the rasterizer:
+the Wii build has no DirectSound either, and sound samples are not staged. */
+
+void __wrap_sound_cache_open(
+	void)
+{
+	wii_unsupported("dsound", "sound_cache_open (no sound cache: sound not started)");
+}
+
+void __wrap_sound_cache_close(
+	void)
+{
+	wii_unsupported("dsound", "sound_cache_close (no sound cache: sound not started)");
+}
+
+/* What objects predict they will draw and play (source/cache/
+predicted_resources.c, from the game's tick: a weapon readied, an object
+made) is precached into those two caches: it loads resources and changes no
+game state. With neither cache, it is reported unsupported and does nothing. */
+
+struct tag_block;
+
+void __wrap_predicted_resources_precache(
+	struct tag_block *predicted_resources)
+{
+	wii_unsupported("render", "predicted_resources_precache (no texture or sound cache)");
 }
 
 /* ---------- the AI's debug records

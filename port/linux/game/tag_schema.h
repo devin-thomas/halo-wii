@@ -313,6 +313,10 @@ boolean tag_validate_structure_bsp(
 	void *base,
 	long size);
 
+/* the name the validator gives a reference or tag without a valid one */
+char const *tag_validate_empty_name_address(
+	void);
+
 /* how many corrections the last validation made (none for a retail map) */
 long tag_validate_corrections(
 	void);

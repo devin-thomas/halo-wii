@@ -102,6 +102,11 @@ struct wii_thread_report
 	unsigned long created;
 	unsigned long fpscr_cleared;
 	uint32_t last_fpscr_before, last_fpscr_after;
+	/* threads whose routine returned, the stack they were given, and the
+	deepest any used (painted below the entry frame, HWI-015B) */
+	unsigned long measured;
+	unsigned long stack_bytes;
+	unsigned long stack_peak;
 };
 
 void wii_thread_report_get(struct wii_thread_report *report);

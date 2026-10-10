@@ -1,0 +1,3010 @@
+{
+ "ticket": "HWI-015B",
+ "build": {
+  "source_commit": "8e66aafa069fa7c1047ec4bc8f736e4c10e249d9",
+  "source_dirty": false,
+  "build_id": "4f7a46b3524d52e6",
+  "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+  "binutils": "GNU ld (GNU Binutils) 2.46.0.20260210",
+  "artifacts": {
+   "engine.elf": {
+    "sha256": "f5121e99840c83c3a6b70639167897c32656192c0f440c176e8b5bcb5c4ffc88",
+    "bytes": 37102376
+   },
+   "engine.dol": {
+    "sha256": "e7136537bd51353830132e3d2fe2931eb2fe0e0eb7e519af75e4e93bbe260d15",
+    "bytes": 4054496
+   },
+   "engine.map": {
+    "sha256": "e19325d2d27ed3cd9ae31800b104539eb29452a99690ed5fe79dd119028e2d68",
+    "bytes": 8966856
+   }
+  },
+  "engine_diagnostic_storage": "omit"
+ },
+ "image": {
+  "image_start": "0x80003f00",
+  "image_end": "0x8144c640",
+  "image_bytes": 21268288,
+  "mem1_after_image": 3881408,
+  "bytes_by_kind": {
+   "bss": 17212778,
+   "code": 3177512,
+   "data": 186806,
+   "rodata": 689350
+  }
+ },
+ "stage": {
+  "format": "HWIMAP01",
+  "format_version": 1,
+  "map": {
+   "name": "prisoner",
+   "build": "01.10.12.2276",
+   "category": "multiplayer",
+   "declared_bytes": 43974656,
+   "tag_bytes": 7034316,
+   "tags": 1685,
+   "bsps": [
+    {
+     "bytes": 884736,
+     "slot_offset": 22183936
+    }
+   ]
+  },
+  "walk": [
+   "GRAPH tags=1685 scenario=0 roots=1683 roots_without_schema=2 bsp=1 blocks=9102 nonempty=5381 elements=84607 structs=1378 data=3258/2532493 file_data=930/13309776",
+   "GRAPH references=9170 none=4071 resolved=5099 names=5099/4071 tag_indices=833 none=0 resolved=833 block_indices=93003 enums=21753 strings=4823 resets=7277 checks=3238 buffers=802 corrections=0",
+   "GRAPH supplementary=1605 supplementary_none=480 claimed=5047273 pointer_fields=16934 null_fields=23669 depth=5 edges=5932 reachable=1072 residual=8328 residual_claimed_aligned=674 residual_claimed_unaligned=554 residual_unclaimed=7100 digest=952866fa edge_digest=eaf1110c"
+  ],
+  "elements": 84607,
+  "data_fields": 1152,
+  "model_indices": 130456,
+  "data_rules": {
+   "animation.0:rule_words32": 123,
+   "animation.1:rule_animation_default": 345,
+   "animation.2:rule_animation_data": 342,
+   "font.0:rule_bytes": 4,
+   "hud_message_text.0:rule_words16": 1,
+   "scenario.0:rule_syntax_data": 1,
+   "scenario.1:rule_bytes": 1,
+   "sound_permutation.0:rule_bytes": 59,
+   "string_list_entry.0:rule_bytes": 15,
+   "structure_bsp.0:rule_words32": 1,
+   "structure_material.1:rule_material_compressed": 79,
+   "unicode_string_list_entry.0:rule_words16": 181
+  },
+  "relocations": 16934,
+  "nulled": 23669,
+  "planned_bytes": {
+   "bsp_header": 24,
+   "buffers": 9624,
+   "data_animation": 1619084,
+   "data_bsp_vertices": 368288,
+   "data_bytes": 120329,
+   "data_script": 380076,
+   "data_text16": 10936,
+   "data_words32": 33780,
+   "elements": 2451176,
+   "header": 36,
+   "model_indices": 260912,
+   "tag_table": 53920
+  },
+  "swap_runs": 396782,
+  "unplanned_loaded_bytes": 2610867,
+  "byte_multisets_equal": true,
+  "unconverted_groups": {
+   "metr": 2
+  },
+  "outputs": {
+   "be": {
+    "bytes": 7988952,
+    "sha256": "017dea1f6b632a901b63421a38b16faec40f8e88666708066454260c2f5af2a7"
+   },
+   "le": {
+    "bytes": 7988952,
+    "sha256": "a22e1580d63070ede43eaab585875803e40bceb9cfd75ee0361a75f8327f9b1f"
+   }
+  },
+  "seconds": 2.8
+ },
+ "titan": {
+  "runtime": {
+   "host": {
+    "os": "Windows",
+    "version": "10.0.26200",
+    "machine": "AMD64",
+    "python": "3.14.0"
+   },
+   "batch": {
+    "os_stability": {
+     "observation": "no_instability_events_observed",
+     "instability_events": [],
+     "system_events_matched": [],
+     "dolphin_application_events": [],
+     "last_boot_utc": "2026-10-08T13:53:48.5000000Z",
+     "limits": "Event-log query over the batch window only; absence of events is not a guarantee of stability.",
+     "window_utc": [
+      "2026-10-10T20:52:18+00:00",
+      "2026-10-10T20:55:48+00:00"
+     ]
+    },
+    "physical_wii": "untested"
+   },
+   "launches": [
+    {
+     "number": 1,
+     "cold_process": true,
+     "exit_code": "0x00000000",
+     "forced_stop": false,
+     "elapsed_seconds": 99.701,
+     "outcome": "exit_zero",
+     "persistence": "passed",
+     "dolphin_processes_after": 0
+    },
+    {
+     "number": 2,
+     "cold_process": true,
+     "exit_code": "0x00000000",
+     "forced_stop": false,
+     "elapsed_seconds": 99.468,
+     "outcome": "exit_zero",
+     "persistence": "passed",
+     "dolphin_processes_after": 0
+    }
+   ]
+  },
+  "launches": [
+   {
+    "begin": {
+     "target": "engine",
+     "build": "4f7a46b3524d52e6",
+     "previous_runs": "0",
+     "ios": "58.6176"
+    },
+    "fpscr": {
+     "entry": "00000004",
+     "engine": "00000000",
+     "ieee": "1"
+    },
+    "persist": {
+     "previous_result": "0",
+     "digest": "00000000",
+     "chain": "00000000"
+    },
+    "arena_open": {
+     "offset": "0",
+     "low": "0x90002000",
+     "high_before": "0x933db7e0",
+     "high_during": "0x904db000",
+     "required": "51380224",
+     "spare": "2985984",
+     "state": "0x904db000+20971520",
+     "tags": "0x918db000+23068672",
+     "sound": "0x92edb000+4194304",
+     "general": "0x932db000+1048576"
+    },
+    "memory": [
+     "MAP image bss=0x803e22f0..0x8144c640 sbss=0x803e1be0 arena1_link=0x8144c640..0x81800000 arena2_link=0x90002000..0x933e0000",
+     "MAP entry arena1=0x8145c640..0x81800000 bytes=3815872 arena2=0x90002000..0x933e0000 bytes=54386688 heap_in_use=0 main_sp=0x81392758 main_stack=131072",
+     "MAP gx fifo=0x8147d800 xfb0=0x814bd820 xfb1=0x81553840 xfb_bytes_each=614400 arena1_after_gx=0x81617000..0x81800000 bytes=2002944 heap_in_use=1795392",
+     "MAP after_engine_start arena1_lo=0x8171f000 arena2_lo=0x90002000"
+    ],
+    "platform": {
+     "failures": "0"
+    },
+    "stages": [
+     "STAGE shell_initialize begin",
+     "STAGE shell_initialize result=0 (0 expected: rasterizer unsupported)",
+     "STAGE game_initialize begin",
+     "STAGE game_initialize result=1 game_state_used=17986420 heap_in_use=2880840 (before 1863136) unsupported=5",
+     "STAGE diagnostic_storage ai_debug_records=0 profile_frame_history=0 ai_debug_bytes=2376 actor_debug_records=one_shared path_debug_storage=none ai_debug_initialized=1 selected_squad=-1 selected_actor=-1 result=pass",
+     "STAGE engine_report error_buffer_has_warning=1 (d:\\debug.txt is read back by the host)"
+    ],
+    "fixed_step": {
+     "cadence": "30hz",
+     "ticks": "300",
+     "digest": "c1ad6ae6",
+     "chain": "58ce9719",
+     "expected": "c1ad6ae6/58ce9719",
+     "pass": "1"
+    },
+    "warmup": {
+     "ran": "1"
+    },
+    "loads": {
+     "count": 18,
+     "all_loaded": true,
+     "bytes": [
+      "7919052"
+     ],
+     "relocations": [
+      "16934"
+     ],
+     "segments": [
+      "2"
+     ],
+     "unstaged_reads": [
+      "0"
+     ],
+     "ms": [
+      327,
+      324,
+      324,
+      324,
+      324,
+      328,
+      324,
+      324,
+      324,
+      326,
+      324,
+      324,
+      326,
+      324,
+      326,
+      324,
+      324,
+      324
+     ]
+    },
+    "runs": [
+     {
+      "cycle": "-1",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3441"
+     },
+     {
+      "cycle": "0",
+      "cadence": "60hz",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "7e21eb42",
+      "chain": "303df087",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3630"
+     },
+     {
+      "cycle": "0",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3438"
+     },
+     {
+      "cycle": "0",
+      "cadence": "20hz",
+      "ticks": "300",
+      "frames": "201",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "2",
+      "digest": "4f76eecc",
+      "chain": "b6c9e268",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3416"
+     },
+     {
+      "cycle": "0",
+      "cadence": "144hz",
+      "ticks": "300",
+      "frames": "1441",
+      "frames_without_ticks": "1141",
+      "most_ticks_in_a_frame": "1",
+      "digest": "7ad5b4af",
+      "chain": "e12c6426",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "4159"
+     },
+     {
+      "cycle": "0",
+      "cadence": "irregular",
+      "ticks": "300",
+      "frames": "224",
+      "frames_without_ticks": "28",
+      "most_ticks_in_a_frame": "7",
+      "digest": "764fb1e8",
+      "chain": "1d478fb8",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3445"
+     },
+     {
+      "cycle": "0",
+      "cadence": "vsync_measured",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "d7c12717",
+      "chain": "0444fdc3",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "10156"
+     },
+     {
+      "cycle": "1",
+      "cadence": "60hz",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "f4273eee",
+      "chain": "87c5b671",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3622"
+     },
+     {
+      "cycle": "1",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3438"
+     },
+     {
+      "cycle": "1",
+      "cadence": "20hz",
+      "ticks": "300",
+      "frames": "201",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "2",
+      "digest": "75891c0e",
+      "chain": "8950bdae",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3439"
+     },
+     {
+      "cycle": "1",
+      "cadence": "144hz",
+      "ticks": "300",
+      "frames": "1441",
+      "frames_without_ticks": "1141",
+      "most_ticks_in_a_frame": "1",
+      "digest": "ae8763ea",
+      "chain": "4475722d",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "4159"
+     },
+     {
+      "cycle": "1",
+      "cadence": "irregular",
+      "ticks": "300",
+      "frames": "224",
+      "frames_without_ticks": "28",
+      "most_ticks_in_a_frame": "7",
+      "digest": "9ec7a9ce",
+      "chain": "6c75c675",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3440"
+     },
+     {
+      "cycle": "1",
+      "cadence": "vsync_measured",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "3850a6fa",
+      "chain": "09d48d50",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "10156"
+     },
+     {
+      "cycle": "2",
+      "cadence": "60hz",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "f4273eee",
+      "chain": "87c5b671",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3622"
+     },
+     {
+      "cycle": "2",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3438"
+     },
+     {
+      "cycle": "2",
+      "cadence": "20hz",
+      "ticks": "300",
+      "frames": "201",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "2",
+      "digest": "75891c0e",
+      "chain": "8950bdae",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3439"
+     },
+     {
+      "cycle": "2",
+      "cadence": "144hz",
+      "ticks": "300",
+      "frames": "1441",
+      "frames_without_ticks": "1141",
+      "most_ticks_in_a_frame": "1",
+      "digest": "8d344f3c",
+      "chain": "36883ded",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "4073"
+     },
+     {
+      "cycle": "2",
+      "cadence": "irregular",
+      "ticks": "300",
+      "frames": "224",
+      "frames_without_ticks": "28",
+      "most_ticks_in_a_frame": "7",
+      "digest": "0ee0c8af",
+      "chain": "8f86878f",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3432"
+     },
+     {
+      "cycle": "2",
+      "cadence": "vsync_measured",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "aac8499f",
+      "chain": "67cf2b92",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "10156"
+     }
+    ],
+    "run_same": [
+     {
+      "cycle": "0",
+      "cadence": "60hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "30hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "20hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "144hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "irregular",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "vsync_measured",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "1",
+      "cadence": "60hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "30hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "1",
+      "cadence": "20hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "144hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "irregular",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "vsync_measured",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "60hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "30hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "2",
+      "cadence": "20hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "144hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "irregular",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "vsync_measured",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     }
+    ],
+    "cycles": [
+     {
+      "heap_in_use": "2500912",
+      "unsupported_names": "17",
+      "unsupported_calls": "17441"
+     },
+     {
+      "heap_in_use": "2500912",
+      "unsupported_names": "17",
+      "unsupported_calls": "32096"
+     },
+     {
+      "heap_in_use": "2500912",
+      "unsupported_names": "17",
+      "unsupported_calls": "46751"
+     }
+    ],
+    "map_runs": {
+     "runs": "18",
+     "simulation_identical": "1",
+     "whole_identical_per_cadence": "0",
+     "heap_flat": "1",
+     "digest": "7e21eb42",
+     "chain": "303df087",
+     "sim": "127656ef",
+     "sim_chain": "73904c7f",
+     "tags_start": "00c29f29",
+     "spawn_tick": "1"
+    },
+    "map_times": {
+     "load_ms": "327",
+     "run_ms": "3630"
+    },
+    "arena_close": {
+     "restored": "1",
+     "high_after": "0x933db7e0",
+     "high_before": "0x933db7e0",
+     "low_before": "0x90002000",
+     "low_after": "0x90002000",
+     "general_peak": "65536",
+     "failed_allocations": "0",
+     "heap_in_use": "2125952"
+    },
+    "threads": {
+     "created": "1",
+     "fpscr_cleared": "1",
+     "measured": "1",
+     "stack_bytes": "65536",
+     "stack_peak": "256"
+    },
+    "stack": {
+     "entry_sp": "0x81392758",
+     "painted": "114688",
+     "peak_below_entry": "97920",
+     "window_exhausted": "0"
+    },
+    "unsupported": [
+     "render:rasterizer_initialize (no Direct3D 8 device; halts the engine)",
+     "render:rasterizer_decals_initialize",
+     "network:XNetGetEthernetLinkStatus",
+     "network:XNetStartup",
+     "bink:RADSetMemory",
+     "render:halo_interpolation_enabled",
+     "render:texture_cache_open (no texture cache: no rasterizer)",
+     "dsound:sound_cache_open (no sound cache: sound not started)",
+     "d3d8:D3DResource_Register",
+     "menus:halo_menus_load",
+     "hires_assets:hud_hires_asset_count",
+     "render:predicted_resources_precache (no texture or sound cache)",
+     "render:texture_cache_bitmap_get_hardware_format (no texture cache: none)",
+     "render:rasterizer_decals_dispose_from_old_map (vertex cache flush)",
+     "dsound:sound_cache_close (no sound cache: sound not started)",
+     "render:texture_cache_close (no texture cache: no rasterizer)",
+     "d3d8:D3DResource_BlockUntilNotBusy",
+     "render:rasterizer_decals_dispose"
+    ],
+    "partial": [
+     "PARTIAL memory VirtualProtect: protection is recorded, not enforced (no MMU mapping)"
+    ],
+    "end": {
+     "target": "engine",
+     "build": "4f7a46b3524d52e6",
+     "cycles": "3",
+     "cadences": "6",
+     "failures": "0",
+     "elapsed_ms": "96118",
+     "result": "pass"
+    },
+    "halt": "HALT stage=halt_check expected=1",
+    "exit": "EXIT via halt elapsed_ms=96122"
+   },
+   {
+    "begin": {
+     "target": "engine",
+     "build": "4f7a46b3524d52e6",
+     "previous_runs": "1",
+     "ios": "58.6176"
+    },
+    "fpscr": {
+     "entry": "00000004",
+     "engine": "00000000",
+     "ieee": "1"
+    },
+    "persist": {
+     "previous_result": "1",
+     "digest": "127656ef",
+     "chain": "73904c7f"
+    },
+    "arena_open": {
+     "offset": "4096",
+     "low": "0x90002000",
+     "high_before": "0x933db7e0",
+     "high_during": "0x904da000",
+     "required": "51380224",
+     "spare": "2981888",
+     "state": "0x904da000+20971520",
+     "tags": "0x918da000+23068672",
+     "sound": "0x92eda000+4194304",
+     "general": "0x932da000+1048576"
+    },
+    "memory": [
+     "MAP image bss=0x803e22f0..0x8144c640 sbss=0x803e1be0 arena1_link=0x8144c640..0x81800000 arena2_link=0x90002000..0x933e0000",
+     "MAP entry arena1=0x8145c640..0x81800000 bytes=3815872 arena2=0x90002000..0x933e0000 bytes=54386688 heap_in_use=0 main_sp=0x81392758 main_stack=131072",
+     "MAP gx fifo=0x8147d800 xfb0=0x814bd820 xfb1=0x81553840 xfb_bytes_each=614400 arena1_after_gx=0x81617000..0x81800000 bytes=2002944 heap_in_use=1795392",
+     "MAP after_engine_start arena1_lo=0x81720000 arena2_lo=0x90002000"
+    ],
+    "platform": {
+     "failures": "0"
+    },
+    "stages": [
+     "STAGE shell_initialize begin",
+     "STAGE shell_initialize result=0 (0 expected: rasterizer unsupported)",
+     "STAGE game_initialize begin",
+     "STAGE game_initialize result=1 game_state_used=17986420 heap_in_use=2880880 (before 1863168) unsupported=5",
+     "STAGE diagnostic_storage ai_debug_records=0 profile_frame_history=0 ai_debug_bytes=2376 actor_debug_records=one_shared path_debug_storage=none ai_debug_initialized=1 selected_squad=-1 selected_actor=-1 result=pass",
+     "STAGE engine_report error_buffer_has_warning=1 (d:\\debug.txt is read back by the host)"
+    ],
+    "fixed_step": {
+     "cadence": "30hz",
+     "ticks": "300",
+     "digest": "c1ad6ae6",
+     "chain": "58ce9719",
+     "expected": "c1ad6ae6/58ce9719",
+     "pass": "1"
+    },
+    "warmup": {
+     "ran": "1"
+    },
+    "loads": {
+     "count": 18,
+     "all_loaded": true,
+     "bytes": [
+      "7919052"
+     ],
+     "relocations": [
+      "16934"
+     ],
+     "segments": [
+      "2"
+     ],
+     "unstaged_reads": [
+      "0"
+     ],
+     "ms": [
+      323,
+      325,
+      323,
+      323,
+      323,
+      323,
+      323,
+      323,
+      323,
+      323,
+      323,
+      325,
+      323,
+      323,
+      323,
+      323,
+      323,
+      323
+     ]
+    },
+    "runs": [
+     {
+      "cycle": "-1",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3439"
+     },
+     {
+      "cycle": "0",
+      "cadence": "60hz",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "7e21eb42",
+      "chain": "303df087",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3630"
+     },
+     {
+      "cycle": "0",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3438"
+     },
+     {
+      "cycle": "0",
+      "cadence": "20hz",
+      "ticks": "300",
+      "frames": "201",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "2",
+      "digest": "4f76eecc",
+      "chain": "b6c9e268",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3416"
+     },
+     {
+      "cycle": "0",
+      "cadence": "144hz",
+      "ticks": "300",
+      "frames": "1441",
+      "frames_without_ticks": "1141",
+      "most_ticks_in_a_frame": "1",
+      "digest": "7ad5b4af",
+      "chain": "e12c6426",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "4159"
+     },
+     {
+      "cycle": "0",
+      "cadence": "irregular",
+      "ticks": "300",
+      "frames": "224",
+      "frames_without_ticks": "28",
+      "most_ticks_in_a_frame": "7",
+      "digest": "764fb1e8",
+      "chain": "1d478fb8",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3445"
+     },
+     {
+      "cycle": "0",
+      "cadence": "vsync_measured",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "d7c12717",
+      "chain": "0444fdc3",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "10156"
+     },
+     {
+      "cycle": "1",
+      "cadence": "60hz",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "f4273eee",
+      "chain": "87c5b671",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3622"
+     },
+     {
+      "cycle": "1",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3438"
+     },
+     {
+      "cycle": "1",
+      "cadence": "20hz",
+      "ticks": "300",
+      "frames": "201",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "2",
+      "digest": "75891c0e",
+      "chain": "8950bdae",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3439"
+     },
+     {
+      "cycle": "1",
+      "cadence": "144hz",
+      "ticks": "300",
+      "frames": "1441",
+      "frames_without_ticks": "1141",
+      "most_ticks_in_a_frame": "1",
+      "digest": "ae8763ea",
+      "chain": "4475722d",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "4159"
+     },
+     {
+      "cycle": "1",
+      "cadence": "irregular",
+      "ticks": "300",
+      "frames": "224",
+      "frames_without_ticks": "28",
+      "most_ticks_in_a_frame": "7",
+      "digest": "9ec7a9ce",
+      "chain": "6c75c675",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3440"
+     },
+     {
+      "cycle": "1",
+      "cadence": "vsync_measured",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "3850a6fa",
+      "chain": "09d48d50",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "10156"
+     },
+     {
+      "cycle": "2",
+      "cadence": "60hz",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "f4273eee",
+      "chain": "87c5b671",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3622"
+     },
+     {
+      "cycle": "2",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3438"
+     },
+     {
+      "cycle": "2",
+      "cadence": "20hz",
+      "ticks": "300",
+      "frames": "201",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "2",
+      "digest": "75891c0e",
+      "chain": "8950bdae",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3439"
+     },
+     {
+      "cycle": "2",
+      "cadence": "144hz",
+      "ticks": "300",
+      "frames": "1441",
+      "frames_without_ticks": "1141",
+      "most_ticks_in_a_frame": "1",
+      "digest": "8d344f3c",
+      "chain": "36883ded",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "4073"
+     },
+     {
+      "cycle": "2",
+      "cadence": "irregular",
+      "ticks": "300",
+      "frames": "224",
+      "frames_without_ticks": "28",
+      "most_ticks_in_a_frame": "7",
+      "digest": "0ee0c8af",
+      "chain": "8f86878f",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3432"
+     },
+     {
+      "cycle": "2",
+      "cadence": "vsync_measured",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "aac8499f",
+      "chain": "67cf2b92",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "10156"
+     }
+    ],
+    "run_same": [
+     {
+      "cycle": "0",
+      "cadence": "60hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "30hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "20hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "144hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "irregular",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "vsync_measured",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "1",
+      "cadence": "60hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "30hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "1",
+      "cadence": "20hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "144hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "irregular",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "vsync_measured",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "60hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "30hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "2",
+      "cadence": "20hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "144hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "irregular",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "vsync_measured",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     }
+    ],
+    "cycles": [
+     {
+      "heap_in_use": "2500944",
+      "unsupported_names": "17",
+      "unsupported_calls": "17441"
+     },
+     {
+      "heap_in_use": "2500944",
+      "unsupported_names": "17",
+      "unsupported_calls": "32096"
+     },
+     {
+      "heap_in_use": "2500944",
+      "unsupported_names": "17",
+      "unsupported_calls": "46751"
+     }
+    ],
+    "map_runs": {
+     "runs": "18",
+     "simulation_identical": "1",
+     "whole_identical_per_cadence": "0",
+     "heap_flat": "1",
+     "digest": "7e21eb42",
+     "chain": "303df087",
+     "sim": "127656ef",
+     "sim_chain": "73904c7f",
+     "tags_start": "2469014f",
+     "spawn_tick": "1"
+    },
+    "map_times": {
+     "load_ms": "323",
+     "run_ms": "3630"
+    },
+    "arena_close": {
+     "restored": "1",
+     "high_after": "0x933db7e0",
+     "high_before": "0x933db7e0",
+     "low_before": "0x90002000",
+     "low_after": "0x90002000",
+     "general_peak": "65536",
+     "failed_allocations": "0",
+     "heap_in_use": "2125976"
+    },
+    "threads": {
+     "created": "1",
+     "fpscr_cleared": "1",
+     "measured": "1",
+     "stack_bytes": "65536",
+     "stack_peak": "256"
+    },
+    "stack": {
+     "entry_sp": "0x81392758",
+     "painted": "114688",
+     "peak_below_entry": "97920",
+     "window_exhausted": "0"
+    },
+    "unsupported": [
+     "render:rasterizer_initialize (no Direct3D 8 device; halts the engine)",
+     "render:rasterizer_decals_initialize",
+     "network:XNetGetEthernetLinkStatus",
+     "network:XNetStartup",
+     "bink:RADSetMemory",
+     "render:halo_interpolation_enabled",
+     "render:texture_cache_open (no texture cache: no rasterizer)",
+     "dsound:sound_cache_open (no sound cache: sound not started)",
+     "d3d8:D3DResource_Register",
+     "menus:halo_menus_load",
+     "hires_assets:hud_hires_asset_count",
+     "render:predicted_resources_precache (no texture or sound cache)",
+     "render:texture_cache_bitmap_get_hardware_format (no texture cache: none)",
+     "render:rasterizer_decals_dispose_from_old_map (vertex cache flush)",
+     "dsound:sound_cache_close (no sound cache: sound not started)",
+     "render:texture_cache_close (no texture cache: no rasterizer)",
+     "d3d8:D3DResource_BlockUntilNotBusy",
+     "render:rasterizer_decals_dispose"
+    ],
+    "partial": [
+     "PARTIAL memory VirtualProtect: protection is recorded, not enforced (no MMU mapping)"
+    ],
+    "end": {
+     "target": "engine",
+     "build": "4f7a46b3524d52e6",
+     "cycles": "3",
+     "cadences": "6",
+     "failures": "0",
+     "elapsed_ms": "96050",
+     "result": "pass"
+    },
+    "halt": "HALT stage=halt_check expected=1",
+    "exit": "EXIT via halt elapsed_ms=96054"
+   }
+  ]
+ },
+ "research": {
+  "runtime": {
+   "host": {
+    "os": "macOS",
+    "version": "27.0",
+    "machine": "arm64",
+    "python": "3.12.15"
+   },
+   "batch": {
+    "os_stability": {
+     "observation": "no_instability_events_observed",
+     "source": "macos",
+     "instability_events": [],
+     "kernel_log_matched": [],
+     "dolphin_application_events": [],
+     "dolphin_application_event_count": 0,
+     "last_boot_utc": "2026-10-10T00:33:25+00:00",
+     "limits": "Read-only, batch window only: kern.boottime; names and modification times of files in the system and user DiagnosticReports folders (only their kind is kept); `log show` over the window for kernel panic/GPU-restart/watchdog messages, ReportCrash naming Dolphin and fault-level Dolphin messages. A kernel panic restarts the host and ends this runner, so it would appear as a later boot time or panic report, not in this record. Absence of events is not a guarantee of stability.",
+     "report_folders_unreadable": [],
+     "window_utc": [
+      "2026-10-10T20:52:17+00:00",
+      "2026-10-10T20:55:41+00:00"
+     ]
+    },
+    "physical_wii": "untested"
+   },
+   "launches": [
+    {
+     "number": 1,
+     "cold_process": true,
+     "exit_code": "0x00000000",
+     "forced_stop": false,
+     "elapsed_seconds": 97.095,
+     "outcome": "exit_zero",
+     "persistence": "passed",
+     "dolphin_processes_after": 0
+    },
+    {
+     "number": 2,
+     "cold_process": true,
+     "exit_code": "0x00000000",
+     "forced_stop": false,
+     "elapsed_seconds": 96.829,
+     "outcome": "exit_zero",
+     "persistence": "passed",
+     "dolphin_processes_after": 0
+    }
+   ]
+  },
+  "launches": [
+   {
+    "begin": {
+     "target": "engine",
+     "build": "4f7a46b3524d52e6",
+     "previous_runs": "0",
+     "ios": "58.6176"
+    },
+    "fpscr": {
+     "entry": "00000004",
+     "engine": "00000000",
+     "ieee": "1"
+    },
+    "persist": {
+     "previous_result": "0",
+     "digest": "00000000",
+     "chain": "00000000"
+    },
+    "arena_open": {
+     "offset": "0",
+     "low": "0x90002000",
+     "high_before": "0x933db7e0",
+     "high_during": "0x904db000",
+     "required": "51380224",
+     "spare": "2985984",
+     "state": "0x904db000+20971520",
+     "tags": "0x918db000+23068672",
+     "sound": "0x92edb000+4194304",
+     "general": "0x932db000+1048576"
+    },
+    "memory": [
+     "MAP image bss=0x803e22f0..0x8144c640 sbss=0x803e1be0 arena1_link=0x8144c640..0x81800000 arena2_link=0x90002000..0x933e0000",
+     "MAP entry arena1=0x8145c640..0x81800000 bytes=3815872 arena2=0x90002000..0x933e0000 bytes=54386688 heap_in_use=0 main_sp=0x81392758 main_stack=131072",
+     "MAP gx fifo=0x8147d800 xfb0=0x814bd820 xfb1=0x81553840 xfb_bytes_each=614400 arena1_after_gx=0x81617000..0x81800000 bytes=2002944 heap_in_use=1795392",
+     "MAP after_engine_start arena1_lo=0x8171f000 arena2_lo=0x90002000"
+    ],
+    "platform": {
+     "failures": "0"
+    },
+    "stages": [
+     "STAGE shell_initialize begin",
+     "STAGE shell_initialize result=0 (0 expected: rasterizer unsupported)",
+     "STAGE game_initialize begin",
+     "STAGE game_initialize result=1 game_state_used=17986420 heap_in_use=2880840 (before 1863136) unsupported=5",
+     "STAGE diagnostic_storage ai_debug_records=0 profile_frame_history=0 ai_debug_bytes=2376 actor_debug_records=one_shared path_debug_storage=none ai_debug_initialized=1 selected_squad=-1 selected_actor=-1 result=pass",
+     "STAGE engine_report error_buffer_has_warning=1 (d:\\debug.txt is read back by the host)"
+    ],
+    "fixed_step": {
+     "cadence": "30hz",
+     "ticks": "300",
+     "digest": "c1ad6ae6",
+     "chain": "58ce9719",
+     "expected": "c1ad6ae6/58ce9719",
+     "pass": "1"
+    },
+    "warmup": {
+     "ran": "1"
+    },
+    "loads": {
+     "count": 18,
+     "all_loaded": true,
+     "bytes": [
+      "7919052"
+     ],
+     "relocations": [
+      "16934"
+     ],
+     "segments": [
+      "2"
+     ],
+     "unstaged_reads": [
+      "0"
+     ],
+     "ms": [
+      327,
+      324,
+      324,
+      324,
+      324,
+      328,
+      324,
+      324,
+      324,
+      326,
+      324,
+      324,
+      326,
+      324,
+      326,
+      324,
+      324,
+      324
+     ]
+    },
+    "runs": [
+     {
+      "cycle": "-1",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3441"
+     },
+     {
+      "cycle": "0",
+      "cadence": "60hz",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "7e21eb42",
+      "chain": "303df087",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3630"
+     },
+     {
+      "cycle": "0",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3438"
+     },
+     {
+      "cycle": "0",
+      "cadence": "20hz",
+      "ticks": "300",
+      "frames": "201",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "2",
+      "digest": "4f76eecc",
+      "chain": "b6c9e268",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3416"
+     },
+     {
+      "cycle": "0",
+      "cadence": "144hz",
+      "ticks": "300",
+      "frames": "1441",
+      "frames_without_ticks": "1141",
+      "most_ticks_in_a_frame": "1",
+      "digest": "7ad5b4af",
+      "chain": "e12c6426",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "4159"
+     },
+     {
+      "cycle": "0",
+      "cadence": "irregular",
+      "ticks": "300",
+      "frames": "224",
+      "frames_without_ticks": "28",
+      "most_ticks_in_a_frame": "7",
+      "digest": "764fb1e8",
+      "chain": "1d478fb8",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3445"
+     },
+     {
+      "cycle": "0",
+      "cadence": "vsync_measured",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "d7c12717",
+      "chain": "0444fdc3",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "10156"
+     },
+     {
+      "cycle": "1",
+      "cadence": "60hz",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "f4273eee",
+      "chain": "87c5b671",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3622"
+     },
+     {
+      "cycle": "1",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3438"
+     },
+     {
+      "cycle": "1",
+      "cadence": "20hz",
+      "ticks": "300",
+      "frames": "201",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "2",
+      "digest": "75891c0e",
+      "chain": "8950bdae",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3439"
+     },
+     {
+      "cycle": "1",
+      "cadence": "144hz",
+      "ticks": "300",
+      "frames": "1441",
+      "frames_without_ticks": "1141",
+      "most_ticks_in_a_frame": "1",
+      "digest": "ae8763ea",
+      "chain": "4475722d",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "4159"
+     },
+     {
+      "cycle": "1",
+      "cadence": "irregular",
+      "ticks": "300",
+      "frames": "224",
+      "frames_without_ticks": "28",
+      "most_ticks_in_a_frame": "7",
+      "digest": "9ec7a9ce",
+      "chain": "6c75c675",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3440"
+     },
+     {
+      "cycle": "1",
+      "cadence": "vsync_measured",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "3850a6fa",
+      "chain": "09d48d50",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "10156"
+     },
+     {
+      "cycle": "2",
+      "cadence": "60hz",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "f4273eee",
+      "chain": "87c5b671",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3622"
+     },
+     {
+      "cycle": "2",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3438"
+     },
+     {
+      "cycle": "2",
+      "cadence": "20hz",
+      "ticks": "300",
+      "frames": "201",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "2",
+      "digest": "75891c0e",
+      "chain": "8950bdae",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3439"
+     },
+     {
+      "cycle": "2",
+      "cadence": "144hz",
+      "ticks": "300",
+      "frames": "1441",
+      "frames_without_ticks": "1141",
+      "most_ticks_in_a_frame": "1",
+      "digest": "8d344f3c",
+      "chain": "36883ded",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "4073"
+     },
+     {
+      "cycle": "2",
+      "cadence": "irregular",
+      "ticks": "300",
+      "frames": "224",
+      "frames_without_ticks": "28",
+      "most_ticks_in_a_frame": "7",
+      "digest": "0ee0c8af",
+      "chain": "8f86878f",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "3432"
+     },
+     {
+      "cycle": "2",
+      "cadence": "vsync_measured",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "aac8499f",
+      "chain": "67cf2b92",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "00c29f29",
+      "ms": "10156"
+     }
+    ],
+    "run_same": [
+     {
+      "cycle": "0",
+      "cadence": "60hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "30hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "20hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "144hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "irregular",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "vsync_measured",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "1",
+      "cadence": "60hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "30hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "1",
+      "cadence": "20hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "144hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "irregular",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "vsync_measured",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "60hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "30hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "2",
+      "cadence": "20hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "144hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "irregular",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "vsync_measured",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     }
+    ],
+    "cycles": [
+     {
+      "heap_in_use": "2500912",
+      "unsupported_names": "17",
+      "unsupported_calls": "17441"
+     },
+     {
+      "heap_in_use": "2500912",
+      "unsupported_names": "17",
+      "unsupported_calls": "32096"
+     },
+     {
+      "heap_in_use": "2500912",
+      "unsupported_names": "17",
+      "unsupported_calls": "46751"
+     }
+    ],
+    "map_runs": {
+     "runs": "18",
+     "simulation_identical": "1",
+     "whole_identical_per_cadence": "0",
+     "heap_flat": "1",
+     "digest": "7e21eb42",
+     "chain": "303df087",
+     "sim": "127656ef",
+     "sim_chain": "73904c7f",
+     "tags_start": "00c29f29",
+     "spawn_tick": "1"
+    },
+    "map_times": {
+     "load_ms": "327",
+     "run_ms": "3630"
+    },
+    "arena_close": {
+     "restored": "1",
+     "high_after": "0x933db7e0",
+     "high_before": "0x933db7e0",
+     "low_before": "0x90002000",
+     "low_after": "0x90002000",
+     "general_peak": "65536",
+     "failed_allocations": "0",
+     "heap_in_use": "2125952"
+    },
+    "threads": {
+     "created": "1",
+     "fpscr_cleared": "1",
+     "measured": "1",
+     "stack_bytes": "65536",
+     "stack_peak": "256"
+    },
+    "stack": {
+     "entry_sp": "0x81392758",
+     "painted": "114688",
+     "peak_below_entry": "97920",
+     "window_exhausted": "0"
+    },
+    "unsupported": [
+     "render:rasterizer_initialize (no Direct3D 8 device; halts the engine)",
+     "render:rasterizer_decals_initialize",
+     "network:XNetGetEthernetLinkStatus",
+     "network:XNetStartup",
+     "bink:RADSetMemory",
+     "render:halo_interpolation_enabled",
+     "render:texture_cache_open (no texture cache: no rasterizer)",
+     "dsound:sound_cache_open (no sound cache: sound not started)",
+     "d3d8:D3DResource_Register",
+     "menus:halo_menus_load",
+     "hires_assets:hud_hires_asset_count",
+     "render:predicted_resources_precache (no texture or sound cache)",
+     "render:texture_cache_bitmap_get_hardware_format (no texture cache: none)",
+     "render:rasterizer_decals_dispose_from_old_map (vertex cache flush)",
+     "dsound:sound_cache_close (no sound cache: sound not started)",
+     "render:texture_cache_close (no texture cache: no rasterizer)",
+     "d3d8:D3DResource_BlockUntilNotBusy",
+     "render:rasterizer_decals_dispose"
+    ],
+    "partial": [
+     "PARTIAL memory VirtualProtect: protection is recorded, not enforced (no MMU mapping)"
+    ],
+    "end": {
+     "target": "engine",
+     "build": "4f7a46b3524d52e6",
+     "cycles": "3",
+     "cadences": "6",
+     "failures": "0",
+     "elapsed_ms": "96118",
+     "result": "pass"
+    },
+    "halt": "HALT stage=halt_check expected=1",
+    "exit": "EXIT via halt elapsed_ms=96122"
+   },
+   {
+    "begin": {
+     "target": "engine",
+     "build": "4f7a46b3524d52e6",
+     "previous_runs": "1",
+     "ios": "58.6176"
+    },
+    "fpscr": {
+     "entry": "00000004",
+     "engine": "00000000",
+     "ieee": "1"
+    },
+    "persist": {
+     "previous_result": "1",
+     "digest": "127656ef",
+     "chain": "73904c7f"
+    },
+    "arena_open": {
+     "offset": "4096",
+     "low": "0x90002000",
+     "high_before": "0x933db7e0",
+     "high_during": "0x904da000",
+     "required": "51380224",
+     "spare": "2981888",
+     "state": "0x904da000+20971520",
+     "tags": "0x918da000+23068672",
+     "sound": "0x92eda000+4194304",
+     "general": "0x932da000+1048576"
+    },
+    "memory": [
+     "MAP image bss=0x803e22f0..0x8144c640 sbss=0x803e1be0 arena1_link=0x8144c640..0x81800000 arena2_link=0x90002000..0x933e0000",
+     "MAP entry arena1=0x8145c640..0x81800000 bytes=3815872 arena2=0x90002000..0x933e0000 bytes=54386688 heap_in_use=0 main_sp=0x81392758 main_stack=131072",
+     "MAP gx fifo=0x8147d800 xfb0=0x814bd820 xfb1=0x81553840 xfb_bytes_each=614400 arena1_after_gx=0x81617000..0x81800000 bytes=2002944 heap_in_use=1795392",
+     "MAP after_engine_start arena1_lo=0x81720000 arena2_lo=0x90002000"
+    ],
+    "platform": {
+     "failures": "0"
+    },
+    "stages": [
+     "STAGE shell_initialize begin",
+     "STAGE shell_initialize result=0 (0 expected: rasterizer unsupported)",
+     "STAGE game_initialize begin",
+     "STAGE game_initialize result=1 game_state_used=17986420 heap_in_use=2880880 (before 1863168) unsupported=5",
+     "STAGE diagnostic_storage ai_debug_records=0 profile_frame_history=0 ai_debug_bytes=2376 actor_debug_records=one_shared path_debug_storage=none ai_debug_initialized=1 selected_squad=-1 selected_actor=-1 result=pass",
+     "STAGE engine_report error_buffer_has_warning=1 (d:\\debug.txt is read back by the host)"
+    ],
+    "fixed_step": {
+     "cadence": "30hz",
+     "ticks": "300",
+     "digest": "c1ad6ae6",
+     "chain": "58ce9719",
+     "expected": "c1ad6ae6/58ce9719",
+     "pass": "1"
+    },
+    "warmup": {
+     "ran": "1"
+    },
+    "loads": {
+     "count": 18,
+     "all_loaded": true,
+     "bytes": [
+      "7919052"
+     ],
+     "relocations": [
+      "16934"
+     ],
+     "segments": [
+      "2"
+     ],
+     "unstaged_reads": [
+      "0"
+     ],
+     "ms": [
+      323,
+      325,
+      323,
+      323,
+      323,
+      323,
+      323,
+      323,
+      323,
+      323,
+      323,
+      325,
+      323,
+      323,
+      323,
+      323,
+      323,
+      323
+     ]
+    },
+    "runs": [
+     {
+      "cycle": "-1",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3439"
+     },
+     {
+      "cycle": "0",
+      "cadence": "60hz",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "7e21eb42",
+      "chain": "303df087",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3630"
+     },
+     {
+      "cycle": "0",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3438"
+     },
+     {
+      "cycle": "0",
+      "cadence": "20hz",
+      "ticks": "300",
+      "frames": "201",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "2",
+      "digest": "4f76eecc",
+      "chain": "b6c9e268",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3416"
+     },
+     {
+      "cycle": "0",
+      "cadence": "144hz",
+      "ticks": "300",
+      "frames": "1441",
+      "frames_without_ticks": "1141",
+      "most_ticks_in_a_frame": "1",
+      "digest": "7ad5b4af",
+      "chain": "e12c6426",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "4159"
+     },
+     {
+      "cycle": "0",
+      "cadence": "irregular",
+      "ticks": "300",
+      "frames": "224",
+      "frames_without_ticks": "28",
+      "most_ticks_in_a_frame": "7",
+      "digest": "764fb1e8",
+      "chain": "1d478fb8",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3445"
+     },
+     {
+      "cycle": "0",
+      "cadence": "vsync_measured",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "d7c12717",
+      "chain": "0444fdc3",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "10156"
+     },
+     {
+      "cycle": "1",
+      "cadence": "60hz",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "f4273eee",
+      "chain": "87c5b671",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3622"
+     },
+     {
+      "cycle": "1",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3438"
+     },
+     {
+      "cycle": "1",
+      "cadence": "20hz",
+      "ticks": "300",
+      "frames": "201",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "2",
+      "digest": "75891c0e",
+      "chain": "8950bdae",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3439"
+     },
+     {
+      "cycle": "1",
+      "cadence": "144hz",
+      "ticks": "300",
+      "frames": "1441",
+      "frames_without_ticks": "1141",
+      "most_ticks_in_a_frame": "1",
+      "digest": "ae8763ea",
+      "chain": "4475722d",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "4159"
+     },
+     {
+      "cycle": "1",
+      "cadence": "irregular",
+      "ticks": "300",
+      "frames": "224",
+      "frames_without_ticks": "28",
+      "most_ticks_in_a_frame": "7",
+      "digest": "9ec7a9ce",
+      "chain": "6c75c675",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3440"
+     },
+     {
+      "cycle": "1",
+      "cadence": "vsync_measured",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "3850a6fa",
+      "chain": "09d48d50",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "10156"
+     },
+     {
+      "cycle": "2",
+      "cadence": "60hz",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "f4273eee",
+      "chain": "87c5b671",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3622"
+     },
+     {
+      "cycle": "2",
+      "cadence": "30hz",
+      "ticks": "300",
+      "frames": "300",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "1",
+      "digest": "762481ba",
+      "chain": "99165462",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3438"
+     },
+     {
+      "cycle": "2",
+      "cadence": "20hz",
+      "ticks": "300",
+      "frames": "201",
+      "frames_without_ticks": "0",
+      "most_ticks_in_a_frame": "2",
+      "digest": "75891c0e",
+      "chain": "8950bdae",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3439"
+     },
+     {
+      "cycle": "2",
+      "cadence": "144hz",
+      "ticks": "300",
+      "frames": "1441",
+      "frames_without_ticks": "1141",
+      "most_ticks_in_a_frame": "1",
+      "digest": "8d344f3c",
+      "chain": "36883ded",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "4073"
+     },
+     {
+      "cycle": "2",
+      "cadence": "irregular",
+      "ticks": "300",
+      "frames": "224",
+      "frames_without_ticks": "28",
+      "most_ticks_in_a_frame": "7",
+      "digest": "0ee0c8af",
+      "chain": "8f86878f",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "3432"
+     },
+     {
+      "cycle": "2",
+      "cadence": "vsync_measured",
+      "ticks": "300",
+      "frames": "600",
+      "frames_without_ticks": "300",
+      "most_ticks_in_a_frame": "1",
+      "digest": "aac8499f",
+      "chain": "67cf2b92",
+      "sim": "127656ef",
+      "sim_chain": "73904c7f",
+      "first_divergent_tick": "-1",
+      "seed": "70999115",
+      "objects": "5",
+      "spawn_tick": "1",
+      "position": "5.317363,1.632625,-0.527503",
+      "tags_end": "2469014f",
+      "ms": "10156"
+     }
+    ],
+    "run_same": [
+     {
+      "cycle": "0",
+      "cadence": "60hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "30hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "20hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "144hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "irregular",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "0",
+      "cadence": "vsync_measured",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "1",
+      "cadence": "60hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "30hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "1",
+      "cadence": "20hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "144hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "irregular",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "1",
+      "cadence": "vsync_measured",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "60hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "30hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "1"
+     },
+     {
+      "cycle": "2",
+      "cadence": "20hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "144hz",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "irregular",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     },
+     {
+      "cycle": "2",
+      "cadence": "vsync_measured",
+      "simulation_same": "1",
+      "whole_same_as_cycle0": "0"
+     }
+    ],
+    "cycles": [
+     {
+      "heap_in_use": "2500944",
+      "unsupported_names": "17",
+      "unsupported_calls": "17441"
+     },
+     {
+      "heap_in_use": "2500944",
+      "unsupported_names": "17",
+      "unsupported_calls": "32096"
+     },
+     {
+      "heap_in_use": "2500944",
+      "unsupported_names": "17",
+      "unsupported_calls": "46751"
+     }
+    ],
+    "map_runs": {
+     "runs": "18",
+     "simulation_identical": "1",
+     "whole_identical_per_cadence": "0",
+     "heap_flat": "1",
+     "digest": "7e21eb42",
+     "chain": "303df087",
+     "sim": "127656ef",
+     "sim_chain": "73904c7f",
+     "tags_start": "2469014f",
+     "spawn_tick": "1"
+    },
+    "map_times": {
+     "load_ms": "323",
+     "run_ms": "3630"
+    },
+    "arena_close": {
+     "restored": "1",
+     "high_after": "0x933db7e0",
+     "high_before": "0x933db7e0",
+     "low_before": "0x90002000",
+     "low_after": "0x90002000",
+     "general_peak": "65536",
+     "failed_allocations": "0",
+     "heap_in_use": "2125976"
+    },
+    "threads": {
+     "created": "1",
+     "fpscr_cleared": "1",
+     "measured": "1",
+     "stack_bytes": "65536",
+     "stack_peak": "256"
+    },
+    "stack": {
+     "entry_sp": "0x81392758",
+     "painted": "114688",
+     "peak_below_entry": "97920",
+     "window_exhausted": "0"
+    },
+    "unsupported": [
+     "render:rasterizer_initialize (no Direct3D 8 device; halts the engine)",
+     "render:rasterizer_decals_initialize",
+     "network:XNetGetEthernetLinkStatus",
+     "network:XNetStartup",
+     "bink:RADSetMemory",
+     "render:halo_interpolation_enabled",
+     "render:texture_cache_open (no texture cache: no rasterizer)",
+     "dsound:sound_cache_open (no sound cache: sound not started)",
+     "d3d8:D3DResource_Register",
+     "menus:halo_menus_load",
+     "hires_assets:hud_hires_asset_count",
+     "render:predicted_resources_precache (no texture or sound cache)",
+     "render:texture_cache_bitmap_get_hardware_format (no texture cache: none)",
+     "render:rasterizer_decals_dispose_from_old_map (vertex cache flush)",
+     "dsound:sound_cache_close (no sound cache: sound not started)",
+     "render:texture_cache_close (no texture cache: no rasterizer)",
+     "d3d8:D3DResource_BlockUntilNotBusy",
+     "render:rasterizer_decals_dispose"
+    ],
+    "partial": [
+     "PARTIAL memory VirtualProtect: protection is recorded, not enforced (no MMU mapping)"
+    ],
+    "end": {
+     "target": "engine",
+     "build": "4f7a46b3524d52e6",
+     "cycles": "3",
+     "cadences": "6",
+     "failures": "0",
+     "elapsed_ms": "96050",
+     "result": "pass"
+    },
+    "halt": "HALT stage=halt_check expected=1",
+    "exit": "EXIT via halt elapsed_ms=96054"
+   }
+  ]
+ },
+ "host_reference": [
+  {
+   "map_runs": {
+    "runs": "18",
+    "simulation_identical": "1",
+    "whole_identical_per_cadence": "0",
+    "heap_flat": "1",
+    "digest": "7e21eb42",
+    "chain": "303df087",
+    "sim": "127656ef",
+    "sim_chain": "73904c7f",
+    "tags_start": "00c29f29",
+    "spawn_tick": "1"
+   },
+   "fixed_step": {
+    "cadence": "30hz",
+    "ticks": "300",
+    "digest": "c1ad6ae6",
+    "chain": "58ce9719",
+    "expected": "c1ad6ae6/58ce9719",
+    "pass": "1"
+   },
+   "vsync_replay": {
+    "loaded": "1",
+    "frames": "1800"
+   },
+   "end": {
+    "target": "engine_host",
+    "failures": "0",
+    "result": "pass"
+   }
+  },
+  {
+   "map_runs": {
+    "runs": "18",
+    "simulation_identical": "1",
+    "whole_identical_per_cadence": "0",
+    "heap_flat": "1",
+    "digest": "7e21eb42",
+    "chain": "303df087",
+    "sim": "127656ef",
+    "sim_chain": "73904c7f",
+    "tags_start": "2469014f",
+    "spawn_tick": "1"
+   },
+   "fixed_step": {
+    "cadence": "30hz",
+    "ticks": "300",
+    "digest": "c1ad6ae6",
+    "chain": "58ce9719",
+    "expected": "c1ad6ae6/58ce9719",
+    "pass": "1"
+   },
+   "vsync_replay": {
+    "loaded": "1",
+    "frames": "1800"
+   },
+   "end": {
+    "target": "engine_host",
+    "failures": "0",
+    "result": "pass"
+   }
+  }
+ ],
+ "timings": {
+  "titan": {
+   "host": "Titan (Windows 11, WSL Debian for the host reference)",
+   "wii_engine_build_seconds_clean": 63.0,
+   "wii_engine_build_seconds_earlier_clean_builds": [
+    68.7,
+    74.0,
+    71.7
+   ],
+   "host_reference_build_seconds_clean": 128.0,
+   "host_reference_build_seconds_earlier": [
+    124.3,
+    105.4,
+    117.5
+   ],
+   "host_reference_run_seconds_18_runs": [
+    11.5,
+    11.0,
+    11.1,
+    11.2
+   ],
+   "map_stage_seconds": 2.8,
+   "map_stage_wall_seconds_with_walker_build": 7.7,
+   "dolphin_launch_elapsed_seconds": [
+    99.701,
+    99.468
+   ],
+   "dolphin_batch_wall_seconds": 218
+  },
+  "research": {
+   "host": "Research (Mac Studio, Apple M5 Max, macOS 27.0, Dolphin 2609 Vulkan)",
+   "map_stage_seconds": 1.2,
+   "map_stage_wall_seconds_with_walker_build": 1.55,
+   "dolphin_launch_elapsed_seconds": [
+    97.095,
+    96.829
+   ],
+   "dolphin_batch_wall_seconds": 205
+  },
+  "guest": {
+   "map_load_milliseconds_in_dolphin": [
+    327,
+    323
+   ],
+   "first_run_milliseconds_300_ticks_60hz_with_digests": 3630,
+   "guest_elapsed_milliseconds": [
+    96118,
+    96050
+   ]
+  }
+ },
+ "comparison_research": [
+  {
+   "simulation_all_same": true,
+   "whole_all_same_unpaced": true,
+   "allocations_all_same_unpaced": true,
+   "allocations_compared": 1404,
+   "ticks_compared": 300,
+   "first_divergent_tick": null,
+   "fixed_step_same": true,
+   "runs_compared": 18,
+   "runs_whole_same": 18,
+   "runs_simulation_same": 18,
+   "allocation_differences": []
+  },
+  {
+   "simulation_all_same": true,
+   "whole_all_same_unpaced": true,
+   "allocations_all_same_unpaced": true,
+   "allocations_compared": 1404,
+   "ticks_compared": 300,
+   "first_divergent_tick": null,
+   "fixed_step_same": true,
+   "runs_compared": 18,
+   "runs_whole_same": 18,
+   "runs_simulation_same": 18,
+   "allocation_differences": []
+  }
+ ],
+ "comparison": [
+  {
+   "simulation_all_same": true,
+   "whole_all_same_unpaced": true,
+   "allocations_all_same_unpaced": true,
+   "allocations_compared": 1404,
+   "ticks_compared": 300,
+   "first_divergent_tick": null,
+   "fixed_step_same": true,
+   "runs_compared": 18,
+   "runs_whole_same": 18,
+   "runs_simulation_same": 18,
+   "allocation_differences": []
+  },
+  {
+   "simulation_all_same": true,
+   "whole_all_same_unpaced": true,
+   "allocations_all_same_unpaced": true,
+   "allocations_compared": 1404,
+   "ticks_compared": 300,
+   "first_divergent_tick": null,
+   "fixed_step_same": true,
+   "runs_compared": 18,
+   "runs_whole_same": 18,
+   "runs_simulation_same": 18,
+   "allocation_differences": []
+  }
+ ]
+}

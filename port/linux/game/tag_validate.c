@@ -211,6 +211,15 @@ static unsigned long tag_validate_claims[CLAIM_WORDS];
 
 static char const tag_validate_empty_name[] = "";
 
+/* the name a reference or tag without a valid one is given: the Wii
+build's state digests take this address as one value on every build
+(port/wii/engine/real_map_scenario.c) */
+char const *tag_validate_empty_name_address(
+	void)
+{
+	return tag_validate_empty_name;
+}
+
 /* ---------- prototypes */
 
 static void validate_element(struct tag_validation *validation, byte *base,

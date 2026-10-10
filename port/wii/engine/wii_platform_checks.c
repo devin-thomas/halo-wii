@@ -33,12 +33,17 @@ static void check(int ok, const char *name, const char *format, ...)
 
 static unsigned long fpscr_now(void)
 {
+#if defined(__PPC__)
 	double value;
 	unsigned long long bits;
 
 	__asm__ volatile("mffs %0" : "=f"(value));
 	memcpy(&bits, &value, sizeof(bits));
 	return (unsigned long)bits;
+#else
+	/* (the i686 host reference: no FPSCR; IEEE already) */
+	return 0;
+#endif
 }
 
 struct thread_probe
