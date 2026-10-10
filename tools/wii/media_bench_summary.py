@@ -6,8 +6,10 @@ halo-wii-media directory. For every launch it checks the guest log (BEGIN and
 END lines, the run counter, every job's result) and turns each job line into
 numbers. From the per-frame records it adds what the log cannot hold:
 
-  video  decode-ahead lead: the smallest head start (and queue depth) that
-         presents every frame on time with this launch's decode times;
+  video  a playback model with the A/V job's queue: frames are decoded
+         back to back into QUEUE_FRAMES slots, playback starts when the
+         slots are full, and a frame whose decode ends after its display
+         time is late. Reports late frames and the worst lateness, and the
          worst one-second window of decode plus present time.
   av     drift statistics and the least-squares drift slope (ms per minute)
          of the audio clock against the frame times, over presented frames.
@@ -67,15 +69,34 @@ def launches(log_text):
     return result
 
 
-def lead_needed(work_us, period_us):
-    """Smallest head start so frame i, decoded in order, is ready by start + i*period.
+QUEUE_FRAMES = 5  # decoded frames the A/V job can hold ahead (six XFB slots, one on screen)
 
-    Returns (lead_us, frames): the head start and the queue depth it implies."""
-    finished, lead = 0, 0
+
+def playback_model(work_us, period_us, queue=QUEUE_FRAMES):
+    """Decode-ahead playback with `queue` slots; returns (late frames, worst lateness in us).
+
+    Frame i may start decoding once frame i - queue has been displayed (its
+    slot is free); playback starts when the first `queue` frames are decoded
+    and frame i is due at start + i * period."""
+    finished, ready = 0.0, []
+    start = None
+    late, worst = 0, 0.0
     for index, work in enumerate(work_us):
-        finished += work
-        lead = max(lead, finished - index * period_us)
-    return lead, int(-(-lead // period_us))
+        begin = finished
+        if index >= queue:
+            if start is None:
+                start = ready[queue - 1]
+            begin = max(begin, start + (index - queue) * period_us)
+        finished = begin + work
+        ready.append(finished)
+    if start is None:
+        start = ready[-1] if ready else 0.0
+    for index, done in enumerate(ready):
+        lateness = done - (start + index * period_us)
+        if lateness > 0:
+            late += 1
+            worst = max(worst, lateness)
+    return late, worst
 
 
 def worst_window(values_us, frames):
@@ -118,8 +139,9 @@ def summarize_video(fields, data):
         raise SummaryError("video records disagree with the log's frame count")
     period = 1e6 / fields["fps"]
     work = [decode + present for _, decode, present, _ in records]
-    lead, depth = lead_needed(work, period)
-    return {"lead_needed_ms": round(lead / 1000, 3), "queue_frames_needed": depth,
+    late, worst = playback_model(work, period)
+    return {"model_queue_frames": QUEUE_FRAMES, "model_late_frames": late,
+            "model_worst_lateness_ms": round(worst / 1000, 3),
             "worst_1s_window_ms_per_frame": round(worst_window(work, round(fields["fps"])) / 1000, 3),
             "records": len(records)}
 

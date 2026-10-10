@@ -56,13 +56,15 @@ class ParsingTests(unittest.TestCase):
 
 
 class DerivedTests(unittest.TestCase):
-    def test_lead_needed(self):
+    def test_playback_model(self):
         period = 1e6 / 30
-        self.assertEqual(ms.lead_needed([10000] * 30, period)[0], 10000)
-        # one 200 ms frame after five 10 ms ones needs a head start of about 2.5 frames
-        lead, depth = ms.lead_needed([10000] * 5 + [200000] + [10000] * 30, period)
-        self.assertAlmostEqual(lead, 250000 - 5 * period, places=3)
-        self.assertEqual(depth, 3)
+        self.assertEqual(ms.playback_model([10000] * 60, period), (0, 0.0))
+        # a 100 ms frame is absorbed by five queued frames, a long slow run is not
+        self.assertEqual(ms.playback_model([10000] * 10 + [100000] + [10000] * 30, period)[0], 0)
+        late, worst = ms.playback_model([10000] * 5 + [40000] * 60, period)
+        self.assertGreater(late, 0)
+        self.assertGreater(worst, 0)
+        self.assertEqual(ms.playback_model([], period), (0, 0.0))
 
     def test_worst_window(self):
         self.assertEqual(ms.worst_window([1, 1, 5, 5, 1], 2), 5)
@@ -93,7 +95,7 @@ class LaunchTests(unittest.TestCase):
                             {"clip-1.bin": video_bins([20000] * 3), "av-1.bin": av_bins([1, 2, 3])})
             summary = ms.from_card(tmp)
             self.assertEqual(summary["launches"][0]["guest"], "passed")
-            self.assertEqual(summary["launches"][0]["jobs"][0]["derived"]["queue_frames_needed"], 1)
+            self.assertEqual(summary["launches"][0]["jobs"][0]["derived"]["model_late_frames"], 0)
         with tempfile.TemporaryDirectory() as tmp:
             self.write_card(tmp, log(1, [video_line("clip", 3, result="fail")], passed=False),
                             {"clip-1.bin": video_bins([20000] * 3)})

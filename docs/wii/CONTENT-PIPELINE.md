@@ -17,9 +17,11 @@ What it covers today:
   sectioned container (HWI-008C);
 - a census of shaders, whose parameters the engine reads in place;
 - Wii runtime loaders for the texture, recorded-animation and sound
-  containers, proven in Dolphin ([Wii loaders](#wii-runtime-loaders)).
+  containers, proven in Dolphin ([Wii loaders](#wii-runtime-loaders));
+- the game's five movies, transcoded to MPEG-1 video and MP2 audio for the
+  vendored pl_mpeg decoder (HWI-008D, [movies](#movies)).
 
-Scripts, movies and the remaining tag fields are not converted yet (see
+Scripts and the remaining tag fields are not converted yet (see
 [open items](#open-items)).
 
 ## Inputs
@@ -59,6 +61,11 @@ python -B tools/wii/content_convert.py --staging <staging-dir> `
 python -B tools/wii/probe_movies.py --image <image.iso> --image-inventory <xiso-inventory.json> `
   --ffmpeg-bin <dir-with-ffmpeg-and-ffprobe> --output <private-dir>/movie-probe.json `
   --transcode-sample <private-dir>/movie-transcode
+
+# 4. Movies: transcode the five game movies and publish them under their own root
+python -B tools/wii/movie_convert.py --image <image.iso> --image-inventory <xiso-inventory.json> `
+  --ffmpeg-bin <dir-with-ffmpeg-and-ffprobe> --output-root <private-dir>/movies --record <private-dir>/movies-1.json
+#    optional: --profile wii-mpeg1-q8-mp2-v1 (default) | wii-mpeg1-q6-mp2-v1 | wii-mpeg1-q4-mp2-v1
 
 # Tests (authored fixtures only; no game data)
 python -B -m unittest discover -s tools/wii -p "test_*.py"
@@ -234,6 +241,50 @@ deterministic sample with host digests and malformed variants, and
 `run_dolphin.py --scenario content_loaders` checks a run. The
 [evidence](evidence/2026-10-10-content-loaders.md) has the Dolphin results.
 
+## Movies
+
+`movie_convert.py` (HWI-008D) reads the five game movies from the image at
+the byte ranges the image inventory lists, through FFmpeg's subfile protocol,
+so nothing is extracted. It transcodes each with your own FFmpeg build and
+publishes one generation with the same staging, validation, rename and
+`CURRENT` steps as above. Give it its own output root, because a root has one
+`CURRENT` generation.
+
+```text
+<movie-root>/generations/<generation>/movies/game-movie-<n>.mpg   n = 1..5, by disc path
+```
+
+| Profile | Video | Audio | Five movies |
+|---|---|---|---|
+| `wii-mpeg1-q8-mp2-v1` (default) | MPEG-1, 640×480, `-q:v 8`, 30000/1001 fps | MP2 192 kbit/s, source rate and channels | 96,053,248 bytes |
+| `wii-mpeg1-q6-mp2-v1` | as above, `-q:v 6` | as above | 121,927,680 bytes |
+| `wii-mpeg1-q4-mp2-v1` | as above, `-q:v 4` | as above | 177,260,544 bytes |
+
+The container is an MPEG-1 program stream, which the Wii decodes with the
+vendored pl_mpeg ([third-party notes](../../port/wii/third_party/README.md)).
+The default is the setting whose heaviest measured passage still decodes near
+real time in Dolphin. The [decoder evidence](evidence/2026-10-10-movie-audio-decoders.md)
+has the reasons. Re-run with another profile once hardware measurements
+show the headroom.
+
+- **Checks before publication.** FFmpeg must exit 0 with no messages at its
+  `error` level. ffprobe must count exactly the frames in the Bink header,
+  one MPEG-1 video stream at the source size, and one MP2 stream at the
+  source rate and channel count. Every output must start with an MPEG pack
+  header. Any failure fails the run and nothing is published.
+- **Determinism.** FFmpeg runs single-threaded with bit-exact flags and no
+  metadata. The manifest records the FFmpeg and ffprobe SHA-256 and version
+  line, the profile and its hash, this module's hash, the image and image
+  inventory hashes, each source's byte-range hash, header facts and output
+  hash, with no timestamps or host paths. The same image, FFmpeg binary and
+  profile give the same generation.
+- **Exclusions.** The disc's demo-launcher files (its executable, videos,
+  WMA and WAV audio, images and fonts) are out of scope (ADR-019). The
+  manifest lists them as excluded, by kind and ordinal; they are never
+  transcoded or copied.
+- Exit status as for `content_convert.py` (0, 1, 3, 4). The image is
+  re-hashed after the run and must be unchanged.
+
 ## Profile `gx-baseline-v1`
 
 | Halo format | GX format | Fidelity |
@@ -272,8 +323,8 @@ decoded.
   still Xbox little-endian. The upstream validator schema types only blocks,
   references, data, enums and indices, so a complete byte-order pass needs
   full field definitions (HWI-015B loads tags; HWI-008 owns the content).
-- **Content not converted yet:** scripts, movies, and the demo launcher's
-  files (an open scope decision).
+- **Content not converted yet:** scripts. The demo launcher's files are
+  out of scope (ADR-019) and are listed as excluded, never converted.
 - **Runtime:** loaders exist for HWT1, HRA1 and HWS1 only. HWM1, HWL1,
   HWC1, HMA1, HWF1 and HUS1 have explicit Python decoders and checks, but no
   Wii loader yet; the engine's consumers (HWI-015B, HWI-016, HWI-032) will
@@ -292,5 +343,8 @@ decoded.
   spans overlap, while each bitmap's own offset tiles the pixel region
   without overlap. The converter uses the bitmap's own offset, and so does
   the Wii texture loader, which reads only the converted file.
-- **Movies and audio:** decoder choices are open. The plan and measurements
-  are in the [evidence](evidence/2026-10-10-content-pipeline.md).
+- **Movies and audio:** decoders are chosen and measured in Dolphin
+  ([evidence](evidence/2026-10-10-movie-audio-decoders.md)): MPEG-1/MP2
+  through pl_mpeg for movies, and the game's Xbox ADPCM kept as stored and
+  decoded on the CPU. Still open: the engine's movie player, and every
+  hardware timing (HWI-040).
