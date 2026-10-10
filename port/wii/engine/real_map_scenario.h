@@ -35,7 +35,8 @@ library.
 #ifndef __HALO_WII_REAL_MAP_SCENARIO_H
 #define __HALO_WII_REAL_MAP_SCENARIO_H
 
-#define REAL_MAP_TICKS 300
+#define REAL_MAP_TICKS 300            /* a run's ticks unless its map says (HWI-015B's) */
+#define REAL_MAP_MAXIMUM_TICKS 9000   /* five minutes of game time */
 #define REAL_MAP_CHECKPOINTS 4
 #define REAL_MAP_MAXIMUM_ALLOCATIONS 160
 
@@ -47,7 +48,7 @@ struct real_map_result
 	long most_ticks_in_a_frame;
 	unsigned long digest;                        /* the whole game state after the last tick */
 	unsigned long chain;                         /* CRC of every tick's digest, in order */
-	unsigned long digest_at[REAL_MAP_CHECKPOINTS]; /* after ticks 1, 30, 150, 300 */
+	unsigned long digest_at[REAL_MAP_CHECKPOINTS]; /* after ticks 1, 30, 150 and the run's last */
 	/* the same without the allocations the render frames reach (the
 	scheduler's frame-time remainder, the game sound's frame update, the
 	first-person view model: real_map_scenario.c) */
@@ -61,6 +62,24 @@ struct real_map_result
 	float player_position[3];
 	long player_spawn_tick;                      /* the first tick after which it had a unit, or -1 */
 	long first_divergent_tick;                   /* the simulation's, against the reference run, or -1 */
+	short structure_bsp_index;                   /* loaded after the last tick */
+	long bsp_switches;                           /* structure bsps loaded during the run */
+	long command_tick;                           /* when the run's script command ran, or -1 */
+	long command_result;                         /* hs_compile_and_evaluate's */
+	long requests_left;                          /* frames ending with a won map or a reset asked for */
+};
+
+/* the game's state at a tick, for the log (engine_map_run.c's PROGRESS lines) */
+struct real_map_progress
+{
+	long tick;
+	short structure_bsp_index;
+	int cinematic;                               /* cinematic_in_progress */
+	long objects;
+	long actors;                                 /* live AI actors */
+	long script_threads;                         /* live script threads */
+	long player_unit;
+	float player_position[3];
 };
 
 /* the engine's allocations, recorded as game_initialize makes them (wrapped
@@ -77,15 +96,21 @@ a local player; 0 on failure (the engine's error text says why) */
 int real_map_load(const char *scenario_path);
 /* the engine's map reset (a new run from the same start) */
 int real_map_reset(void);
-/* arm a run: the clock from game time 0; the reference run's digests (NULL
-for none) are compared tick by tick */
-int real_map_begin(const unsigned long *reference_digests);
+/* arm a run of ticks ticks (at most REAL_MAP_MAXIMUM_TICKS): the clock from
+game time 0; the reference run's digests (NULL for none) are compared tick
+by tick */
+int real_map_begin(const unsigned long *reference_digests, long ticks);
 /* one rendered frame of dt seconds through the engine's scheduler; 0 once
-REAL_MAP_TICKS ticks have run */
+the run's ticks have run */
 int real_map_frame(float dt);
 void real_map_end(struct real_map_result *result);
-/* every tick's simulation digest of the last run (REAL_MAP_TICKS) */
+/* every tick's simulation digest of the last run (its ticks) */
 const unsigned long *real_map_tick_digests(void);
+/* a script command (script source, such as "(switch_bsp 1)") the harness
+runs through the engine's own script compiler and runtime after the given
+tick of every run armed from now on (0: none) */
+void real_map_set_command(long tick, const char *command);
+void real_map_progress_get(struct real_map_progress *progress);
 void real_map_unload(void);
 /* nonzero while a run is armed */
 int real_map_armed(void);

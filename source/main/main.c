@@ -3191,6 +3191,63 @@ static void main_game_render(
 	return;
 }
 
+/* port (HWI-016C): what the game asked of the main loop between frames, as
+main_loop handles it, for a driver that runs the game's own ticks without
+main_loop (the Wii build's real-map run, port/wii/engine/
+real_map_scenario.c). before_update: what main_loop handles before a
+frame's game time update (a structure bsp switch, a loss, a respawn, a
+checkpoint save's completion, a revert, a cinematic skip, a core save or
+load); else what it handles after it (a checkpoint save in progress). A won
+map, a reset and the menus' requests stay with the driver, which stays on
+its map. main_loop itself is unchanged. */
+void main_port_game_requests(
+	boolean before_update)
+{
+	static boolean started = FALSE;
+
+	if (game_in_editor())
+		return;
+	/* (as main_loop starts: no bsp switch asked for) */
+	if (!started)
+	{
+		main_globals.switch_to_structure_bsp_index = NONE;
+		started = TRUE;
+	}
+	if (before_update)
+	{
+		if (main_globals.switch_to_structure_bsp_index!=NONE)
+			main_switch_to_structure_bsp_private();
+		if (main_globals.lost_map)
+			main_lost_map_private();
+		if (main_globals.respawn)
+			main_respawn_private();
+		if (main_globals.save_map_completed)
+			main_saving_map_private();
+		if (main_globals.revert_map)
+			main_revert_map_private();
+		if (main_globals.skip_cinematic)
+			main_skip_cinematic_private();
+		if (main_globals.save_core)
+			main_save_core_private();
+		if (main_globals.load_core)
+			main_load_core_private();
+	}
+	else if (main_globals.saving_map)
+	{
+		main_save_map_private();
+	}
+
+	return;
+}
+
+/* port (HWI-016C): whether the game asked the main loop for something
+main_port_game_requests leaves to the driver (a won map, a map reset) */
+boolean main_port_game_requests_left(
+	void)
+{
+	return main_globals.won_map || main_globals.reset_map;
+}
+
 void main_loop(
 	void)
 {

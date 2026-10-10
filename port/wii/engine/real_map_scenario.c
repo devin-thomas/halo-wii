@@ -17,6 +17,10 @@ i686 host reference (tools/wii/run_engine_map_host.py).
 #include "cache/physical_memory_map.h"
 #include "objects/objects.h"
 #include "units/units.h"
+#include "ai/actors.h"
+#include "hs/hs.h"
+#include "cutscene/cinematics.h"
+#include "scenario/scenario.h"
 
 #include "real_map_scenario.h"
 #include "cache_files_wii.h"
@@ -36,6 +40,9 @@ void input_flush(void);
 void game_connection_set(short connection);
 unsigned long *get_global_random_seed_address(void);
 unsigned long *get_global_local_random_seed_address(void);
+/* (main.c's, HWI-016C: the main loop's handling of the game's requests) */
+void main_port_game_requests(boolean before_update);
+boolean main_port_game_requests_left(void);
 
 /* (game.c's, private there) */
 struct real_map_game_options
@@ -58,6 +65,9 @@ struct real_map_lights_globals_prefix
 };
 
 extern struct real_map_lights_globals_prefix lights_globals_prefix __asm__("lights_globals");
+
+/* (unit_dialogue.c's: the next dialogue variant a unit gets) */
+extern long sequential_counter;
 
 /* (player_queues_new.c's struct server_update, private there: its action
 count, then an action per player; room for the ports' players) */
@@ -93,11 +103,13 @@ struct real_map_allocation
 	unsigned long size;
 	unsigned long digest_at[REAL_MAP_CHECKPOINTS];
 	boolean frame_coupled;
+	short initial_identifier;          /* a data array's next identifier as the first map loaded */
 };
 
 struct real_map_globals
 {
 	boolean recording;
+	boolean identifiers_taken;
 	boolean loaded;
 	boolean armed;
 	long allocation_count;
@@ -112,7 +124,8 @@ struct real_map_globals
 	unsigned long chain;
 	unsigned long digest_at[REAL_MAP_CHECKPOINTS];
 	unsigned long tags_at_start;
-	unsigned long tick_digests[REAL_MAP_TICKS];   /* the simulation's */
+	long ticks;                                   /* the run's */
+	unsigned long tick_digests[REAL_MAP_MAXIMUM_TICKS]; /* the simulation's */
 	unsigned long simulation_chain;
 	unsigned long simulation_at[REAL_MAP_CHECKPOINTS];
 	const unsigned long *reference;
@@ -125,7 +138,17 @@ struct real_map_globals
 	long final_player_unit;
 	real_point3d final_player_position;
 	unsigned long final_tags;
+	short final_structure_bsp_index;
+	/* the harness's script command */
+	long command_tick;
+	char command[128];
+	long command_ran_tick;
+	long command_result;
+	long bsp_reads_at_begin;
+	long requests_left;                /* frames ending with a won map or a reset asked for */
 };
+
+extern struct data_array *hs_thread_data;
 
 static struct real_map_globals real_map_globals;
 static unsigned long digest_tables[2][256];
@@ -626,6 +649,8 @@ void real_map_record_allocations(
 {
 	if (on && !real_map_globals.recording)
 		real_map_globals.allocation_count = 0;
+	if (on)
+		real_map_globals.identifiers_taken = FALSE;
 	real_map_globals.recording = on ? TRUE : FALSE;
 
 	return;
@@ -766,16 +791,17 @@ void real_map_after_tick(
 	unsigned long simulation;
 	int checkpoint = -1;
 
-	if (!real_map_globals.armed || real_map_globals.tick >= REAL_MAP_TICKS)
+	if (!real_map_globals.armed || real_map_globals.tick >= real_map_globals.ticks)
 		return;
 	tick = ++real_map_globals.tick;
-	switch (tick)
-	{
-	case 1: checkpoint = 0; break;
-	case 30: checkpoint = 1; break;
-	case 150: checkpoint = 2; break;
-	case REAL_MAP_TICKS: checkpoint = 3; break;
-	}
+	if (tick == real_map_globals.ticks)
+		checkpoint = 3;
+	else if (tick == 1)
+		checkpoint = 0;
+	else if (tick == 30)
+		checkpoint = 1;
+	else if (tick == 150)
+		checkpoint = 2;
 	digest = game_state_digest(checkpoint, &simulation);
 	real_map_globals.tick_digests[tick - 1] = simulation;
 	real_map_globals.last_digest = digest;
@@ -793,10 +819,11 @@ void real_map_after_tick(
 	}
 	if (real_map_globals.player_spawn_tick == NONE && local_player_unit() != NONE)
 		real_map_globals.player_spawn_tick = tick;
-	if (tick == REAL_MAP_TICKS)
+	if (tick == real_map_globals.ticks)
 	{
 		long unit = local_player_unit();
 
+		real_map_globals.final_structure_bsp_index = global_structure_bsp_index;
 		real_map_globals.final_random_seed = *get_global_random_seed_address();
 		real_map_globals.final_objects = object_header_data ? object_header_data->actual_count : 0;
 		real_map_globals.final_player_unit = unit;
@@ -806,6 +833,54 @@ void real_map_after_tick(
 	}
 	if (real_map_globals.observer)
 		real_map_globals.observer(tick);
+	/* the harness's script command, through the engine's own compiler and
+	runtime (as a console command), between this tick and the next */
+	if (real_map_globals.command_tick == tick && real_map_globals.command[0])
+	{
+		real_map_globals.command_ran_tick = tick;
+		real_map_globals.command_result = hs_compile_and_evaluate(real_map_globals.command);
+	}
+
+	return;
+}
+
+void real_map_set_command(
+	long tick,
+	const char *command)
+{
+	real_map_globals.command_tick = tick;
+	real_map_globals.command[0] = 0;
+	if (command)
+	{
+		csstrncpy(real_map_globals.command, command, sizeof(real_map_globals.command) - 1);
+		real_map_globals.command[sizeof(real_map_globals.command) - 1] = 0;
+	}
+
+	return;
+}
+
+void real_map_progress_get(
+	struct real_map_progress *progress)
+{
+	long unit = local_player_unit();
+
+	csmemset(progress, 0, sizeof(*progress));
+	progress->tick = real_map_globals.tick;
+	progress->structure_bsp_index = global_structure_bsp_index;
+	progress->cinematic = cinematic_in_progress() ? 1 : 0;
+	progress->objects = object_header_data ? object_header_data->actual_count : 0;
+	progress->actors = actor_data ? actor_data->actual_count : 0;
+	progress->script_threads = hs_thread_data ? hs_thread_data->actual_count : 0;
+	progress->player_unit = unit;
+	if (unit != NONE)
+	{
+		real_point3d position;
+
+		object_get_origin(unit, &position);
+		progress->player_position[0] = position.x;
+		progress->player_position[1] = position.y;
+		progress->player_position[2] = position.z;
+	}
 
 	return;
 }
@@ -834,6 +909,38 @@ int real_map_load(
 	makes copies: each load starts it at 0, so a load's lights are the same
 	whatever ran before (only its equality with a light's matters) */
 	lights_globals_prefix.marker = 0;
+	/* (HWI-016C) likewise the units' dialogue variants (unit_dialogue.c
+	unit_dialogue_determine_variant: each new unit takes the next of its
+	variants, by a counter that also counts on across maps): each load
+	starts it at 0, as a fresh start has it */
+	sequential_counter = 0;
+	/* (HWI-016C) and every data array's identifier counter, which gives
+	each new datum its identifier and counts on across maps for as long as
+	the program runs (data_make_valid keeps it): each load starts it where
+	it was as the first map loaded, so a load's identifiers (a campaign
+	map's script globals, objects, effects) are the same whatever ran
+	before */
+	{
+		long index;
+
+		for (index = 0; index < real_map_globals.allocation_count; index++)
+		{
+			struct real_map_allocation *allocation = &real_map_globals.allocations[index];
+			struct data_array *data = (struct data_array *)allocation->address;
+
+			if (allocation->kind != _allocation_data)
+				continue;
+			if (!real_map_globals.identifiers_taken)
+				allocation->initial_identifier = data->next_identifier;
+			else
+				data->next_identifier = allocation->initial_identifier;
+		}
+		real_map_globals.identifiers_taken = TRUE;
+	}
+	/* (HWI-016C) and the engine's local random numbers, which a campaign
+	map's effects made as it loads draw on (as real_map_begin does for a
+	run) */
+	*get_global_local_random_seed_address() = REAL_MAP_LOCAL_RANDOM_SEED;
 	if (!game_load((struct game_options *)&options))
 		return FALSE;
 	game_initialize_for_new_map();
@@ -861,10 +968,20 @@ int real_map_reset(
 }
 
 int real_map_begin(
-	const unsigned long *reference_digests)
+	const unsigned long *reference_digests,
+	long ticks)
 {
-	if (!real_map_globals.loaded || real_map_globals.armed)
+	struct wii_cache_load_report load;
+
+	if (!real_map_globals.loaded || real_map_globals.armed || ticks < 1 || ticks > REAL_MAP_MAXIMUM_TICKS)
 		return FALSE;
+	wii_cache_load_report_get(&load);
+	real_map_globals.bsp_reads_at_begin = load.bsp_reads;
+	real_map_globals.requests_left = 0;
+	real_map_globals.ticks = ticks;
+	real_map_globals.command_ran_tick = NONE;
+	real_map_globals.command_result = 0;
+	real_map_globals.final_structure_bsp_index = NONE;
 	real_map_globals.tick = 0;
 	real_map_globals.frames = 0;
 	real_map_globals.frames_without_ticks = 0;
@@ -898,7 +1015,15 @@ int real_map_frame(
 {
 	short elapsed;
 
+	/* the frame as main_loop runs it for the game: what the game asked of
+	the main loop (a structure bsp switch a trigger volume asked for, a
+	checkpoint save, a respawn ...), its time update with its ticks, then a
+	checkpoint save in progress */
+	main_port_game_requests(TRUE);
 	game_time_update(dt);
+	main_port_game_requests(FALSE);
+	if (main_port_game_requests_left())
+		real_map_globals.requests_left++;
 	elapsed = game_time_get_elapsed();
 	real_map_globals.frames++;
 	if (!elapsed)
@@ -906,7 +1031,7 @@ int real_map_frame(
 	if (elapsed > real_map_globals.most_ticks_in_a_frame)
 		real_map_globals.most_ticks_in_a_frame = elapsed;
 
-	return real_map_globals.tick < REAL_MAP_TICKS;
+	return real_map_globals.tick < real_map_globals.ticks;
 }
 
 void real_map_end(
@@ -942,6 +1067,16 @@ void real_map_end(
 	}
 	result->player_spawn_tick = real_map_globals.player_spawn_tick;
 	result->first_divergent_tick = real_map_globals.first_divergent_tick;
+	result->structure_bsp_index = real_map_globals.final_structure_bsp_index;
+	{
+		struct wii_cache_load_report load;
+
+		wii_cache_load_report_get(&load);
+		result->bsp_switches = load.bsp_reads - real_map_globals.bsp_reads_at_begin;
+	}
+	result->command_tick = real_map_globals.command_ran_tick;
+	result->command_result = real_map_globals.command_result;
+	result->requests_left = real_map_globals.requests_left;
 	real_map_globals.armed = FALSE;
 	game_time_end();
 

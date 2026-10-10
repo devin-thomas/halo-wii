@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and run the i686 host reference of the Wii engine build's real-map run (HWI-015B).
+"""Build and run the i686 host reference of the Wii engine build's real-map run (HWI-015B, HWI-016C).
 
 The same engine units as engine.dol (tools/wii/engine_build.py, the Wii
 replacements included: cache_files_wii.c, physical_memory_map_wii.c), and
@@ -9,15 +9,16 @@ GAME_FLAGS: clang in WSL Debian. libogc's few services come from
 tools/wii/engine_host_shim.c; the driver is tools/wii/engine_map_host.c, which
 runs port/wii/engine/engine_map_run.c as the Wii does.
 
-The map is the little-endian staging of the same owned map
-(tools/wii/map_stage.py <map>.le.wmap), copied into the run directory's
-sd:/halo-wii-engine/data/maps/. MEM2's arena is mapped at the addresses the
-Wii run reported (its ARENA line), so pointers into the engine's regions have
-the same values on both.
+The maps are the little-endian stagings of the same owned maps
+(tools/wii/map_stage.py <map>.le.wmap and manifest.le.txt, and the load
+failure fixtures' little-endian files, tools/wii/map_load_failures.py), copied
+into the run directory's sd:/halo-wii-engine/data/maps/ as <map>.wmap and
+manifest.txt. The plan is the Wii's map.txt (engine_map_run.h). MEM2's arena
+is mapped at the addresses the Wii run reported (its ARENA line), so pointers
+into the engine's regions have the same values on both.
 
-    python tools/wii/run_engine_map_host.py --build <dir> --map <private .le.wmap> \\
-        --scenario <levels\\...\\name> --run <new dir> [--cycles 3] \\
-        [--arena2 0x90002000 0x933db7e0] [--offset 0]
+    python tools/wii/run_engine_map_host.py --build <dir> --maps <private staging dir> [<more dirs>] \\
+        --plan <map.txt> --run <new dir> [--cycles 3] [--arena2 0x90002000 0x933db7e0] [--offset 0]
 """
 
 import argparse
@@ -104,7 +105,8 @@ def build(out: Path) -> Path:
                          (platform_semantics, ["--inlines", "port/include/xdk"])):
         subprocess.run([sys.executable, "tools/linux_msvc_semantics.py", "--output", str(target), *scan], cwd=ROOT,
                        check=True)
-    lines = ["rule cc", "  command = clang $flags -MD -MF $out.d -c $in -o $out", "  depfile = $out.d",
+    # (its own ninja log: the Wii build's ninja keeps one at the checkout's root)
+    lines = [f"builddir = {wsl(out)}", "rule cc", "  command = clang $flags -MD -MF $out.d -c $in -o $out", "  depfile = $out.d",
              "  deps = gcc", "  description = HOST CC $in",
              "rule link", "  command = clang --target=i686-linux-gnu -m32 -no-pie $flags -o $out @$out.rsp -lm -lpthread",
              "  rspfile = $out.rsp", "  rspfile_content = $in", "  description = HOST LINK $out"]
@@ -134,8 +136,9 @@ def build(out: Path) -> Path:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--build", type=Path, required=True)
-    parser.add_argument("--map", type=Path, help="the little-endian staged map (private)")
-    parser.add_argument("--scenario", help="the staged map's scenario path (its map.txt on the Wii's card)")
+    parser.add_argument("--maps", type=Path, nargs="+",
+                        help="private directories of little-endian stagings (<map>.le.wmap, manifest.le.txt)")
+    parser.add_argument("--plan", type=Path, help="the run's plan: the Wii card's map.txt")
     parser.add_argument("--run", type=Path)
     parser.add_argument("--cycles", type=int, default=3)
     parser.add_argument("--arena2", nargs=2, default=["0x90002000", "0x933db7e0"])
@@ -149,21 +152,37 @@ def main() -> int:
     program = out / "engine_map_host" if args.no_build else build(out)
     if not args.run:
         return 0
-    if not args.scenario or not args.map:
-        parser.error("--run needs --map and --scenario")
+    if not args.plan or not args.maps:
+        parser.error("--run needs --maps and --plan")
     run_dir = args.run.resolve()
     run_dir.mkdir(parents=True, exist_ok=False)
     maps = run_dir / "sd:" / "halo-wii-engine" / "data" / "maps"
     # (a directory named "sd:" on the host stands for the Wii's card)
+    # every little-endian staging, as the card's <map>.wmap; the directories' manifests merged, as manifest.txt
+    copies = []
+    manifest = {}
+    for directory in args.maps:
+        for staged in sorted(directory.glob("*.le.wmap")):
+            copies.append(f"cp {sh(wsl(staged.resolve()))} "
+                          f"{sh(wsl(run_dir) + '/sd:/halo-wii-engine/data/maps/' + staged.name[:-len('.le.wmap')] + '.wmap')}")
+        listed = directory / "manifest.le.txt"
+        if listed.exists():
+            rows = listed.read_text(encoding="ascii").splitlines()
+            for row in rows[1:]:
+                manifest[row.split()[0]] = row
+            header = rows[0]
+    (run_dir / "manifest.txt").write_text(header + "\n" + "".join(manifest[key] + "\n" for key in sorted(manifest)),
+                                          encoding="ascii", newline="\n")
+    copies.append(f"mv {sh(wsl(run_dir / 'manifest.txt'))} {sh(wsl(run_dir) + '/sd:/halo-wii-engine/data/maps/')}")
     run = subprocess.run(["wsl", "-d", "Debian", "--", "sh", "-c",
-                          f"mkdir -p {sh(wsl(run_dir) + '/sd:/halo-wii-engine/data/maps')} && "
-                          f"cp {sh(wsl(args.map.resolve()))} "
-                          f"{sh(wsl(run_dir) + '/sd:/halo-wii-engine/data/maps/' + args.map.name.replace('.le.wmap', '.wmap'))}"],
+                          f"mkdir -p {sh(wsl(run_dir) + '/sd:/halo-wii-engine/data/maps')} && " + " && ".join(copies)],
                          capture_output=True, text=True)
     if run.returncode != 0:
         raise SystemExit(run.stderr)
     started = time.perf_counter()
-    command = [wsl(program), args.scenario, str(args.cycles), *args.arena2, args.offset]
+    plan = run_dir / "map.txt"
+    plan.write_bytes(args.plan.read_bytes())
+    command = [wsl(program), wsl(plan), str(args.cycles), *args.arena2, args.offset]
     if args.vsync_from:
         frames = []
         for line in args.vsync_from.read_text(encoding="ascii", errors="replace").splitlines():

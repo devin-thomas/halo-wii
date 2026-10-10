@@ -103,7 +103,9 @@ WRAPPED = ("main", "halt_and_catch_fire", "game_tick", "game_frame", "update_cli
            # HWI-015B: the texture cache rasterizer_initialize would have made
            "texture_cache_open", "texture_cache_close", "sound_cache_open", "sound_cache_close",
            "predicted_resources_precache", "_rasterizer_decals_dispose_from_old_map",
-           "_texture_cache_bitmap_get_hardware_format")
+           "_texture_cache_bitmap_get_hardware_format",
+           # HWI-016C: the decal vertex cache rasterizer_decals_initialize would have made
+           "_rasterizer_decal_vertices_new")
 # Diagnostic storage (HWI-015D): "omit" (the default) compiles the engine
 # without the AI's debug records and the profiler's frame history; "keep"
 # compiles them as the other ports do, and then wraps ai_debug_initialize
