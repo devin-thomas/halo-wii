@@ -385,7 +385,14 @@ void data_delete_all(
 	data->count = 0;
 	data->actual_count = 0;
 	data->first_free_absolute_index = 0;
-	csstrncpy((char *)&data->next_identifier, data->name, sizeof(data->next_identifier));
+	/* port: the seed is the name's first two characters as the Xbox (and
+	every little-endian port) reads them through the short, on every target:
+	a big-endian copy would read them the other way round, and the
+	identifiers given out are machine-visible (network_objects.c: every
+	machine has the host's objects at the same datum index, identifier and
+	all). csstrncpy stops at the name's end: a second character only if
+	there is a first */
+	data->next_identifier = (short)((byte)data->name[0] | (data->name[0] ? (byte)data->name[1] : 0) << 8);
 	data->next_identifier |= 0x8000;
 
 	for (absolute_index = 0; absolute_index<data->maximum_count; absolute_index++)
