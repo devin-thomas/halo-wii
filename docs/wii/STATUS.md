@@ -362,3 +362,17 @@ untested.
 The semantics rerun passes 240/240 checks on host and on PPC in Dolphin with
 zero unexplained differences. The x86 regression against the previous engine
 bodies shows 0 mismatches.
+
+The [memory strategy](evidence/2026-10-10-memory-strategy.md) is demonstrated
+on PPC in Dolphin.
+- **Tag cache:** loads into MEM2 at a run-time base, and the upstream validator
+  schema relocates every pointer the game reads. A whole map's tag graph (3,647
+  tags, 39,224 pointers) re-walks identically to the host references.
+- **Game state:** the full upstream state at unchanged capacities is built with
+  the engine's own allocators, saved without pointers and restored at another
+  base and in the next launch, with all 8 image CRCs equal to the host.
+- **Datum identifiers:** they were seeded byte-reversed on big-endian, which
+  would have broken netcode across ports. This is fixed.
+
+Measured blocker: MEM1 cannot hold the engine image as compiled for desktop
+alongside a 22 MiB texture cache.
