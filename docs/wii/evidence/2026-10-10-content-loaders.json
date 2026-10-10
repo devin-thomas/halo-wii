@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "ticket": "HWI-008C",
+  "date": "2026-10-10",
+  "scope": "Wii runtime loaders for HWT1/HRA1/HWS1 proven in stock Dolphin; conversion of models, BSP lightmap geometry, collision, model animations, fonts and unicode text; shader in-place decision; full conversion on Research and Titan",
+  "privacy": "Counts, formats, sizes and hashes only. No owned bytes, names, map names or host paths. Maps are referred to by category and ordinal only.",
+  "source": {
+    "loader_commit": "1419143f2a288e6d6746860f39c72fd619aad5dd",
+    "converter_commit": "1f9c598c",
+    "converter_commit_note": "merge of the category commit 483154b1 with wii 60825927; port/wii/content, content_loader_cases.py, run_dolphin.py and the input script are unchanged between 1419143f and 1f9c598c",
+    "image_sha256": "43ec0813edadd592b7b489a930f108d289db9313ac337611110ffca8be0a7258",
+    "staging_manifest_sha256": "acc4e9d1ab2da3d659c0508b67358d9b742bc924bd4754f28c5e0af4ad0061ca",
+    "converter_modules_sha256": {
+      "be_records.py": "5bd8db222b9123cfb07168a43b5b5934a8016b880690f5fbfdff43dbf30755b3",
+      "content_animation.py": "a90ce2af76ea1012f44625deb69b79bfab40571c02c4e3bfc9389b3e3b2a7f75",
+      "content_convert.py": "ef0a585d31585c9782c4678564dd68425d6286f42c1f7cca890c32078bea6819",
+      "content_geometry.py": "94d082c855c073ec3c8a1a37485e74c6b765b1be02acfacfdf338b58e2ca3aa5",
+      "content_publish.py": "9ea6985dcbe325efa0d138bdf7261673295692c5b8b63afe62eb05b7efe7f8ba",
+      "content_text.py": "3f6a067b6276386e2f5fd3c3724553ceff190384174d9aff42c76f666e20bfa9",
+      "gx_texture.py": "024bb56c309489f2aa8d2ab2ad1941f060da6b0139c143cb1f3256b9b2738854",
+      "halo_cache.py": "efa1511c139407aef9854b0a49727f6c34335fc5cadf4577216252a12329640d",
+      "media_formats.py": "5a55134e0cd6a41dff1d33a1e1e070defd8279fdfee2c53b036924c2e2402f89",
+      "recorded_animation.py": "789c2ba26bffd633b589914ef0f5300a5a8057cbfcdf2b5e5d57d4223101737b"
+    }
+  },
+  "loaders": {
+    "units": ["port/wii/content/hwt_texture.c", "port/wii/content/hra_animation.c", "port/wii/content/hws_sound.c", "port/wii/content/content_common.c", "port/wii/content/content_check.c"],
+    "compile_flags": "C11 -Wall -Wextra -Werror (Wii CFLAGS); host build with the same warnings",
+    "build": {
+      "target": "wii_content_loaders",
+      "build_id": "3900490c293fab5c",
+      "source_dirty": false,
+      "compiler": "powerpc-eabi-gcc (devkitPPC) 16.1.0",
+      "dol_sha256": "b58b19f0d8728147562ca31f5af6aa9c236e315a2c9349a9ee9bb385de0b9cba",
+      "dol_bytes": 525024
+    },
+    "cases": {
+      "generator": "tools/wii/content_loader_cases.py over the HWI-008B generation 01bf08505713bcb9",
+      "total": 93,
+      "valid": {"textures": 43, "recorded_animations": 6, "sounds": 6},
+      "valid_textures_by_gx_format_and_type": {"CMPR 2d": 3, "CMPR cube": 2, "RGBA8 2d": 10, "RGBA8 cube": 4, "RGBA8 3d": 2, "RGB565 2d": 2, "RGB565 cube": 2, "RGB5A3 2d": 4, "IA8 2d": 6, "IA8 cube": 2, "IA8 3d": 2, "I8 2d": 2, "I8 3d": 2},
+      "texture_over_gx_limit": {"count": 1, "width": 2048, "height": 128, "checked": "CPU decode digest only, not uploaded"},
+      "texels_cpu_decoded_per_cycle": 1579464,
+      "sounds": {"xbox_adpcm_mono_22050": 2, "xbox_adpcm_stereo_22050": 2, "xbox_adpcm_stereo_44100": 2, "frames_decoded_per_cycle": 114432},
+      "recorded_animations": {"version_4_unit_control_0": 2, "version_4_unit_control_3": 2, "version_4_unit_control_4": 2, "events_per_cycle": 3681, "note": "every owned recorded animation is version 4; the v1 codec is covered by the host fixtures"},
+      "malformed": {"textures": 14, "recorded_animations": 13, "sounds": 11, "expected_errors": ["truncated", "length", "magic", "version", "enum", "dimensions", "count", "reserved", "event", "delta", "value", "identity"]},
+      "staged_bytes": 3473246
+    },
+    "dolphin": {
+      "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+      "launch": "Dolphin.exe --user <new isolated profile> --batch --video_backend D3D --exec content_loaders.dol --movie input.dtm",
+      "efb_access": true,
+      "input_script_sha256": "d0518af9130939af380b86d040afbae97ce530b3eba021dafcf2c5c43bf944d5",
+      "sd_image_sha256_before_staging": "ed845a516ee8f992683c88954ff2125768decf527bd6e740a6038d08c009c8e7",
+      "host_lock": "dolphin_lock.py acquired before and released after the batch",
+      "runs": [
+        {"run": 1, "guest": "passed", "persistence": "passed", "host_exit": "0x00000000", "forced_stop": false, "elapsed_seconds": 10.09},
+        {"run": 2, "guest": "passed", "persistence": "passed", "host_exit": "0x00000000", "forced_stop": false, "elapsed_seconds": 9.368}
+      ],
+      "per_cycle": {"cycles_per_launch": 2, "passed": 93, "failed": 0, "rejected_as_expected": 38, "gx_images_read_back": 750, "mip_chain_levels_read_back": 130, "draws": 1760, "efb_peeks": 766804, "mismatches": 0, "max_channel_error_rgba": [0, 0, 0, 0], "wrong_format_controls_detected": "38/42", "cycle_crc": "2c32c90f", "heap_growth_bytes": 0},
+      "cycle_crc_identical_across_cycles_and_launches": true,
+      "timing_emulated_us_cycle_1_run_1": {
+        "texture": {"valid_bytes": 3113664, "load_us": 92757, "decode_us": 653433},
+        "animation": {"valid_bytes": 59656, "load_us": 14244, "decode_us": 1697},
+        "sound": {"valid_bytes": 117084, "load_us": 13881, "decode_us": 46243},
+        "scope": "Dolphin emulated time base, not hardware timing"
+      },
+      "persistence": "run counter advanced 1 then 2 across cold launches; prior guest log preserved; every staged file read back identical after each launch",
+      "os_stability": "no_instability_events_observed (Windows System and Application logs over the batch window)",
+      "physical_wii": "untested"
+    },
+    "host_tests": "tools/wii/test_content_loaders.py builds the loaders with the host compiler and runs the same cases on authored fixtures"
+  },
+  "categories": {
+    "decisions": {
+      "models": "converted: HWM1 (parts, Xbox compressed vertices, u16 indices)",
+      "lightmaps": "converted: HWL1 per scenario structure BSP (lightmaps, materials, environment and lightmap vertices, surfaces); lightmap bitmaps already convert as HWT1 textures",
+      "collision": "converted: HWC1 per collision model and per structure BSP",
+      "model_animations": "converted: HMA1 (frame info, defaults, frames, compressed arrays)",
+      "fonts": "converted: HWF1 (metrics, character tables, characters, verbatim 8-bit glyph pixels)",
+      "strings": "converted: HUS1 (unicode string lists and HUD message text, UTF-16 big-endian)",
+      "shaders": "read in place after ADR-015 relocation: typed tag fields only, no tag-data or file payload in any shader group schema; census only",
+      "string_lists_8bit": "read in place: 8-bit text has no byte order"
+    },
+    "outputs": {
+      "model": {"files": 1481, "bytes": 85246848, "geometries": 4644, "parts": 10862, "vertices": 2386375, "indices": 4045905},
+      "lightmap_geometry": {"files": 82, "bytes": 146230304, "lightmaps": 2288, "materials": 14642, "vertices": 3329120, "lightmap_vertices": 3103411, "surfaces": 2012273},
+      "collision": {"files": 936, "from_collision_models": 854, "from_structure_bsps": 82, "bytes": 146645184, "bsps": 3814, "elements": 9955825},
+      "model_animation": {"files": 628, "bytes": 70005984, "animations": 12711, "compressed": 186, "frames": 468552, "frame_bytes": 59020944, "compressed_bytes": 1767250},
+      "font": {"files": 96, "bytes": 3679488, "characters": 21504, "character_tables": 24576, "pixel_bytes": 2790576},
+      "strings": {"files": 452, "string_lists": 418, "hud_message_texts": 34, "bytes": 495200, "strings": 5431, "code_units": 204713, "terminated": 5397},
+      "new_total": {"files": 3675, "bytes": 452303008}
+    },
+    "shader_census": {"tags": 4542, "by_group": {"senv": 496, "soso": 2498, "schi": 502, "sgla": 163, "smet": 129, "sotr": 707, "spla": 39, "swat": 8, "scex": 0}, "roots_outside_tag_data": 0},
+    "owned_layout_facts": {
+      "model_parts": "all 10,862 use the compressed model vertex (type 5) and precompiled strips; every buffer resolves to the map's descriptor tables and every index is below its part's vertex count",
+      "bsp_materials": "all 14,642 use compressed environment (1) and lightmap (3) vertices; data size equals 32 x vertices + 8 x lightmap vertices; no uncompressed vertex data",
+      "compressed_animations": "all 186 compressed blocks are covered exactly by their typed arrays with no gaps or overlaps",
+      "blank_glyphs": "some glyphs carry a negative bitmap width with height 0 (no pixels)",
+      "empty_collision_leaves": "empty leaves name first reference -1 with count 0"
+    },
+    "fixture_tests": "tools/wii/test_content_categories.py (11 tests): conversion and explicit decode of every category, determinism, nine authored defects, interruption and disk-full, container validation, tag offsets against cache_schema_tables.c"
+  },
+  "full_conversion": {
+    "categories": "all ten (textures, animations, sounds, models, lightmaps, collision, model_animations, fonts, strings, shaders)",
+    "generation": "17189aa32aa83526",
+    "manifest_sha256": "17189aa32aa8352611b7b5ebe117bc7ea595014080e89d61bc7693474723e6b1",
+    "outputs": 91397,
+    "tree": {"files": 91398, "bytes": 3689821826, "tree_sha256": "afb8532b0aa082ca73d4e2d1b550d90f5397418031e0d7967ea83b5c4f1c8166"},
+    "runs": [
+      {"host": "Research", "run": "R1", "exit": 0, "converter_seconds": 272.331, "wall_seconds": 272.5, "output_root": "fresh"},
+      {"host": "Research", "run": "R2", "exit": 0, "converter_seconds": 272.874, "wall_seconds": 273.0, "output_root": "fresh"},
+      {"host": "Titan", "run": "T1", "exit": 0, "converter_seconds": 1431.894, "output_root": "fresh", "note": "Titan shared with other agents during the run"}
+    ],
+    "research_host": {"cpu": "Apple M5 Max", "logical_cpus": 18, "memory_bytes": 38654705664, "os": "macOS 27.0", "python": "3.12.15", "converter_parallelism": "single process"},
+    "titan_host": {"os": "Windows 11 Pro 10.0.26200", "python": "3.14.0"},
+    "identity": {
+      "research_r1_r2_tree_identical": true,
+      "research_titan_manifest_identical": true,
+      "titan_tree_sha256": "afb8532b0aa082ca73d4e2d1b550d90f5397418031e0d7967ea83b5c4f1c8166", "titan_tree_identical_to_research": true,
+      "hwi_008b_outputs_unchanged": "all 87,722 texture, recorded-animation and sound outputs have the same path, size and SHA-256 as HWI-008B generation 01bf08505713bcb9 (3,198,310,104 bytes)"
+    },
+    "research_staging": "the 24 maps were copied out of Research's own copy of the image (same SHA-256) and each matched the staging manifest hash before conversion",
+    "hwi_008b_titan_baseline_seconds": [1171.6, 1563.0]
+  },
+  "safety_owned_data_research": {
+    "setup": "new categories for two maps (UI and campaign 1) into the root whose CURRENT is the full generation",
+    "cases": [
+      {"case": "disk_full_0", "exit": 4, "bytes_written": 7872, "current_unchanged": true, "staging_left": 0},
+      {"case": "disk_full_20MB", "exit": 4, "bytes_written": 20039424, "current_unchanged": true, "staging_left": 0},
+      {"case": "stop_before_validate", "exit": 4, "bytes_written": 57335571, "current_unchanged": true, "staging_left": 0},
+      {"case": "stop_before_promote", "exit": 4, "bytes_written": 57335571, "current_unchanged": true, "staging_left": 0},
+      {"case": "stop_before_current", "exit": 4, "bytes_written": 57335571, "current_unchanged": true, "staging_left": 0, "note": "renamed generation left non-current, as designed"},
+      {"case": "sigkill_after_1s (two other campaign maps)", "exit": -9, "current_unchanged": true, "staging_left": 1},
+      {"case": "next_run_after_kill", "exit": 0, "staging_left": 0, "note": "discarded the killed run's staging and published"}
+    ],
+    "full_generation_after": "re-verified and reused (reused_existing true), CURRENT restored to 17189aa32aa83526; tree digest unchanged",
+    "note": "a first kill attempt at 4 s missed: that run reused the generation the stop-before-current case had renamed and finished in under 4 s, so it published normally; the kill was repeated on maps not converted before"
+  },
+  "tests": {"python_3_14": "OK", "python_3_11": "OK", "suite": "tools/wii unittest discover"},
+  "acceptance": {
+    "HWI-008C_loaders": "met for HWT1, HRA1 and HWS1 in stock Dolphin (2 cold launches); physical Wii untested",
+    "HWI-008C_categories": "models, lightmap geometry, collision, model animations, fonts and text converted; shaders documented as in place",
+    "HWI-008C_research_run": "met: two Research runs, byte-identical to each other and to Titan",
+    "HWI-008": "open: scripts, movies, tag field byte order, loaders for the new containers, consumers and hardware remain"
+  }
+}
