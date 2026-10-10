@@ -1,4 +1,4 @@
-/* Shared pieces of the Wii content loaders (HWI-008C).
+/* Shared pieces of the Wii content loaders (HWI-008C, HWI-008E).
  *
  * Every converted container is big-endian. Fields are assembled from bytes
  * with explicit shifts, so nothing here depends on host byte order, struct
@@ -29,6 +29,8 @@ enum content_error {
     CONTENT_VALUE,      /* a field value outside its declared width */
     CONTENT_IDENTITY,   /* rebuilt source differs from the recorded identity */
     CONTENT_CAPACITY,   /* caller's output buffer too small */
+    CONTENT_SECTION,    /* sectioned container: section id, record size, order, offset or size wrong */
+    CONTENT_RANGE,      /* a record names an element outside its array, or ranges do not tile it */
     CONTENT_ERROR_COUNT
 };
 
@@ -73,6 +75,11 @@ struct content_blob {
     uint32_t bytes;
     uint32_t capacity;
 };
+
+/* 32-byte aligned allocation for owned content memory (NULL on failure or
+ * for 0 bytes); release with content_free_aligned. */
+void *content_alloc_aligned(uint32_t bytes);
+void content_free_aligned(void *pointer);
 
 /* Reads path whole. Rejects a size of 0 or above max_bytes, a short read, or
  * a file that grows while it is read. On failure *out is left empty. */

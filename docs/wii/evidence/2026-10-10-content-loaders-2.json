@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "ticket": "HWI-008E",
+  "date": "2026-10-10",
+  "scope": "Wii runtime loaders for HWM1, HWL1, HWC1, HMA1, HWF1 and HUS1: validation, owned decoded forms, canonical digests, renderer decisions; host sweep of every converted file; two cold launches in stock Dolphin on Research and Titan; per-asset memory and load time",
+  "privacy": "Counts, formats, sizes and hashes only. No owned bytes, names, map names or host paths.",
+  "source": {
+    "loader_commit": "465c9ac814ce8e19b6a9ba3ee048cb0e1934373e",
+    "source_dirty": false,
+    "content_generation": "17189aa32aa83526",
+    "content_manifest_sha256": "17189aa32aa8352611b7b5ebe117bc7ea595014080e89d61bc7693474723e6b1",
+    "build": {
+      "target": "wii_content_loaders",
+      "build_id": "892c076edf870298",
+      "compiler": "powerpc-eabi-gcc (devkitPPC) 16.1.0",
+      "compile_flags": "C11 -O2 -Wall -Wextra -Werror -ffp-contract=off (Wii CFLAGS)",
+      "dol_sha256": "4bdf6c72888d17d62345d019bb059a2c78033bd221e13393e48a4e3de403f2e2",
+      "dol_bytes": 548320,
+      "elf_sha256": "486495053be455f33ce4ffa72b53a507680b614a640d4e042b8fe7c344f4261d"
+    },
+    "host_compiler": "MinGW-w64 gcc 13.1.0, -std=c11 -O1 -Wall -Wextra -Werror -ffp-contract=off"
+  },
+  "loaders": {
+    "units": ["port/wii/content/content_sections.c", "port/wii/content/hwm_model.c", "port/wii/content/hwl_lightmap.c",
+              "port/wii/content/hwc_collision.c", "port/wii/content/hma_graph.c", "port/wii/content/hwf_font.c",
+              "port/wii/content/hus_strings.c"],
+    "host_reference": "tools/wii/content_decoded.py",
+    "new_error_classes": ["section", "range"],
+    "digest": "SHA-256 of every decoded field serialized little-endian in the order each header documents; the input file is released before the digest is taken",
+    "decoded_forms": {
+      "HWM1": "parts (56 B); vertices 56 B: f32 position, f32 normal/binormal/tangent expanded from 11:11:10, s16 texcoord, node bytes and weight as stored; u16 indices",
+      "HWL1": "BSP, lightmaps, materials (188 B); environment vertices 56 B: f32 position, expanded NBT, f32 texcoord; lightmap vertices 16 B: expanded incident radiosity, s16 texcoord; u16 surfaces",
+      "HWC1": "the engine's eight collision record arrays in native order",
+      "HMA1": "Xbox byte layout of frame info, defaults, frames and compressed blocks in native order; compressed blocks 4-byte aligned, arrays at original offsets",
+      "HWF1": "records, tables, s16 indices; 8-bit glyph coverage verbatim",
+      "HUS1": "string table and native u16 code units"
+    },
+    "decisions": {
+      "packed_vectors": "expand at load to f32 with the engine's uncompress_int32_to_real_vector3d, bit-exact (GX_NRM_NBT F32); GX has no 11:11:10 format and S16/S8 are not exact; 36 bytes per vertex instead of 12",
+      "texcoords": "model and lightmap texcoords stay s16 (GX S16); the engine's (2s+1)/65535 is affine and belongs in the texture matrix",
+      "index_width": "16-bit (GX_INDEX16); every part and material has at most 65,535 vertices (largest owned part 5,628); GX has no 32-bit indices",
+      "primitives": "model parts as stored precompiled strips (GX_TRIANGLESTRIP), BSP surfaces as material-local triangle lists",
+      "skinning": "left to the renderer (HWI-032); node bytes and weights stay as stored. 2,240,801 of 2,386,375 owned model vertices have node bytes that are not multiples of 3",
+      "compressed_animations": "stay compressed, decoded at playback by the engine's keyframe code; 186 animations hold 1,767,250 bytes compressed and would need 4,437,112 bytes expanded at load; 279 arrays inside the blocks sit at 2-byte offsets and need alignment-safe reads",
+      "glyphs": "8-bit linear coverage; the text renderer fills a GX I8/I4 cache texture; every font has 224 characters"
+    },
+    "collision_index_rules_confirmed_on_owned_data": "all 936 files: 3D node planes and children (node, NONE, leaf by sign bit), leaf references, 2D reference planes (flip bit) and nodes, 2D node children (node or surface by sign bit), surface planes and edges, edge vertices/edges/surfaces, vertex edges; 0 violations before enforcement"
+  },
+  "host_sweep": {
+    "command": "content_loader_cases.py --sweep, then host_check of the committed loaders on every list",
+    "files": 3675,
+    "passed": 3675,
+    "by_kind": {
+      "model": {"files": 1481, "file_bytes": 85246848, "decoded_bytes": 142393696, "largest_decoded": 916160},
+      "lightmap": {"files": 82, "file_bytes": 146230304, "decoded_bytes": 250944160, "largest_decoded": 7382560},
+      "collision": {"files": 936, "file_bytes": 146645184, "decoded_bytes": 146465472, "largest_decoded": 3449248},
+      "model_animation": {"files": 628, "file_bytes": 70005984, "decoded_bytes": 70332480, "largest_decoded": 934368},
+      "font": {"files": 96, "file_bytes": 3679488, "decoded_bytes": 3664128, "largest_decoded": 57152},
+      "strings": {"files": 452, "file_bytes": 495200, "decoded_bytes": 466272, "largest_decoded": 6272}
+    },
+    "totals": {"file_bytes": 452303008, "decoded_bytes": 614266208},
+    "source_identity_matches": 1176,
+    "source_identity_note": "every model animation, font and text file's decoded data rebuilds the converter's source hash of the original Xbox bytes",
+    "titan_seconds": {"python_lists_and_digests": 166.4, "host_c_loaders": 18.6, "note": "Titan shared with a concurrent build"}
+  },
+  "cases": {
+    "generator": "tools/wii/content_loader_cases.py over generation 17189aa32aa83526",
+    "total": 210,
+    "valid": 79,
+    "malformed": 131,
+    "staged_bytes": 17990198,
+    "valid_by_kind": {"texture": 43, "animation": 6, "sound": 6, "model": 3, "lightmap": 3, "collision": 4, "model_animation": 5, "font": 4, "strings": 5},
+    "malformed_by_kind": {"texture": 14, "animation": 13, "sound": 11, "model": 15, "lightmap": 15, "collision": 15, "model_animation": 17, "font": 15, "strings": 13},
+    "wrong_format_controls": [
+      {"id": "w00", "loader": "lightmap", "input": "a model file", "expect": "magic"},
+      {"id": "w01", "loader": "lightmap", "input": "a collision file relabelled HWL1", "expect": "section"},
+      {"id": "w02", "loader": "strings", "input": "a font file", "expect": "magic"}
+    ],
+    "extremes": {
+      "largest_model": {"id": "g02", "bytes": 551616, "geometries": 85, "parts": 155, "vertices": 15193, "indices": 28309},
+      "largest_lightmap_geometry": {"id": "l02", "bytes": 4281792, "materials": 317, "vertices": 96903, "surfaces": 57532},
+      "largest_collision_model": {"id": "c02", "bytes": 92544, "elements": 6309},
+      "largest_structure_bsp_collision": {"id": "c03", "bytes": 3449440, "elements": 233508},
+      "compressed_animations": [{"id": "n01", "compressed": 3, "expanded_bytes_if_decoded_at_load": 17184},
+                                {"id": "n03", "compressed": 22, "expanded_bytes_if_decoded_at_load": 724324}],
+      "largest_model_animation": {"id": "n04", "bytes": 928864, "animations": 176},
+      "font_most_glyph_pixels": {"id": "f03", "bytes": 57312, "characters": 224, "pixel_bytes": 48048, "note": "every font has 224 characters"},
+      "longest_string_list": {"id": "u04", "strings": 39, "code_units": 2963},
+      "most_strings": {"id": "u03", "strings": 46},
+      "hud_text": {"id": "u02", "code_units": 1227}
+    },
+    "malformed_variants": {
+      "every_sectioned_format": ["header_truncated:truncated", "trailing_bytes:length", "bad_magic:magic", "bad_version:version", "flags_nonzero:reserved", "total_bytes_off:length", "section_count_off:section", "record_size_off:section", "section_offset_off:section", "section_padding_nonzero:reserved"],
+      "model": ["vertex_type_unknown:enum", "strip_type_unknown:enum", "part_order:range", "vertex_range_gap:range", "index_past_vertices:range"],
+      "lightmap": ["bsp_counts_off:count", "lightmap_material_gap:range", "material_vertex_type:enum", "material_surfaces_outside:range", "surface_index_past:range"],
+      "collision": ["bsp_range_gap:range", "node_child_outside:range", "leaf_reference_outside:range", "surface_plane_outside:range", "edge_vertex_outside:range"],
+      "model_animation": ["index_wrong:range", "pad_nonzero:reserved", "node_count_above:count", "frame_info_type_unknown:enum", "frame_size_off:count", "frame_info_offset_off:range", "compressed_array_moved:range"],
+      "font": ["font_counts_off:count", "table_gap:range", "table_too_long:count", "index_outside:range", "glyph_outside:range"],
+      "strings": ["string_gap:range", "units_short:range", "string_too_long:count"]
+    }
+  },
+  "dolphin": {
+    "launch": "run_dolphin.py --runs 2 --efb-access --scenario content_loaders --input-script tools/wii/inputs/content-loaders.json, fresh isolated profile per batch, host Dolphin lock held",
+    "hosts": [
+      {"host": "Research", "cpu": "Apple M5 Max", "os": "macOS 27.0", "dolphin": "2609", "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf", "backend": "Vulkan",
+       "runs": [{"run": 1, "guest": "passed", "persistence": "passed", "host_exit": "0x00000000", "forced_stop": false, "elapsed_seconds": 15.895},
+                {"run": 2, "guest": "passed", "persistence": "passed", "host_exit": "0x00000000", "forced_stop": false, "elapsed_seconds": 15.818}],
+       "batch_wall_seconds": 44.0, "os_stability": "no_instability_events_observed",
+       "attempts": "a first attempt acquired the lock but did not start: another agent's Dolphin was still running and the runner requires exclusive ownership (tool exit 2, 450.5 s waiting); repeated when the host was idle"},
+      {"host": "Titan", "os": "Windows 11 Pro 10.0.26200", "dolphin": "stock", "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac", "backend": "D3D",
+       "runs": [{"run": 1, "guest": "passed", "persistence": "passed", "host_exit": "0x00000000", "forced_stop": false, "elapsed_seconds": 19.473},
+                {"run": 2, "guest": "passed", "persistence": "passed", "host_exit": "0x00000000", "forced_stop": false, "elapsed_seconds": 19.162}],
+       "batch_wall_seconds": 198.8, "os_stability": "no_instability_events_observed", "note": "batch wall time includes SD staging through WSL mtools"}
+    ],
+    "per_cycle": {"cycles_per_launch": 2, "passed": 210, "failed": 0, "rejected_as_expected": 131,
+                  "by_kind_passed": {"texture": 57, "animation": 19, "sound": 17, "model": 18, "lightmap": 20, "collision": 19, "model_animation": 22, "font": 19, "strings": 19},
+                  "gx_images_read_back": 750, "mip_chain_levels_read_back": 130, "mismatches": 0, "max_channel_error_rgba": [0, 0, 0, 0],
+                  "wrong_format_texture_controls_detected": "38/42", "cycle_crc": "44383094", "heap_growth_bytes": 0},
+    "cycle_crc_identical_across_cycles_launches_and_hosts": true,
+    "persistence": "run counter advanced 1 then 2 across cold launches on each host; prior guest log preserved; staged files read back identical",
+    "physical_wii": "untested",
+    "development_run": "a dirty-tree build on Titan earlier gave 210/210, CRC 44383094, heap growth 0"
+  },
+  "memory_and_time": {
+    "scope": "Dolphin emulated time base, identical on both hosts; not hardware timing. heap_peak holds the file and the decoded form, heap_resident the decoded form alone (libogc mallinfo uordblks above the case's start)",
+    "largest_per_kind": {
+      "lightmap": {"id": "l02", "file_bytes": 4281792, "decoded_bytes": 7382560, "heap_peak": 11664368, "heap_resident": 7382568, "load_us": 46441, "decode_us": 42342},
+      "collision": {"id": "c03", "file_bytes": 3449440, "decoded_bytes": 3449248, "heap_peak": 6898704, "heap_resident": 3449256, "load_us": 38371, "decode_us": 34004},
+      "model_animation": {"id": "n04", "file_bytes": 928864, "decoded_bytes": 931552, "heap_peak": 1860432, "heap_resident": 931560, "load_us": 12843, "decode_us": 5785},
+      "model": {"id": "g02", "file_bytes": 551616, "decoded_bytes": 916160, "heap_peak": 1467792, "heap_resident": 916168, "load_us": 7895, "decode_us": 5443},
+      "font": {"id": "f03", "file_bytes": 57312, "decoded_bytes": 57152, "heap_peak": 114480, "heap_resident": 57160, "load_us": 3671, "decode_us": 203},
+      "strings": {"id": "u04", "file_bytes": 6336, "decoded_bytes": 6272, "heap_peak": 12624, "heap_resident": 6280, "load_us": 2805, "decode_us": 119}
+    },
+    "per_cycle_valid_sectioned_cases": {"cases": 24, "file_bytes": 11637408, "decoded_bytes": 16413152, "load_us": 183530, "decode_us": 109350},
+    "per_kind_cycle_1": {
+      "model": {"valid_bytes": 581088, "decoded_bytes": 965152, "load_us": 12760, "decode_us": 5738},
+      "lightmap": {"valid_bytes": 6075360, "decoded_bytes": 10466176, "load_us": 69205, "decode_us": 59955},
+      "collision": {"valid_bytes": 3549536, "decoded_bytes": 3548768, "load_us": 47172, "decode_us": 35014},
+      "model_animation": {"valid_bytes": 1275104, "decoded_bytes": 1277696, "load_us": 27320, "decode_us": 7678},
+      "font": {"valid_bytes": 143904, "decoded_bytes": 143264, "load_us": 13239, "decode_us": 731},
+      "strings": {"valid_bytes": 12416, "decoded_bytes": 12096, "load_us": 13834, "decode_us": 234}
+    }
+  },
+  "timings_titan": {
+    "configure_and_all_wii_targets_seconds": 177.8,
+    "content_loaders_incremental_build_seconds": 3.6,
+    "case_staging_seconds": 10.3,
+    "host_fixture_tests_seconds": 11.7,
+    "tools_wii_suite": {"python_3_14": {"tests": 394, "seconds": 16.3}, "python_3_11": {"tests": 394, "seconds": 16.9}}
+  },
+  "build_only_artifacts": "package_artifacts.py stage and inspect --require-clean at 465c9ac8: 29 allowlisted files, 0 problems, 0 findings",
+  "tests": {"python_3_14": "OK", "python_3_11": "OK", "suite": "tools/wii unittest discover"},
+  "acceptance": {
+    "HWI-008E_loaders": "met in stock Dolphin: loaders for HWM1, HWL1, HWC1, HMA1, HWF1 and HUS1, 210/210 cases on two cold launches each on Research and Titan, stable CRC, no heap growth; every one of the 3,675 converted files decodes on the host build",
+    "HWI-008E_decisions": "recorded: F32 vector expansion, s16 texcoords via texture matrix, 16-bit indices, strips as stored, skinning to the renderer, compressed animations decoded at playback, linear glyphs",
+    "HWI-008": "open: consumers of the decoded forms, scripts, movies, tag field byte order and physical Wii remain"
+  }
+}

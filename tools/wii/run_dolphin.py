@@ -1042,7 +1042,7 @@ def check_geometry_view(build_id, run_number, initial_count, previous_log, files
 
 
 def check_content_loaders(build_id, run_number, initial_count, previous_log, files, expect_exit="pad_start"):
-    """Evaluate one cold launch of the content loader self-test (HWI-008C) from its SD log.
+    """Evaluate one cold launch of the content loader self-test (HWI-008C, HWI-008E) from its SD log.
 
     Requires an accepted case list, every case passing in each load/check/release
     cycle (valid files decode to the host digests and read back from GX exactly,
@@ -1070,8 +1070,9 @@ def check_content_loaders(build_id, run_number, initial_count, previous_log, fil
     if failed:
         guest["failures"].append("cases_failed")
     cycles = [fields(line) for line in lines if line.startswith("CYCLE ")]
-    keep = ("n", "passed", "failed", "rejected_as_expected", "textures", "animations", "sounds", "gx_images",
-            "mip_levels", "draws", "peeks", "mismatches", "max_err", "controls_detected", "crc", "heap_growth")
+    keep = ("n", "passed", "failed", "rejected_as_expected", "textures", "animations", "sounds", "models",
+            "lightmaps", "collisions", "model_animations", "fonts", "strings", "gx_images", "mip_levels", "draws",
+            "peeks", "mismatches", "max_err", "controls_detected", "crc", "heap_growth")
     obs["cycles"] = [{k: c.get(k) for k in keep} for c in cycles]
     if len(cycles) != CNT_CYCLES or len(cases) != CNT_CYCLES * int(count):
         guest["failures"].append(f"expected_{CNT_CYCLES}_cycles_of_{count}_cases")
@@ -1083,6 +1084,7 @@ def check_content_loaders(build_id, run_number, initial_count, previous_log, fil
         guest["failures"].append("texture_control_not_detected")
     last_fields(lines, ("SUMMARY ",), obs)
     obs["timing"] = [fields(line) for line in lines if line.startswith("TIMING ")]
+    obs["memory"] = [fields(line) for line in lines if line.startswith("MEMORY ")]
     summary = obs.get("summary", {})
     if summary.get("stable") != "1" or summary.get("all_passed") != "1" or summary.get("heap_growth_max") != "0":
         guest["failures"].append("summary_not_stable_passed_or_heap_grew")

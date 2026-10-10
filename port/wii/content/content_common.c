@@ -20,7 +20,7 @@
 
 static const char *const error_names[CONTENT_ERROR_COUNT] = {
     "ok", "argument", "io", "size", "memory", "truncated", "magic", "version", "enum", "dimensions",
-    "count", "length", "reserved", "event", "delta", "value", "identity", "capacity",
+    "count", "length", "reserved", "event", "delta", "value", "identity", "capacity", "section", "range",
 };
 
 const char *content_error_name(enum content_error error)
@@ -34,6 +34,19 @@ enum content_error content_error_from_name(const char *name)
         if (strcmp(name, error_names[i]) == 0)
             return (enum content_error)i;
     return CONTENT_ERROR_COUNT;
+}
+
+void *content_alloc_aligned(uint32_t bytes)
+{
+    if (bytes == 0 || bytes > 0x7FFFFFE0u)
+        return NULL;
+    return content_aligned_alloc(32, (bytes + 31u) & ~31u);
+}
+
+void content_free_aligned(void *pointer)
+{
+    if (pointer != NULL)
+        content_aligned_free(pointer);
 }
 
 void content_blob_release(struct content_blob *blob)

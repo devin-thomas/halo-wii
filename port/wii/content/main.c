@@ -1,9 +1,12 @@
-/* Content loader self-test (HWI-008C).
+/* Content loader self-test (HWI-008C, HWI-008E).
  *
  * Loads converted content files (HWT1 textures, HRA1 recorded animations,
- * HWS1 sounds) from the SD card into memory this program owns, validates
- * them with the runtime loaders and checks the decoded contents against
- * SHA-256 digests the host converter wrote (content_check.c). Textures are
+ * HWS1 sounds; HWM1 models, HWL1 lightmap geometry, HWC1 collision, HMA1
+ * model animations, HWF1 fonts and HUS1 text) from the SD card into memory
+ * this program owns, validates them with the runtime loaders and checks the
+ * decoded contents against SHA-256 digests the host tool wrote
+ * (content_check.c). The decoded kinds also log their decoded memory, the
+ * heap they held and their load times (MEMORY lines). Textures are
  * also uploaded to GX and read back from the EFB, texel by texel, against
  * the CPU decode. Malformed and truncated inputs must be rejected with the
  * stated reason. Every case runs in two load/check/release cycles, which
@@ -259,28 +262,55 @@ static struct content_case cases[CONTENT_CHECK_MAX_CASES];
 static unsigned char *scratch;
 static uint32_t scratch_bytes;
 
+/* The largest decoded asset of a kind in one cycle (HWI-008E residency input). */
+struct largest {
+    char id[24];
+    u32 file_bytes, decoded_bytes, units, items;
+    int heap_peak, heap_resident;
+    u64 load_ticks, decode_ticks, expanded_bytes;
+};
+
 struct totals {
     unsigned passed, failed, rejected_as_expected;
     unsigned kind_cases[CONTENT_KIND_COUNT], kind_passed[CONTENT_KIND_COUNT];
     u64 load_ticks[CONTENT_KIND_COUNT], decode_ticks[CONTENT_KIND_COUNT], bytes[CONTENT_KIND_COUNT];
+    u64 decoded_bytes[CONTENT_KIND_COUNT], digest_ticks[CONTENT_KIND_COUNT];
+    struct largest largest[CONTENT_KIND_COUNT];
     unsigned draws, peeks, mismatches, gx_images, mip_levels, controls, controls_detected;
     int max_err[4];
     u32 crc;
 };
 
+static int32_t wii_heap(void) { return (int32_t)mallinfo().uordblks; }
+
 static void run_case(const struct content_case *c, unsigned cycle, struct totals *t)
 {
     struct content_outcome o;
-    content_run_case(c, scratch, scratch_bytes, texture_readback, wii_clock, &o);
+    content_run_case(c, scratch, scratch_bytes, texture_readback, wii_clock, wii_heap, &o);
     const struct content_readback *rb = &o.readback;
     log_line("CASE cycle=%u id=%s kind=%s expect=%s got=%s bytes=%u file_sha=%d decoded_match=%d units=%u "
+             "items=%u decoded_bytes=%u expanded_bytes=%u heap_peak=%d heap_resident=%d "
              "gx_images=%u mip_levels=%u draws=%u peeks=%u mismatches=%u interpolated=%u max_err=%d,%d,%d,%d "
-             "control=%d readback_crc=%08x load_us=%u decode_us=%u result=%s\n",
+             "control=%d readback_crc=%08x load_us=%u decode_us=%u digest_us=%u result=%s\n",
              cycle, c->id, content_kind_name(c->kind), content_error_name(c->expect), content_error_name(o.error),
-             (unsigned)c->bytes, o.file_ok, o.decoded_match, (unsigned)o.units, (unsigned)o.gx_images,
-             (unsigned)o.mip_levels, rb->draws, rb->peeks, rb->mismatches, rb->interpolated, rb->max_err[0],
-             rb->max_err[1], rb->max_err[2], rb->max_err[3], o.control, (unsigned)rb->crc, us(o.load_ticks),
-             us(o.decode_ticks), o.pass ? "pass" : "fail");
+             (unsigned)c->bytes, o.file_ok, o.decoded_match, (unsigned)o.units, (unsigned)o.items,
+             (unsigned)o.decoded_bytes, (unsigned)o.expanded_bytes, (int)o.heap_peak, (int)o.heap_resident,
+             (unsigned)o.gx_images, (unsigned)o.mip_levels, rb->draws, rb->peeks, rb->mismatches, rb->interpolated,
+             rb->max_err[0], rb->max_err[1], rb->max_err[2], rb->max_err[3], o.control, (unsigned)rb->crc,
+             us(o.load_ticks), us(o.decode_ticks), us(o.digest_ticks), o.pass ? "pass" : "fail");
+    if (c->expect == CONTENT_OK && o.pass && o.decoded_bytes > t->largest[c->kind].decoded_bytes) {
+        struct largest *l = &t->largest[c->kind];
+        memcpy(l->id, c->id, sizeof(l->id));   /* both char[24], NUL-terminated by the parser */
+        l->file_bytes = c->bytes;
+        l->decoded_bytes = o.decoded_bytes;
+        l->units = o.units;
+        l->items = o.items;
+        l->heap_peak = o.heap_peak;
+        l->heap_resident = o.heap_resident;
+        l->load_ticks = o.load_ticks;
+        l->decode_ticks = o.decode_ticks;
+        l->expanded_bytes = o.expanded_bytes;
+    }
     t->kind_cases[c->kind]++;
     if (o.pass) {
         t->passed++;
@@ -292,7 +322,9 @@ static void run_case(const struct content_case *c, unsigned cycle, struct totals
     if (c->expect == CONTENT_OK) {
         t->load_ticks[c->kind] += o.load_ticks;
         t->decode_ticks[c->kind] += o.decode_ticks;
+        t->digest_ticks[c->kind] += o.digest_ticks;
         t->bytes[c->kind] += c->bytes;
+        t->decoded_bytes[c->kind] += o.decoded_bytes;
     }
     t->draws += rb->draws;
     t->peeks += rb->peeks;
@@ -434,17 +466,30 @@ int main(void)
         if (growth > heap_growth)
             heap_growth = growth;
         log_line("CYCLE n=%u passed=%u failed=%u rejected_as_expected=%u textures=%u/%u animations=%u/%u "
-                 "sounds=%u/%u gx_images=%u mip_levels=%u draws=%u peeks=%u mismatches=%u max_err=%d,%d,%d,%d "
+                 "sounds=%u/%u models=%u/%u lightmaps=%u/%u collisions=%u/%u model_animations=%u/%u fonts=%u/%u "
+                 "strings=%u/%u gx_images=%u mip_levels=%u draws=%u peeks=%u mismatches=%u max_err=%d,%d,%d,%d "
                  "controls_detected=%u/%u crc=%08x heap_growth=%d\n",
                  cycle, t->passed, t->failed, t->rejected_as_expected, t->kind_passed[0], t->kind_cases[0],
-                 t->kind_passed[1], t->kind_cases[1], t->kind_passed[2], t->kind_cases[2], t->gx_images,
-                 t->mip_levels, t->draws, t->peeks, t->mismatches, t->max_err[0], t->max_err[1], t->max_err[2],
-                 t->max_err[3], t->controls_detected, t->controls, (unsigned)t->crc, growth);
+                 t->kind_passed[1], t->kind_cases[1], t->kind_passed[2], t->kind_cases[2], t->kind_passed[3],
+                 t->kind_cases[3], t->kind_passed[4], t->kind_cases[4], t->kind_passed[5], t->kind_cases[5],
+                 t->kind_passed[6], t->kind_cases[6], t->kind_passed[7], t->kind_cases[7], t->kind_passed[8],
+                 t->kind_cases[8], t->gx_images, t->mip_levels, t->draws, t->peeks, t->mismatches, t->max_err[0],
+                 t->max_err[1], t->max_err[2], t->max_err[3], t->controls_detected, t->controls, (unsigned)t->crc,
+                 growth);
         for (int k = 0; k < CONTENT_KIND_COUNT; ++k)
-            log_line("TIMING cycle=%u kind=%s valid_bytes=%u load_us=%u decode_us=%u "
+            log_line("TIMING cycle=%u kind=%s valid_bytes=%u decoded_bytes=%u load_us=%u decode_us=%u digest_us=%u "
                      "scope=SD_read_and_CPU_decode_in_Dolphin_emulated_time\n",
-                     cycle, content_kind_name((enum content_kind)k), (unsigned)t->bytes[k], us(t->load_ticks[k]),
-                     us(t->decode_ticks[k]));
+                     cycle, content_kind_name((enum content_kind)k), (unsigned)t->bytes[k],
+                     (unsigned)t->decoded_bytes[k], us(t->load_ticks[k]), us(t->decode_ticks[k]),
+                     us(t->digest_ticks[k]));
+        for (int k = CONTENT_KIND_MODEL; k < CONTENT_KIND_COUNT; ++k) {
+            const struct largest *l = &t->largest[k];
+            log_line("MEMORY cycle=%u kind=%s largest=%s file_bytes=%u decoded_bytes=%u units=%u items=%u "
+                     "expanded_bytes=%u heap_peak=%d heap_resident=%d load_us=%u decode_us=%u\n",
+                     cycle, content_kind_name((enum content_kind)k), l->id[0] ? l->id : "-", (unsigned)l->file_bytes,
+                     (unsigned)l->decoded_bytes, (unsigned)l->units, (unsigned)l->items, (unsigned)l->expanded_bytes,
+                     l->heap_peak, l->heap_resident, us(l->load_ticks), us(l->decode_ticks));
+        }
     }
     int stable = cases_ok, all_passed = cases_ok;
     for (unsigned cycle = 0; cases_ok && cycle < CYCLES; ++cycle) {

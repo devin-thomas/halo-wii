@@ -16,8 +16,10 @@ What it covers today:
   model animation frame data, fonts and unicode text, each in a big-endian
   sectioned container (HWI-008C);
 - a census of shaders, whose parameters the engine reads in place;
-- Wii runtime loaders for the texture, recorded-animation and sound
-  containers, proven in Dolphin ([Wii loaders](#wii-runtime-loaders));
+- Wii runtime loaders for all nine containers (textures, recorded
+  animations, sounds, models, lightmap geometry, collision, model
+  animations, fonts and text), proven in Dolphin
+  ([Wii loaders](#wii-runtime-loaders));
 - the game's five movies, transcoded to MPEG-1 video and MP2 audio for the
   vendored pl_mpeg decoder (HWI-008D, [movies](#movies)).
 
@@ -216,9 +218,9 @@ wrong record size, count, offset or length, and non-zero padding.
 
 The field lists are in the module docstrings (`content_geometry.py`,
 `content_animation.py`, `content_text.py`). Vertices stay in their Xbox
-compressed forms; expanding packed normals and choosing GX vertex formats is
-a renderer decision (HWI-032). Compressed model animations keep every array
-at its original offset, and the arrays must cover the block exactly.
+compressed forms in the containers; the Wii loaders expand them (see
+[Wii loaders](#wii-runtime-loaders)). Compressed model animations keep every
+array at its original offset, and the arrays must cover the block exactly.
 
 **Read in place (no conversion).** Shader parameters are typed tag fields
 (enums, flags, colours, floats, references, blocks). No shader group has a
@@ -231,15 +233,40 @@ lists (`str#`) are bytes and need no byte-order change.
 
 ## Wii runtime loaders
 
-`port/wii/content` holds C loaders for HWT1, HRA1 and HWS1 and a self-test
+`port/wii/content` holds C loaders for all nine containers and a self-test
 DOL (`ninja wii_content_loaders`; [README](../../port/wii/content/README.md)).
 They validate every header field, count, length and reserved byte, load
 files from SD into owned 32-byte-aligned memory and decode explicitly:
 texels by the GX rules, recorded animations back to their Xbox stream,
-Xbox ADPCM to PCM16. `tools/wii/content_loader_cases.py` stages a
-deterministic sample with host digests and malformed variants, and
-`run_dolphin.py --scenario content_loaders` checks a run. The
-[evidence](evidence/2026-10-10-content-loaders.md) has the Dolphin results.
+Xbox ADPCM to PCM16 (HWI-008C). The six sectioned containers (HWI-008E)
+are validated section by section and record by record, including every
+index the engine follows, and decoded into one owned arena each:
+
+| Container | Decoded form |
+|---|---|
+| HWM1 | parts; GX indexed vertices (56 bytes: F32 position, F32 normal, binormal and tangent expanded from 11:11:10 by the engine's formula, s16 texcoord, node bytes and weight as stored); u16 strip or list indices |
+| HWL1 | BSP, lightmaps, materials; environment vertices (56 bytes: F32 position, expanded NBT, F32 texcoord); lightmap vertices (16 bytes: expanded incident radiosity, s16 texcoord); u16 surfaces |
+| HWC1 | the engine's eight collision record arrays, every index checked against its BSP |
+| HMA1 | the Xbox frame info, defaults, frames and compressed blocks in native order; compressed blocks stay compressed and decode at playback |
+| HWF1 | records, character tables and indices; 8-bit glyph coverage verbatim |
+| HUS1 | native UTF-16 code units per string |
+
+Each loader exposes a canonical digest of its decoded form (every field
+little-endian) that `tools/wii/content_decoded.py` computes on the host;
+for model animations, unicode string lists and fonts the decoded data also
+rebuilds the converter's source hash. The renderer decisions (F32 normals,
+s16 texcoords through the texture matrix, 16-bit indices, skinning left to
+the renderer, decode compressed animations at playback, glyphs into a GX
+cache texture) are recorded in the
+[loader README](../../port/wii/content/README.md#decoded-forms-and-digests).
+
+`tools/wii/content_loader_cases.py` stages a deterministic sample with host
+digests, malformed variants and wrong-format controls, and
+`run_dolphin.py --scenario content_loaders` checks a run; `--sweep` lists
+every output of the six kinds for the host build. Evidence:
+[HWI-008C](evidence/2026-10-10-content-loaders.md) for the first three
+loaders, [HWI-008E](evidence/2026-10-10-content-loaders-2.md) for the six
+sectioned containers.
 
 ## Movies
 
@@ -325,13 +352,11 @@ decoded.
   full field definitions (HWI-015B loads tags; HWI-008 owns the content).
 - **Content not converted yet:** scripts. The demo launcher's files are
   out of scope (ADR-019) and are listed as excluded, never converted.
-- **Runtime:** loaders exist for HWT1, HRA1 and HWS1 only. HWM1, HWL1,
-  HWC1, HMA1, HWF1 and HUS1 have explicit Python decoders and checks, but no
-  Wii loader yet; the engine's consumers (HWI-015B, HWI-016, HWI-032) will
-  read them.
-- **Compressed vertex expansion:** packed 11:11:10 normals and the s16
-  texture coordinates stay as stored; GX vertex formats are a renderer
-  decision.
+- **Runtime:** every container has a Wii loader, proven in Dolphin. The
+  engine's consumers (HWI-015B, HWI-016, HWI-032) do not read the decoded
+  forms yet: skinning, the texcoord texture matrices, compressed-animation
+  playback (alignment-safe reads of arrays at 2-byte offsets) and the glyph
+  cache are theirs.
 - **Residency and storage budgets:** HWI-007 owns these. DXT3/DXT5 to RGBA8
   quadruples those textures; a CMPR colour plane plus an I4/I8 alpha plane
   is a possible smaller profile.

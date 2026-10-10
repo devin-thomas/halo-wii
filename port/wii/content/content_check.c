@@ -1,16 +1,23 @@
-/* Case list and per-file checks for the content loaders (HWI-008C). See
- * content_check.h. */
+/* Case list and per-file checks for the content loaders (HWI-008C,
+ * HWI-008E). See content_check.h. */
 #include "content_check.h"
 
 #include <stdio.h>
 #include <string.h>
 
+#include "hma_graph.h"
 #include "hra_animation.h"
+#include "hwc_collision.h"
+#include "hwf_font.h"
+#include "hwl_lightmap.h"
+#include "hwm_model.h"
+#include "hus_strings.h"
 #include "hws_sound.h"
 
 #define ADPCM_CHUNK_BLOCKS 64u
 
-static const char *const kind_names[CONTENT_KIND_COUNT] = {"texture", "animation", "sound"};
+static const char *const kind_names[CONTENT_KIND_COUNT] = {"texture", "animation", "sound", "model", "lightmap",
+                                                           "collision", "model_animation", "font", "strings"};
 
 const char *content_kind_name(enum content_kind kind)
 {
@@ -43,7 +50,7 @@ int content_read_cases(const char *list_path, const char *prefix, struct content
     FILE *file = fopen(list_path, "r");
     if (file == NULL)
         return -1;
-    char line[512];
+    char line[640];
     unsigned count = 0;
     int ok = 1;
     while (ok && fgets(line, sizeof(line), file) != NULL) {
@@ -56,7 +63,7 @@ int content_read_cases(const char *list_path, const char *prefix, struct content
         struct content_case *c = &cases[count];
         char kind[16], expect[16];
         unsigned long bytes;
-        if (sscanf(line, "case %23s %15s %15s %127s %lu %64s %64s", c->id, kind, expect, c->path, &bytes,
+        if (sscanf(line, "case %23s %15s %15s %255s %lu %64s %64s", c->id, kind, expect, c->path, &bytes,
                    c->file_sha, c->decoded_sha) != 7) {
             ok = 0;
             break;
@@ -170,13 +177,105 @@ static void sound_case(const struct content_blob *blob, unsigned char *scratch, 
     content_hex(digest, o->decoded);
 }
 
+/* The six decoded kinds: load into owned memory (timed as decode), measure
+ * the heap with the file and decoded form held, release the file, measure
+ * again, then digest the decoded form alone. */
+union decoded {
+    struct hwm_model model;
+    struct hwl_geometry lightmap;
+    struct hwc_collision collision;
+    struct hma_graph graph;
+    struct hwf_font font;
+    struct hus_strings strings;
+};
+
+static enum content_error decoded_load(enum content_kind kind, const struct content_blob *blob, union decoded *d,
+                                       struct content_outcome *o)
+{
+    enum content_error error;
+    switch (kind) {
+    case CONTENT_KIND_MODEL:
+        error = hwm_load(blob->data, blob->bytes, &d->model);
+        o->units = d->model.vertex_count;
+        o->items = d->model.index_count;
+        o->decoded_bytes = d->model.arena.bytes;
+        break;
+    case CONTENT_KIND_LIGHTMAP:
+        error = hwl_load(blob->data, blob->bytes, &d->lightmap);
+        o->units = d->lightmap.vertex_count;
+        o->items = d->lightmap.surface_count;
+        o->decoded_bytes = d->lightmap.arena.bytes;
+        break;
+    case CONTENT_KIND_COLLISION:
+        error = hwc_load(blob->data, blob->bytes, &d->collision);
+        for (uint32_t k = 0; k < HWC_ARRAYS; ++k)
+            o->units += d->collision.counts[k];
+        o->items = d->collision.bsp_count;
+        o->decoded_bytes = d->collision.arena.bytes;
+        break;
+    case CONTENT_KIND_MODEL_ANIMATION:
+        error = hma_load(blob->data, blob->bytes, &d->graph);
+        o->units = d->graph.animation_count;
+        o->items = d->graph.compressed_count;
+        o->expanded_bytes = d->graph.expanded_bytes;
+        o->decoded_bytes = d->graph.arena.bytes;
+        break;
+    case CONTENT_KIND_FONT:
+        error = hwf_load(blob->data, blob->bytes, &d->font);
+        o->units = d->font.font.character_count;
+        o->items = d->font.font.pixel_bytes;
+        o->decoded_bytes = d->font.arena.bytes;
+        break;
+    default:
+        error = hus_load(blob->data, blob->bytes, &d->strings);
+        o->units = d->strings.string_count;
+        o->items = d->strings.unit_count;
+        o->decoded_bytes = d->strings.arena.bytes;
+        break;
+    }
+    return error;
+}
+
+static void decoded_digest_release(enum content_kind kind, union decoded *d, unsigned char digest[32])
+{
+    switch (kind) {
+    case CONTENT_KIND_MODEL: hwm_digest(&d->model, digest); hwm_release(&d->model); break;
+    case CONTENT_KIND_LIGHTMAP: hwl_digest(&d->lightmap, digest); hwl_release(&d->lightmap); break;
+    case CONTENT_KIND_COLLISION: hwc_digest(&d->collision, digest); hwc_release(&d->collision); break;
+    case CONTENT_KIND_MODEL_ANIMATION: hma_digest(&d->graph, digest); hma_release(&d->graph); break;
+    case CONTENT_KIND_FONT: hwf_digest(&d->font, digest); hwf_release(&d->font); break;
+    default: hus_digest(&d->strings, digest); hus_release(&d->strings); break;
+    }
+}
+
+static void decoded_case(enum content_kind kind, struct content_blob *blob, content_clock clock, content_heap heap,
+                         int32_t heap_base, struct content_outcome *o)
+{
+    union decoded d;
+    uint64_t start = clock();
+    o->error = decoded_load(kind, blob, &d, o);
+    o->decode_ticks = clock() - start;
+    if (o->error != CONTENT_OK)
+        return;
+    o->heap_peak = heap != NULL ? heap() - heap_base : -1;
+    content_blob_release(blob);
+    o->heap_resident = heap != NULL ? heap() - heap_base : -1;
+    unsigned char digest[32];
+    start = clock();
+    decoded_digest_release(kind, &d, digest);
+    o->digest_ticks = clock() - start;
+    content_hex(digest, o->decoded);
+}
+
 void content_run_case(const struct content_case *c, unsigned char *scratch, uint32_t scratch_bytes,
-                      content_texture_hook hook, content_clock clock, struct content_outcome *o)
+                      content_texture_hook hook, content_clock clock, content_heap heap, struct content_outcome *o)
 {
     memset(o, 0, sizeof(*o));
     o->control = -1;
+    o->heap_peak = o->heap_resident = -1;
     strcpy(o->decoded, "-");
     struct content_blob blob;
+    int32_t heap_base = heap != NULL ? heap() : 0;
     uint64_t start = clock();
     enum content_error load = content_load_file(c->path, CONTENT_CHECK_MAX_FILE_BYTES, &blob);
     o->load_ticks = clock() - start;
@@ -193,8 +292,10 @@ void content_run_case(const struct content_case *c, unsigned char *scratch, uint
         texture_case(&blob, hook, clock, o);
     else if (c->kind == CONTENT_KIND_ANIMATION)
         animation_case(&blob, scratch, scratch_bytes, clock, o);
-    else
+    else if (c->kind == CONTENT_KIND_SOUND)
         sound_case(&blob, scratch, scratch_bytes, clock, o);
+    else
+        decoded_case(c->kind, &blob, clock, heap, heap_base, o);
     content_blob_release(&blob);
     if (c->expect == CONTENT_OK) {
         o->decoded_match = o->error == CONTENT_OK && strcmp(o->decoded, c->decoded_sha) == 0;
