@@ -7,6 +7,15 @@ one validated content generation under an output root (content_publish.py):
   textures/<map>/<tag>-<bitmap>.hwt   GX textures, every hardware mip level
   animations/<map>/<index>.hra        canonical big-endian recorded animations
   sounds/<map>/<tag>-<range>-<perm>.hws  sound permutations, codec retained
+  models/<map>/<tag>.hwm              model render geometry (content_geometry.py)
+  lightmaps/<map>/<bsp tag>.hwl       structure-BSP lightmap geometry
+  collision/<map>/<tag>.hwc           collision BSPs of a model or structure BSP
+  model_animations/<map>/<tag>.hma    model animation frame data (content_animation.py)
+  fonts/<map>/<tag>.hwf               font metrics and glyph pixels (content_text.py)
+  strings/<map>/<tag>.hus             unicode string lists and HUD message text
+
+Shaders are validated and counted but not converted: the engine reads their
+parameters in place (content_text.py); the manifest records the census.
 
 The manifest records the converter version and the hashes of its own
 modules, the profile, every source map hash and every output hash, and no
@@ -32,7 +41,11 @@ import sys
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import be_records as br  # noqa: E402
+import content_animation as ca  # noqa: E402
+import content_geometry as cg  # noqa: E402
 import content_publish as publish  # noqa: E402
+import content_text as ct  # noqa: E402
 import gx_texture as gt  # noqa: E402
 import halo_cache as hc  # noqa: E402
 import media_formats as mf  # noqa: E402
@@ -42,8 +55,11 @@ CONVERTER = "halo-wii-content-convert"
 CONVERTER_VERSION = "1.0.0"
 CHECKOUT = Path(__file__).resolve().parents[2]
 MODULES = ("content_convert.py", "content_publish.py", "gx_texture.py", "halo_cache.py", "media_formats.py",
-           "recorded_animation.py")
-CATEGORIES = ("textures", "animations", "sounds")
+           "recorded_animation.py", "be_records.py", "content_geometry.py", "content_animation.py", "content_text.py")
+CATEGORIES = ("textures", "animations", "sounds", "models", "lightmaps", "collision", "model_animations", "fonts",
+              "strings", "shaders")
+KINDS = ("texture", "animation", "sound", "model", "lightmap_geometry", "collision", "model_animation", "font",
+         "strings")
 MAP_NAME = re.compile(r"^[a-z0-9_]{1,32}$")
 MAX_BITMAPS_PER_GROUP = 2048
 MAX_PITCH_RANGES = 8
@@ -60,6 +76,17 @@ PROFILES = {
         "animations": {"container": "HRA1", "byte_order": "big-endian, explicit field decode (ADR-018)"},
         "sounds": {"container": "HWS1", "xbox_adpcm": "payload retained verbatim (decoded at runtime)",
                    "pcm16le": "converted to big-endian PCM16"},
+        "models": {"container": "HWM1", "vertices": "Xbox compressed model vertices, fields big-endian",
+                   "indices": "u16 strips as stored"},
+        "lightmaps": {"container": "HWL1", "vertices": "compressed environment and lightmap vertices, fields "
+                      "big-endian", "bitmaps": "the lightmap bitmap group converts with the textures"},
+        "collision": {"container": "HWC1", "layout": "collision_bsp_definitions.c element arrays, fields big-endian"},
+        "model_animations": {"container": "HMA1", "frames": "frame info, defaults, frames and compressed arrays "
+                             "decoded per field and re-encoded big-endian"},
+        "fonts": {"container": "HWF1", "pixels": "8-bit glyph coverage verbatim"},
+        "strings": {"container": "HUS1", "units": "UTF-16 code units big-endian, terminators kept"},
+        "shaders": {"decision": "read in place after ADR-015 relocation; parameters are typed tag fields with no "
+                    "tag-data or file payload; census only"},
     },
 }
 HWS_MAGIC = b"HWS1"
@@ -202,6 +229,54 @@ def plan_sounds(cache, map_name):
     return items
 
 
+def _item(kind, path, blob, source):
+    return {"kind": kind, "path": path, "data": blob, "estimate": len(blob), "source": source}
+
+
+TAG_CONTAINERS = (("models", "mode", "model", "models", "hwm", cg.convert_model),
+                  ("model_animations", "antr", "model_animation", "model_animations", "hma", ca.convert_graph),
+                  ("fonts", "font", "font", "fonts", "hwf", ct.convert_font),
+                  ("strings", "ustr", "strings", "strings", "hus", ct.convert_string_list),
+                  ("strings", "hmt ", "strings", "strings", "hus", ct.convert_hud_text),
+                  ("collision", "coll", "collision", "collision", "hwc",
+                   lambda cache, instance: cg.convert_collision(cg.collision_model_bsps(cache, instance))))
+CONTAINER_ERRORS = (cg.GeometryError, ca.AnimationDataError, ct.TextError, br.RecordError, hc.CacheError)
+
+
+def plan_tag_containers(cache, map_name, categories):
+    """Models, lightmap geometry, collision, model animations, fonts and text,
+    each built in full here so the map is validated before anything is written."""
+    items = []
+    for category, group, kind, folder, extension, convert in TAG_CONTAINERS:
+        if category not in categories:
+            continue
+        for instance in cache.by_group(group):
+            try:
+                blob, facts = convert(cache, instance)
+            except CONTAINER_ERRORS as error:
+                raise ConversionError("%s tag %d: %s" % (map_name, instance["ordinal"], error)) from None
+            items.append(_item(kind, "%s/%s/%05d.%s" % (folder, map_name, instance["ordinal"], extension), blob,
+                               dict(facts, map=map_name, tag=instance["ordinal"], group=group.strip())))
+    if "lightmaps" in categories or "collision" in categories:
+        try:
+            bsps = cg.scenario_bsps(cache)
+        except CONTAINER_ERRORS as error:
+            raise ConversionError("%s structure BSPs: %s" % (map_name, error)) from None
+        for ordinal, space, root in bsps:
+            try:
+                if "lightmaps" in categories:
+                    blob, facts = cg.convert_lightmaps(cache, space, root)
+                    items.append(_item("lightmap_geometry", "lightmaps/%s/%05d.hwl" % (map_name, ordinal), blob,
+                                       dict(facts, map=map_name, tag=ordinal, group="sbsp")))
+                if "collision" in categories:
+                    blob, facts = cg.convert_collision(cg.structure_collision_bsps(space, root))
+                    items.append(_item("collision", "collision/%s/%05d.hwc" % (map_name, ordinal), blob,
+                                       dict(facts, map=map_name, tag=ordinal, group="sbsp")))
+            except CONTAINER_ERRORS as error:
+                raise ConversionError("%s structure BSP tag %d: %s" % (map_name, ordinal, error)) from None
+    return items
+
+
 def pack_hws(codec, rate, channels, frames, payload):
     header = struct.pack(">4sHHIHHII", HWS_MAGIC, 1, HWS_CODECS[codec], rate, channels, 0, frames, len(payload))
     return header + bytes(32 - len(header)) + payload
@@ -216,6 +291,12 @@ def convert_map(cache, map_name, categories, profile, generation, verify_per_kin
         planned += plan_animations(cache, map_name)
     if "sounds" in categories:
         planned += plan_sounds(cache, map_name)
+    planned += plan_tag_containers(cache, map_name, categories)
+    if "shaders" in categories:
+        try:
+            record.setdefault("in_place", {}).setdefault("shaders", {})[map_name] = ct.shader_census(cache)
+        except (ct.TextError, hc.CacheError) as error:
+            raise ConversionError("%s shaders: %s" % (map_name, error)) from None
     generation.require_space(sum(item["estimate"] for item in planned))
     outputs = []
     verified = {}
@@ -248,6 +329,9 @@ def convert_map(cache, map_name, categories, profile, generation, verify_per_kin
             entry = generation.write(item["path"], item["data"])
             entry.update(kind="animation", source=dict(item["source"], map=map_name, index=item["index"]),
                          events=item["facts"]["events"], round_trip=item["facts"]["round_trip"])
+        elif item["kind"] != "sound":
+            entry = generation.write(item["path"], item["data"])
+            entry.update(kind=item["kind"], source=item["source"])
         else:
             payload = bytes(cache.file_span(item["file_offset"], item["size"]))
             codec = item["codec"]
@@ -272,6 +356,10 @@ def convert_map(cache, map_name, categories, profile, generation, verify_per_kin
     return outputs
 
 
+UNPACKERS = {"model": cg.unpack_model, "lightmap_geometry": cg.unpack_lightmaps, "collision": cg.unpack_collision,
+             "model_animation": ca.unpack_graph, "font": ct.unpack_font, "strings": ct.unpack_strings}
+
+
 def verify_output(entry, data):
     """Structural re-read of a published file (used by content_publish.verify_tree)."""
     kind = entry.get("kind")
@@ -284,6 +372,13 @@ def verify_output(entry, data):
     elif kind == "sound":
         if data[:4] != HWS_MAGIC or struct.unpack_from(">I", data, 20)[0] != len(data) - 32:
             raise publish.PublishError("sound container header inconsistent")
+    elif kind in UNPACKERS:
+        try:
+            UNPACKERS[kind](data)
+        except CONTAINER_ERRORS as error:
+            raise publish.PublishError("%s container invalid: %s" % (kind, error)) from None
+    else:
+        raise publish.PublishError("unknown output kind")
 
 
 def run(staging_dir, map_names, categories, profile_name, output_root, verify_per_kind=2, fault=None,
@@ -337,9 +432,11 @@ def run(staging_dir, map_names, categories, profile_name, output_root, verify_pe
             "source_chain": chain, "sources": sources, "categories": sorted(categories),
             "totals": {kind: {"files": sum(1 for o in outputs if o["kind"] == kind),
                               "bytes": sum(o["bytes"] for o in outputs if o["kind"] == kind)}
-                       for kind in ("texture", "animation", "sound")},
+                       for kind in KINDS if kind in KINDS[:3] or any(o["kind"] == kind for o in outputs)},
             "outputs": outputs,
         }
+        if record.get("in_place"):
+            manifest["in_place"] = record["in_place"]
         result = generation.finish(manifest, verify_output)
     except BaseException:
         generation.abandon()
@@ -382,7 +479,7 @@ def main(argv=None):
     except publish.PublishError as error:
         status = 3 if "insufficient destination space" in str(error) else 1
         print("Content conversion failed: %s" % error, file=sys.stderr)
-    except (ConversionError, hc.CacheError, gt.TextureError, ra.AnimationError, mf.MediaError) as error:
+    except (ConversionError, gt.TextureError, ra.AnimationError, mf.MediaError) + CONTAINER_ERRORS as error:
         status = 1
         print("Content conversion failed: %s" % error, file=sys.stderr)
     except InterruptedError as error:
