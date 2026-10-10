@@ -17,6 +17,69 @@ import sys
 CHECKOUT_PREFIX = "."
 DEVKITPRO_PREFIX = "/opt/devkitpro"
 
+# ADR-018: the code-generation semantics every Wii *engine* translation unit
+# compiles with, as the other native ports compile the game
+# (tools/linux_build.py, tools/android_build.py). tools/wii_build.py composes
+# them into ENGINE_CFLAGS. Authored Wii diagnostics that do not consume engine
+# data keep the target defaults.
+#  - -fsigned-char: plain char is signed on every other port; PowerPC EABI
+#    makes it unsigned (recorded-animation char deltas and the players.h
+#    char bit-field then read wrongly).
+#  - -fshort-wchar: engine text is UTF-16 code units (tag data, profiles,
+#    saves). Allowed only because no engine object calls a C-library wide
+#    function (newlib's assume a 4-byte wchar_t): engine_wide_references()
+#    is the gate, and the engine's wide calls go to 16-bit implementations
+#    (port/linux/include/wchar.h and port/linux/src/msvc_wide.c, as on Linux
+#    and Android), never to newlib's.
+#  - -fno-builtin-<wide>: nor may the compiler synthesise such a call.
+#  - the MSVC-tolerated-UB flags every port uses.
+WIDE_BUILTINS = ("wcslen", "wcsnlen", "wcschr", "wcsrchr", "wcscmp", "wcsncmp", "wcscpy", "wcsncpy",
+                 "wcscat", "wcsncat", "wmemchr", "wmemcmp", "wmemcpy", "wmemmove", "wmemset")
+ENGINE_SEMANTIC_FLAGS = ["-fsigned-char", "-fshort-wchar", "-fno-strict-aliasing", "-fwrapv",
+                         "-fno-delete-null-pointer-checks", *(f"-fno-builtin-{name}" for name in WIDE_BUILTINS)]
+
+# C-library functions whose behaviour depends on the size of wchar_t (C95
+# <wchar.h>/<wctype.h>, the multibyte conversions, and the MSVC spellings the
+# engine uses). An engine object compiled with -fshort-wchar must not
+# reference any of them.
+WIDE_LIBRARY_FUNCTIONS = frozenset((
+    *WIDE_BUILTINS, "wcscoll", "wcsxfrm", "wcsstr", "wcsspn", "wcscspn", "wcspbrk", "wcstok", "wcstol",
+    "wcstoul", "wcstoll", "wcstoull", "wcstod", "wcstof", "wcstold", "wcsdup", "wcsicmp", "wcsnicmp",
+    "wcslwr", "wcsupr", "wcsftime", "wtoi", "wtol", "towlower", "towupper", "towctrans", "wctrans",
+    "iswalpha", "iswupper", "iswlower", "iswdigit", "iswxdigit", "iswspace", "iswpunct", "iswalnum",
+    "iswprint", "iswgraph", "iswcntrl", "iswblank", "iswascii", "iswctype", "wctype", "swprintf",
+    "vswprintf", "snwprintf", "vsnwprintf", "wprintf", "vwprintf", "fwprintf", "vfwprintf", "swscanf",
+    "vswscanf", "wscanf", "fwscanf", "fgetwc", "fputwc", "getwc", "putwc", "getwchar", "putwchar",
+    "ungetwc", "fgetws", "fputws", "getws", "putws", "fwide", "wremove", "wtmpnam", "wctime", "wasctime",
+    "wperror", "wcserror", "wfopen", "mbstowcs", "wcstombs", "mbtowc", "wctomb", "mbrtowc", "wcrtomb",
+    "mbsrtowcs", "wcsrtombs", "btowc", "wctob", "mbrlen", "mbsinit"))
+
+
+def wide_references_from_nm(text: str) -> list[str]:
+    """The wide C-library functions among `nm -u` output's undefined symbols
+    (MSVC spellings keep a leading underscore: _wcsicmp is wcsicmp)."""
+    found = set()
+    for line in text.splitlines():
+        parts = line.split()
+        if not parts:
+            continue
+        name = parts[-1]
+        if name in WIDE_LIBRARY_FUNCTIONS or name.lstrip("_") in WIDE_LIBRARY_FUNCTIONS:
+            found.add(name)
+    return sorted(found)
+
+
+def engine_wide_references(nm: Path, objects) -> dict:
+    """{object: [wide C-library functions it references]} for each engine
+    object that references any; empty when the -fshort-wchar gate holds."""
+    result = {}
+    for obj in objects:
+        listing = subprocess.run([str(nm), "-u", str(obj)], capture_output=True, text=True, check=True)
+        names = wide_references_from_nm(listing.stdout)
+        if names:
+            result[Path(obj).name] = names
+    return result
+
 
 def prefix_map_flags(checkout: Path, root: Path) -> list[str]:
     return [f"-ffile-prefix-map={checkout}={CHECKOUT_PREFIX}",

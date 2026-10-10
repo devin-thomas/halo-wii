@@ -40,18 +40,19 @@ enum
 
 /* ---------- structures */
 
-union message_header_value
-{
-	word value;
-	struct
-	{
-		word flags : 2;
-		word type : 2;
-		word message_size : 12;
-	} fields;
-};
+/* port: the header word was read through a union of it and the bit-fields
+flags : 2, type : 2, message_size : 12. Bit-field allocation is the
+compiler's: MSVC and GCC on x86 allocate from the low bit, as
+build_message_header's shifts encode, but PowerPC EABI allocates from the
+high bit, where a 20-byte message read as 332 bytes and was rewritten 312
+bytes past its end. The header is decoded with message_header.h's own shifts
+and masks instead, which read the same bits on x86 (ADR-018). */
 
 /* ---------- prototypes */
+
+static void message_block_load(byte const *bytes, unsigned long block[2]);
+static void message_block_store(unsigned long const block[2], byte *bytes);
+static void message_key_bytes(unsigned long const key[2], byte key_bytes[2 * 4]);
 
 /* ---------- globals */
 
@@ -159,7 +160,6 @@ void message_encrypt(
 	word *msgptr,
 	unsigned long const key[2])
 {
-	union message_header_value header;
 	word message_size;
 	word flags;
 	word block_count;
@@ -167,11 +167,17 @@ void message_encrypt(
 	word *cursor;
 	long key_copy[4];
 	unsigned long block_index;
+	unsigned long block[2];
+	byte key_bytes[2 * 4];
 
 	match_assert("c:\\halo\\SOURCE\\bungie_net\\common\\message_encryption.c", 31, msgptr && key);
-	header.value = *msgptr;
-	flags = header.fields.flags;
-	message_size = header.fields.message_size;
+	/* port: explicit header decode (see structures) */
+	flags = GET_MESSAGE_FLAGS(*msgptr);
+	message_size = GET_MESSAGE_SIZE(*msgptr);
+	/* port: a size smaller than the header itself would wrap the block count
+	below to 0xFFFF blocks; such a message is left as it is */
+	if (message_size < sizeof(word))
+		return;
 	if (!TEST_FLAG(flags, 0))
 	{
 		block_count = (message_size - sizeof(word)) >> 3;
@@ -184,14 +190,19 @@ void message_encrypt(
 			block_index = block_count;
 			do
 			{
-				tea_encipher((unsigned long *)cursor, (unsigned long *)cursor, key_copy);
+				/* port: through little-endian words (message_block_load) */
+				message_block_load((byte const *)cursor, block);
+				tea_encipher(block, block, key_copy);
+				message_block_store(block, (byte *)cursor);
 				cursor += TEA_BLOCK_SIZE / sizeof(word);
 			}
 			while (--block_index);
 		}
 		if (remainder_size)
 		{
-			reversible_crypt((byte *)cursor, (short)remainder_size, (byte const *)key, sizeof(unsigned long) * 2);
+			/* port: the key's little-endian bytes (message_block_load) */
+			message_key_bytes(key, key_bytes);
+			reversible_crypt((byte *)cursor, (short)remainder_size, key_bytes, sizeof(key_bytes));
 		}
 		flags |= MESSAGE_ENCRYPTED_FLAG;
 		match_assert("c:\\halo\\SOURCE\\bungie_net\\common\\message_encryption.c", 76, (0<=flags) && ((flags)<=MESSAGE_FLAG_BITS_MASK));
@@ -205,7 +216,6 @@ void message_decrypt(
 	word *msgptr,
 	unsigned long const key[2])
 {
-	union message_header_value header;
 	word message_size;
 	word flags;
 	word block_count;
@@ -213,11 +223,17 @@ void message_decrypt(
 	word *cursor;
 	long key_copy[4];
 	unsigned long block_index;
+	unsigned long block[2];
+	byte key_bytes[2 * 4];
 
 	match_assert("c:\\halo\\SOURCE\\bungie_net\\common\\message_encryption.c", 88, msgptr && key);
-	header.value = *msgptr;
-	flags = header.fields.flags;
-	message_size = header.fields.message_size;
+	/* port: explicit header decode (see structures) */
+	flags = GET_MESSAGE_FLAGS(*msgptr);
+	message_size = GET_MESSAGE_SIZE(*msgptr);
+	/* port: a size smaller than the header itself would wrap the block count
+	below to 0xFFFF blocks; such a message is left as it is */
+	if (message_size < sizeof(word))
+		return;
 	if (TEST_FLAG(flags, 0))
 	{
 		block_count = (message_size - sizeof(word)) >> 3;
@@ -230,14 +246,19 @@ void message_decrypt(
 			block_index = block_count;
 			do
 			{
-				tea_decipher((unsigned long *)cursor, (unsigned long *)cursor, key_copy);
+				/* port: through little-endian words (message_block_load) */
+				message_block_load((byte const *)cursor, block);
+				tea_decipher(block, block, key_copy);
+				message_block_store(block, (byte *)cursor);
 				cursor += TEA_BLOCK_SIZE / sizeof(word);
 			}
 			while (--block_index);
 		}
 		if (remainder_size)
 		{
-			reversible_crypt((byte *)cursor, (short)remainder_size, (byte const *)key, sizeof(unsigned long) * 2);
+			/* port: the key's little-endian bytes (message_block_load) */
+			message_key_bytes(key, key_bytes);
+			reversible_crypt((byte *)cursor, (short)remainder_size, key_bytes, sizeof(key_bytes));
 		}
 		flags &= ~MESSAGE_ENCRYPTED_FLAG;
 		match_assert("c:\\halo\\SOURCE\\bungie_net\\common\\message_encryption.c", 131, (0<=flags) && ((flags)<=MESSAGE_FLAG_BITS_MASK));
@@ -248,3 +269,51 @@ void message_decrypt(
 }
 
 /* ---------- private code */
+
+/* port: an encrypted block is two 32-bit words, and the bytes the remainder is
+crypted with are the key's: the Xbox loads both little-endian. Loading them
+explicitly gives the same ciphertext on a big-endian target, and reads no
+misaligned words (the blocks start two bytes into the message). On the x86
+ports these are the values the casts loaded (ADR-018). */
+static void message_block_load(
+	byte const *bytes,
+	unsigned long block[2])
+{
+	long index;
+
+	for (index = 0; index < 2; index++, bytes += 4)
+	{
+		block[index] = (unsigned long)bytes[0] |
+			((unsigned long)bytes[1] << 8) |
+			((unsigned long)bytes[2] << 16) |
+			((unsigned long)bytes[3] << 24);
+	}
+
+	return;
+}
+
+static void message_block_store(
+	unsigned long const block[2],
+	byte *bytes)
+{
+	long index;
+
+	for (index = 0; index < 2; index++, bytes += 4)
+	{
+		bytes[0] = (byte)(block[index] & 0xFF);
+		bytes[1] = (byte)((block[index] >> 8) & 0xFF);
+		bytes[2] = (byte)((block[index] >> 16) & 0xFF);
+		bytes[3] = (byte)((block[index] >> 24) & 0xFF);
+	}
+
+	return;
+}
+
+static void message_key_bytes(
+	unsigned long const key[2],
+	byte key_bytes[2 * 4])
+{
+	message_block_store(key, key_bytes);
+
+	return;
+}

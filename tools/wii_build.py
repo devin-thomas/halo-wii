@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 
-from .wii.build import CHECKOUT_PREFIX, DEVKITPRO_PREFIX
+from .wii.build import CHECKOUT_PREFIX, DEVKITPRO_PREFIX, ENGINE_SEMANTIC_FLAGS
 from .wii.check_toolchain import inspect_toolchain, toolchain_inputs
 
 BUILD = Path("build/wii")
@@ -18,6 +18,11 @@ GEOMETRY_VIEW_SOURCES = [Path("port/wii/geometry_view/main.c"),
                              "cache_address_probe.c", "cache_bsp_probe.c", "cache_material_probe.c"))]
 MACHINE_FLAGS = ["-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float"]
 CFLAGS = ["-std=c11", "-O2", "-g", "-Wall", "-Wextra", "-Werror", "-ffp-contract=off", *MACHINE_FLAGS]
+# ADR-018: engine translation units (HWI-015 onwards) compile with the
+# shared engine semantics (tools/wii/build.py ENGINE_SEMANTIC_FLAGS) on top of
+# CFLAGS, and link only objects that pass engine_wide_references(). The
+# current targets are authored diagnostics, not engine units, and keep CFLAGS.
+ENGINE_CFLAGS = [*CFLAGS, *ENGINE_SEMANTIC_FLAGS]
 LIBRARIES = ("libfat.a", "libwiiuse.a", "libbte.a", "libogc.a")
 
 

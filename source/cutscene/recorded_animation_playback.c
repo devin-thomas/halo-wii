@@ -207,6 +207,11 @@ long recorded_animation_unit_control_size(
 	byte unit_control_data_version);
 static boolean recorded_animation_stream_damaged(
 	void);
+static word recorded_animation_decode_event_header(
+	byte const *stream,
+	byte const *stream_end,
+	struct animation_event_header *header,
+	word *time_delta);
 
 static void apply_animation_state(
 	struct animation_playback_controller *animation_state,
@@ -414,6 +419,7 @@ boolean recorded_animation_apply_event_stream(
 	byte const **playback_stream,
 	byte const *playback_stream_end)
 {
+	struct animation_event_header decoded_header;
 	struct animation_event_header const *header;
 	word time_delta;
 	word header_size;
@@ -426,29 +432,20 @@ boolean recorded_animation_apply_event_stream(
 
 	for (;;)
 	{
-		/* port: a header inside the stream (and its time delta, below) */
-		if (*playback_stream >= playback_stream_end)
+		/* port: a header inside the stream, and its time delta, decoded from the
+		stream's bytes rather than overlaid on them (ADR-018) */
+		header_size = recorded_animation_decode_event_header(
+			*playback_stream,
+			playback_stream_end,
+			&decoded_header,
+			&time_delta);
+		if (!header_size)
 			return recorded_animation_stream_damaged();
 
-		header = (struct animation_event_header const *)*playback_stream;
-		header_size = 0;
+		header = &decoded_header;
 		switch (header->time_delta)
 		{
-		case _time_delta_zero:
-			time_delta = 0;
-			header_size = 1;
-			break;
-
-		case _time_delta_one:
-			time_delta = 1;
-			header_size = 1;
-			break;
-
 		case _time_delta_byte:
-			if (playback_stream_end - *playback_stream < 2)
-				return recorded_animation_stream_damaged();
-			time_delta = *((byte const *)header + 1);
-			header_size = 2;
 			match_assert(
 				"c:\\halo\\SOURCE\\cutscene\\recorded_animation_playback.c",
 				0x12D,
@@ -456,25 +453,10 @@ boolean recorded_animation_apply_event_stream(
 			break;
 
 		case _time_delta_word:
-			if (playback_stream_end - *playback_stream < 3)
-				return recorded_animation_stream_damaged();
-			memcpy(&time_delta, (byte const *)header + 1, sizeof(time_delta));
-			header_size = 3;
 			match_assert(
 				"c:\\halo\\SOURCE\\cutscene\\recorded_animation_playback.c",
 				0x132,
 				time_delta>UNSIGNED_CHAR_MAX);
-			break;
-
-		/* time_delta is left unassigned only by this default arm. Not reached unassigned: the
-		 * arm's assertion failure calls system_exit, which does not return in January
-		 * (0x47c960 jumps to halt_and_catch_fire 0x4f21c0, which loops or calls exit).
-		 * Source-policy approval pending (2026-09-27 audit). */
-		default:
-			match_assert(
-				"c:\\halo\\SOURCE\\cutscene\\recorded_animation_playback.c",
-				0x135,
-				!"unreachable");
 			break;
 		}
 
@@ -518,6 +500,59 @@ void byte_swap_recording_stream(
 }
 
 /* ---------- private code */
+
+/* port: an event header is Xbox-authored stream data. Its first byte holds
+the time delta's kind in bits 0-1 and the event type in bits 2-7, where
+MSVC allocates struct animation_event_header's bit-fields (PowerPC EABI
+allocates them from the high bit, and read 0x0D as kind 0, type 13 instead of
+kind 1, type 3); a byte time delta follows, or a little-endian word one. The
+fields are decoded with shifts and masks into header, an in-memory copy,
+which is what the bit-field overlay and memcpy read on x86. Returns the
+header's size, or 0 (header and time_delta untouched) when it runs past
+stream_end. */
+static word recorded_animation_decode_event_header(
+	byte const *stream,
+	byte const *stream_end,
+	struct animation_event_header *header,
+	word *time_delta)
+{
+	word kind;
+	word delta;
+	word size;
+
+	if (stream >= stream_end)
+		return 0;
+
+	kind = stream[0] & 3;
+	switch (kind)
+	{
+	case _time_delta_zero:
+	case _time_delta_one:
+		delta = kind;
+		size = 1;
+		break;
+
+	case _time_delta_byte:
+		if (stream_end - stream < 2)
+			return 0;
+		delta = stream[1];
+		size = 2;
+		break;
+
+	default: /* _time_delta_word: the kind has two bits */
+		if (stream_end - stream < 3)
+			return 0;
+		delta = (word)(stream[1] | (stream[2] << 8));
+		size = 3;
+		break;
+	}
+
+	header->time_delta = kind;
+	header->event_type = stream[0] >> 2;
+	*time_delta = delta;
+
+	return size;
+}
 
 /* port: a stream that runs out before its end event, or holds an event the
 table doesn't have, stops playing (a map's stream; said once) */

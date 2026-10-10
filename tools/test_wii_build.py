@@ -88,3 +88,13 @@ def test_sdk_and_git_identity_are_reconfigure_dependencies(tmp_path, monkeypatch
     dependencies = wii_configure_inputs(root)
     assert Path(".git/HEAD") in dependencies
     assert any(path.as_posix().endswith("refs/heads/wii") for path in dependencies)
+
+
+def test_engine_cflags_add_the_adr_018_semantics_only_to_engine_units():
+    from tools.wii.build import ENGINE_SEMANTIC_FLAGS
+    from tools.wii_build import CFLAGS, ENGINE_CFLAGS
+
+    assert ENGINE_CFLAGS == [*CFLAGS, *ENGINE_SEMANTIC_FLAGS]
+    assert "-fsigned-char" in ENGINE_CFLAGS and "-fshort-wchar" in ENGINE_CFLAGS
+    # authored diagnostics keep the target defaults
+    assert "-fsigned-char" not in CFLAGS and "-fshort-wchar" not in CFLAGS
