@@ -16,6 +16,24 @@ header included in hcex build.
 
 /* ---------- constants */
 
+/* port: HALO_AI_DEBUG_RECORDS 0 leaves out the AI's debug records (HWI-015D,
+the Wii build's default). The records are diagnostics: the AI writes them as
+it decides, and only the debug drawing and debug logging read them (the audit:
+docs/wii/evidence/2026-10-10-diagnostics-storage-audit.md). Without them:
+- the large records of ai_debug (line-of-sight points and rays, the debug
+  path's state and storage, the selected encounter's firing-position
+  evaluation) are not compiled; the debug path tool (ai_debug_path) does
+  nothing;
+- every actor's debug information (actor_debug_array) is one shared record,
+  written and never read for a decision (ACTOR_DEBUG_INFO);
+- there is no path debug storage: ai_debug_get_path_storage returns NULL,
+  which the pathfinder already handles (path.c, path_obstacle_avoidance.c).
+The controls of ai_debug (the debug selection, the AI cheats, print_* and
+render_*) are kept. Every other build keeps the records (1). */
+#ifndef HALO_AI_DEBUG_RECORDS
+#define HALO_AI_DEBUG_RECORDS 1
+#endif
+
 enum
 {
 	MAXIMUM_AI_DEBUG_LINEOFFIRE_PILLS = 16,
@@ -291,6 +309,7 @@ struct ai_debug_state
 	real_point3d lineoffire_pill_start[MAXIMUM_AI_DEBUG_LINEOFFIRE_PILLS];
 	real_vector3d lineoffire_pill_vector[MAXIMUM_AI_DEBUG_LINEOFFIRE_PILLS];
 	real lineoffire_pill_radius[MAXIMUM_AI_DEBUG_LINEOFFIRE_PILLS];
+#if HALO_AI_DEBUG_RECORDS
 	boolean lineofsight_overflowed;
 	char __unknown2E9[3];
 	long lineofsight_point_count;
@@ -299,6 +318,7 @@ struct ai_debug_state
 	short lineofsight_point_key[MAXIMUM_AI_DEBUG_LINEOFSIGHT_POINTS];
 	long lineofsight_pair_count;
 	struct ai_debug_lineofsight_pair lineofsight_pair[MAXIMUM_AI_DEBUG_LINEOFSIGHT_PAIRS];
+#endif
 	boolean ballistic_lineoffire_valid;
 	boolean ballistic_lineoffire_success;
 	char __unknown4C2F6[2];
@@ -325,6 +345,7 @@ struct ai_debug_state
 	real field_4C814;
 	boolean field_4C818;
 	char __unknown4C819[3];
+#if HALO_AI_DEBUG_RECORDS
 	struct path_state path_state;
 	boolean field_608A8;
 	char __unknown608A9[91];
@@ -333,6 +354,7 @@ struct ai_debug_state
 	char __unknown7D381[3];
 	struct firing_position_evaluation_context evaluation_context;
 	struct ai_debug_actor_record actor_record[NUMBER_OF_AI_DEBUG_ACTOR_RECORDS];
+#endif
 	long field_859F4;
 	boolean field_859F8;
 	boolean field_859F9;
@@ -363,6 +385,7 @@ typedef char ai_debug_state_render_offset_assert[
 	offsetof(struct ai_debug_state, render) == 0xA5 ? 1 : -1];
 typedef char ai_debug_state_last_render_id_offset_assert[
 	offsetof(struct ai_debug_state, last_render_id) == 0xF4 ? 1 : -1];
+#if HALO_AI_DEBUG_RECORDS
 typedef char ai_debug_state_ballistic_lineoffire_valid_offset_assert[
 	offsetof(struct ai_debug_state, ballistic_lineoffire_valid) == 0x4C2F4 ? 1 : -1];
 typedef char ai_debug_state_ballistic_lineoffire_point_count_offset_assert[
@@ -389,6 +412,7 @@ typedef char ai_debug_actor_record_field_3C_offset_assert[
 	offsetof(struct ai_debug_actor_record, firing_position.evaluation) == 0x3C ? 1 : -1];
 typedef char ai_debug_state_field_7D380_offset_assert[
 	offsetof(struct ai_debug_state, evaluation_context_valid) == 0x7D380 ? 1 : -1];
+#endif
 
 struct actor_debug_info
 {
@@ -612,6 +636,15 @@ void ai_debug_speak(
 extern struct ai_debug_state ai_debug;
 extern struct actor_debug_info *actor_debug_array;
 extern struct path_debug_storage *actor_path_debug_array;
+
+/* port: an actor's debug information (HALO_AI_DEBUG_RECORDS above): its own
+record, or without the records the one shared record that ai_debug_initialize
+allocates */
+#if HALO_AI_DEBUG_RECORDS
+#define ACTOR_DEBUG_INFO(actor_index) (&actor_debug_array[DATUM_INDEX_TO_ABSOLUTE_INDEX(actor_index)])
+#else
+#define ACTOR_DEBUG_INFO(actor_index) (actor_debug_array)
+#endif
 
 
 extern real_point3d global_ai_debug_drawstack_next_position;
