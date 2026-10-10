@@ -6,6 +6,8 @@ The host importer must identify the exact supported source revision, validate in
 
 Debug fixtures should be authored/synthetic or otherwise redistributable with clear provenance. Reference-game decompilations are study material, not permission to copy code without inspecting notices and provenance. Do not import proprietary SDK implementations from a matching-decomp tree. A game dump is not needed to use libogc's ordinary controller APIs.
 
+Third-party code compiled into Wii binaries is vendored only after a licence and provenance review: pinned upstream commit and SHA-256, licence text, patent status and redistribution obligations. The movie decoders are pl_mpeg (MIT) and, for the benchmark only, stb_image's JPEG decoder (MIT or public domain); see [third-party notes](../../port/wii/third_party/README.md). Keep their notices in every release's third-party notice file. FFmpeg is a host tool you supply for import-time transcoding; no FFmpeg code is linked into a Wii binary. Proprietary decoders (RAD Bink, Nintendo THP and DSP-ADPCM SDK code) are not used.
+
 The inspected upstream [LICENSE.md](https://github.com/OpenCommunityEdition/OpenCE/blob/2b0327bc80ca38c90894cb56b19652cbe85733ff/LICENSE.md) contains CC0. Preserve that file and all third-party/per-file notices. It is not a blanket license over game assets, trademarks or every external component. Review provenance before public code reuse and packaging.
 
 Local logs should use data fingerprints rather than absolute dump paths. Saves belong to a versioned project directory with recoverable writes and migrations. Never overwrite a user's only valid state or place their source data in CI artifacts.
