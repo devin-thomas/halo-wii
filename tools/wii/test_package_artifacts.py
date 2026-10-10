@@ -146,7 +146,8 @@ class PackageArtifactsTest(unittest.TestCase):
 
     def test_secret_like_content_fails_without_echoing_it(self):
         token = "ghp_" + "A1b2C3d4E5" * 4
-        secrets = (token + "\n-----BEGIN OPENSSH PRIVATE KEY-----\nAKIAABCDEFGHIJKLMNOP\n"
+        # Assembled at run time so the source holds no literal secret shape.
+        secrets = (token + "\n-----BEGIN OPENSSH " + "PRIVATE KEY-----\n" + "AKIA" + "ABCDEFGHIJKLMNOP\n"
                    "password = hunter2hunter2\nwii 192.168.1.50\n")
         result = self.inspect(self.staged(map_extra=secrets))
         self.assertTrue({"github-token", "private-key", "aws-access-key", "credential-assignment",
