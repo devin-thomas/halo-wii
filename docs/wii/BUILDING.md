@@ -66,6 +66,18 @@ python -B tools/wii/compare_map_runs.py --wii <Wii engine.log> --host <host engi
 python -B tools/wii/map_layouts.py --check                              # generated layouts current
 ```
 
+The engine draws the map's environment through GX (HWI-016B) from render
+files staged from a content pipeline generation
+([tools/wii/README.md](../../tools/wii/README.md#environment-render-staging-hwi-016b),
+[evidence](evidence/2026-10-10-engine-environment-render.md)). Without them
+on the card nothing is drawn, the log says `RENDER_FAIL` and the pose check
+fails; `render.txt` with `render=off` restores the HWI-015B build's
+behaviour:
+
+```powershell
+python -B tools/wii/render_stage.py --generation <generation dir> --map <your .map> --name <map> --out <new private dir> --stage-args
+```
+
 `tools/wii/engine_layout.py game-state` evaluates every game-state allocation
 with the Wii compiler and compares it with the committed i686 census;
 `engine_layout.py dwarf` compares structure layouts unit by unit from two

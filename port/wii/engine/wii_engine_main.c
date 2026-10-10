@@ -25,6 +25,9 @@ One launch:
    an irregular cadence with a half-second hitch, frames paced by the video's
    vertical retrace), and unloading it. Every run's simulation digests must
    be the first run's; the heap must not grow across cycles.
+4b. HWI-016B: every frame of those runs is drawn by the Wii rasterizer
+   (port/wii/render, unless render.txt turns it off); then its fixed-pose
+   checks (render.txt mode=poses_only runs them alone).
 5. The engine's shut-down; the arena must be restored. The main stack's
    peak, the unsupported entry points called, and the result.
 6. A deliberate fatal engine assertion: its halt is reported and the
@@ -48,6 +51,7 @@ One launch:
 #include "fixed_step_scenario.h"
 #include "engine_map_run.h"
 #include "../runtime/runtime_start.h"
+#include "../render/wii_render.h"
 
 #define LOG_PATH WII_ENGINE_ROOT "/engine.log"
 #define RUNS_PATH WII_ENGINE_ROOT "/runs.txt"
@@ -340,6 +344,17 @@ int __wrap_main(void)
 	have_previous = read_previous_result(&previous_digest, &previous_chain);
 	wii_log("PERSIST previous_result=%d digest=%08lx chain=%08lx\n", have_previous, previous_digest,
 		previous_chain);
+	/* HWI-016B: the Wii rasterizer (port/wii/render; render.txt can turn it
+	off), registered before the engine's start-up runs its initialize */
+	{
+		struct wii_render_video video;
+
+		video.mode = mode;
+		video.xfb[0] = xfb0;
+		video.xfb[1] = xfb1;
+		wii_render_configure(&video);
+		wii_render_register_hooks();
+	}
 
 	/* ---------- platform services */
 	stage = "arena";
@@ -373,9 +388,9 @@ int __wrap_main(void)
 		stage = "shell_initialize";
 		wii_log("STAGE shell_initialize begin\n");
 		shell = wii_engine_shell_initialize();
-		wii_log("STAGE shell_initialize result=%d (0 expected: rasterizer unsupported) error=\"%s\" unsupported=%lu\n",
-			shell, wii_engine_error_text(), wii_unsupported_names());
-		check(!shell, "shell_initialize_reports_rasterizer");
+		wii_log("STAGE shell_initialize result=%d (expected %d: 1 with the Wii rasterizer, 0 without) error=\"%s\" "
+			"unsupported=%lu\n", shell, wii_render_enabled(), wii_engine_error_text(), wii_unsupported_names());
+		check(shell == wii_render_enabled(), "shell_initialize_rasterizer");
 		stage = "game_initialize";
 		wii_log("STAGE game_initialize begin\n");
 		game = wii_engine_game_initialize();
@@ -397,6 +412,7 @@ int __wrap_main(void)
 	/* ---------- the real map (engine_map_run.c) */
 	stage = "map_run";
 	read_scenario_path(scenario_path, sizeof(scenario_path));
+	wii_render_set_map(scenario_path);
 	{
 		struct stat information;
 		char staged[320];
@@ -426,7 +442,16 @@ int __wrap_main(void)
 	config.vsync_dt = vsync_dt;
 	config.vsync_begin = vsync_begin;
 	config.heap_in_use = heap_in_use;
-	check(engine_map_run(&config, &map_report), "map_run");
+	/* (render.txt mode=poses_only: the fixed-pose checks alone, below) */
+	if (wii_render_poses_only())
+		memset(&map_report, 0, sizeof(map_report));
+	else
+		check(engine_map_run(&config, &map_report), "map_run");
+	/* HWI-016B: the drawn environment at fixed poses */
+	stage = "render_poses";
+	check(wii_render_pose_phase(scenario_path), "render_poses");
+	wii_render_report();
+	stage = "map_run";
 	wii_log("MAP_TIMES load_ms=%lu run_ms=%lu\n", map_report.load_milliseconds, map_report.run_milliseconds);
 	if (have_previous)
 	{

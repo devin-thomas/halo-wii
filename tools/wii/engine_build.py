@@ -70,6 +70,18 @@ WII_PLATFORM = tuple(ENGINE_DIR / name for name in (
     "wii_engine_main.c")) + (
     Path("port/wii/runtime/runtime_start.c"), Path("tools/wii/cache_arena_plan.c"))
 WII_HEADERS = tuple(sorted(ENGINE_DIR.glob("*.h"))) + (PREFIX, ENGINE_DIR / "sdl/SDL3/SDL.h")
+# HWI-016B: the Wii rasterizer's environment path, in engine.dol only (the
+# i686 host reference, tools/wii/run_engine_map_host.py, builds the engine
+# units and WII_PLATFORM without it and registers no rasterizer): its
+# engine-side unit (the engine's headers and flags), and its GX side with the
+# HWL1/HWT1 loaders (strict C11, libogc).
+RENDER_DIR = Path("port/wii/render")
+CONTENT_DIR = Path("port/wii/content")
+RENDER_ENGINE = (RENDER_DIR / "render_engine.c",)
+RENDER_GX = (RENDER_DIR / "render_gx.c",) + tuple(CONTENT_DIR / name for name in (
+    "content_common.c", "content_sections.c", "hwl_lightmap.c", "hwt_texture.c"))
+RENDER_HEADERS = (RENDER_DIR / "wii_render.h",) + tuple(CONTENT_DIR / name for name in (
+    "content_common.h", "content_sections.h", "hwl_lightmap.h", "hwt_texture.h"))
 
 MUSL_MATH = Path("port/third_party/musl-math")
 ZLIB = Path("port/third_party/zlib")
@@ -103,7 +115,9 @@ WRAPPED = ("main", "halt_and_catch_fire", "game_tick", "game_frame", "update_cli
            # HWI-015B: the texture cache rasterizer_initialize would have made
            "texture_cache_open", "texture_cache_close", "sound_cache_open", "sound_cache_close",
            "predicted_resources_precache", "_rasterizer_decals_dispose_from_old_map",
-           "_texture_cache_bitmap_get_hardware_format")
+           "_texture_cache_bitmap_get_hardware_format",
+           # HWI-016B: the Wii rasterizer's per-map halves (engine_hooks.c)
+           "rasterizer_initialize_for_new_map", "rasterizer_dispose_from_old_map")
 # Diagnostic storage (HWI-015D): "omit" (the default) compiles the engine
 # without the AI's debug records and the profiler's frame history; "keep"
 # compiles them as the other ports do, and then wraps ai_debug_initialize
@@ -199,6 +213,9 @@ def flag_sets(semantic_flags: List[str], diagnostic_storage: str = "omit") -> Di
         # the driver and the arena planner: libogc's headers, not the SDK's
         # (the target's CFLAGS, and POSIX names)
         "driver": [*SECTION_FLAGS, "-D_GNU_SOURCE", f"-I{ENGINE_DIR.as_posix()}"],
+        # HWI-016B: the rasterizer's GX side and the content loaders it uses
+        "render_gx": [*SECTION_FLAGS, "-D_GNU_SOURCE", f"-I{ENGINE_DIR.as_posix()}", f"-I{RENDER_DIR.as_posix()}",
+                      f"-I{CONTENT_DIR.as_posix()}"],
         "musl_math": [*semantic_flags, "-std=gnu11", "-w", f"-I{MUSL_MATH.as_posix()}/include",
                       "-include", f"{MUSL_MATH.as_posix()}/include/libm.h", *SECTION_FLAGS],
         "zlib": [*semantic_flags, "-std=gnu11", "-w", *ZLIB_DEFINES, *SECTION_FLAGS],
@@ -231,6 +248,7 @@ def engine_inputs() -> List[Path]:
     return [Path("tools/wii/engine_build.py"), Path("tools/wii/engine_semantics.py"),
             Path("tools/wii/engine_rewrite.py"), Path("tools/linux_msvc_semantics.py"), PORT_CONFIG,
             *WII_HEADERS, *game_units(), *ENGINE_AUTHORED, *(path for path, _ in platform_units()),
+            *RENDER_ENGINE, *RENDER_GX, *RENDER_HEADERS,
             *REPLACED.values(), *sorted(set(headers))]
 
 
@@ -284,6 +302,17 @@ def generate_engine_build(n, semantic_flags: List[str], libraries: List[Path],
         obj = object_path(unit)
         n.build(obj, "wii_cc_file", unit, implicit=[*common, PLATFORM_SEMANTICS, flag_files[flags]],
                 variables={"flags": flag_files[flags].as_posix()})
+        objects.append(obj)
+    # HWI-016B: the Wii rasterizer (engine.dol only)
+    for unit in RENDER_ENGINE:
+        obj = object_path(unit)
+        n.build(obj, "wii_cc_file", unit, implicit=[*common, SEMANTICS, flag_files["engine"]],
+                variables={"flags": flag_files["engine"].as_posix()})
+        engine_objects.append(obj)
+    for unit in RENDER_GX:
+        obj = object_path(unit)
+        n.build(obj, "wii_cc_file", unit, implicit=[*common, PLATFORM_SEMANTICS, flag_files["render_gx"]],
+                variables={"flags": flag_files["render_gx"].as_posix()})
         objects.append(obj)
 
     engine_list = ENGINE_BUILD / "engine-objects.txt"
