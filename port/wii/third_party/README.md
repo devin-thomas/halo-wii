@@ -62,6 +62,10 @@ the user interface.
 - The Xbox ADPCM decoder is authored in this repository
   (`port/wii/media_bench/media_core.c`). It follows the published IMA ADPCM
   algorithm, the Linux port's mixer and `tools/wii/media_formats.py`.
+- Audio output uses ASND from the official devkitPro libogc build
+  (`libasnd.a`, linked from the toolchain, not vendored). Its header carries
+  a BSD 3-clause licence (Copyright (c) 2008 Hermes): a binary release must
+  reproduce that notice in its documentation, like libogc's own notices.
 - FFmpeg is only a host tool that you supply for import-time transcoding.
   No FFmpeg code is linked into a Wii binary.
 - The proprietary RAD Bink SDK and Nintendo's THP and DSP-ADPCM SDK
