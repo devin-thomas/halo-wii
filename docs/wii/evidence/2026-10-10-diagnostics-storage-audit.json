@@ -1,0 +1,7273 @@
+{
+ "schema_version": 1,
+ "ticket": "HWI-015D",
+ "scope": "audit of the AI debug records and the profiling storage for gameplay effect; compile-out of the diagnostic-only storage in the Wii engine build; no map, no rendering, emulator only",
+ "base_commit": "0c73eaf8277d0f288b31ea5b09ee8c017dc32132",
+ "implementation_commit": "fa1927311eff99d8467379c24109e98ee2dc115e",
+ "line_numbers_at": "0c73eaf8 (unmodified upstream lines)",
+ "toolchain": {
+  "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+  "binutils": "GNU ld (GNU Binutils) 2.46.0.20260210",
+  "host_compiler": "Debian clang version 19.1.7 (3+b1)"
+ },
+ "builds": {
+  "before": {
+   "commit": "0c73eaf8277d0f288b31ea5b09ee8c017dc32132",
+   "dirty": false,
+   "build_id": "ffbd172161ac9401",
+   "dol_bytes": 4101856,
+   "dol_sha256": "d55704a29ed263c5a7e3be99a4640fb1138150733dcea71149146dfa6a2b1d5c"
+  },
+  "after_omit": {
+   "commit": "fa1927311eff99d8467379c24109e98ee2dc115e",
+   "dirty": false,
+   "build_id": "02ae7bd4f03ae987",
+   "diagnostic_storage": "omit",
+   "dol_bytes": 4091968,
+   "dol_sha256": "37686b4a92b5800f2aa5ccd82d058f1d61022d02f4fcbf2667bff2ddb64dddc4",
+   "elf_sha256": "de8bb309ce7829de45006dfe28dffdd3536cf383ef0be0d966371ef9f3192dda",
+   "map_sha256": "aab74868caa0b60e2bc84f39a1a30d91ad121fbc8b7f9214b979c34837433b6d"
+  },
+  "after_keep": {
+   "commit": "fa1927311eff99d8467379c24109e98ee2dc115e",
+   "dirty": false,
+   "build_id": "950374d87b522b6a",
+   "diagnostic_storage": "keep"
+  }
+ },
+ "mem1_image": {
+  "before": {
+   "image_start": "0x80003f00",
+   "image_end": "0x815ed3a0",
+   "image_bytes": 22975648,
+   "mem1_after_image": 2174048,
+   "bytes_by_kind": {
+    "bss": 18872810,
+    "code": 3212604,
+    "data": 186806,
+    "rodata": 701584
+   },
+   "named_groups": {
+    "ai_debug": {
+     "code": 50620,
+     "rodata": 1432,
+     "data": 12,
+     "bss": 547730
+    },
+    "profiling": {
+     "code": 28292,
+     "rodata": 454,
+     "data": 34079,
+     "bss": 1138742
+    }
+   }
+  },
+  "after_omit": {
+   "image_start": "0x80003f00",
+   "image_end": "0x81453340",
+   "image_bytes": 21296192,
+   "mem1_after_image": 3853504,
+   "bytes_by_kind": {
+    "bss": 17203204,
+    "code": 3203248,
+    "data": 186806,
+    "rodata": 701104
+   },
+   "named_groups": {
+    "ai_debug": {
+     "code": 41992,
+     "rodata": 1332,
+     "data": 12,
+     "bss": 2476
+    },
+    "profiling": {
+     "code": 27824,
+     "rodata": 454,
+     "data": 34079,
+     "bss": 14390
+    }
+   }
+  },
+  "after_keep": {
+   "image_start": "0x80003f00",
+   "image_end": "0x815ed580",
+   "image_bytes": 22976128,
+   "mem1_after_image": 2173568,
+   "bytes_by_kind": {
+    "bss": 18872810,
+    "code": 3212880,
+    "data": 186806,
+    "rodata": 701824
+   },
+   "named_groups": {
+    "ai_debug": {
+     "code": 50620,
+     "rodata": 1432,
+     "data": 12,
+     "bss": 547730
+    },
+    "profiling": {
+     "code": 28292,
+     "rodata": 454,
+     "data": 34079,
+     "bss": 1138742
+    }
+   }
+  },
+  "image_bytes_saved": 1679456
+ },
+ "mem1_runtime": {
+  "before_hwi015a": {
+   "source": "docs/wii/evidence/2026-10-10-platform-runtime.json (same image bytes, 22,975,648)",
+   "arena_at_main": 2108512,
+   "after_gx": 294912,
+   "after_engine_start_mem1": 16384,
+   "mem2_heap_during_cycles": 802816
+  },
+  "after_omit": {
+   "arena_at_main": 3787968,
+   "after_gx": 1974272,
+   "after_engine_start_mem1": 892928,
+   "mem2_heap_during_cycles": 0
+  }
+ },
+ "group_symbols": [
+  {
+   "group": "ai_debug",
+   "kind": "rodata",
+   "symbol": "ai_debug_render_actor",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 356,
+   "class": "diagnostic_only (debug drawing strings)",
+   "bytes_before": 356,
+   "bytes_after": 356
+  },
+  {
+   "group": "ai_debug",
+   "kind": "rodata",
+   "symbol": "global_ai_debug_firing_position_colors",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 288,
+   "class": "diagnostic_only (debug drawing)",
+   "bytes_before": 288,
+   "bytes_after": 288
+  },
+  {
+   "group": "ai_debug",
+   "kind": "rodata",
+   "symbol": "postcombat_type_strings",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 44,
+   "class": "diagnostic_only (debug drawing)",
+   "bytes_before": 44,
+   "bytes_after": 44
+  },
+  {
+   "group": "ai_debug",
+   "kind": "rodata",
+   "symbol": ".rodata",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 744,
+   "class": "diagnostic_only (strings)",
+   "bytes_before": 744,
+   "bytes_after": 644
+  },
+  {
+   "group": "profiling",
+   "kind": "rodata",
+   "symbol": "ai_profile_render_spray_names",
+   "object": "source/ai/ai_profile.o",
+   "bytes": 12,
+   "class": "diagnostic_only",
+   "bytes_before": 12,
+   "bytes_after": 12
+  },
+  {
+   "group": "profiling",
+   "kind": "rodata",
+   "symbol": ".rodata",
+   "object": "source/ai/ai_profile.o",
+   "bytes": 6,
+   "class": "diagnostic_only (strings)",
+   "bytes_before": 6,
+   "bytes_after": 6
+  },
+  {
+   "group": "profiling",
+   "kind": "rodata",
+   "symbol": "profile_frame_get_value",
+   "object": "source/cseries/profile.o",
+   "bytes": 116,
+   "class": "diagnostic_only (switch table)",
+   "bytes_before": 116,
+   "bytes_after": 116
+  },
+  {
+   "group": "profiling",
+   "kind": "rodata",
+   "symbol": "profile_unlock_solo_levels_definition",
+   "object": "source/hs/hs.o",
+   "bytes": 28,
+   "class": "diagnostic_only (HS command/global definition)",
+   "bytes_before": 28,
+   "bytes_after": 28
+  },
+  {
+   "group": "profiling",
+   "kind": "rodata",
+   "symbol": "profile_graph_toggle_definition",
+   "object": "source/hs/hs.o",
+   "bytes": 32,
+   "class": "diagnostic_only (HS command/global definition)",
+   "bytes_before": 32,
+   "bytes_after": 32
+  },
+  {
+   "group": "profiling",
+   "kind": "rodata",
+   "symbol": "profile_deactivate_definition",
+   "object": "source/hs/hs.o",
+   "bytes": 32,
+   "class": "diagnostic_only (HS command/global definition)",
+   "bytes_before": 32,
+   "bytes_after": 32
+  },
+  {
+   "group": "profiling",
+   "kind": "rodata",
+   "symbol": "profile_activate_definition",
+   "object": "source/hs/hs.o",
+   "bytes": 32,
+   "class": "diagnostic_only (HS command/global definition)",
+   "bytes_before": 32,
+   "bytes_after": 32
+  },
+  {
+   "group": "profiling",
+   "kind": "rodata",
+   "symbol": "profile_dump_definition",
+   "object": "source/hs/hs.o",
+   "bytes": 32,
+   "class": "diagnostic_only (HS command/global definition)",
+   "bytes_before": 32,
+   "bytes_after": 32
+  },
+  {
+   "group": "profiling",
+   "kind": "rodata",
+   "symbol": "profile_reset_definition",
+   "object": "source/hs/hs.o",
+   "bytes": 28,
+   "class": "diagnostic_only (HS command/global definition)",
+   "bytes_before": 28,
+   "bytes_after": 28
+  },
+  {
+   "group": "profiling",
+   "kind": "rodata",
+   "symbol": "profile_color_table",
+   "object": "source/saved_games/player_profile.o",
+   "bytes": 72,
+   "class": "player profile colours: name match only; kept",
+   "bytes_before": 72,
+   "bytes_after": 72
+  },
+  {
+   "group": "profiling",
+   "kind": "rodata",
+   "symbol": "profile_settings",
+   "object": "port/linux/game/menu_functions.o",
+   "bytes": 64,
+   "class": "PC menus' profile settings: name match only; kept",
+   "bytes_before": 64,
+   "bytes_after": 64
+  },
+  {
+   "group": "ai_debug",
+   "kind": "data",
+   "symbol": "global_ai_debug_selected_squad_time",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 4,
+   "class": "diagnostic_only (debug cluster tint cache)",
+   "bytes_before": 4,
+   "bytes_after": 4
+  },
+  {
+   "group": "ai_debug",
+   "kind": "data",
+   "symbol": "global_ai_debug_selected_squad_index",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 4,
+   "class": "diagnostic_only (debug cluster tint cache)",
+   "bytes_before": 4,
+   "bytes_after": 4
+  },
+  {
+   "group": "profiling",
+   "kind": "data",
+   "symbol": "global_ai_meter_definitions",
+   "object": "source/ai/ai_profile.o",
+   "bytes": 224,
+   "class": "diagnostic_only (AI meters)",
+   "bytes_before": 224,
+   "bytes_after": 224
+  },
+  {
+   "group": "profiling",
+   "kind": "data",
+   "symbol": "profile_dump_lost_frames_definition",
+   "object": "source/hs/hs_globals_external.o",
+   "bytes": 12,
+   "class": "diagnostic_only (HS command/global definition)",
+   "bytes_before": 12,
+   "bytes_after": 12
+  },
+  {
+   "group": "profiling",
+   "kind": "data",
+   "symbol": "profile_dump_frames_definition",
+   "object": "source/hs/hs_globals_external.o",
+   "bytes": 12,
+   "class": "diagnostic_only (HS command/global definition)",
+   "bytes_before": 12,
+   "bytes_after": 12
+  },
+  {
+   "group": "profiling",
+   "kind": "data",
+   "symbol": "profile_timebase_ticks_definition",
+   "object": "source/hs/hs_globals_external.o",
+   "bytes": 12,
+   "class": "diagnostic_only (HS command/global definition)",
+   "bytes_before": 12,
+   "bytes_after": 12
+  },
+  {
+   "group": "profiling",
+   "kind": "data",
+   "symbol": "profile_display_definition",
+   "object": "source/hs/hs_globals_external.o",
+   "bytes": 12,
+   "class": "diagnostic_only (HS command/global definition)",
+   "bytes_before": 12,
+   "bytes_after": 12
+  },
+  {
+   "group": "profiling",
+   "kind": "data",
+   "symbol": "profile_graph_definition",
+   "object": "source/hs/hs_globals_external.o",
+   "bytes": 12,
+   "class": "diagnostic_only (HS command/global definition)",
+   "bytes_before": 12,
+   "bytes_after": 12
+  },
+  {
+   "group": "profiling",
+   "kind": "data",
+   "symbol": "profile_graph_values",
+   "object": "source/interface/interface.o",
+   "bytes": 33536,
+   "class": "diagnostic_only (profile graph definitions; .data, kept)",
+   "bytes_before": 33536,
+   "bytes_after": 33536
+  },
+  {
+   "group": "profiling",
+   "kind": "data",
+   "symbol": "rasterizer_profile_globals",
+   "object": "source/rasterizer/xbox/rasterizer_xbox_profile.o",
+   "bytes": 124,
+   "class": "diagnostic_only (Xbox rasterizer profiler)",
+   "bytes_before": 124,
+   "bytes_after": 124
+  },
+  {
+   "group": "profiling",
+   "kind": "data",
+   "symbol": "rasterizer_profile_performance_counter_frequency",
+   "object": "source/rasterizer/xbox/rasterizer_xbox_profile.o",
+   "bytes": 8,
+   "class": "diagnostic_only (Xbox rasterizer profiler)",
+   "bytes_before": 8,
+   "bytes_after": 8
+  },
+  {
+   "group": "profiling",
+   "kind": "data",
+   "symbol": "playlist_profile_default_data",
+   "object": "source/saved_games/playlist_profile.o",
+   "bytes": 105,
+   "class": "multiplayer playlist profile defaults: name match only; kept",
+   "bytes_before": 105,
+   "bytes_after": 105
+  },
+  {
+   "group": "ai_debug",
+   "kind": "data",
+   "symbol": "global_ai_debug_firing_position_color_count",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 4,
+   "class": "diagnostic_only (debug drawing)",
+   "bytes_before": 4,
+   "bytes_after": 4
+  },
+  {
+   "group": "profiling",
+   "kind": "data",
+   "symbol": "format_strings",
+   "object": "source/cseries/profile.o",
+   "bytes": 8,
+   "class": "diagnostic_only (profile dump)",
+   "bytes_before": 8,
+   "bytes_after": 8
+  },
+  {
+   "group": "profiling",
+   "kind": "data",
+   "symbol": "header_strings",
+   "object": "source/cseries/profile.o",
+   "bytes": 8,
+   "class": "diagnostic_only (profile dump)",
+   "bytes_before": 8,
+   "bytes_after": 8
+  },
+  {
+   "group": "profiling",
+   "kind": "data",
+   "symbol": "profile_graph_value_count",
+   "object": "source/interface/interface.o",
+   "bytes": 2,
+   "class": "diagnostic_only",
+   "bytes_before": 2,
+   "bytes_after": 2
+  },
+  {
+   "group": "profiling",
+   "kind": "data",
+   "symbol": "profile_log_path",
+   "object": "source/rasterizer/rasterizer_frame_statistics.o",
+   "bytes": 4,
+   "class": "diagnostic_only",
+   "bytes_before": 4,
+   "bytes_after": 4
+  },
+  {
+   "group": "ai_debug",
+   "kind": "bss",
+   "symbol": "actor_path_debug_array",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 4,
+   "class": "diagnostic_only (pointer to the path debug storage)",
+   "bytes_before": 4,
+   "bytes_after": 4
+  },
+  {
+   "group": "ai_debug",
+   "kind": "bss",
+   "symbol": "actor_debug_array",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 4,
+   "class": "diagnostic_only (pointer to the per-actor debug records)",
+   "bytes_before": 4,
+   "bytes_after": 4
+  },
+  {
+   "group": "ai_debug",
+   "kind": "bss",
+   "symbol": "global_ai_debug_drawstack_height",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 4,
+   "class": "diagnostic_only (debug drawing)",
+   "bytes_before": 4,
+   "bytes_after": 4
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "global_ai_profile_string_position",
+   "object": "source/ai/ai_profile.o",
+   "bytes": 2,
+   "class": "diagnostic_only",
+   "bytes_before": 2,
+   "bytes_after": 2
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "profile_dump_lost_frames",
+   "object": "source/cseries/profile.o",
+   "bytes": 1,
+   "class": "diagnostic_only (HS control)",
+   "bytes_before": 1,
+   "bytes_after": 1
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "profile_dump_frames",
+   "object": "source/cseries/profile.o",
+   "bytes": 1,
+   "class": "diagnostic_only (HS control)",
+   "bytes_before": 1,
+   "bytes_after": 1
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "profile_global_enable",
+   "object": "source/cseries/profile.o",
+   "bytes": 1,
+   "class": "diagnostic_only (control)",
+   "bytes_before": 1,
+   "bytes_after": 1
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "profile_timebase_ticks",
+   "object": "source/cseries/profile.o",
+   "bytes": 1,
+   "class": "diagnostic_only (HS control)",
+   "bytes_before": 1,
+   "bytes_after": 1
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "profile_graph",
+   "object": "port/linux/src/halo_linker_common.o",
+   "bytes": 1,
+   "class": "diagnostic_only (HS control)",
+   "bytes_before": 1,
+   "bytes_after": 1
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "profile_display",
+   "object": "port/linux/src/halo_linker_common.o",
+   "bytes": 1,
+   "class": "diagnostic_only (HS control)",
+   "bytes_before": 1,
+   "bytes_after": 1
+  },
+  {
+   "group": "ai_debug",
+   "kind": "bss",
+   "symbol": "global_ai_debug_activation_cluster_bit_vector",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 64,
+   "class": "diagnostic_only (debug cluster tint)",
+   "bytes_before": 64,
+   "bytes_after": 64
+  },
+  {
+   "group": "ai_debug",
+   "kind": "bss",
+   "symbol": "global_ai_debug_path_render_id",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 2,
+   "class": "diagnostic_only (debug path drawing)",
+   "bytes_before": 2,
+   "bytes_after": 0
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "profile_globals",
+   "object": "source/cseries/profile.o",
+   "bytes": 1129808,
+   "class": "diagnostic_only; the 256-frame history compiled out",
+   "bytes_before": 1129808,
+   "bytes_after": 5456
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "profile_accumulated_pushbuffer_size",
+   "object": "source/rasterizer/rasterizer_frame_statistics.o",
+   "bytes": 4,
+   "class": "diagnostic_only (rasterizer frame statistics)",
+   "bytes_before": 4,
+   "bytes_after": 4
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "profile_accumulated_time",
+   "object": "source/rasterizer/rasterizer_frame_statistics.o",
+   "bytes": 4,
+   "class": "diagnostic_only (rasterizer frame statistics)",
+   "bytes_before": 4,
+   "bytes_after": 4
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "profile_accumulation_index",
+   "object": "source/rasterizer/rasterizer_frame_statistics.o",
+   "bytes": 2,
+   "class": "diagnostic_only (rasterizer frame statistics)",
+   "bytes_before": 2,
+   "bytes_after": 2
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "rasterizer_profile_error_count",
+   "object": "source/rasterizer/xbox/rasterizer_xbox_profile.o",
+   "bytes": 2,
+   "class": "diagnostic_only (Xbox rasterizer profiler; no Wii rasterizer)",
+   "bytes_before": 2,
+   "bytes_after": 2
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "rasterizer_profile_state",
+   "object": "source/rasterizer/xbox/rasterizer_xbox_profile.o",
+   "bytes": 12,
+   "class": "diagnostic_only (Xbox rasterizer profiler)",
+   "bytes_before": 12,
+   "bytes_after": 12
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "local_profile_enable",
+   "object": "source/rasterizer/xbox/rasterizer_xbox_profile.o",
+   "bytes": 2,
+   "class": "diagnostic_only (Xbox rasterizer profiler)",
+   "bytes_before": 2,
+   "bytes_after": 2
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "rasterizer_profile_frame_state",
+   "object": "source/rasterizer/xbox/rasterizer_xbox_profile.o",
+   "bytes": 24,
+   "class": "diagnostic_only (Xbox rasterizer profiler)",
+   "bytes_before": 24,
+   "bytes_after": 24
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "rasterizer_profile_start_times",
+   "object": "source/rasterizer/xbox/rasterizer_xbox_profile.o",
+   "bytes": 232,
+   "class": "diagnostic_only (Xbox rasterizer profiler)",
+   "bytes_before": 232,
+   "bytes_after": 232
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "rasterizer_profile_elapsed_state",
+   "object": "source/rasterizer/xbox/rasterizer_xbox_profile.o",
+   "bytes": 592,
+   "class": "diagnostic_only (Xbox rasterizer profiler)",
+   "bytes_before": 592,
+   "bytes_after": 592
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "rasterizer_profile_callback_end_times",
+   "object": "source/rasterizer/xbox/rasterizer_xbox_profile.o",
+   "bytes": 128,
+   "class": "diagnostic_only (Xbox rasterizer profiler)",
+   "bytes_before": 128,
+   "bytes_after": 128
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "rasterizer_profile_callback_elapsed_times",
+   "object": "source/rasterizer/xbox/rasterizer_xbox_profile.o",
+   "bytes": 128,
+   "class": "diagnostic_only (Xbox rasterizer profiler)",
+   "bytes_before": 128,
+   "bytes_after": 128
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "player_profile_globals",
+   "object": "source/saved_games/player_profile.o",
+   "bytes": 108,
+   "class": "player profiles (saved settings): name match only; persistence; kept",
+   "bytes_before": 108,
+   "bytes_after": 108
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "playlist_profile_globals",
+   "object": "source/saved_games/playlist_profile.o",
+   "bytes": 116,
+   "class": "multiplayer playlist profile (saved): name match only; kept",
+   "bytes_before": 116,
+   "bytes_after": 116
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "playlist_profile_write_options",
+   "object": "source/saved_games/playlist_profile.o",
+   "bytes": 28,
+   "class": "multiplayer playlist profile: name match only; kept",
+   "bytes_before": 28,
+   "bytes_after": 28
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "profile_list",
+   "object": "port/linux/game/menu_functions.o",
+   "bytes": 1676,
+   "class": "PC menus' player profile list: name match only; kept",
+   "bytes_before": 1676,
+   "bytes_after": 1676
+  },
+  {
+   "group": "ai_debug",
+   "kind": "bss",
+   "symbol": "ai_debug",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 547628,
+   "class": "mixed: controls (gameplay-affecting when set: AI cheats, editor fixes, the debug selection that player spawning reads) kept; records diagnostic-only, the large ones compiled out",
+   "bytes_before": 547628,
+   "bytes_after": 2376
+  },
+  {
+   "group": "ai_debug",
+   "kind": "bss",
+   "symbol": "global_ai_debug_drawstack_last_position",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 12,
+   "class": "diagnostic_only (debug drawing)",
+   "bytes_before": 12,
+   "bytes_after": 12
+  },
+  {
+   "group": "ai_debug",
+   "kind": "bss",
+   "symbol": "global_ai_debug_drawstack_next_position",
+   "object": "source/ai/ai_debug.o",
+   "bytes": 12,
+   "class": "diagnostic_only (debug drawing)",
+   "bytes_before": 12,
+   "bytes_after": 12
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "profilestring",
+   "object": "source/ai/ai_profile.o",
+   "bytes": 2048,
+   "class": "diagnostic_only (AI profile text)",
+   "bytes_before": 2048,
+   "bytes_after": 2048
+  },
+  {
+   "group": "profiling",
+   "kind": "bss",
+   "symbol": "ai_profile",
+   "object": "source/ai/ai_profile.o",
+   "bytes": 3820,
+   "class": "mixed: ai_profile.disabled and move_actors_randomly are gameplay-affecting when set (HS ai_profile_disable / ai_profile_random; ai.c:1940-1941); meters diagnostic-only; kept",
+   "bytes_before": 3820,
+   "bytes_after": 3820
+  }
+ ],
+ "group_totals_before_after": {
+  "ai_debug.rodata": [
+   1432,
+   1332
+  ],
+  "profiling.rodata": [
+   454,
+   454
+  ],
+  "ai_debug.data": [
+   12,
+   12
+  ],
+  "profiling.data": [
+   34079,
+   34079
+  ],
+  "ai_debug.bss": [
+   547730,
+   2476
+  ],
+  "profiling.bss": [
+   1138742,
+   14390
+  ]
+ },
+ "ai_debug_members_compiled_out": [
+  {
+   "members": "lineofsight_overflowed .. lineofsight_pair (16,384 points, 8,192 rays)",
+   "bytes": 311308
+  },
+  {
+   "members": "path_state, field_608A8, path_storage (the ai_debug_path tool)",
+   "bytes": 199524
+  },
+  {
+   "members": "evaluation_context_valid, evaluation_context, actor_record[512]",
+   "bytes": 34420
+  }
+ ],
+ "ai_debug_struct_bytes": {
+  "before": 547628,
+  "after": 2376
+ },
+ "ai_debug_heap": {
+  "before": {
+   "actor_debug_array": 26603520,
+   "actor_path_debug_array": 3755904,
+   "state": "not allocated: ai_debug_initialize reported unsupported"
+  },
+  "after": {
+   "actor_debug_array": 25980,
+   "actor_path_debug_array": 0,
+   "state": "ai_debug_initialize runs; one shared record"
+  }
+ },
+ "profile_globals_bytes": {
+  "before": 1129808,
+  "after": 5456,
+  "frame_history": 1124352
+ },
+ "reference_inventory": {
+  "commit": "0c73eaf8",
+  "reference_count": 1753,
+  "summary": [
+   {
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "access": "address",
+    "count": 116
+   },
+   {
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "access": "read",
+    "count": 291
+   },
+   {
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "access": "write",
+    "count": 6
+   },
+   {
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "access": "address",
+    "count": 20
+   },
+   {
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "access": "read",
+    "count": 127
+   },
+   {
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "access": "write",
+    "count": 13
+   },
+   {
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "access": "call_or_use",
+    "count": 207
+   },
+   {
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "access": "address",
+    "count": 61
+   },
+   {
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "access": "pointer",
+    "count": 52
+   },
+   {
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "access": "read",
+    "count": 135
+   },
+   {
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "access": "storage_location",
+    "count": 2
+   },
+   {
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "access": "write",
+    "count": 212
+   },
+   {
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "access": "address",
+    "count": 34
+   },
+   {
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "access": "read",
+    "count": 112
+   },
+   {
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "access": "write",
+    "count": 96
+   },
+   {
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "access": "read",
+    "count": 7
+   },
+   {
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "access": "write",
+    "count": 112
+   },
+   {
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "access": "read",
+    "count": 109
+   },
+   {
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "access": "write",
+    "count": 41
+   }
+  ],
+  "by_storage": [
+   {
+    "storage": "actor_debug_array",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out (sink / NULL)",
+    "pointer": [
+     "source/ai/action_charge.c:531",
+     "source/ai/action_charge.c:909",
+     "source/ai/action_vehicle.c:457",
+     "source/ai/actions.c:1784",
+     "source/ai/actions.c:2074",
+     "source/ai/actions.c:3504",
+     "source/ai/actions.c:4445",
+     "source/ai/actor_combat.c:1105",
+     "source/ai/actor_combat.c:1643",
+     "source/ai/actor_moving.c:1422",
+     "source/ai/actor_moving.c:2012",
+     "source/ai/actor_perception.c:2513",
+     "source/ai/actor_perception.c:2695",
+     "source/ai/actor_perception.c:6521",
+     "source/ai/actors.c:1727",
+     "source/ai/actors.c:2372",
+     "source/ai/ai_debug.c:207",
+     "source/ai/ai_debug.c:269",
+     "source/ai/ai_debug.c:269",
+     "source/ai/ai_debug.c:269",
+     "source/ai/ai_debug.c:269",
+     "source/ai/ai_debug.c:272",
+     "source/ai/ai_debug.c:280",
+     "source/ai/ai_debug.c:282",
+     "source/ai/ai_debug.c:283",
+     "source/ai/ai_debug.c:321",
+     "source/ai/ai_debug.c:323",
+     "source/ai/ai_debug.c:323",
+     "source/ai/ai_debug.c:765",
+     "source/ai/ai_debug.h:613"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.avoid_t",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1034",
+     "source/ai/ai_debug.c:1054"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1530"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.avoidance_data",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:1118",
+     "source/ai/ai_debug.c:1119",
+     "source/ai/ai_debug.c:1120",
+     "source/ai/ai_debug.c:1127",
+     "source/ai/ai_debug.c:1129",
+     "source/ai/ai_debug.c:1136",
+     "source/ai/ai_debug.c:1145",
+     "source/ai/ai_debug.c:1146",
+     "source/ai/ai_debug.c:1168",
+     "source/ai/ai_debug.c:1223"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1166"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1832"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.avoidance_type",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:955",
+     "source/ai/ai_debug.c:965"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1488"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.avoidance_vector",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:1145"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1623"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.burst_alignment",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "write": [
+     "source/ai/actor_combat.c:2008",
+     "source/ai/actor_combat.c:2011",
+     "source/ai/actor_combat.c:2012",
+     "source/ai/actor_combat.c:2028",
+     "source/ai/actor_combat.c:2029",
+     "source/ai/actor_combat.c:2030",
+     "source/ai/actor_combat.c:2031",
+     "source/ai/actor_combat.c:2032",
+     "source/ai/actor_combat.c:2033"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.burst_last_known_position",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3448"
+    ],
+    "write": [
+     "source/ai/actor_combat.c:2172",
+     "source/ai/actor_combat.c:2225"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.burst_lead_vector",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3450",
+     "source/ai/ai_debug.c:3455"
+    ],
+    "write": [
+     "source/ai/actor_combat.c:2164",
+     "source/ai/actor_combat.c:2211"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.burst_tracked_position",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3454"
+    ],
+    "write": [
+     "source/ai/actor_combat.c:2163",
+     "source/ai/actor_combat.c:2194"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.charge_decision",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3218",
+     "source/ai/ai_debug.c:3251"
+    ],
+    "write": [
+     "source/ai/action_charge.c:924",
+     "source/ai/action_charge.c:932",
+     "source/ai/action_charge.c:942",
+     "source/ai/action_charge.c:947",
+     "source/ai/action_charge.c:1038",
+     "source/ai/action_charge.c:1042",
+     "source/ai/action_charge.c:1048",
+     "source/ai/action_charge.c:1060",
+     "source/ai/action_charge.c:1064"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.charge_last_time",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3215",
+     "source/ai/ai_debug.c:3216"
+    ],
+    "write": [
+     "source/ai/action_charge.c:911",
+     "source/ai/actors.c:2380"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.collision_t",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:973",
+     "source/ai/ai_debug.c:990"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1489"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.danger_abandoned_path",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2884"
+    ],
+    "write": [
+     "source/ai/actions.c:4457",
+     "source/ai/actions.c:4596"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.danger_avoidance_time",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2878",
+     "source/ai/ai_debug.c:2880"
+    ],
+    "write": [
+     "source/ai/actions.c:4454",
+     "source/ai/actors.c:2379"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.danger_decision",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2891"
+    ],
+    "write": [
+     "source/ai/actions.c:4455",
+     "source/ai/actions.c:4461",
+     "source/ai/actions.c:4467",
+     "source/ai/actions.c:4473",
+     "source/ai/actions.c:4497",
+     "source/ai/actions.c:4509",
+     "source/ai/actions.c:4515",
+     "source/ai/actions.c:4686",
+     "source/ai/actions.c:4701",
+     "source/ai/actions.c:4707",
+     "source/ai/actions.c:4716",
+     "source/ai/actions.c:4722",
+     "source/ai/actions.c:4731",
+     "source/ai/actions.c:4757",
+     "source/ai/actions.c:4763",
+     "source/ai/actions.c:4769"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.danger_far_dist",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2909"
+    ],
+    "write": [
+     "source/ai/actions.c:4498"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.danger_far_radius",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2910"
+    ],
+    "write": [
+     "source/ai/actions.c:4501"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.danger_intersect_time",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2926",
+     "source/ai/ai_debug.c:2932"
+    ],
+    "write": [
+     "source/ai/actions.c:4758"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.danger_zone_dist",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2916"
+    ],
+    "write": [
+     "source/ai/actions.c:4770"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.danger_zone_radius",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2917"
+    ],
+    "write": [
+     "source/ai/actions.c:4772"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.dive_decision",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2965"
+    ],
+    "write": [
+     "source/ai/actions.c:3610",
+     "source/ai/actions.c:3670",
+     "source/ai/actions.c:3674",
+     "source/ai/actions.c:3681",
+     "source/ai/actions.c:4456"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.dive_decision_time",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2962",
+     "source/ai/ai_debug.c:2963"
+    ],
+    "write": [
+     "source/ai/actions.c:3516"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_108",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3264",
+     "source/ai/ai_debug.c:3278",
+     "source/ai/ai_debug.c:3294"
+    ],
+    "write": [
+     "source/ai/action_charge.c:536",
+     "source/ai/ai_debug.c:3277",
+     "source/ai/ai_debug.c:3280"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_114",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3264"
+    ],
+    "write": [
+     "source/ai/action_charge.c:537"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_120",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3265",
+     "source/ai/ai_debug.c:3274"
+    ],
+    "write": [
+     "source/ai/action_charge.c:538"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_12C",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3281",
+     "source/ai/ai_debug.c:3295"
+    ],
+    "write": [
+     "source/ai/action_charge.c:699",
+     "source/ai/ai_debug.c:3277",
+     "source/ai/ai_debug.c:3280"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_138",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3297"
+    ],
+    "write": [
+     "source/ai/action_charge.c:700"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_139",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3267",
+     "source/ai/ai_debug.c:3298"
+    ],
+    "write": [
+     "source/ai/action_charge.c:547",
+     "source/ai/action_charge.c:558"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_13C",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3274",
+     "source/ai/ai_debug.c:3275"
+    ],
+    "write": [
+     "source/ai/action_charge.c:572"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_148",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3280"
+    ],
+    "write": [
+     "source/ai/action_charge.c:590",
+     "source/ai/action_charge.c:645",
+     "source/ai/action_charge.c:671"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_14C",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3277"
+    ],
+    "write": [
+     "source/ai/action_charge.c:591",
+     "source/ai/action_charge.c:646",
+     "source/ai/action_charge.c:672"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_194",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3239"
+    ],
+    "write": [
+     "source/ai/action_charge.c:1043"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_198",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3236",
+     "source/ai/ai_debug.c:3242"
+    ],
+    "write": [
+     "source/ai/action_charge.c:979"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_19C",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:940",
+     "source/ai/ai_debug.c:941"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1440",
+     "source/ai/actors.c:2381"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_60",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3417",
+     "source/ai/ai_debug.c:3419"
+    ],
+    "write": [
+     "source/ai/actor_combat.c:1127"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_62F8",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1016",
+     "source/ai/ai_debug.c:1026"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1529"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6358",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:1032",
+     "source/ai/ai_debug.c:1037",
+     "source/ai/ai_debug.c:1041",
+     "source/ai/ai_debug.c:1062",
+     "source/ai/ai_debug.c:1092"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1527",
+     "source/ai/ai_debug.c:1071"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_64",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3414",
+     "source/ai/ai_debug.c:3434"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3393"
+    ],
+    "write": [
+     "source/ai/actor_combat.c:1128"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6418",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:1033",
+     "source/ai/ai_debug.c:1038",
+     "source/ai/ai_debug.c:1063",
+     "source/ai/ai_debug.c:1093"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1528",
+     "source/ai/ai_debug.c:1071"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_64D8",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1104"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1643"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_64FC",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1125"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1676"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6500",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1120",
+     "source/ai/ai_debug.c:1125"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1677"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6504",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1129",
+     "source/ai/ai_debug.c:1133"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1675"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6508",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1133"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1678"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6510",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1140"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1687"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_651C",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1189"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1819"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6520",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1189"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1816"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6524",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:1118"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1673"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6530",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:1119"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1674"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_653C",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1183"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1695",
+     "source/ai/actor_moving.c:1702",
+     "source/ai/actor_moving.c:1708",
+     "source/ai/actor_moving.c:1776",
+     "source/ai/actor_moving.c:1782",
+     "source/ai/actor_moving.c:1787",
+     "source/ai/actor_moving.c:1818",
+     "source/ai/actor_moving.c:1823"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6540",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:1223"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1834"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_654C",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1224"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1833"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6550",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1116"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1827"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6551",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1143"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1583",
+     "source/ai/actor_moving.c:1622"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6554",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1155"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1620"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6558",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1153"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1621"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_6568",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1154"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1624"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_70",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3415"
+    ],
+    "write": [
+     "source/ai/actor_combat.c:1149"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_7C",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3421"
+    ],
+    "write": [
+     "source/ai/actor_combat.c:1138"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_88",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3424"
+    ],
+    "write": [
+     "source/ai/actor_combat.c:1180",
+     "source/ai/actor_combat.c:1186"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_8C",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3435"
+    ],
+    "write": [
+     "source/ai/actor_combat.c:1182"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_98",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3429"
+    ],
+    "write": [
+     "source/ai/actor_combat.c:1181"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_A4",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:1601"
+    ],
+    "write": [
+     "source/ai/actor_perception.c:2699"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_A6",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1607",
+     "source/ai/ai_debug.c:1613"
+    ],
+    "write": [
+     "source/ai/actor_perception.c:2700"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_A8",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1624"
+    ],
+    "write": [
+     "source/ai/actor_perception.c:2698"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_AC",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1624"
+    ],
+    "write": [
+     "source/ai/actor_perception.c:2702"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_B0",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1626",
+     "source/ai/ai_debug.c:1628"
+    ],
+    "write": [
+     "source/ai/actor_perception.c:2701"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_B4",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1628"
+    ],
+    "write": [
+     "source/ai/actor_perception.c:2703"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_B8",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:1492"
+    ],
+    "write": [
+     "source/ai/actions.c:1793"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_BA",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1509"
+    ],
+    "write": [
+     "source/ai/actions.c:1794",
+     "source/ai/actions.c:1810",
+     "source/ai/actions.c:1814",
+     "source/ai/actions.c:1819",
+     "source/ai/actions.c:1824",
+     "source/ai/actions.c:1829",
+     "source/ai/actions.c:1835",
+     "source/ai/actions.c:1847"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_BC",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1509"
+    ],
+    "write": [
+     "source/ai/actions.c:1802"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_C0",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1509"
+    ],
+    "write": [
+     "source/ai/actions.c:1803"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_C8",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3314",
+     "source/ai/ai_debug.c:3335",
+     "source/ai/ai_debug.c:3361"
+    ],
+    "write": [
+     "source/ai/action_vehicle.c:530",
+     "source/ai/ai_debug.c:3336"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_D4",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3315",
+     "source/ai/ai_debug.c:3360"
+    ],
+    "write": [
+     "source/ai/action_vehicle.c:531"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_E0",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3315"
+    ],
+    "write": [
+     "source/ai/action_vehicle.c:532"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_E4",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3314",
+     "source/ai/ai_debug.c:3335"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3317"
+    ],
+    "write": [
+     "source/ai/action_vehicle.c:533"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_F0",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3336"
+    ],
+    "write": [
+     "source/ai/action_vehicle.c:534",
+     "source/ai/action_vehicle.c:547"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_F4",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3357"
+    ],
+    "write": [
+     "source/ai/action_vehicle.c:535",
+     "source/ai/action_vehicle.c:605"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.field_F8",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:3360",
+     "source/ai/ai_debug.c:3361"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3363"
+    ],
+    "write": [
+     "source/ai/action_vehicle.c:606"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.firing_decision",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2630",
+     "source/ai/ai_debug.c:2713",
+     "source/ai/ai_debug.c:2739"
+    ],
+    "write": [
+     "source/ai/actor_combat.c:2435"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.firing_position_type_mismatch_ticks",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/actors.c:1749",
+     "source/ai/actors.c:1752"
+    ],
+    "write": [
+     "source/ai/actors.c:1751",
+     "source/ai/actors.c:1775"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.grenade_current_damage",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2759"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.grenade_decision",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2750"
+    ],
+    "write": [
+     "source/ai/actions.c:2080",
+     "source/ai/actions.c:2103",
+     "source/ai/actions.c:2141",
+     "source/ai/actions.c:2145",
+     "source/ai/actions.c:2150",
+     "source/ai/actions.c:2157",
+     "source/ai/actions.c:2162"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.grenade_encounter_timeout_ticks",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2772"
+    ],
+    "write": [
+     "source/ai/actions.c:2104"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.grenade_enemy_count",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2781"
+    ],
+    "write": [
+     "source/ai/actions.c:2149"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.grenade_eval_time",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2747",
+     "source/ai/ai_debug.c:2748"
+    ],
+    "write": [
+     "source/ai/actions.c:2076",
+     "source/ai/actors.c:2378"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.grenade_random_chance",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2769"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.grenade_random_value",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2768"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.grenade_required_enemy_count",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2782"
+    ],
+    "write": [
+     "source/ai/actions.c:2151"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.last_melee_time",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3261",
+     "source/ai/ai_debug.c:3262"
+    ],
+    "write": [
+     "source/ai/action_charge.c:535",
+     "source/ai/actors.c:2377"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.last_path_refresh",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3765",
+     "source/ai/ai_debug.c:3765",
+     "source/ai/ai_debug.c:3774"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:2014",
+     "source/ai/actors.c:2374"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.last_projectile_aiming_time",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3387",
+     "source/ai/ai_debug.c:3388"
+    ],
+    "write": [
+     "source/ai/actor_combat.c:1107",
+     "source/ai/actors.c:2375"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.last_render_id",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:767"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:783"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.last_vehicle_avoidance_time",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3305",
+     "source/ai/ai_debug.c:3306"
+    ],
+    "write": [
+     "source/ai/action_vehicle.c:529",
+     "source/ai/actors.c:2376"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.perception_awareness_speed",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/actor_perception.c:6585"
+    ],
+    "write": [
+     "source/ai/actor_perception.c:6529",
+     "source/ai/actor_perception.c:6587",
+     "source/ai/actor_perception.c:6642",
+     "source/ai/actors.c:2383"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.ray_direction",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:972",
+     "source/ai/ai_debug.c:977",
+     "source/ai/ai_debug.c:999"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1487"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.ray_origin",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "address": [
+     "source/ai/ai_debug.c:971",
+     "source/ai/ai_debug.c:976",
+     "source/ai/ai_debug.c:980",
+     "source/ai/ai_debug.c:998"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1486"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.shooting_rof",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:2641"
+    ],
+    "write": [
+     "source/ai/actor_combat.c:2408"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.sign_no_danger",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1140",
+     "source/ai/ai_debug.c:1193"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1688"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.sign_rotated",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1199"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1777"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.sign_too_far_cosangle",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:1196"
+    ],
+    "write": [
+     "source/ai/actor_moving.c:1781"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.vision_last_maximum_distance",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3504"
+    ],
+    "write": [
+     "source/ai/actor_perception.c:2519"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.vision_last_perception_factor",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3505"
+    ],
+    "write": [
+     "source/ai/actor_perception.c:2521"
+    ]
+   },
+   {
+    "storage": "actor_debug_info.vision_last_time",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "sink",
+    "read": [
+     "source/ai/ai_debug.c:3501",
+     "source/ai/ai_debug.c:3502"
+    ],
+    "write": [
+     "source/ai/actor_perception.c:2518",
+     "source/ai/actors.c:2382"
+    ]
+   },
+   {
+    "storage": "actor_path_debug_array",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out (sink / NULL)",
+    "pointer": [
+     "source/ai/ai_debug.c:208",
+     "source/ai/ai_debug.c:270",
+     "source/ai/ai_debug.c:270",
+     "source/ai/ai_debug.c:270",
+     "source/ai/ai_debug.c:270",
+     "source/ai/ai_debug.c:272",
+     "source/ai/ai_debug.c:286",
+     "source/ai/ai_debug.c:288",
+     "source/ai/ai_debug.c:289",
+     "source/ai/ai_debug.c:324",
+     "source/ai/ai_debug.c:326",
+     "source/ai/ai_debug.c:326",
+     "source/ai/ai_debug.c:338",
+     "source/ai/ai_debug.c:362",
+     "source/ai/ai_debug.c:371",
+     "source/ai/ai_debug.c:4983",
+     "source/ai/ai_debug.c:5004",
+     "source/ai/ai_debug.c:5020",
+     "source/ai/ai_debug.c:5625",
+     "source/ai/ai_debug.c:6118",
+     "source/ai/ai_debug.c:6124",
+     "source/ai/ai_debug.h:614"
+    ]
+   },
+   {
+    "storage": "ai_debug.actor_record",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out",
+    "read": [
+     "source/ai/actor_firing_position.c:2430",
+     "source/ai/actor_firing_position.c:2431",
+     "source/ai/ai_debug.c:4601",
+     "source/ai/ai_debug.c:5883",
+     "source/ai/ai_debug.c:5892",
+     "source/ai/ai_debug.c:5893",
+     "source/ai/ai_debug.c:5921",
+     "source/ai/ai_debug.c:5922",
+     "source/ai/ai_debug.c:5927",
+     "source/ai/ai_debug.c:5929",
+     "source/ai/ai_debug.c:5931",
+     "source/ai/ai_debug.c:5938",
+     "source/ai/ai_debug.c:5939",
+     "source/ai/ai_debug.c:5945",
+     "source/ai/ai_debug.c:5949",
+     "source/ai/ai_debug.c:5963",
+     "source/ai/ai_debug.c:5967",
+     "source/ai/ai_debug.c:5972"
+    ],
+    "write": [
+     "source/ai/actor_firing_position.c:2084",
+     "source/ai/actor_firing_position.c:2090",
+     "source/ai/actor_firing_position.c:2353",
+     "source/ai/actor_firing_position.c:2354",
+     "source/ai/ai_debug.c:4579",
+     "source/ai/ai_debug.c:4579"
+    ]
+   },
+   {
+    "storage": "ai_debug.ballistic_lineoffire_freeze",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1860"
+    ],
+    "read": [
+     "source/ai/ai.c:2563",
+     "source/ai/ai.c:2601",
+     "source/ai/ai.c:2667",
+     "source/ai/ai.c:2674"
+    ]
+   },
+   {
+    "storage": "ai_debug.ballistic_lineoffire_pill_count",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai.c:2574",
+     "source/ai/ai_debug.c:5088"
+    ],
+    "write": [
+     "source/ai/ai.c:2569"
+    ]
+   },
+   {
+    "storage": "ai_debug.ballistic_lineoffire_pill_end",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/ai/ai_debug.c:5093"
+    ],
+    "write": [
+     "source/ai/ai.c:2578"
+    ]
+   },
+   {
+    "storage": "ai_debug.ballistic_lineoffire_pill_radius",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:5094"
+    ],
+    "write": [
+     "source/ai/ai.c:2579"
+    ]
+   },
+   {
+    "storage": "ai_debug.ballistic_lineoffire_pill_start",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/ai/ai_debug.c:5092"
+    ],
+    "write": [
+     "source/ai/ai.c:2577"
+    ]
+   },
+   {
+    "storage": "ai_debug.ballistic_lineoffire_point",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/ai/ai_debug.c:5102",
+     "source/ai/ai_debug.c:5103"
+    ],
+    "write": [
+     "source/ai/ai.c:2604",
+     "source/ai/ai.c:2670"
+    ]
+   },
+   {
+    "storage": "ai_debug.ballistic_lineoffire_point_count",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai.c:2602",
+     "source/ai/ai.c:2604",
+     "source/ai/ai.c:2668",
+     "source/ai/ai.c:2670",
+     "source/ai/ai_debug.c:5098",
+     "source/ai/ai_debug.c:5105"
+    ],
+    "write": [
+     "source/ai/ai.c:2568",
+     "source/ai/ai.c:2605",
+     "source/ai/ai.c:2671"
+    ]
+   },
+   {
+    "storage": "ai_debug.ballistic_lineoffire_start",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/ai/ai_debug.c:5077",
+     "source/ai/ai_debug.c:5083"
+    ],
+    "write": [
+     "source/ai/ai.c:2566"
+    ]
+   },
+   {
+    "storage": "ai_debug.ballistic_lineoffire_success",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:5104"
+    ],
+    "write": [
+     "source/ai/ai.c:2675"
+    ]
+   },
+   {
+    "storage": "ai_debug.ballistic_lineoffire_valid",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:5071"
+    ],
+    "write": [
+     "source/ai/ai.c:2565"
+    ]
+   },
+   {
+    "storage": "ai_debug.ballistic_lineoffire_vector",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/ai/ai_debug.c:5084"
+    ],
+    "write": [
+     "source/ai/ai.c:2567"
+    ]
+   },
+   {
+    "storage": "ai_debug.blind",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1870"
+    ],
+    "read": [
+     "source/ai/actor_perception.c:4206"
+    ]
+   },
+   {
+    "storage": "ai_debug.communication_focus_enable",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1868"
+    ],
+    "read": [
+     "source/ai/ai_communication.c:4409",
+     "source/ai/ai_communication.c:4418",
+     "source/ai/ai_communication.c:4437",
+     "source/ai/ai_communication.c:4676",
+     "source/ai/ai_communication.c:4707",
+     "source/ai/ai_communication.c:6224",
+     "source/ai/ai_communication.c:6242",
+     "source/ai/ai_communication.c:7223"
+    ]
+   },
+   {
+    "storage": "ai_debug.communication_focus_vector",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_communication.c:4420",
+     "source/ai/ai_communication.c:4439",
+     "source/ai/ai_communication.c:4679",
+     "source/ai/ai_communication.c:4709",
+     "source/ai/ai_communication.c:6244",
+     "source/ai/ai_debug.c:4260"
+    ]
+   },
+   {
+    "storage": "ai_debug.communication_ignore_vector",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_communication.c:6221",
+     "source/ai/ai_debug.c:4250"
+    ]
+   },
+   {
+    "storage": "ai_debug.communication_random_disabled",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1862"
+    ],
+    "read": [
+     "source/ai/ai_communication.c:4459",
+     "source/ai/ai_communication.c:4838"
+    ]
+   },
+   {
+    "storage": "ai_debug.communication_suppress_vector",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_communication.c:6213",
+     "source/ai/ai_debug.c:4240"
+    ]
+   },
+   {
+    "storage": "ai_debug.communication_timeout_disabled",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1864"
+    ],
+    "read": [
+     "source/ai/ai_communication.c:3209",
+     "source/ai/ai_communication.c:3234",
+     "source/ai/ai_communication.c:4555",
+     "source/ai/ai_communication.c:6757"
+    ]
+   },
+   {
+    "storage": "ai_debug.communication_unit_repeat_disabled",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1866"
+    ],
+    "read": [
+     "source/ai/ai_communication.c:2009"
+    ]
+   },
+   {
+    "storage": "ai_debug.deaf",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1872"
+    ],
+    "read": [
+     "source/ai/actor_perception.c:4269",
+     "source/ai/actors.c:3489"
+    ]
+   },
+   {
+    "storage": "ai_debug.disable_wounded_sounds",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1882"
+    ],
+    "read": [
+     "source/units/unit_dialogue.c:856"
+    ]
+   },
+   {
+    "storage": "ai_debug.enter_debugger",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "read": [
+     "source/ai/actors.c:1370"
+    ],
+    "write": [
+     "source/ai/actors.c:1372"
+    ]
+   },
+   {
+    "storage": "ai_debug.evaluate_all_positions",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1840"
+    ],
+    "read": [
+     "source/ai/actor_firing_position.c:2389"
+    ]
+   },
+   {
+    "storage": "ai_debug.evaluation_context",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out",
+    "address": [
+     "source/ai/ai_debug.c:5933"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:5920",
+     "source/ai/ai_debug.c:5920",
+     "source/ai/ai_debug.c:5926",
+     "source/ai/ai_debug.c:5928",
+     "source/ai/ai_debug.c:5930"
+    ],
+    "write": [
+     "source/ai/actor_firing_position.c:2058",
+     "source/ai/ai_debug.c:4578",
+     "source/ai/ai_debug.c:4578"
+    ]
+   },
+   {
+    "storage": "ai_debug.evaluation_context_valid",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out",
+    "read": [
+     "source/ai/ai_debug.c:5919"
+    ],
+    "write": [
+     "source/ai/actor_firing_position.c:2057",
+     "source/ai/ai_debug.c:4576",
+     "source/ai/ai_debug.c:4599"
+    ]
+   },
+   {
+    "storage": "ai_debug.fast_los",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1836"
+    ],
+    "read": [
+     "source/ai/ai.c:2324"
+    ]
+   },
+   {
+    "storage": "ai_debug.field_4C814",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/ai/ai_debug.c:4674"
+    ]
+   },
+   {
+    "storage": "ai_debug.field_4C818",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/ai/ai_debug.c:4731"
+    ]
+   },
+   {
+    "storage": "ai_debug.field_608A8",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out",
+    "address": [
+     "source/ai/ai_debug.c:4729"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:5584"
+    ]
+   },
+   {
+    "storage": "ai_debug.field_859F4",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "read": [
+     "source/ai/actors.c:3102",
+     "source/ai/ai_debug.c:5169",
+     "source/ai/ai_debug.c:5176",
+     "source/ai/ai_debug.c:5178",
+     "source/ai/ai_debug.c:5195"
+    ],
+    "write": [
+     "source/ai/actors.c:3104",
+     "source/ai/ai_debug.c:5171"
+    ]
+   },
+   {
+    "storage": "ai_debug.field_859F8",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:5227"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:5173",
+     "source/ai/ai_debug.c:5206"
+    ]
+   },
+   {
+    "storage": "ai_debug.field_859F9",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:5216"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:5172",
+     "source/ai/ai_debug.c:5200"
+    ]
+   },
+   {
+    "storage": "ai_debug.field_859FC",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/ai/ai_debug.c:5233"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:5207"
+    ]
+   },
+   {
+    "storage": "ai_debug.field_85A08",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/ai/ai_debug.c:5224"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:5201"
+    ]
+   },
+   {
+    "storage": "ai_debug.field_85B21",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:6072"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4465",
+     "source/ai/ai_debug.c:4488"
+    ]
+   },
+   {
+    "storage": "ai_debug.field_85B22",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:6085"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4466"
+    ]
+   },
+   {
+    "storage": "ai_debug.field_85B28",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:6008",
+     "source/ai/ai_debug.c:6013"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4464",
+     "source/ai/ai_debug.c:4487",
+     "source/ai/ai_debug.c:6010",
+     "source/ai/ai_debug.c:6074"
+    ]
+   },
+   {
+    "storage": "ai_debug.fix_actor_variants",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1894"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4776"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4808"
+    ]
+   },
+   {
+    "storage": "ai_debug.fix_defending_guard_firing_positions",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1892"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4738"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4773"
+    ]
+   },
+   {
+    "storage": "ai_debug.flee_always",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1878"
+    ],
+    "read": [
+     "source/ai/actions.c:1148"
+    ]
+   },
+   {
+    "storage": "ai_debug.force_all_active",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1880"
+    ],
+    "read": [
+     "source/ai/encounters.c:4085",
+     "source/ai/encounters.c:4111"
+    ]
+   },
+   {
+    "storage": "ai_debug.force_crouch",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1886"
+    ],
+    "read": [
+     "source/ai/actor_moving.c:3439"
+    ]
+   },
+   {
+    "storage": "ai_debug.force_vocalizations",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1884"
+    ],
+    "read": [
+     "source/units/unit_dialogue.c:288",
+     "source/units/unit_dialogue.c:300",
+     "source/units/unit_dialogue.c:672"
+    ]
+   },
+   {
+    "storage": "ai_debug.idle_look_prop_count",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:4163",
+     "source/ai/ai_debug.c:4165",
+     "source/ai/ai_debug.c:4166",
+     "source/ai/ai_debug.c:5251"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4132",
+     "source/ai/ai_debug.c:4167"
+    ]
+   },
+   {
+    "storage": "ai_debug.idle_look_prop_index",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:5253",
+     "source/ai/ai_debug.c:5265"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4165"
+    ]
+   },
+   {
+    "storage": "ai_debug.idle_look_prop_weight",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:5275"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4166"
+    ]
+   },
+   {
+    "storage": "ai_debug.idle_look_unit_index",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:5245"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4131"
+    ]
+   },
+   {
+    "storage": "ai_debug.idle_look_valid",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:4161",
+     "source/ai/ai_debug.c:5243"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4130"
+    ]
+   },
+   {
+    "storage": "ai_debug.ignore_player",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1876"
+    ],
+    "read": [
+     "source/ai/actor_perception.c:3836",
+     "source/ai/ai.c:929",
+     "source/ai/ai.c:1450"
+    ]
+   },
+   {
+    "storage": "ai_debug.invisible_player",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1874"
+    ],
+    "read": [
+     "source/ai/actor_perception.c:4207"
+    ]
+   },
+   {
+    "storage": "ai_debug.last_render_id",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:426",
+     "source/ai/ai_debug.c:767",
+     "source/ai/ai_debug.c:783",
+     "source/ai/ai_debug.c:3964",
+     "source/ai/ai_debug.c:4083"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:266",
+     "source/ai/ai_debug.c:426"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineoffire_pill_count",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:4145",
+     "source/ai/ai_debug.c:4147",
+     "source/ai/ai_debug.c:4148",
+     "source/ai/ai_debug.c:4149",
+     "source/ai/ai_debug.c:4150",
+     "source/ai/ai_debug.c:5054"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4105",
+     "source/ai/ai_debug.c:4151"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineoffire_pill_hit",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:5061"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4147"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineoffire_pill_radius",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:5060"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4150"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineoffire_pill_start",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/ai/ai_debug.c:5058"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4148"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineoffire_pill_vector",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/ai/ai_debug.c:5059"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4149"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineoffire_start",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/ai/ai_debug.c:5043",
+     "source/ai/ai_debug.c:5050"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4102"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineoffire_success",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:5052"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4100",
+     "source/ai/ai_debug.c:4113"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineoffire_valid",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:4143",
+     "source/ai/ai_debug.c:5037"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4099"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineoffire_vector",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/ai/ai_debug.c:5044"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4103"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineofsight_overflowed",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out",
+    "read": [
+     "source/ai/ai_debug.c:4295",
+     "source/ai/ai_debug.c:4345"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4300",
+     "source/ai/ai_debug.c:4350"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineofsight_pair",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out",
+    "address": [
+     "source/ai/ai_debug.c:5154"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4324",
+     "source/ai/ai_debug.c:4325",
+     "source/ai/ai_debug.c:5153"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4337",
+     "source/ai/ai_debug.c:4338",
+     "source/ai/ai_debug.c:4339",
+     "source/ai/ai_debug.c:4357"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineofsight_pair_count",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out",
+    "read": [
+     "source/ai/ai_debug.c:4299",
+     "source/ai/ai_debug.c:4322",
+     "source/ai/ai_debug.c:4331",
+     "source/ai/ai_debug.c:4333",
+     "source/ai/ai_debug.c:5149"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4122",
+     "source/ai/ai_debug.c:4335",
+     "source/ai/ai_debug.c:4630"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineofsight_point",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out",
+    "address": [
+     "source/ai/ai_debug.c:4275",
+     "source/ai/ai_debug.c:5144",
+     "source/ai/ai_debug.c:5158",
+     "source/ai/ai_debug.c:5159"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4287"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineofsight_point_count",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out",
+    "read": [
+     "source/ai/ai_debug.c:4272",
+     "source/ai/ai_debug.c:4281",
+     "source/ai/ai_debug.c:4283",
+     "source/ai/ai_debug.c:4349",
+     "source/ai/ai_debug.c:5136"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4121",
+     "source/ai/ai_debug.c:4285",
+     "source/ai/ai_debug.c:4629"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineofsight_point_key",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out",
+    "read": [
+     "source/ai/ai_debug.c:4274"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4289"
+    ]
+   },
+   {
+    "storage": "ai_debug.lineofsight_point_reference_count",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out",
+    "read": [
+     "source/ai/ai_debug.c:5138",
+     "source/ai/ai_debug.c:5140"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4288",
+     "source/ai/ai_debug.c:4308"
+    ]
+   },
+   {
+    "storage": "ai_debug.oversteer_disable",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1838"
+    ],
+    "read": [
+     "source/ai/actor_moving.c:2725"
+    ]
+   },
+   {
+    "storage": "ai_debug.path",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1842"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:465",
+     "source/ai/ai_debug.c:4633"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_accept_radius",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1858"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4718",
+     "source/ai/ai_debug.c:4726"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_attractor",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1852"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4691"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_attractor_radius",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1854"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4706",
+     "source/ai/ai_debug.c:4707"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_attractor_weight",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1856"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4704",
+     "source/ai/ai_debug.c:4705"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_disable_obstacle_avoidance",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1890"
+    ],
+    "read": [
+     "source/ai/path.c:959"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_disable_smoothing",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1888"
+    ],
+    "read": [
+     "source/ai/path.c:939"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_end_freeze",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1846"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4654"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_end_point",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/ai/ai_debug.c:4717",
+     "source/ai/ai_debug.c:4725",
+     "source/ai/ai_debug.c:5605"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4672"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_end_surface_index",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:4718",
+     "source/ai/ai_debug.c:4726"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4673"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_end_valid",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:4715",
+     "source/ai/ai_debug.c:4723",
+     "source/ai/ai_debug.c:5584"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4671"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_flood",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1848"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4715",
+     "source/ai/ai_debug.c:4723",
+     "source/ai/ai_debug.c:5588"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_maximum_radius",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1850"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4686",
+     "source/ai/ai_debug.c:4688"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_start_freeze",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1844"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4635"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_start_point",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/ai/ai_debug.c:4684",
+     "source/ai/ai_debug.c:5605"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4647"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_start_surface_index",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:4684"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4646"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_start_unit_index",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:4683"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4648"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_start_valid",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:4679",
+     "source/ai/ai_debug.c:5584"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4649"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_state",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out",
+    "address": [
+     "source/ai/ai_debug.c:4713",
+     "source/ai/ai_debug.c:4717",
+     "source/ai/ai_debug.c:4721",
+     "source/ai/ai_debug.c:4725",
+     "source/ai/ai_debug.c:4729"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:5588",
+     "source/ai/ai_debug.c:5592",
+     "source/ai/ai_debug.c:5596"
+    ]
+   },
+   {
+    "storage": "ai_debug.path_storage",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "compiled_out",
+    "address": [
+     "source/ai/ai_debug.c:4713",
+     "source/ai/ai_debug.c:5610",
+     "source/ai/ai_debug.c:5612"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:5608"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4732",
+     "source/ai/ai_debug.c:4733",
+     "source/ai/ai_debug.c:4734"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_acknowledgement",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1828"
+    ],
+    "read": [
+     "source/ai/actor_perception.c:6511",
+     "source/ai/actor_perception.c:6530",
+     "source/ai/actor_perception.c:6588",
+     "source/ai/actor_perception.c:6643"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_allegiance",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1804"
+    ],
+    "read": [
+     "source/ai/ai.c:1037",
+     "source/ai/ai.c:1108",
+     "source/ai/ai_communication.c:5978",
+     "source/ai/ai_communication.c:6006"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_automatic_migration",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1810"
+    ],
+    "read": [
+     "source/ai/encounters.c:3856"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_bsp_transition",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1832"
+    ],
+    "read": [
+     "source/ai/ai.c:1674",
+     "source/ai/ai.c:1688",
+     "source/ai/ai.c:1732",
+     "source/ai/ai.c:1752"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_command_lists",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1816"
+    ],
+    "read": [
+     "source/ai/action_obey.c:2465"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_communication",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1792"
+    ],
+    "read": [
+     "source/ai/ai_communication.c:4411",
+     "source/ai/ai_communication.c:4448",
+     "source/ai/ai_communication.c:4517",
+     "source/ai/ai_communication.c:4562",
+     "source/ai/ai_communication.c:4581",
+     "source/ai/ai_communication.c:4596",
+     "source/ai/ai_communication.c:4613",
+     "source/ai/ai_communication.c:4637",
+     "source/ai/ai_communication.c:4669",
+     "source/ai/ai_communication.c:4698",
+     "source/ai/ai_communication.c:4718",
+     "source/ai/ai_communication.c:4726",
+     "source/ai/ai_communication.c:4845",
+     "source/ai/ai_communication.c:4859",
+     "source/ai/ai_communication.c:4927",
+     "source/ai/ai_communication.c:4940",
+     "source/ai/ai_communication.c:4954",
+     "source/ai/ai_communication.c:4962",
+     "source/ai/ai_communication.c:4970",
+     "source/ai/ai_communication.c:4978",
+     "source/ai/ai_communication.c:4988",
+     "source/ai/ai_communication.c:6030",
+     "source/ai/ai_communication.c:6203",
+     "source/ai/ai_communication.c:6253",
+     "source/ai/ai_communication.c:6276",
+     "source/ai/ai_communication.c:6286",
+     "source/ai/ai_communication.c:6309",
+     "source/ai/ai_communication.c:6326",
+     "source/ai/ai_communication.c:6342",
+     "source/ai/ai_communication.c:6543",
+     "source/ai/ai_communication.c:6581",
+     "source/ai/ai_communication.c:6600",
+     "source/ai/ai_communication.c:6635",
+     "source/ai/ai_communication.c:6687",
+     "source/ai/ai_communication.c:6768",
+     "source/ai/ai_communication.c:6888",
+     "source/ai/ai_communication.c:6975",
+     "source/ai/ai_communication.c:7041",
+     "source/ai/ai_communication.c:7072",
+     "source/ai/ai_communication.c:7203",
+     "source/ai/ai_communication.c:7217"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_communication_player",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1794"
+    ],
+    "read": [
+     "source/ai/ai_communication.c:7006"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_conversations",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1824"
+    ],
+    "read": [
+     "source/ai/ai_communication.c:671"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_damage_modifiers",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1818"
+    ],
+    "read": [
+     "source/ai/actor_combat.c:1290",
+     "source/ai/actor_combat.c:1323"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_evaluation_statistics",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1790"
+    ],
+    "read": [
+     "source/ai/actor_firing_position.c:2434"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_killing_sprees",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1826"
+    ],
+    "read": [
+     "source/ai/ai.c:992"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_lost_speech",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1806"
+    ],
+    "read": [
+     "source/units/unit_dialogue.c:571"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_major_upgrade",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1786"
+    ],
+    "read": [
+     "source/ai/ai.c:1866"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_migration",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1808"
+    ],
+    "read": [
+     "source/ai/ai_script.c:2196",
+     "source/ai/ai_script.c:2204",
+     "source/ai/ai_script.c:2254",
+     "source/ai/ai_script.c:2281",
+     "source/ai/ai_script.c:2299",
+     "source/ai/ai_script.c:2314",
+     "source/ai/ai_script.c:2566",
+     "source/ai/ai_script.c:2645",
+     "source/ai/ai_script.c:2713"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_oversteer",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1822"
+    ],
+    "read": [
+     "source/ai/actor_moving.c:2767",
+     "source/ai/actor_moving.c:2776",
+     "source/ai/actor_moving.c:2785",
+     "source/ai/actor_moving.c:2798",
+     "source/ai/actor_moving.c:2825"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_placement",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1798"
+    ],
+    "read": [
+     "source/ai/encounters.c:2170",
+     "source/ai/encounters.c:2241"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_pursuit_checks",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1780"
+    ],
+    "read": [
+     "source/ai/encounters.c:1392"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_respawn",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1788"
+    ],
+    "read": [
+     "source/ai/encounters.c:3414",
+     "source/ai/encounters.c:3428",
+     "source/ai/encounters.c:3453",
+     "source/ai/encounters.c:3483",
+     "source/ai/encounters.c:3498"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_rule_values",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1784"
+    ],
+    "read": [
+     "source/ai/encounters.c:3339"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_rules",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1782"
+    ],
+    "read": [
+     "source/ai/encounters.c:1724",
+     "source/ai/encounters.c:3549",
+     "source/ai/encounters.c:3571",
+     "source/ai/encounters.c:3986"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_scripting",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1812"
+    ],
+    "read": [
+     "source/ai/ai_script.c:1151",
+     "source/ai/ai_script.c:1179",
+     "source/ai/ai_script.c:1207",
+     "source/ai/ai_script.c:1236",
+     "source/ai/ai_script.c:1265",
+     "source/ai/ai_script.c:1294",
+     "source/ai/ai_script.c:1312",
+     "source/ai/ai_script.c:1344",
+     "source/ai/ai_script.c:1370",
+     "source/ai/ai_script.c:1392",
+     "source/ai/ai_script.c:1420",
+     "source/ai/ai_script.c:1448",
+     "source/ai/ai_script.c:1466",
+     "source/ai/ai_script.c:1494",
+     "source/ai/ai_script.c:1512",
+     "source/ai/ai_script.c:1530",
+     "source/ai/ai_script.c:1560",
+     "source/ai/ai_script.c:1596",
+     "source/ai/ai_script.c:1663",
+     "source/ai/ai_script.c:1689",
+     "source/ai/ai_script.c:1715",
+     "source/ai/ai_script.c:1782",
+     "source/ai/ai_script.c:1805",
+     "source/ai/ai_script.c:1829",
+     "source/ai/ai_script.c:1853",
+     "source/ai/ai_script.c:1896",
+     "source/ai/ai_script.c:1932",
+     "source/ai/ai_script.c:1969",
+     "source/ai/ai_script.c:1992",
+     "source/ai/ai_script.c:2566",
+     "source/ai/ai_script.c:2645",
+     "source/ai/ai_script.c:2713",
+     "source/ai/ai_script.c:2781",
+     "source/ai/ai_script.c:2816",
+     "source/ai/ai_script.c:2844",
+     "source/ai/ai_script.c:2874",
+     "source/ai/ai_script.c:2904",
+     "source/ai/ai_script.c:2927",
+     "source/ai/ai_script.c:2954",
+     "source/ai/ai_script.c:2979",
+     "source/ai/ai_script.c:3013",
+     "source/ai/ai_script.c:3035",
+     "source/ai/ai_script.c:3086",
+     "source/ai/ai_script.c:3200",
+     "source/ai/ai_script.c:3320",
+     "source/ai/ai_script.c:3378",
+     "source/ai/ai_script.c:3430",
+     "source/ai/ai_script.c:3489",
+     "source/ai/ai_script.c:3536",
+     "source/ai/ai_script.c:3596",
+     "source/ai/ai_script.c:3627",
+     "source/ai/ai_script.c:3671",
+     "source/ai/ai_script.c:3712",
+     "source/ai/ai_script.c:3755",
+     "source/ai/ai_script.c:3787",
+     "source/ai/ai_script.c:3828",
+     "source/ai/ai_script.c:3865",
+     "source/ai/ai_script.c:3888",
+     "source/ai/ai_script.c:3917",
+     "source/ai/ai_script.c:3948",
+     "source/ai/ai_script.c:3982",
+     "source/ai/ai_script.c:4019",
+     "source/ai/ai_script.c:4044",
+     "source/ai/ai_script.c:4070",
+     "source/ai/ai_script.c:4099",
+     "source/ai/ai_script.c:4180",
+     "source/ai/ai_script.c:4200",
+     "source/ai/ai_script.c:4222",
+     "source/ai/ai_script.c:4240",
+     "source/ai/ai_script.c:4264",
+     "source/ai/ai_script.c:4289",
+     "source/ai/ai_script.c:4345"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_secondary_looking",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1820"
+    ],
+    "read": [
+     "source/ai/actor_looking.c:234"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_speech",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1800"
+    ],
+    "read": [
+     "source/ai/ai_communication.c:3831",
+     "source/ai/ai_debug.c:485",
+     "source/ai/ai_debug.c:5447"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_speech_timers",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1802"
+    ],
+    "read": [
+     "source/ai/ai_communication.c:3177"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_surprise",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1814"
+    ],
+    "read": [
+     "source/ai/actor_stimulus.c:847"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_uncovering",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1834"
+    ],
+    "read": [
+     "source/ai/action_uncover.c:35"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_unfinished_paths",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1830"
+    ],
+    "read": [
+     "source/ai/actor_moving.c:2189"
+    ]
+   },
+   {
+    "storage": "ai_debug.print_vocalizations",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1796"
+    ],
+    "read": [
+     "source/ai/ai_communication.c:3745"
+    ]
+   },
+   {
+    "storage": "ai_debug.render",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1624"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:438"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:267"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_activation",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1726"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1231"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_active_cover_seeking",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1682"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1492"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_aiming_validity",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1694"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:475"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_aiming_vectors",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1670"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1980"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_all_actors",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1626"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:480",
+     "source/ai/ai_debug.c:5689"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_audibility",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1668"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1601"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_ballistic_lineoffire",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1636"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:450"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_burst_geometry",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1708"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3443"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_charge_decisions",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1722"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3214"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_control",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1724"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3004"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_current_state",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1642"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:2204"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_danger_zones",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1720"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:2816"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_detailed_state",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1644"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3604"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_dialogue_variants",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1716"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:485",
+     "source/ai/ai_debug.c:5377"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_emotions",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1666"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1531"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_encounter_activeregion",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1638"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:380"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_evaluations",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1684"
+    ],
+    "read": [
+     "source/ai/actor_firing_position.c:1760",
+     "source/ai/ai_debug.c:5938"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_firing_positions",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1704"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:5835"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_grenade_decisions",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1718"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:2745"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_gun_positions",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1706"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:2047"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_idle_look",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1658"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:490"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_inactive_actors",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1628"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:482"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_lineoffire",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1632"
+    ],
+    "read": [
+     "source/ai/ai.c:2264",
+     "source/ai/ai_debug.c:440"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_lineoffire_crouching",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1630"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:832"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_lineofsight",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1634"
+    ],
+    "read": [
+     "source/ai/ai.c:2303",
+     "source/ai/ai_debug.c:445",
+     "source/ai/ai_debug.c:4627"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_melee_check",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1714"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3260"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1728"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3694"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_avoidance_obstacles",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1746"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4062"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_avoidance_search",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1748"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4069"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_avoidance_segment",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1744"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4059",
+     "source/ai/ai_debug.c:4060",
+     "source/ai/ai_debug.c:4065",
+     "source/ai/ai_debug.c:4066",
+     "source/ai/ai_debug.c:4072"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_avoided",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1742"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4053"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_current",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1736"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3696"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_destination",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1732"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4005"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_failed",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1738"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:470"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_nodes",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1750"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4076"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_nodes_all",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1752"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4079"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_nodes_closest",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1758"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4080"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_nodes_costs",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1756"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4080"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_nodes_polygons",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1754"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4079"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_raw",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1734"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4041"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_selected_only",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1730"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3694"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_paths_smoothed",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1740"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:4047"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_player_aiming_blocked",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1760"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:879"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_player_ratings",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1700"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1593"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_postcombat",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1778"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3790"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_projectile_aiming",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1692"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3386"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_props",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1646"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1636",
+     "source/ai/ai_debug.c:2175"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_props_no_friends",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1650"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1681"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_props_target_weight",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1654"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1795",
+     "source/ai/ai_debug.c:1819"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_props_unopposable",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1652"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1783",
+     "source/ai/ai_debug.c:2175"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_props_unreachable",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1656"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1760"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_props_web",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1648"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1636",
+     "source/ai/ai_debug.c:1680",
+     "source/ai/ai_debug.c:1833"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_pursuit",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1686"
+    ],
+    "read": [
+     "source/ai/actor_firing_position.c:1765",
+     "source/ai/ai_debug.c:1956",
+     "source/ai/ai_debug.c:5883"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_recent_damage",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1662"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1477"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_secondary_looking",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1672"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1845"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_shooting",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1688"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:2628"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_spatial_effects",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1702"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:495"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_speech",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1696"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:485",
+     "source/ai/ai_debug.c:5411",
+     "source/ai/ai_debug.c:5447"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4383",
+     "source/ai/ai_debug.c:4462",
+     "source/ai/ai_debug.c:4485"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_states",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1678"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:2189"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_support_surfaces",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1660"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1401"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_targets",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1674"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:2117"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_targets_last_visible",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1676"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:2117",
+     "source/ai/ai_debug.c:2170"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_teams",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1698"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1572"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_threats",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1664"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1515"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_trigger",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1690"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:2993"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_vector_avoidance",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1762"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:939"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_vector_avoidance_avoid_t",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1768"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1045"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_vector_avoidance_clear_time",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1770"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1067"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_vector_avoidance_intermediate",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1776"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1112"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_vector_avoidance_objects",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1774"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1162"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_vector_avoidance_rays",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1764"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:948",
+     "source/ai/ai_debug.c:1012"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_vector_avoidance_sense_t",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1766"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:984"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_vector_avoidance_weights",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1772"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1087"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_vehicle_avoidance",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1710"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3304"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_vehicles_enterable",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1712"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:500"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_vision_cones",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1640"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:3486"
+    ]
+   },
+   {
+    "storage": "ai_debug.render_vitality",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "address": [
+     "source/hs/hs_globals_external.c:1680"
+    ],
+    "read": [
+     "source/ai/ai_debug.c:1462"
+    ]
+   },
+   {
+    "storage": "ai_debug.select_this_actor",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:433"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:5351",
+     "source/main/debug_keys.c:144"
+    ]
+   },
+   {
+    "storage": "ai_debug.selected_actor_index",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "read": [
+     "source/ai/actor_firing_position.c:1758",
+     "source/ai/actor_firing_position.c:1758",
+     "source/ai/actor_looking.c:729",
+     "source/ai/actor_looking.c:768",
+     "source/ai/actors.c:1370",
+     "source/ai/actors.c:3097",
+     "source/ai/ai_debug.c:428",
+     "source/ai/ai_debug.c:430",
+     "source/ai/ai_debug.c:460",
+     "source/ai/ai_debug.c:462",
+     "source/ai/ai_debug.c:4379",
+     "source/ai/ai_debug.c:4381",
+     "source/ai/ai_debug.c:4420",
+     "source/ai/ai_debug.c:4440",
+     "source/ai/ai_debug.c:4478",
+     "source/ai/ai_debug.c:4480",
+     "source/ai/ai_debug.c:4591",
+     "source/ai/ai_debug.c:4837",
+     "source/ai/ai_debug.c:4841",
+     "source/ai/ai_debug.c:5169",
+     "source/ai/ai_debug.c:5171",
+     "source/ai/ai_debug.c:5658",
+     "source/ai/ai_debug.c:5687",
+     "source/ai/ai_debug.c:5689",
+     "source/ai/ai_debug.c:5731",
+     "source/ai/ai_debug.c:5735",
+     "source/ai/ai_debug.c:5758",
+     "source/ai/ai_debug.c:5889",
+     "source/ai/ai_debug.c:5897",
+     "source/ai/ai_debug.c:5900",
+     "source/ai/ai_debug.c:5907",
+     "source/ai/ai_debug.c:5909",
+     "source/ai/ai_debug.c:5940",
+     "source/ai/ai_debug.c:5952",
+     "source/ai/encounters.c:1393",
+     "source/ai/encounters.c:1393",
+     "source/units/units.c:9994",
+     "source/units/units.c:9995",
+     "source/units/units.c:9996"
+    ],
+    "write": [
+     "source/ai/actors.c:3099",
+     "source/ai/ai_debug.c:264",
+     "source/ai/ai_debug.c:4598"
+    ]
+   },
+   {
+    "storage": "ai_debug.selected_squad_index",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "read": [
+     "source/ai/actor_firing_position.c:1757",
+     "source/ai/actor_firing_position.c:2088",
+     "source/ai/ai_debug.c:300",
+     "source/ai/ai_debug.c:304",
+     "source/ai/ai_debug.c:380",
+     "source/ai/ai_debug.c:383",
+     "source/ai/ai_debug.c:386",
+     "source/ai/ai_debug.c:392",
+     "source/ai/ai_debug.c:399",
+     "source/ai/ai_debug.c:455",
+     "source/ai/ai_debug.c:457",
+     "source/ai/ai_debug.c:4573",
+     "source/ai/ai_debug.c:4591",
+     "source/ai/ai_debug.c:4821",
+     "source/ai/ai_debug.c:4835",
+     "source/ai/ai_debug.c:4865",
+     "source/ai/ai_debug.c:4871",
+     "source/ai/ai_debug.c:4882",
+     "source/ai/ai_debug.c:4883",
+     "source/ai/ai_debug.c:5736",
+     "source/ai/encounters.c:1392",
+     "source/ai/encounters.c:1744",
+     "source/game/players.c:1062",
+     "source/game/players.c:1066",
+     "source/game/players.c:1093",
+     "source/game/players.c:1097",
+     "source/game/players.c:1288",
+     "source/game/players.c:1292",
+     "source/game/players.c:1417",
+     "source/game/players.c:1421"
+    ],
+    "write": [
+     "source/ai/ai.c:2869",
+     "source/ai/ai_debug.c:265",
+     "source/ai/ai_debug.c:430",
+     "source/ai/ai_debug.c:4575"
+    ]
+   },
+   {
+    "storage": "ai_debug.selected_squad_name",
+    "group": "ai_debug",
+    "kind": "control",
+    "class": "gameplay_affecting_when_set",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:307",
+     "source/ai/ai_debug.c:307",
+     "source/ai/ai_debug.c:308",
+     "source/ai/ai_debug.c:312",
+     "source/ai/ai_debug.c:4615"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:308"
+    ]
+   },
+   {
+    "storage": "ai_debug.speak_unit_index",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:5990",
+     "source/ai/ai_debug.c:5995",
+     "source/ai/ai_debug.c:6024",
+     "source/ai/ai_debug.c:6040"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4467",
+     "source/ai/ai_debug.c:4489"
+    ]
+   },
+   {
+    "storage": "ai_debug.speak_valid",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:5985"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4463",
+     "source/ai/ai_debug.c:4486",
+     "source/ai/ai_debug.c:5999",
+     "source/ai/ai_debug.c:6104"
+    ]
+   },
+   {
+    "storage": "ai_debug.speak_vocalization_type",
+    "group": "ai_debug",
+    "kind": "record",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/ai/ai_debug.c:6018",
+     "source/ai/ai_debug.c:6019",
+     "source/ai/ai_debug.c:6022",
+     "source/ai/ai_debug.c:6070",
+     "source/ai/ai_debug.c:6080",
+     "source/ai/ai_debug.c:6091",
+     "source/ai/ai_debug.c:6099",
+     "source/ai/ai_debug.c:6100"
+    ],
+    "write": [
+     "source/ai/ai_debug.c:4468",
+     "source/ai/ai_debug.c:4490",
+     "source/ai/ai_debug.c:6078",
+     "source/ai/ai_debug.c:6087",
+     "source/ai/ai_debug.c:6095"
+    ]
+   },
+   {
+    "storage": "ai_debug_actor_deleted",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/actors.c:3140",
+     "source/ai/ai_debug.c:331"
+    ]
+   },
+   {
+    "storage": "ai_debug_clear_storage",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:318",
+     "source/ai/ai_debug.c:4617"
+    ]
+   },
+   {
+    "storage": "ai_debug_dispose",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai.c:526",
+     "source/ai/ai.c:541",
+     "source/ai/ai.c:2882",
+     "source/ai/ai_debug.c:277",
+     "source/ai/ai_debug.c:295"
+    ]
+   },
+   {
+    "storage": "ai_debug_get_last_path",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:352",
+     "source/ai/ai_debug.c:771"
+    ]
+   },
+   {
+    "storage": "ai_debug_get_path_storage",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/actor_firing_position.c:2272",
+     "source/ai/actor_moving.c:2068",
+     "source/ai/ai_debug.c:4975"
+    ]
+   },
+   {
+    "storage": "ai_debug_idle_look_addprop",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/actor_looking.c:769",
+     "source/ai/ai_debug.c:4157"
+    ]
+   },
+   {
+    "storage": "ai_debug_idle_look_clear",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/actor_looking.c:730",
+     "source/ai/ai_debug.c:4127",
+     "source/ai/ai_debug.c:4606"
+    ]
+   },
+   {
+    "storage": "ai_debug_initialize",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "port/wii/engine/engine_hooks.c:210",
+     "port/wii/engine/engine_hooks.c:222",
+     "source/ai/ai.c:503",
+     "source/ai/ai_debug.c:259"
+    ]
+   },
+   {
+    "storage": "ai_debug_initialize_for_new_map",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai.c:1921",
+     "source/ai/ai_debug.c:4612",
+     "source/saved games/game_state.c:201"
+    ]
+   },
+   {
+    "storage": "ai_debug_lineoffire_addpill",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai.c:2270",
+     "source/ai/ai_debug.c:4137"
+    ]
+   },
+   {
+    "storage": "ai_debug_lineoffire_new",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai.c:2266",
+     "source/ai/ai_debug.c:4095"
+    ]
+   },
+   {
+    "storage": "ai_debug_lineoffire_success",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai.c:2277",
+     "source/ai/ai_debug.c:4110"
+    ]
+   },
+   {
+    "storage": "ai_debug_lineofsight",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai.c:2304",
+     "source/ai/ai_debug.c:4118",
+     "source/ai/ai_debug.c:4266",
+     "source/ai/ai_debug.c:4297",
+     "source/ai/ai_debug.c:4314",
+     "source/ai/ai_debug.c:4347",
+     "source/ai/ai_debug.c:4364",
+     "source/ai/ai_debug.c:4370",
+     "source/ai/ai_debug.c:4370",
+     "source/ai/ai_debug.c:4370",
+     "source/ai/ai_debug.c:5151"
+    ]
+   },
+   {
+    "storage": "ai_debug_render",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:133",
+     "source/ai/ai_debug.c:139",
+     "source/ai/ai_debug.c:143",
+     "source/ai/ai_debug.c:145",
+     "source/ai/ai_debug.c:151",
+     "source/ai/ai_debug.c:153",
+     "source/ai/ai_debug.c:155",
+     "source/ai/ai_debug.c:157",
+     "source/ai/ai_debug.c:159",
+     "source/ai/ai_debug.c:161",
+     "source/ai/ai_debug.c:167",
+     "source/ai/ai_debug.c:169",
+     "source/ai/ai_debug.c:171",
+     "source/ai/ai_debug.c:177",
+     "source/ai/ai_debug.c:179",
+     "source/ai/ai_debug.c:181",
+     "source/ai/ai_debug.c:183",
+     "source/ai/ai_debug.c:196",
+     "source/ai/ai_debug.c:419",
+     "source/ai/ai_debug.c:442",
+     "source/ai/ai_debug.c:447",
+     "source/ai/ai_debug.c:452",
+     "source/ai/ai_debug.c:457",
+     "source/ai/ai_debug.c:462",
+     "source/ai/ai_debug.c:467",
+     "source/ai/ai_debug.c:472",
+     "source/ai/ai_debug.c:477",
+     "source/ai/ai_debug.c:482",
+     "source/ai/ai_debug.c:487",
+     "source/ai/ai_debug.c:492",
+     "source/ai/ai_debug.c:497",
+     "source/ai/ai_debug.c:502",
+     "source/ai/ai_debug.c:544",
+     "source/ai/ai_debug.c:597",
+     "source/ai/ai_debug.c:712",
+     "source/ai/ai_debug.c:759",
+     "source/ai/ai_debug.c:1441",
+     "source/ai/ai_debug.c:1447",
+     "source/ai/ai_debug.c:3779",
+     "source/ai/ai_debug.c:3807",
+     "source/ai/ai_debug.c:3836",
+     "source/ai/ai_debug.c:3881",
+     "source/ai/ai_debug.c:3945",
+     "source/ai/ai_debug.c:3961",
+     "source/ai/ai_debug.c:4028",
+     "source/ai/ai_debug.c:4043",
+     "source/ai/ai_debug.c:4049",
+     "source/ai/ai_debug.c:4055",
+     "source/ai/ai_debug.c:4078",
+     "source/ai/ai_debug.c:5034",
+     "source/ai/ai_debug.c:5068",
+     "source/ai/ai_debug.c:5113",
+     "source/ai/ai_debug.c:5166",
+     "source/ai/ai_debug.c:5240",
+     "source/ai/ai_debug.c:5285",
+     "source/ai/ai_debug.c:5356",
+     "source/ai/ai_debug.c:5485",
+     "source/ai/ai_debug.c:5581",
+     "source/ai/ai_debug.c:5612",
+     "source/ai/ai_debug.c:5618",
+     "source/ai/ai_debug.c:5640",
+     "source/ai/ai_debug.c:5647",
+     "source/ai/ai_debug.c:5656",
+     "source/ai/ai_debug.c:5665",
+     "source/ai/ai_debug.c:5691",
+     "source/ai/ai_debug.c:6148",
+     "source/render/render_debug.c:514"
+    ]
+   },
+   {
+    "storage": "ai_debug_select_actor",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:4581",
+     "source/ai/ai_debug.c:4587",
+     "source/ai/ai_debug.c:4619",
+     "source/ai/ai_debug.c:4827",
+     "source/ai/ai_debug.c:4865",
+     "source/ai/ai_debug.c:4871",
+     "source/ai/ai_debug.c:5344",
+     "source/ai/ai_debug.c:5348",
+     "source/ai/ai_script.c:1621"
+    ]
+   },
+   {
+    "storage": "ai_debug_select_encounter",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:4570",
+     "source/ai/ai_debug.c:4596",
+     "source/ai/ai_debug.c:4890",
+     "source/ai/ai_debug.c:4927",
+     "source/ai/ai_script.c:3001"
+    ]
+   },
+   {
+    "storage": "ai_debug_speak",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:4417",
+     "source/ai/ai_debug.c:4475",
+     "source/hs/hs.c:3732",
+     "source/hs/hs.c:3736",
+     "source/hs/hs.c:10073",
+     "source/hs/hs.c:10078",
+     "source/hs/hs.c:10080",
+     "source/hs/hs.c:10088",
+     "source/hs/hs.c:10093",
+     "source/hs/hs.c:10095",
+     "source/hs/hs.c:11931",
+     "source/hs/hs.c:11932",
+     "source/hs/hs.c:12412",
+     "source/hs/hs.c:12413",
+     "source/hs/hs.c:14857",
+     "source/hs/hs.c:14857",
+     "source/hs/hs.c:14858",
+     "source/hs/hs.c:14858"
+    ]
+   },
+   {
+    "storage": "ai_debug_update",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai.c:1947",
+     "source/ai/ai_debug.c:4624"
+    ]
+   },
+   {
+    "storage": "ai_debug_vocalize",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:4375",
+     "source/hs/hs.c:3744",
+     "source/hs/hs.c:10042",
+     "source/hs/hs.c:10047",
+     "source/hs/hs.c:10049",
+     "source/hs/hs.c:11929",
+     "source/hs/hs.c:12410",
+     "source/hs/hs.c:14843",
+     "source/hs/hs.c:14851"
+    ]
+   },
+   {
+    "storage": "global_ai_debug_activation_cluster_bit_vector",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:233",
+     "source/ai/ai_debug.c:388",
+     "source/ai/ai_debug.c:390",
+     "source/ai/ai_debug.c:397"
+    ]
+   },
+   {
+    "storage": "global_ai_debug_drawstack_height",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:213",
+     "source/ai/ai_debug.c:525",
+     "source/ai/ai_debug.c:529",
+     "source/ai/ai_debug.c:538",
+     "source/ai/ai_debug.c:539",
+     "source/ai/ai_debug.c:540"
+    ]
+   },
+   {
+    "storage": "global_ai_debug_drawstack_last_position",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:212",
+     "source/ai/ai_debug.c:519",
+     "source/ai/ai_debug.c:520",
+     "source/ai/ai_debug.c:524",
+     "source/ai/ai_debug.c:537",
+     "source/ai/ai_debug.c:538",
+     "source/ai/ai_debug.c:539",
+     "source/ai/ai_debug.c:540",
+     "source/ai/ai_debug.c:541"
+    ]
+   },
+   {
+    "storage": "global_ai_debug_drawstack_next_position",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:211",
+     "source/ai/ai_debug.c:520",
+     "source/ai/ai_debug.c:537",
+     "source/ai/ai_debug.c:538",
+     "source/ai/ai_debug.c:539",
+     "source/ai/ai_debug.c:540"
+    ]
+   },
+   {
+    "storage": "global_ai_debug_firing_position_color_count",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:214",
+     "source/ai/ai_debug.c:5696",
+     "source/ai/ai_debug.c:5698",
+     "source/ai/ai_debug.c:5700",
+     "source/ai/ai_debug.c:5701",
+     "source/ai/ai_debug.c:5702",
+     "source/ai/ai_debug.c:5703",
+     "source/ai/ai_debug.c:5705",
+     "source/ai/ai_debug.c:5743"
+    ]
+   },
+   {
+    "storage": "global_ai_debug_firing_position_colors",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:235",
+     "source/ai/ai_debug.c:5700",
+     "source/ai/ai_debug.c:5701",
+     "source/ai/ai_debug.c:5702",
+     "source/ai/ai_debug.c:5703",
+     "source/ai/ai_debug.c:5742"
+    ]
+   },
+   {
+    "storage": "global_ai_debug_path_render_id",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:209",
+     "source/ai/ai_debug.c:3825",
+     "source/ai/ai_debug.c:3842",
+     "source/ai/ai_debug.c:3863",
+     "source/ai/ai_debug.c:3951"
+    ]
+   },
+   {
+    "storage": "global_ai_debug_selected_squad_index",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:231",
+     "source/ai/ai_debug.c:383",
+     "source/ai/ai_debug.c:392"
+    ]
+   },
+   {
+    "storage": "global_ai_debug_selected_squad_time",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "source/ai/ai_debug.c:232",
+     "source/ai/ai_debug.c:382",
+     "source/ai/ai_debug.c:391"
+    ]
+   },
+   {
+    "storage": "global_ai_debug_string_position",
+    "group": "ai_debug",
+    "kind": "entry_point_or_global",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "call_or_use": [
+     "port/linux/src/halo_linker_common.c:109",
+     "port/linux/src/halo_linker_common.c:109",
+     "source/ai/ai_debug.c:424"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.(pointer)",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "read": [
+     "source/ai/path.c:356",
+     "source/ai/path.c:853",
+     "source/ai/path.c:978",
+     "source/ai/path.c:1007",
+     "source/ai/path.c:1013",
+     "source/ai/path.c:1032",
+     "source/ai/path.c:1039",
+     "source/ai/path.c:1044",
+     "source/ai/path.c:1504",
+     "source/ai/path.c:1535",
+     "source/ai/path.c:1713",
+     "source/ai/path.c:1810",
+     "source/ai/path.c:1833",
+     "source/ai/path.c:1842",
+     "source/ai/path.c:1848",
+     "source/ai/path_obstacle_avoidance.c:905",
+     "source/ai/path_obstacle_avoidance.c:942",
+     "source/ai/path_obstacle_avoidance.c:963"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.avoidance_obstacles",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "storage_location": [
+     "source/ai/path_obstacle_avoidance.c:944"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.avoidance_path_count",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "read": [
+     "source/ai/path_obstacle_avoidance.c:946"
+    ],
+    "write": [
+     "source/ai/path_obstacle_avoidance.c:907",
+     "source/ai/path_obstacle_avoidance.c:965"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.avoidance_paths",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "storage_location": [
+     "source/ai/path_obstacle_avoidance.c:945"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.avoided_step_count",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "write": [
+     "source/ai/path.c:1025"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.avoided_steps",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "write": [
+     "source/ai/path.c:1027"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.failure",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "write": [
+     "source/ai/path.c:1050",
+     "source/ai/path.c:1858"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.path_build_result",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "read": [
+     "source/ai/path.c:1048",
+     "source/ai/path.c:1056"
+    ],
+    "write": [
+     "source/ai/path.c:855",
+     "source/ai/path.c:980",
+     "source/ai/path.c:1009",
+     "source/ai/path.c:1034",
+     "source/ai/path.c:1041"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.path_state",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "write": [
+     "source/ai/path.c:1850"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.path_traverse_result",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "read": [
+     "source/ai/path.c:1505",
+     "source/ai/path.c:1536",
+     "source/ai/path.c:1714",
+     "source/ai/path.c:1855",
+     "source/ai/path.c:1856"
+    ],
+    "write": [
+     "source/ai/path.c:1507",
+     "source/ai/path.c:1538",
+     "source/ai/path.c:1716",
+     "source/ai/path.c:1812",
+     "source/ai/path.c:1835",
+     "source/ai/path.c:1844"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.raw_step_count",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "write": [
+     "source/ai/path.c:1015"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.raw_steps",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "write": [
+     "source/ai/path.c:1017"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.result",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "write": [
+     "source/ai/path.c:1046"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.smoothed_step_count",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "write": [
+     "source/ai/path.c:1020"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.smoothed_steps",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "write": [
+     "source/ai/path.c:1022"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.structure_bsp_index",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "write": [
+     "source/ai/path.c:1851"
+    ]
+   },
+   {
+    "storage": "path_debug_storage.use_stored_obstacles",
+    "group": "ai_debug",
+    "kind": "heap_record",
+    "class": "diagnostic_only",
+    "fate": "NULL (path code's own no-debug branch)",
+    "read": [
+     "source/ai/path_obstacle_avoidance.c:905",
+     "source/ai/path_obstacle_avoidance.c:946",
+     "source/ai/path_obstacle_avoidance.c:963"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_dump",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/interface/interface.c:914"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_enter",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/ai/ai.c:1943",
+     "source/effects/effects.c:1023",
+     "source/effects/particles.c:1009",
+     "source/game/game.c:315",
+     "source/game/player_control.c:829",
+     "source/game/players.c:4429",
+     "source/game/players.c:4684",
+     "source/hs/hs.c:13403",
+     "source/items/items.c:542",
+     "source/items/projectiles.c:685",
+     "source/items/weapons.c:2958",
+     "source/memory/array.c:135",
+     "source/memory/array.c:221",
+     "source/memory/array.c:295",
+     "source/models/models.c:888",
+     "source/objects/object_lights.c:905",
+     "source/objects/objects.c:4439",
+     "source/render/render_objects.c:346",
+     "source/render/render_objects.c:378",
+     "source/render/render_particles.c:141",
+     "source/sound/sound_manager.c:3859",
+     "source/structures/leaf_map.c:437",
+     "source/structures/structure_render.c:583",
+     "source/structures/structure_render.c:632",
+     "source/structures/structure_render.c:668",
+     "source/structures/structure_render.c:770",
+     "source/structures/structure_render.c:796",
+     "source/structures/structure_render.c:822",
+     "source/structures/structure_render.c:892",
+     "source/structures/structure_render.c:920",
+     "source/structures/structure_render.c:960",
+     "source/structures/structure_render.c:988",
+     "source/structures/structure_render.c:1027",
+     "source/structures/structure_render.c:1047",
+     "source/structures/structure_visibility.c:425",
+     "source/structures/structure_visibility.c:507",
+     "source/structures/structure_visibility.c:1907",
+     "source/units/bipeds.c:4204",
+     "source/units/units.c:5376",
+     "source/units/vehicles.c:2463"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_exit",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/ai/ai.c:1970",
+     "source/effects/effects.c:1032",
+     "source/effects/particles.c:1060",
+     "source/game/game.c:374",
+     "source/game/player_control.c:839",
+     "source/game/players.c:4641",
+     "source/game/players.c:4820",
+     "source/hs/hs.c:13405",
+     "source/items/items.c:938",
+     "source/items/projectiles.c:1107",
+     "source/items/weapons.c:3407",
+     "source/memory/array.c:164",
+     "source/memory/array.c:241",
+     "source/memory/array.c:315",
+     "source/models/models.c:1193",
+     "source/objects/object_lights.c:1243",
+     "source/objects/objects.c:4542",
+     "source/render/render_objects.c:370",
+     "source/render/render_objects.c:392",
+     "source/render/render_particles.c:407",
+     "source/sound/sound_manager.c:3902",
+     "source/structures/leaf_map.c:459",
+     "source/structures/structure_render.c:591",
+     "source/structures/structure_render.c:660",
+     "source/structures/structure_render.c:686",
+     "source/structures/structure_render.c:788",
+     "source/structures/structure_render.c:814",
+     "source/structures/structure_render.c:840",
+     "source/structures/structure_render.c:940",
+     "source/structures/structure_render.c:943",
+     "source/structures/structure_render.c:1008",
+     "source/structures/structure_render.c:1011",
+     "source/structures/structure_render.c:1060",
+     "source/structures/structure_render.c:1063",
+     "source/structures/structure_visibility.c:497",
+     "source/structures/structure_visibility.c:620",
+     "source/structures/structure_visibility.c:1976",
+     "source/units/bipeds.c:4403",
+     "source/units/units.c:6193",
+     "source/units/vehicles.c:2753"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_find_frame_value",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/interface/interface.c:963"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_frame_end",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/main/main.c:3428"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_frame_get_messages",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/interface/interface.c:1161"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_frame_get_stalls",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/interface/interface.c:1171"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_frame_get_value",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/interface/interface.c:1037"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_frame_iterator_new",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/interface/interface.c:1009",
+     "source/interface/interface.c:1134"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_frame_iterator_next",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/interface/interface.c:1010",
+     "source/interface/interface.c:1135"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_frame_start",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/main/main.c:3306"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_idle_end",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/main/main.c:2537",
+     "source/main/main.c:2631"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_idle_start",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/main/main.c:2534",
+     "source/main/main.c:2616"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_initialize",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/cseries/cseries.c:234",
+     "source/main/debug_keys.c:210"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_lapsed_frames",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/main/main.c:2663"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_lapsed_msec",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/main/main.c:2541"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_rasterizer_stats",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/cseries/profile_rasterizer.h:17",
+     "source/rasterizer/xbox/rasterizer_xbox_profile.c:582"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_render_end",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/main/main.c:3409",
+     "source/main/main.c:3416"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_render_start",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/main/main.c:3405",
+     "source/main/main.c:3414"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_render_window_end",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/render/render.c:229",
+     "source/render/render.c:272",
+     "source/render/render.c:434"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_render_window_start",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/render/render.c:194",
+     "source/render/render.c:245",
+     "source/render/render.c:314"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_seconds_elapsed",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/main/main.c:2338",
+     "source/main/main.c:2581"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_texture_end",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/objects/object_lights.c:543",
+     "source/rasterizer/xbox/rasterizer_xbox.c:1952"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_texture_start",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/objects/object_lights.c:538",
+     "source/rasterizer/xbox/rasterizer_xbox.c:1950"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_tick_end",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/game/game.c:376"
+    ]
+   },
+   {
+    "storage": "profile_globals via profile_tick_start",
+    "group": "profiling",
+    "kind": "call",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "write": [
+     "source/game/game.c:312"
+    ]
+   },
+   {
+    "storage": "profile_globals.compare_type",
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/cseries/profile.c:1629"
+    ],
+    "write": [
+     "source/cseries/profile.c:493"
+    ]
+   },
+   {
+    "storage": "profile_globals.current_frame",
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/cseries/profile.c:607",
+     "source/cseries/profile.c:608",
+     "source/cseries/profile.c:657",
+     "source/cseries/profile.c:1089",
+     "source/cseries/profile.c:1089",
+     "source/cseries/profile.c:1094",
+     "source/cseries/profile.c:1109",
+     "source/cseries/profile.c:1117",
+     "source/cseries/profile.c:1117",
+     "source/cseries/profile.c:1119",
+     "source/cseries/profile.c:1119",
+     "source/cseries/profile.c:1131",
+     "source/cseries/profile.c:1131",
+     "source/cseries/profile.c:1133",
+     "source/cseries/profile.c:1133",
+     "source/cseries/profile.c:1144",
+     "source/cseries/profile.c:1147",
+     "source/cseries/profile.c:1153",
+     "source/cseries/profile.c:1153",
+     "source/cseries/profile.c:1155",
+     "source/cseries/profile.c:1155",
+     "source/cseries/profile.c:1167",
+     "source/cseries/profile.c:1167",
+     "source/cseries/profile.c:1169",
+     "source/cseries/profile.c:1169",
+     "source/cseries/profile.c:1179",
+     "source/cseries/profile.c:1187",
+     "source/cseries/profile.c:1202",
+     "source/cseries/profile.c:1213",
+     "source/cseries/profile.c:1222",
+     "source/cseries/profile.c:1230",
+     "source/cseries/profile.c:1478",
+     "source/cseries/profile.c:1481",
+     "source/cseries/profile.c:1481",
+     "source/cseries/profile.c:1483",
+     "source/cseries/profile.c:1485",
+     "source/cseries/profile.c:1485",
+     "source/cseries/profile.c:1489",
+     "source/cseries/profile.c:1489",
+     "source/cseries/profile.c:1491",
+     "source/cseries/profile.c:1491",
+     "source/cseries/profile.c:1493",
+     "source/cseries/profile.c:1495",
+     "source/cseries/profile.c:1495",
+     "source/cseries/profile.c:1498",
+     "source/cseries/profile.c:1498",
+     "source/cseries/profile.c:1500",
+     "source/cseries/profile.c:1505"
+    ],
+    "write": [
+     "source/cseries/profile.c:609",
+     "source/cseries/profile.c:610",
+     "source/cseries/profile.c:611",
+     "source/cseries/profile.c:652",
+     "source/cseries/profile.c:653",
+     "source/cseries/profile.c:1027",
+     "source/cseries/profile.c:1035",
+     "source/cseries/profile.c:1036",
+     "source/cseries/profile.c:1045",
+     "source/cseries/profile.c:1046",
+     "source/cseries/profile.c:1091",
+     "source/cseries/profile.c:1092",
+     "source/cseries/profile.c:1093",
+     "source/cseries/profile.c:1111",
+     "source/cseries/profile.c:1146",
+     "source/cseries/profile.c:1147",
+     "source/cseries/profile.c:1178"
+    ]
+   },
+   {
+    "storage": "profile_globals.current_frame_history_count",
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/cseries/profile.c:625",
+     "source/cseries/profile.c:638",
+     "source/cseries/profile.c:756",
+     "source/cseries/profile.c:1005",
+     "source/cseries/profile.c:1502",
+     "source/cseries/profile.c:1525"
+    ],
+    "write": [
+     "source/cseries/profile.c:1073",
+     "source/cseries/profile.c:1502"
+    ]
+   },
+   {
+    "storage": "profile_globals.current_frame_history_index",
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/cseries/profile.c:626",
+     "source/cseries/profile.c:639",
+     "source/cseries/profile.c:758",
+     "source/cseries/profile.c:990",
+     "source/cseries/profile.c:1015",
+     "source/cseries/profile.c:1500",
+     "source/cseries/profile.c:1502",
+     "source/cseries/profile.c:1503",
+     "source/cseries/profile.c:1521",
+     "source/cseries/profile.c:1532"
+    ],
+    "write": [
+     "source/cseries/profile.c:1074",
+     "source/cseries/profile.c:1503"
+    ]
+   },
+   {
+    "storage": "profile_globals.framedump_file",
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/cseries/profile.c:1450",
+     "source/cseries/profile.c:1455",
+     "source/cseries/profile.c:1461",
+     "source/cseries/profile.c:1767",
+     "source/cseries/profile.c:1769",
+     "source/cseries/profile.c:1770"
+    ],
+    "write": [
+     "source/cseries/profile.c:1076",
+     "source/cseries/profile.c:1452"
+    ]
+   },
+   {
+    "storage": "profile_globals.framedump_flush_pending",
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/cseries/profile.c:1765"
+    ],
+    "write": [
+     "source/cseries/profile.c:1466",
+     "source/cseries/profile.c:1773"
+    ]
+   },
+   {
+    "storage": "profile_globals.frames",
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "fate": "compiled_out",
+    "read": [
+     "source/cseries/profile.c:636",
+     "source/cseries/profile.c:751",
+     "source/cseries/profile.c:1011",
+     "source/cseries/profile.c:1527"
+    ],
+    "write": [
+     "source/cseries/profile.c:1500"
+    ]
+   },
+   {
+    "storage": "profile_globals.history_index",
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/cseries/profile.c:1695",
+     "source/cseries/profile.c:1696",
+     "source/cseries/profile.c:1697",
+     "source/cseries/profile.c:1698",
+     "source/cseries/profile.c:1716"
+    ],
+    "write": [
+     "source/cseries/profile.c:1072",
+     "source/cseries/profile.c:1716"
+    ]
+   },
+   {
+    "storage": "profile_globals.initialization_pending",
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/cseries/profile.c:1261"
+    ],
+    "write": [
+     "source/cseries/profile.c:1071",
+     "source/cseries/profile.c:1717"
+    ]
+   },
+   {
+    "storage": "profile_globals.lost_frame_count",
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/cseries/profile.c:1513",
+     "source/cseries/profile.c:1519"
+    ],
+    "write": [
+     "source/cseries/profile.c:1075",
+     "source/cseries/profile.c:1507",
+     "source/cseries/profile.c:1511"
+    ]
+   },
+   {
+    "storage": "profile_globals.section_count",
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/cseries/profile.c:498",
+     "source/cseries/profile.c:501",
+     "source/cseries/profile.c:505",
+     "source/cseries/profile.c:509",
+     "source/cseries/profile.c:557",
+     "source/cseries/profile.c:1063",
+     "source/cseries/profile.c:1689",
+     "source/cseries/profile.c:1732",
+     "source/cseries/profile.c:1738",
+     "source/cseries/profile.c:1740",
+     "source/cseries/profile.c:1787"
+    ],
+    "write": [
+     "source/cseries/profile.c:1069",
+     "source/cseries/profile.c:1741"
+    ]
+   },
+   {
+    "storage": "profile_globals.sections",
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/cseries/profile.c:497",
+     "source/cseries/profile.c:1065",
+     "source/cseries/profile.c:1691",
+     "source/cseries/profile.c:1733",
+     "source/cseries/profile.c:1789"
+    ],
+    "write": [
+     "source/cseries/profile.c:1742"
+    ]
+   },
+   {
+    "storage": "profile_globals.stack_depth",
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/cseries/profile.c:1248",
+     "source/cseries/profile.c:1268"
+    ],
+    "write": [
+     "source/cseries/profile.c:1070",
+     "source/cseries/profile.c:1247",
+     "source/cseries/profile.c:1270"
+    ]
+   },
+   {
+    "storage": "profile_globals.timebase_frequency",
+    "group": "profiling",
+    "kind": "profile_globals",
+    "class": "diagnostic_only",
+    "fate": "kept",
+    "read": [
+     "source/cseries/profile.c:540",
+     "source/cseries/profile.c:547",
+     "source/cseries/profile.c:550",
+     "source/cseries/profile.c:553",
+     "source/cseries/profile.c:611",
+     "source/cseries/profile.c:1557",
+     "source/cseries/profile.c:1604"
+    ],
+    "write": [
+     "source/cseries/profile.c:1060"
+    ]
+   }
+  ]
+ },
+ "upstream_objects_identical": {
+  "method": "i686 clang, the Linux build's game flags without -g, each unit compiled from the base tree and from the implementation tree with no define: object SHA-256 equal",
+  "units": [
+   "source/ai/ai_debug.c",
+   "source/ai/actions.c",
+   "source/ai/action_charge.c",
+   "source/ai/action_vehicle.c",
+   "source/ai/actors.c",
+   "source/ai/actor_combat.c",
+   "source/ai/actor_firing_position.c",
+   "source/ai/actor_moving.c",
+   "source/ai/actor_perception.c",
+   "source/cseries/profile.c",
+   "source/ai/path.c",
+   "source/ai/ai.c",
+   "source/hs/hs_globals_external.c",
+   "source/game/players.c",
+   "source/units/unit_dialogue.c"
+  ],
+  "differences": []
+ },
+ "scenario": {
+  "ppc_launches": [
+   {
+    "fpscr": {
+     "entry": "00000004",
+     "engine": "00000000",
+     "ieee": "1"
+    },
+    "platform_checks_passed": 8,
+    "platform_checks": 8,
+    "mem1_entry_arena_bytes": 3787968,
+    "mem1_after_gx_bytes": 1974272,
+    "mem1_after_engine_start_bytes": 892928,
+    "arena2_lo_after_engine_start": "0x90002000",
+    "game_initialize": {
+     "result": "1",
+     "game_state_used": "17986420",
+     "heap_in_use": "2880840",
+     "unsupported": "6"
+    },
+    "diagnostic_storage": {
+     "ai_debug_records": "0",
+     "profile_frame_history": "0",
+     "ai_debug_bytes": "2376",
+     "actor_debug_records": "one_shared",
+     "path_debug_storage": "none",
+     "ai_debug_initialized": "1",
+     "selected_squad": "-1",
+     "selected_actor": "-1",
+     "result": "pass"
+    },
+    "persist": {
+     "previous_result": "0",
+     "digest": "00000000",
+     "chain": "00000000"
+    },
+    "cadence_runs": 18,
+    "cadences_identical": true,
+    "digests": [
+     "c1ad6ae6"
+    ],
+    "chains": [
+     "58ce9719"
+    ],
+    "checkpoints": [
+     [
+      "ef3efead",
+      "1370c5e7",
+      "fb1f5683",
+      "56096e69"
+     ]
+    ],
+    "cycles": [
+     {
+      "heap_in_use": "2880840",
+      "arena1_lo": "0x81726000",
+      "arena2_lo": "0x90002000",
+      "general_in_use": "0",
+      "unsupported_names": "7",
+      "unsupported_calls": "5173"
+     },
+     {
+      "heap_in_use": "2880840",
+      "arena1_lo": "0x81726000",
+      "arena2_lo": "0x90002000",
+      "general_in_use": "0",
+      "unsupported_names": "7",
+      "unsupported_calls": "10340"
+     },
+     {
+      "heap_in_use": "2880840",
+      "arena1_lo": "0x81726000",
+      "arena2_lo": "0x90002000",
+      "general_in_use": "0",
+      "unsupported_names": "7",
+      "unsupported_calls": "15507"
+     }
+    ],
+    "cycles_summary": {
+     "heap_flat": "1",
+     "digest": "c1ad6ae6",
+     "chain": "58ce9719"
+    },
+    "arena_close": {
+     "restored": "1",
+     "high_after": "0x933db7e0",
+     "high_before": "0x933db7e0",
+     "low_before": "0x90002000",
+     "low_after": "0x90002000",
+     "general_peak": "65536",
+     "failed_allocations": "0",
+     "heap_in_use": "2505880"
+    },
+    "unsupported": [
+     "cache:tag_files_open (Xbox hard-disk cache files on z:)",
+     "render:rasterizer_initialize (no Direct3D 8 device; halts the engine)",
+     "render:rasterizer_decals_initialize",
+     "network:XNetGetEthernetLinkStatus",
+     "network:XNetStartup",
+     "bink:RADSetMemory",
+     "render:halo_interpolation_enabled",
+     "render:rasterizer_decals_dispose"
+    ],
+    "unsupported_totals": {
+     "names": "8",
+     "calls": "15508"
+    },
+    "end": {
+     "target": "engine",
+     "build": "02ae7bd4f03ae987",
+     "cycles": "3",
+     "cadences": "6",
+     "failures": "0",
+     "elapsed_ms": "30556",
+     "result": "pass"
+    },
+    "halt": "HALT stage=halt_check expected=1",
+    "failures": []
+   },
+   {
+    "fpscr": {
+     "entry": "00000004",
+     "engine": "00000000",
+     "ieee": "1"
+    },
+    "platform_checks_passed": 8,
+    "platform_checks": 8,
+    "mem1_entry_arena_bytes": 3787968,
+    "mem1_after_gx_bytes": 1974272,
+    "mem1_after_engine_start_bytes": 892928,
+    "arena2_lo_after_engine_start": "0x90002000",
+    "game_initialize": {
+     "result": "1",
+     "game_state_used": "17986420",
+     "heap_in_use": "2880880",
+     "unsupported": "6"
+    },
+    "diagnostic_storage": {
+     "ai_debug_records": "0",
+     "profile_frame_history": "0",
+     "ai_debug_bytes": "2376",
+     "actor_debug_records": "one_shared",
+     "path_debug_storage": "none",
+     "ai_debug_initialized": "1",
+     "selected_squad": "-1",
+     "selected_actor": "-1",
+     "result": "pass"
+    },
+    "persist": {
+     "previous_result": "1",
+     "digest": "c1ad6ae6",
+     "chain": "58ce9719"
+    },
+    "cadence_runs": 18,
+    "cadences_identical": true,
+    "digests": [
+     "c1ad6ae6"
+    ],
+    "chains": [
+     "58ce9719"
+    ],
+    "checkpoints": [
+     [
+      "ef3efead",
+      "1370c5e7",
+      "fb1f5683",
+      "56096e69"
+     ]
+    ],
+    "cycles": [
+     {
+      "heap_in_use": "2880880",
+      "arena1_lo": "0x81726000",
+      "arena2_lo": "0x90002000",
+      "general_in_use": "0",
+      "unsupported_names": "7",
+      "unsupported_calls": "5173"
+     },
+     {
+      "heap_in_use": "2880880",
+      "arena1_lo": "0x81726000",
+      "arena2_lo": "0x90002000",
+      "general_in_use": "0",
+      "unsupported_names": "7",
+      "unsupported_calls": "10340"
+     },
+     {
+      "heap_in_use": "2880880",
+      "arena1_lo": "0x81726000",
+      "arena2_lo": "0x90002000",
+      "general_in_use": "0",
+      "unsupported_names": "7",
+      "unsupported_calls": "15507"
+     }
+    ],
+    "cycles_summary": {
+     "heap_flat": "1",
+     "digest": "c1ad6ae6",
+     "chain": "58ce9719"
+    },
+    "arena_close": {
+     "restored": "1",
+     "high_after": "0x933db7e0",
+     "high_before": "0x933db7e0",
+     "low_before": "0x90002000",
+     "low_after": "0x90002000",
+     "general_peak": "65536",
+     "failed_allocations": "0",
+     "heap_in_use": "2505912"
+    },
+    "unsupported": [
+     "cache:tag_files_open (Xbox hard-disk cache files on z:)",
+     "render:rasterizer_initialize (no Direct3D 8 device; halts the engine)",
+     "render:rasterizer_decals_initialize",
+     "network:XNetGetEthernetLinkStatus",
+     "network:XNetStartup",
+     "bink:RADSetMemory",
+     "render:halo_interpolation_enabled",
+     "render:rasterizer_decals_dispose"
+    ],
+    "unsupported_totals": {
+     "names": "8",
+     "calls": "15508"
+    },
+    "end": {
+     "target": "engine",
+     "build": "02ae7bd4f03ae987",
+     "cycles": "3",
+     "cadences": "6",
+     "failures": "0",
+     "elapsed_ms": "30525",
+     "result": "pass"
+    },
+    "halt": "HALT stage=halt_check expected=1",
+    "failures": []
+   }
+  ],
+  "host_reference": {
+   "compiler": "Debian clang version 19.1.7 (3+b1)",
+   "exit_code": 0,
+   "lines": [
+    "BEGIN host pointer_bits=32 game_state_used=3212",
+    "CADENCE cycle=0 cadence=60hz ticks=300 frames=600 frames_without_ticks=300 most_ticks_in_a_frame=1 digest=c1ad6ae6 chain=58ce9719 at1=ef3efead at30=1370c5e7 at150=fb1f5683 at300=c1ad6ae6 seed=56096e69 bodies=33 spawned=72 deleted=43 same=1",
+    "CADENCE cycle=0 cadence=30hz ticks=300 frames=300 frames_without_ticks=0 most_ticks_in_a_frame=1 digest=c1ad6ae6 chain=58ce9719 at1=ef3efead at30=1370c5e7 at150=fb1f5683 at300=c1ad6ae6 seed=56096e69 bodies=33 spawned=72 deleted=43 same=1",
+    "CADENCE cycle=0 cadence=20hz ticks=300 frames=201 frames_without_ticks=0 most_ticks_in_a_frame=2 digest=c1ad6ae6 chain=58ce9719 at1=ef3efead at30=1370c5e7 at150=fb1f5683 at300=c1ad6ae6 seed=56096e69 bodies=33 spawned=72 deleted=43 same=1",
+    "CADENCE cycle=0 cadence=144hz ticks=300 frames=1441 frames_without_ticks=1141 most_ticks_in_a_frame=1 digest=c1ad6ae6 chain=58ce9719 at1=ef3efead at30=1370c5e7 at150=fb1f5683 at300=c1ad6ae6 seed=56096e69 bodies=33 spawned=72 deleted=43 same=1",
+    "CADENCE cycle=0 cadence=irregular ticks=300 frames=224 frames_without_ticks=28 most_ticks_in_a_frame=7 digest=c1ad6ae6 chain=58ce9719 at1=ef3efead at30=1370c5e7 at150=fb1f5683 at300=c1ad6ae6 seed=56096e69 bodies=33 spawned=72 deleted=43 same=1",
+    "CADENCE cycle=0 cadence=60hz_for_vsync ticks=300 frames=600 frames_without_ticks=300 most_ticks_in_a_frame=1 digest=c1ad6ae6 chain=58ce9719 at1=ef3efead at30=1370c5e7 at150=fb1f5683 at300=c1ad6ae6 seed=56096e69 bodies=33 spawned=72 deleted=43 same=1",
+    "END host failures=0 result=pass"
+   ]
+  }
+ },
+ "game_state_layout": {
+  "rows": 75,
+  "i686_bytes": 17804952,
+  "ppc_bytes": 17804952,
+  "differences": []
+ },
+ "dolphin": {
+  "executable_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+  "runs": [
+   {
+    "number": 1,
+    "cold_process": true,
+    "host_exit": "0x00000000",
+    "forced_stop": false,
+    "elapsed_seconds": 35.959,
+    "host_outcome": "exit_zero",
+    "dolphin_processes_after": 0,
+    "persistence": "passed",
+    "runner_guest": "not_evaluated",
+    "read_back_sha256": {
+     "halo-wii-engine/engine.log": "0c3b3b1988007c3082d06fb0e52f19bdc7807fe322a6aa023047d5a361d4065d",
+     "halo-wii-engine/runs.txt": "70b7300188438c2247a97efc32df453e6eaca9499a8e2db6884d3060d160d124",
+     "halo-wii-engine/result.txt": "300454950f28f752bb03375c9a8c6d634b111e379c774496a67adeb0f2fcfd3b",
+     "halo-wii-engine/data/debug.txt": "6dc5f71357b0de574351e6ced2afd1c4d3bd9fb70d1692a9c3c0779ce582590e"
+    }
+   },
+   {
+    "number": 2,
+    "cold_process": true,
+    "host_exit": "0x00000000",
+    "forced_stop": false,
+    "elapsed_seconds": 34.696,
+    "host_outcome": "exit_zero",
+    "dolphin_processes_after": 0,
+    "persistence": "passed",
+    "runner_guest": "not_evaluated",
+    "read_back_sha256": {
+     "halo-wii-engine/engine.log": "b8dcdf6a48be1f96fb463c493b48ee4f347b420321fc31c20bf7787a35f45fda",
+     "halo-wii-engine/runs.txt": "56b5af2508608876ad7a781ac1cfc70901e8042afb815a60e953b25bd8311b99",
+     "halo-wii-engine/result.txt": "300454950f28f752bb03375c9a8c6d634b111e379c774496a67adeb0f2fcfd3b",
+     "halo-wii-engine/data/debug.txt": "c31110a944f9d3e587eacc45c18bee6da583f1110f549e949382c368e108ed72"
+    }
+   }
+  ],
+  "os_stability": {
+   "observation": "no_instability_events_observed",
+   "instability_events": [],
+   "system_events_matched": [],
+   "dolphin_application_events": [],
+   "window_utc": [
+    "2026-10-10T17:10:43+00:00",
+    "2026-10-10T17:12:06+00:00"
+   ],
+   "limits": "Event-log query over the batch window only; absence of events is not a guarantee of stability."
+  },
+  "physical_wii": "untested"
+ },
+ "timings_build_host": {
+  "host": "Windows 11 Pro, Intel Core i7-12700 (20 threads), 32 GB",
+  "wii_engine_full_build_seconds": {
+   "before_0c73eaf8": 80.8,
+   "omit_dev": 77.3,
+   "keep_fa192731": 80.0,
+   "omit_fa192731": 68.7
+  },
+  "host_reference_wsl_seconds": 49.7,
+  "game_state_layout_seconds": 39.1,
+  "dolphin_launch_seconds": [
+   35.959,
+   34.696
+  ],
+  "dolphin_batch_seconds_including_lock": 84.6,
+  "research_mac": "not used"
+ }
+}

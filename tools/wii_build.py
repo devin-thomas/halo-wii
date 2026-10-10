@@ -99,6 +99,7 @@ def generate_wii_build(n, sln):
     root = Path(value).resolve()
     if not 0 <= sln.wii_probe_frames <= 36000:
         raise ValueError("--wii-probe-frames must be between 0 and 36000")
+    diagnostic_storage = getattr(sln, "wii_diagnostic_storage", "omit")
     inventory = inspect_toolchain(root)
     if inventory["errors"]:
         raise ValueError("Wii toolchain preflight failed:\n" + "\n".join(inventory["errors"]))
@@ -123,7 +124,10 @@ def generate_wii_build(n, sln):
         "compile_flags": CFLAGS, "probe_auto_exit_frames": sln.wii_probe_frames,
         "memory_strategy_flags": {"authored": MEMORY_STRATEGY_INCLUDES, "engine": MEMORY_STRATEGY_ENGINE_FLAGS},
         # HWI-015: wii_engine compiles engine units with ENGINE_CFLAGS plus these
-        "engine_flags": engine_flags(ENGINE_SEMANTIC_FLAGS),
+        "engine_flags": engine_flags(ENGINE_SEMANTIC_FLAGS, diagnostic_storage),
+        # HWI-015D: the AI's debug records and the profiler's frame history
+        # are left out (omit, the default) or compiled (keep)
+        "engine_diagnostic_storage": diagnostic_storage,
         # build.py maps these build-machine roots in debug info and link maps.
         "path_prefix_map": {"checkout": CHECKOUT_PREFIX, "devkitpro": DEVKITPRO_PREFIX},
         "wii_rules_sha256": hashlib.sha256((root / "devkitPPC/wii_rules").read_bytes()).hexdigest(),
@@ -183,4 +187,4 @@ def generate_wii_build(n, sln):
                 variables={"stem": stem, "scope": scope})
         n.build(target, "phony", [dol, manifest])
     n.newline()
-    generate_engine_build(n, ENGINE_SEMANTIC_FLAGS, libraries)
+    generate_engine_build(n, ENGINE_SEMANTIC_FLAGS, libraries, diagnostic_storage)

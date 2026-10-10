@@ -44,9 +44,25 @@ now: Direct3D 8 (`render`), DirectSound (`dsound`), XInput and devices
 (`input`), Winsock/XNet and internet play (`network`, `p2p`), Bink
 (`bink`), the desktop hooks (`desktop`), the high-resolution HUD/text
 (`hires_assets`), the PC menus (`menus`), the debug monitor (`xbdm`), the
-Xbox hard-disk cache (`cache`), Custom Edition maps' fixed tag window
-(`custom_edition`), and the AI's debug records (`diagnostics`, 30.36 MB of
-heap at the ports' capacities).
+Xbox hard-disk cache (`cache`), and Custom Edition maps' fixed tag window
+(`custom_edition`).
+
+## Diagnostic storage left out (HWI-015D)
+
+By default (`configure.py --wii-diagnostic-storage omit`) the engine units
+compile without two diagnostics that nothing in the game reads
+([the audit](../../../docs/wii/evidence/2026-10-10-diagnostics-storage-audit.md)):
+
+| Storage | Define | Left out | What remains |
+|---|---|---|---|
+| The AI's debug records | `HALO_AI_DEBUG_RECORDS=0` ([ai_debug.h](../../../source/ai/ai_debug.h)) | 545,252 bytes of `ai_debug` and 30,359,424 bytes of heap | `ai_debug`'s controls (debug selection, AI cheats, print/render switches); one shared 25,980-byte heap record that every actor's debug information is written to; no path debug storage |
+| The profiler's frame history | `HALO_PROFILE_FRAME_HISTORY=0` ([profile.c](../../../source/cseries/profile.c)) | 1,124,352 bytes of `profile_globals` | the section profile (`profile_dump`, `profile_display`); the frame dump writes each frame as it ends; the profile graph draws nothing |
+
+`ai_debug_initialize` then runs as upstream's (it sets the debug selection,
+which player spawning reads, to none). `--wii-diagnostic-storage keep`
+compiles both as the other ports do; `ai_debug_initialize` is then reported
+unsupported (`diagnostics`, 30.36 MB of heap at the ports' capacities).
+Other ports are unchanged: the defines default to 1.
 
 ## What one launch does
 
@@ -58,7 +74,9 @@ heap at the ports' capacities).
 3. Opens the MEM2 arena, then runs the engine's start-up: `shell_initialize`'s
    steps (with `tag_files_open` and `rasterizer_initialize` reported
    unsupported: each halts the engine on the Wii) and `game_initialize`
-   (its decal vertex buffers and AI debug records reported unsupported).
+   (its decal vertex buffers reported unsupported). Reports the diagnostic
+   storage compiled and that `ai_debug_initialize` ran (`STAGE
+   diagnostic_storage`).
 4. Three load/run/unload cycles of the controlled fixed-step scenario
    ([fixed_step_scenario.h](fixed_step_scenario.h)) at six render cadences
    each: 60, 30, 20 and 144 Hz, an irregular cadence with a 0.5 s hitch, and

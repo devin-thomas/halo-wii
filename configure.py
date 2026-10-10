@@ -22,6 +22,13 @@ parser.add_argument("--wii", action="store_true", help="generate only the native
 parser.add_argument("--wii-devkitpro", type=Path, help="native root of the official devkitPro installation")
 parser.add_argument("--wii-probe-frames", type=int, default=0, help="diagnostic auto-exit after this many video frames (0: controller exit)")
 parser.add_argument(
+    "--wii-diagnostic-storage",
+    choices=["omit", "keep"],
+    default="omit",
+    help="wii_engine: omit (the default) leaves out the AI's debug records and the profiler's frame history, "
+    "diagnostics nothing in the game reads (HWI-015D); keep compiles them as the other ports do",
+)
+parser.add_argument(
     "--linux-cc",
     metavar="BINARY",
     help="compiler for the native Linux build, `ninja linux` (default: clang)",
@@ -93,6 +100,7 @@ sln = SimpleNamespace(
     android_guest_cc=args.android_guest_cc,
     wii_devkitpro=args.wii_devkitpro,
     wii_probe_frames=args.wii_probe_frames,
+    wii_diagnostic_storage=args.wii_diagnostic_storage,
 )
 
 
@@ -122,7 +130,7 @@ if args.wii:
         parser.error(str(error))
     configure_inputs = wii_configure_inputs(args.wii_devkitpro or os.environ.get("DEVKITPRO"))
 else:
-    if args.wii_devkitpro is not None or args.wii_probe_frames:
+    if args.wii_devkitpro is not None or args.wii_probe_frames or args.wii_diagnostic_storage != "omit":
         parser.error("--wii-* options require --wii")
     generate_linux_build(n, sln)
     generate_android_build(n, sln)

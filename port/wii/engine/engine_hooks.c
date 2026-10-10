@@ -21,6 +21,7 @@ Compiled as an engine unit.
 #include "game/game.h"
 #include "saved games/game_state.h"
 #include "cache/physical_memory_map.h"
+#include "ai/ai_debug.h"
 
 #include "engine_hooks.h"
 #include "fixed_step_scenario.h"
@@ -123,6 +124,31 @@ void wii_engine_fatal_assert(
 	match_vassert(__FILE__, __LINE__, FALSE, "HWI-015 deliberate fatal assertion (halt path check)");
 }
 
+/* HWI-015D: what the engine compiled of its diagnostic storage, and
+whether ai_debug_initialize ran: it sets the debug selection to none, which
+player spawning reads (players.c player_get_starting_location_count) */
+#ifndef HALO_PROFILE_FRAME_HISTORY
+#define HALO_PROFILE_FRAME_HISTORY 1
+#endif
+
+int wii_engine_report_diagnostic_storage(
+	void)
+{
+	int initialized = ai_debug.selected_squad_index==NONE && ai_debug.selected_actor_index==NONE && ai_debug.render;
+	int ok = HALO_AI_DEBUG_RECORDS ? TRUE :
+		initialized && actor_debug_array!=NULL && actor_path_debug_array==NULL;
+
+	wii_log("STAGE diagnostic_storage ai_debug_records=%d profile_frame_history=%d ai_debug_bytes=%lu "
+		"actor_debug_records=%s path_debug_storage=%s ai_debug_initialized=%d selected_squad=%ld "
+		"selected_actor=%ld result=%s\n",
+		HALO_AI_DEBUG_RECORDS, HALO_PROFILE_FRAME_HISTORY, (unsigned long)sizeof(ai_debug),
+		actor_debug_array==NULL ? "none" : HALO_AI_DEBUG_RECORDS ? "per_actor" : "one_shared",
+		actor_path_debug_array==NULL ? "none" : "allocated", initialized,
+		(long)ai_debug.selected_squad_index, (long)ai_debug.selected_actor_index, ok ? "pass" : "fail");
+
+	return ok;
+}
+
 unsigned long wii_engine_game_state_used(
 	void)
 {
@@ -210,11 +236,11 @@ void __wrap_rasterizer_decals_dispose(
 ai_debug_initialize (source/ai/ai_debug.c) allocates the AI's debug records
 on the heap: at the native builds' capacities (1024 actors, 32 paths) they
 are 26,603,520 + 3,755,904 bytes on the Wii, more than both memory banks have
-free. They are diagnostics (the AI writes them as it decides, ai_debug.c
-draws them), but the AI's code writes them unconditionally, so they cannot
-simply be left out: until an audit shows nothing reads them for gameplay and
-the writes are made conditional, the Wii build reports them unsupported and
-the AI cannot run (it needs a map, which the Wii build cannot load yet). */
+free. The Wii build leaves them out by default (HALO_AI_DEBUG_RECORDS 0,
+HWI-015D: nothing in the game reads them), and ai_debug_initialize runs as
+upstream's. This wrapper is linked only with configure.py
+--wii-diagnostic-storage keep, which compiles the records: it then reports
+them unsupported, and the AI cannot run. */
 
 void __wrap_ai_debug_initialize(
 	void)

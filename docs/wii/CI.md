@@ -77,7 +77,18 @@ MANIFEST.json
   Xbox image, XBE or Halo cache-header signature.
 
 Findings name only the file, category and offset, so a leaked value is not
-repeated into the public log. Reviewed exceptions are the official install
+repeated into the public log.
+
+In ELF files the generic path shapes (drive, UNC, MSYS/WSL, home and
+workspace) are matched by section: allocated sections, string tables,
+`.comment`, `.debug_str`, `.debug_line_str` and the directory and file tables
+of every `.debug_line` unit (DWARF 2-5). Encoded debug data (`.debug_info`,
+line-number programs, location and range lists, frames, abbreviations) and the
+symbol table are skipped, because their printable runs are encoding noise that
+moves with every code change. This machine's paths and user names, owner names,
+secrets and Xbox data signatures are still matched on every byte of every file,
+and an ELF whose sections cannot be read is a problem, not a pass. DOL files
+hold no debug sections and are scanned whole. Reviewed exceptions are the official install
 prefix `/opt/devkitpro/` and devkitPro's own package build roots
 (`/home/davem/projects/devkitpro/{pacman-packages,tool-packages}/`), which the
 official prebuilt libogc, newlib and libgcc embed for every user.

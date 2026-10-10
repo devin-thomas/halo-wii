@@ -151,6 +151,38 @@ class TargetTests(unittest.TestCase):
             self.assertIn(f"-Wl,--wrap={name}", engine_build.LINK_FLAGS)
         self.assertIn("-Wl,--gc-sections", engine_build.LINK_FLAGS)
 
+    def test_diagnostic_storage_is_left_out_by_default(self):
+        # HWI-015D: the Wii build's default leaves out the AI's debug records
+        # and the profiler's frame history, and runs ai_debug_initialize
+        flags = engine_build.engine_flags(build.ENGINE_SEMANTIC_FLAGS)
+        self.assertEqual(engine_build.DIAGNOSTIC_STORAGE_OMITTED,
+                         ["-DHALO_AI_DEBUG_RECORDS=0", "-DHALO_PROFILE_FRAME_HISTORY=0"])
+        for define in engine_build.DIAGNOSTIC_STORAGE_OMITTED:
+            self.assertIn(define, flags)
+        self.assertEqual(flags, engine_build.engine_flags(build.ENGINE_SEMANTIC_FLAGS, "omit"))
+        self.assertNotIn("-Wl,--wrap=ai_debug_initialize", engine_build.LINK_FLAGS)
+        self.assertEqual(engine_build.flag_sets(build.ENGINE_SEMANTIC_FLAGS)["engine"], flags)
+
+    def test_diagnostic_storage_keep_compiles_it_and_wraps_its_allocation(self):
+        flags = engine_build.engine_flags(build.ENGINE_SEMANTIC_FLAGS, "keep")
+        for define in engine_build.DIAGNOSTIC_STORAGE_OMITTED:
+            self.assertNotIn(define, flags)
+        self.assertIn("-Wl,--wrap=ai_debug_initialize", engine_build.link_flags("keep"))
+        with self.assertRaises(ValueError):
+            engine_build.engine_flags(build.ENGINE_SEMANTIC_FLAGS, "drop")
+
+    def test_diagnostic_storage_defaults_keep_the_other_ports_unchanged(self):
+        # the native ports pass no define: the sources compile the storage
+        header = (ROOT / "source/ai/ai_debug.h").read_text(encoding="utf-8")
+        profile = (ROOT / "source/cseries/profile.c").read_text(encoding="utf-8")
+        self.assertRegex(header, r"#ifndef HALO_AI_DEBUG_RECORDS\s+#define HALO_AI_DEBUG_RECORDS 1\s+#endif")
+        self.assertRegex(profile,
+                         r"#ifndef HALO_PROFILE_FRAME_HISTORY\s+#define HALO_PROFILE_FRAME_HISTORY 1\s+#endif")
+        for script in ("tools/linux_build.py", "tools/windows_build.py", "tools/android_build.py"):
+            text = (ROOT / script).read_text(encoding="utf-8")
+            self.assertNotIn("HALO_AI_DEBUG_RECORDS", text)
+            self.assertNotIn("HALO_PROFILE_FRAME_HISTORY", text)
+
 
 MAP = """\
 .text           0x80003fb0       0x40

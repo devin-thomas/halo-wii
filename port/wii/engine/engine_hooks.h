@@ -37,6 +37,12 @@ void wii_engine_fatal_assert(void);
 /* the bytes of the game state's CPU part the engine has allocated */
 unsigned long wii_engine_game_state_used(void);
 
+/* HWI-015D: logs which diagnostic storage the engine compiled (the AI's
+debug records, the profiler's frame history) and the AI debug state after
+game_initialize; FALSE when the records are left out but ai_debug_initialize
+did not run as upstream's */
+int wii_engine_report_diagnostic_storage(void);
+
 /* the halt report (wii_engine_main.c): the engine stops here */
 void wii_driver_halt(const char *error_text) __attribute__((noreturn));
 
