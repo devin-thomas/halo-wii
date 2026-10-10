@@ -35,6 +35,19 @@
 #define GRID_Y 24
 #define CHECK_CYCLES 3
 
+/* Winding (HWI-016; docs/wii/evidence/2026-10-10-geometry-winding.md). Halo treats a
+ * triangle as front-facing when its corners run clockwise as seen by the viewer:
+ * render_camera_triangle_frontfacing in source/render/render_cameras.c, and the Xbox
+ * environment passes cull D3DCULL_CCW. On the host, this section's stored vertex
+ * normals oppose the right-hand corner-order normal on every triangle, so it follows
+ * that convention. GX also treats clockwise-to-viewer as front-facing (libogc
+ * GX_SetCullMode), so GX_CULL_BACK applies to the original corner order and no
+ * indices are reversed. verify_frame() re-qualifies this choice in the EFB each cycle. */
+#define CONTENT_CULL GX_CULL_BACK
+#define OPPOSITE_CULL GX_CULL_FRONT
+/* Stored-normal orientation of a triangle relative to its right-hand corner order. */
+enum orient { ORIENT_UNCLEAR, ORIENT_ALONG, ORIENT_OPPOSED };
+
 enum { TAG_SLOT, STATE_SLOT, SOUND_SLOT, IO0_SLOT, IO1_SLOT, BSP_CONTROL_SLOT, MATERIAL_CONTROL_SLOT,
        MATERIAL_WORKSPACE_SLOT, POSITION_SLOT, INDEX_SLOT, SHADE_SLOT, SLOT_COUNT };
 _Static_assert(SLOT_COUNT <= CACHE_ARENA_MAX_SLOTS, "arena slot count");
@@ -58,10 +71,12 @@ struct section {
     struct cache_arena_handle tag;
     uint32_t *positions;
     uint16_t *indices;
+    /* Per-triangle flat colour; .a is never drawn and holds the enum orient class. */
     GXColor *shades;
     float centre[3], radius;
     uint32_t index_crc32, position_crc32;
     unsigned degenerate, floors;
+    unsigned normal_along, normal_opposed, normal_unclear;
     u64 load_us;
 };
 
@@ -373,27 +388,39 @@ static int load_section(const struct manifest *m, struct section *s, unsigned pl
     s->position_crc32 = crc;
     crc = 0;
     s->degenerate = s->floors = 0;
+    s->normal_along = s->normal_opposed = s->normal_unclear = 0;
     const float light[3] = {0.40f, 0.30f, 0.866f};
     for (uint32_t t = 0; t < m->surfaces; ++t) {
         struct cache_material_surface_projection surface;
         struct cache_material_surface_positions_projection corners;
+        struct cache_material_surface_vertices_projection records;
         if (!cache_material_get_material_surface(&s->material_view, m->material, t, &surface, &material) ||
-            !cache_material_get_surface_positions(&s->material_view, m->material, t, &corners, &material)) {
+            !cache_material_get_surface_positions(&s->material_view, m->material, t, &corners, &material) ||
+            !cache_material_get_surface_vertices(&s->material_view, m->material, t, &records, &material)) {
             *failure = "surface_get";
             goto fail;
         }
-        float p[3][3];
+        float p[3][3], stored[3] = {0, 0, 0};
         for (unsigned c = 0; c < 3; ++c) {
             uint16_t index = surface.vertex_indices[c];
             s->indices[t * 3 + c] = index;
             crc = crc_le16(crc, index);
             for (unsigned axis = 0; axis < 3; ++axis) {
-                if (corners.position_bits[c][axis] != s->positions[index * 3u + axis]) {
+                if (corners.position_bits[c][axis] != s->positions[index * 3u + axis] ||
+                    records.vertices[c].position_bits[axis] != corners.position_bits[c][axis]) {
                     *failure = "boundary_array_mismatch";
                     goto fail;
                 }
                 p[c][axis] = bits_float(corners.position_bits[c][axis]);
             }
+            /* The stored (lighting) normal marks the surface's visible side. */
+            struct cache_material_vector_projection normal;
+            if (!cache_material_decode_packed_vector(records.vertices[c].normal_packed, &normal, &material)) {
+                *failure = "normal_decode";
+                goto fail;
+            }
+            for (unsigned axis = 0; axis < 3; ++axis)
+                stored[axis] += normal.components[axis];
         }
         float e1[3], e2[3], n[3];
         for (unsigned a = 0; a < 3; ++a) {
@@ -406,16 +433,25 @@ static int load_section(const struct manifest *m, struct section *s, unsigned pl
         float length = sqrtf(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
         if (!(length > 0)) {
             ++s->degenerate;
-            s->shades[t] = (GXColor){255, 0, 255, 255};
+            ++s->normal_unclear;
+            s->shades[t] = (GXColor){255, 0, 255, ORIENT_UNCLEAR};
             continue;
         }
+        /* Orientation: stored normal along or against the right-hand corner-order normal. */
+        float stored_length = sqrtf(stored[0] * stored[0] + stored[1] * stored[1] + stored[2] * stored[2]);
+        float cosine = stored_length > 0
+            ? (n[0] * stored[0] + n[1] * stored[1] + n[2] * stored[2]) / (length * stored_length) : 0;
+        u8 orient = fabsf(cosine) < 0.1f ? ORIENT_UNCLEAR : cosine > 0 ? ORIENT_ALONG : ORIENT_OPPOSED;
+        s->normal_along += orient == ORIENT_ALONG;
+        s->normal_opposed += orient == ORIENT_OPPOSED;
+        s->normal_unclear += orient == ORIENT_UNCLEAR;
         float lambert = fabsf(n[0] * light[0] + n[1] * light[1] + n[2] * light[2]) / length;
         float intensity = 0.28f + 0.72f * lambert;
         int is_floor = fabsf(n[2]) / length > 0.7f;
         s->floors += is_floor;
         const float base[3] = {is_floor ? 150 : 178, is_floor ? 172 : 166, is_floor ? 128 : 150};
         s->shades[t] = (GXColor){(u8)(base[0] * intensity), (u8)(base[1] * intensity),
-                                 (u8)(base[2] * intensity), 255};
+                                 (u8)(base[2] * intensity), orient};
     }
     s->index_crc32 = crc;
     if (s->index_crc32 != m->index_crc32 || s->position_crc32 != m->position_crc32) {
@@ -445,13 +481,12 @@ static void set_desc(int indexed)
     GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);
 }
 
-static void draw_section(const struct section *s, const struct manifest *m, const Mtx view)
+static void draw_section(const struct section *s, const struct manifest *m, const Mtx view, u8 cull)
 {
     sample_stack();
     GX_LoadPosMtxImm((MtxP)view, GX_PNMTX0);
     set_desc(1);
-    /* Winding is not yet qualified for this content, so both faces draw. */
-    GX_SetCullMode(GX_CULL_NONE);
+    GX_SetCullMode(cull);
     GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
     for (uint32_t first = 0; first < m->surfaces; first += 20000) {
         uint32_t count = m->surfaces - first < 20000 ? m->surfaces - first : 20000;
@@ -461,6 +496,52 @@ static void draw_section(const struct section *s, const struct manifest *m, cons
                 GX_Position1x16(s->indices[t * 3 + c]);
                 GX_Color4u8(s->shades[t].r, s->shades[t].g, s->shades[t].b, 255);
             }
+        GX_End();
+    }
+}
+
+static const GXColor lit_colour = {0, 255, 0, 255}, unlit_colour = {255, 0, 0, 255},
+                     unclear_colour = {0, 0, 255, 255};
+
+/* Each triangle coloured by whether its stored normal (visible side) faces the eye,
+ * decided on the CPU independently of GX: lit green, unlit red, unclear or edge-on blue. */
+static void draw_classified(const struct section *s, const struct manifest *m, const Mtx view,
+                            const guVector *eye, u8 cull)
+{
+    sample_stack();
+    GX_LoadPosMtxImm((MtxP)view, GX_PNMTX0);
+    set_desc(1);
+    GX_SetCullMode(cull);
+    GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+    const float e[3] = {eye->x, eye->y, eye->z};
+    for (uint32_t first = 0; first < m->surfaces; first += 20000) {
+        uint32_t count = m->surfaces - first < 20000 ? m->surfaces - first : 20000;
+        GX_Begin(GX_TRIANGLES, GX_VTXFMT0, count * 3);
+        for (uint32_t t = first; t < first + count; ++t) {
+            float p[3][3];
+            for (unsigned c = 0; c < 3; ++c)
+                for (unsigned a = 0; a < 3; ++a)
+                    p[c][a] = bits_float(s->positions[s->indices[t * 3 + c] * 3u + a]);
+            float e1[3], e2[3], v[3], n[3];
+            for (unsigned a = 0; a < 3; ++a) {
+                e1[a] = p[1][a] - p[0][a];
+                e2[a] = p[2][a] - p[0][a];
+                v[a] = e[a] - p[0][a];
+            }
+            n[0] = e1[1] * e2[2] - e1[2] * e2[1];
+            n[1] = e1[2] * e2[0] - e1[0] * e2[2];
+            n[2] = e1[0] * e2[1] - e1[1] * e2[0];
+            float d = n[0] * v[0] + n[1] * v[1] + n[2] * v[2];
+            float scale = sqrtf((n[0] * n[0] + n[1] * n[1] + n[2] * n[2]) * (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]));
+            unsigned orient = s->shades[t].a;
+            const GXColor *colour = &unclear_colour;
+            if (orient != ORIENT_UNCLEAR && fabsf(d) > 1e-3f * scale)
+                colour = (orient == ORIENT_ALONG) == (d > 0) ? &lit_colour : &unlit_colour;
+            for (unsigned c = 0; c < 3; ++c) {
+                GX_Position1x16(s->indices[t * 3 + c]);
+                GX_Color4u8(colour->r, colour->g, colour->b, 255);
+            }
+        }
         GX_End();
     }
 }
@@ -499,13 +580,14 @@ static void draw_text(const char *text, f32 x, f32 y, f32 cell, GXColor colour)
     GX_End();
 }
 
-static void camera(const struct section *s, f32 yaw, f32 pitch, f32 distance, Mtx view)
+static guVector camera(const struct section *s, f32 yaw, f32 pitch, f32 distance, Mtx view)
 {
     guVector eye = {s->centre[0] + distance * cosf(pitch) * cosf(yaw),
                     s->centre[1] + distance * cosf(pitch) * sinf(yaw),
                     s->centre[2] + distance * sinf(pitch)};
     guVector up = {0, 0, 1}, target = {s->centre[0], s->centre[1], s->centre[2]};
     guLookAt(view, &eye, &up, &target);
+    return eye;
 }
 
 static void projection(const struct section *s, const GXRModeObj *mode)
@@ -515,28 +597,80 @@ static void projection(const struct section *s, const GXRModeObj *mode)
     GX_LoadProjectionMtx(perspective, GX_PERSPECTIVE);
 }
 
-/* Fixed pose, EFB sampled on a grid: count of non-clear samples and their CRC. */
-static void verify_frame(const struct section *s, const struct manifest *m, const GXRModeObj *mode,
-                         void *scratch, unsigned *visible, uint32_t *grid_crc)
+/* One EFB grid sample set: non-clear samples, the classified colours, agreement
+ * with a reference pass, and the CRC of all samples. Counts only, no timing, so a
+ * whole verification compares bytewise across cycles. */
+struct grid_pass {
+    uint32_t visible, lit, unlit, unclear, same_as_none, crc;
+};
+enum { CULL_MODES = 3, POSES = 2 };
+static const u8 cull_modes[CULL_MODES] = {GX_CULL_NONE, CONTENT_CULL, OPPOSITE_CULL};
+static const char *const cull_names[CULL_MODES] = {"none", "content_back", "opposite_front"};
+/* Pose 0 is the historical fixed pose from above; pose 1 looks from the opposite side, slightly below. */
+static const f32 poses[POSES][2] = {{0.8f, 0.55f}, {3.94f, -0.15f}};
+struct verification {
+    struct grid_pass shaded[CULL_MODES], classified[POSES][CULL_MODES];
+};
+
+static uint32_t reference_samples[GRID_X * GRID_Y];
+
+static void sample_grid(const GXRModeObj *mode, int keep_reference, struct grid_pass *out)
 {
-    Mtx view;
-    projection(s, mode);
-    camera(s, 0.8f, 0.55f, s->radius * 1.6f, view);
-    draw_section(s, m, view);
-    GX_DrawDone();
-    *visible = 0;
-    *grid_crc = 0;
+    memset(out, 0, sizeof(*out));
     for (int gy = 0; gy < GRID_Y; ++gy)
         for (int gx = 0; gx < GRID_X; ++gx) {
             GXColor c;
             GX_PeekARGB((u16)((gx * 2 + 1) * mode->fbWidth / (GRID_X * 2)),
                         (u16)((gy * 2 + 1) * mode->efbHeight / (GRID_Y * 2)), &c);
-            *visible += c.r != clear_colour.r || c.g != clear_colour.g || c.b != clear_colour.b;
+            out->visible += c.r != clear_colour.r || c.g != clear_colour.g || c.b != clear_colour.b;
+            out->lit += c.g > 160 && c.r < 96 && c.b < 96;
+            out->unlit += c.r > 160 && c.g < 96 && c.b < 96;
+            out->unclear += c.b > 160 && c.r < 96 && c.g < 96;
+            uint32_t packed = (uint32_t)c.r << 16 | (uint32_t)c.g << 8 | c.b;
+            if (keep_reference)
+                reference_samples[gy * GRID_X + gx] = packed;
+            out->same_as_none += reference_samples[gy * GRID_X + gx] == packed;
             const unsigned char bytes[3] = {c.r, c.g, c.b};
-            *grid_crc = crc_update(*grid_crc, bytes, 3);
+            out->crc = crc_update(out->crc, bytes, 3);
         }
-    GX_CopyDisp(scratch, GX_TRUE);
-    GX_DrawDone();
+}
+
+/* Fixed poses, EFB sampled on a grid after each pass, then cleared by a scratch copy.
+ * Shaded passes at pose 0 compare each cull mode with cull-none; classified passes at
+ * both poses check which faces each GX cull mode keeps. draw_us includes GX_DrawDone. */
+static void verify_frame(const struct section *s, const struct manifest *m, const GXRModeObj *mode,
+                         void *scratch, struct verification *out, u64 draw_us[1 + POSES][CULL_MODES])
+{
+    memset(out, 0, sizeof(*out));
+    projection(s, mode);
+    for (unsigned pose = 0; pose < POSES; ++pose) {
+        Mtx view;
+        guVector eye = camera(s, poses[pose][0], poses[pose][1], s->radius * 1.6f, view);
+        for (unsigned classified = pose ? 1 : 0; classified < 2; ++classified)
+            for (unsigned k = 0; k < CULL_MODES; ++k) {
+                u64 start = gettime();
+                if (classified)
+                    draw_classified(s, m, view, &eye, cull_modes[k]);
+                else
+                    draw_section(s, m, view, cull_modes[k]);
+                GX_DrawDone();
+                draw_us[classified ? 1 + pose : 0][k] = ticks_to_microsecs(gettime() - start);
+                sample_grid(mode, k == 0, classified ? &out->classified[pose][k] : &out->shaded[k]);
+                GX_CopyDisp(scratch, GX_TRUE);
+                GX_DrawDone();
+            }
+    }
+}
+
+/* The content cull mode keeps only lit-side samples and the opposite mode only unlit ones. */
+static int cull_qualified(const struct verification *v)
+{
+    int ok = 1;
+    for (unsigned pose = 0; pose < POSES; ++pose) {
+        const struct grid_pass *content = &v->classified[pose][1], *opposite = &v->classified[pose][2];
+        ok &= content->unlit == 0 && content->lit > 0 && opposite->lit == 0 && opposite->unlit > 0;
+    }
+    return ok;
 }
 
 struct frame_state {
@@ -556,7 +690,7 @@ static void present(const struct section *s, const struct manifest *m, const GXR
     u64 start = gettime();
     u32 before = PI_FIFO_WRITE_POINTER & PI_FIFO_ADDRESS_MASK;
     projection(s, mode);
-    draw_section(s, m, view);
+    draw_section(s, m, view, CONTENT_CULL);
     Mtx44 ortho;
     Mtx identity;
     guOrtho(ortho, 0, mode->efbHeight, 0, mode->fbWidth, 0, 1);
@@ -564,6 +698,7 @@ static void present(const struct section *s, const struct manifest *m, const GXR
     GX_LoadProjectionMtx(ortho, GX_ORTHOGRAPHIC);
     GX_LoadPosMtxImm(identity, GX_PNMTX0);
     set_desc(0);
+    GX_SetCullMode(GX_CULL_NONE);
     GX_SetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
     draw_text(WII_BUILD_ID, 24, 24, 4, (GXColor){255, 220, 64, 255});
     draw_text(line1, 24, 52, 4, (GXColor){240, 240, 240, 255});
@@ -695,8 +830,9 @@ int main(void)
         log_failed = 1;
 
     unsigned cycles = 0, stale = 0;
-    unsigned visible0 = 0;
-    uint32_t grid0 = 0;
+    static struct verification first_verification;
+    unsigned cull_qualified_cycles = 0;
+    u64 draw_us_max[1 + POSES][CULL_MODES] = {{0}};
     size_t max_required = 0;
     struct mallinfo heap_loaded = heap_start;
     for (unsigned cycle = 0; manifest_ok && !failures && cycle <= CHECK_CYCLES; ++cycle) {
@@ -710,22 +846,45 @@ int main(void)
         }
         if (section.plan.required > max_required)
             max_required = section.plan.required;
-        unsigned visible;
-        uint32_t grid;
-        verify_frame(&section, &manifest, mode, frame.xfb[frame.fb], &visible, &grid);
-        if (cycle == 0) {
-            visible0 = visible;
-            grid0 = grid;
-        }
-        int same = visible == visible0 && grid == grid0 && visible >= 16;
+        struct verification check;
+        u64 draw_us[1 + POSES][CULL_MODES];
+        verify_frame(&section, &manifest, mode, frame.xfb[frame.fb], &check, draw_us);
+        for (unsigned row = 0; row < 1 + POSES; ++row)
+            for (unsigned k = 0; k < CULL_MODES; ++k)
+                if (draw_us[row][k] > draw_us_max[row][k])
+                    draw_us_max[row][k] = draw_us[row][k];
+        if (cycle == 0)
+            first_verification = check;
+        /* Frames render with the qualified content cull mode. */
+        unsigned visible = check.shaded[1].visible;
+        uint32_t grid = check.shaded[1].crc;
+        int qualified = cull_qualified(&check);
+        cull_qualified_cycles += qualified;
+        int same = memcmp(&check, &first_verification, sizeof(check)) == 0 && check.shaded[0].visible >= 16 &&
+                   qualified;
         view_log("CYCLE n=%u placement=%u required=%lu charge=%lu remaining=%lu load_us=%" PRIu64
                  " index_crc=%08" PRIx32 " position_crc=%08" PRIx32 " degenerate=%u floor_tris=%u radius=%.2f"
-                 " visible=%u/%d grid_crc=%08" PRIx32 " same_as_first=%d\n",
+                 " normals_along=%u opposed=%u unclear=%u none_visible=%" PRIu32 "/%d none_grid_crc=%08" PRIx32
+                 " visible=%u/%d grid_crc=%08" PRIx32 " cull=%s qualified=%d same_as_first=%d\n",
                  cycle, cycle & 1, (unsigned long)section.plan.required,
                  (unsigned long)(section.begin - arena_lo + section.plan.required),
                  (unsigned long)(arena_hi - section.begin - section.plan.required), section.load_us,
                  section.index_crc32, section.position_crc32, section.degenerate, section.floors, section.radius,
-                 visible, GRID_X * GRID_Y, grid, same);
+                 section.normal_along, section.normal_opposed, section.normal_unclear, check.shaded[0].visible,
+                 GRID_X * GRID_Y, check.shaded[0].crc, visible, GRID_X * GRID_Y, grid, cull_names[1], qualified,
+                 same);
+        for (unsigned k = 0; k < CULL_MODES; ++k)
+            view_log("CULL n=%u mode=%s shaded_pose0 visible=%" PRIu32 " same_as_none=%" PRIu32 " crc=%08" PRIx32
+                     " draw_us=%" PRIu64 " classified_pose0 lit=%" PRIu32 " unlit=%" PRIu32 " unclear=%" PRIu32
+                     " visible=%" PRIu32 " same_as_none=%" PRIu32 " draw_us=%" PRIu64 " classified_pose1 lit=%" PRIu32
+                     " unlit=%" PRIu32 " unclear=%" PRIu32 " visible=%" PRIu32 " same_as_none=%" PRIu32
+                     " draw_us=%" PRIu64 "\n",
+                     cycle, cull_names[k], check.shaded[k].visible, check.shaded[k].same_as_none, check.shaded[k].crc,
+                     draw_us[0][k], check.classified[0][k].lit, check.classified[0][k].unlit,
+                     check.classified[0][k].unclear, check.classified[0][k].visible,
+                     check.classified[0][k].same_as_none, draw_us[1][k], check.classified[1][k].lit,
+                     check.classified[1][k].unlit, check.classified[1][k].unclear, check.classified[1][k].visible,
+                     check.classified[1][k].same_as_none, draw_us[2][k]);
         failures += !same;
         /* Baseline after the first float log, which allocates newlib dtoa state once. */
         if (cycle == 0)
@@ -823,10 +982,16 @@ int main(void)
              (unsigned long)(arena_hi - arena_lo), (unsigned long)max_required,
              (unsigned long)(arena_hi - arena_lo - max_required), heap_start.uordblks, heap_loaded.uordblks,
              heap_end.uordblks, (uintptr_t)SYS_GetArena2Lo() == arena_lo);
-    view_log("GX fifo_bytes=%u fifo_submitted_peak=%u render_max_us=%" PRIu64 " frames=%u\n",
-             FIFO_BYTES, (unsigned)frame.fifo_peak, frame.render_max_us, frame.frames);
+    view_log("GX fifo_bytes=%u fifo_submitted_peak=%u render_max_us=%" PRIu64 " frames=%u cull=%s\n",
+             FIFO_BYTES, (unsigned)frame.fifo_peak, frame.render_max_us, frame.frames, cull_names[1]);
+    view_log("GX_VERIFY draw_us_max shaded_pose0 none=%" PRIu64 " content=%" PRIu64 " opposite=%" PRIu64
+             " classified_pose0 none=%" PRIu64 " content=%" PRIu64 " opposite=%" PRIu64
+             " classified_pose1 none=%" PRIu64 " content=%" PRIu64 " opposite=%" PRIu64 " cull_qualified_cycles=%u\n",
+             draw_us_max[0][0], draw_us_max[0][1], draw_us_max[0][2], draw_us_max[1][0], draw_us_max[1][1],
+             draw_us_max[1][2], draw_us_max[2][0], draw_us_max[2][1], draw_us_max[2][2], cull_qualified_cycles);
     view_log("STACK depth_sampled=%u scope=frame_address_samples_not_peak\n", (unsigned)(stack_entry - stack_lowest));
     int success = !failures && manifest_ok && heap_end.uordblks == heap_loaded.uordblks && cycles == CHECK_CYCLES + 1 && stale == cycles &&
+                  cull_qualified_cycles == cycles &&
                   faults_rejected == 2 && (uintptr_t)SYS_GetArena2Lo() == arena_lo;
     view_log("END target=geometry_view build=%s cycles=%u stale_rejected=%u faults_rejected=%u failures=%d result=%s\n",
              WII_BUILD_ID, cycles, stale, faults_rejected, failures, success ? "pass" : "fail");
