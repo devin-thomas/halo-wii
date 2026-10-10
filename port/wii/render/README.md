@@ -28,6 +28,16 @@ drawing changes the game state.
 - **Environment shaders:** the lightmap page times the base map, two TEV
   stages. Lightmap texcoords are the engine's `(2s + 1) / 65535` through the
   texture matrix.
+- **Base map alpha (HWI-008F):** a base map converted with
+  `gx-splitalpha-v1` is CMPR colour plus an alpha plane (I4 or I8), loaded
+  as a second texture object with the colour's wrap, filter and mip chain.
+  Where the shader reads the base map's alpha (environment types blended
+  and blended base specular, whose diffuse pass blends the detail maps by
+  it and uses it as the specular mask), a third TEV stage samples the plane
+  (`TEXMAP2`, the base texcoord) into the output alpha; an RGBA8 base map
+  gives its own alpha. The detail maps and specular that consume it are
+  HWI-032's. Each pose check also draws the base maps' combined alpha as
+  grey (`crc_base_alpha`).
 - **Culling:** `GX_CULL_BACK` with the stored corner order, as qualified in
   HWI-016A. Every pose check classifies the visible samples with the
   engine's `render_camera_triangle_frontfacing` under each cull mode.
@@ -56,12 +66,16 @@ generation (private; never in Git) to the card:
 is reduced to positions, base texcoords and lightmap texcoords (24 bytes a
 vertex) and released. Lightmap pages are always loaded; base maps are loaded
 in order of the surfaces they cover while they fit `base_budget` (default
-2 MiB, `wii_render.h`), pending the Wii texture cache (HWI-032). Base maps
-left out are logged with their bytes (`RENDER_BASE_NOT_RESIDENT`).
+3 MiB, `wii_render.h`; 2 MiB before HWI-008F), pending the Wii texture cache
+(HWI-032). Base maps left out are logged with their bytes
+(`RENDER_BASE_NOT_RESIDENT`), resident ones with their format and alpha
+(`RENDER_BASE_RESIDENT`).
 
 ## `render.txt`
 
 Optional, on the card at `sd:/halo-wii-engine/render.txt`:
 `render=off` (the HWI-015B build: nothing drawn, the rasterizer reported
 unsupported), `mode=poses_only` (skip the map run; only the fixed-pose
-checks, for short frame dumps), `base_budget=<bytes>`.
+checks, for short frame dumps), `base_budget=<bytes>`, `base_limit=<count>`
+(at most that many base maps, in coverage order: compares texture profiles
+at equal residency).
