@@ -43,17 +43,19 @@ What one invocation does:
    ID does not match.
 4. Optionally copies a FAT32 image (`--sd-image`, never modified) into the
    profile and stages files with `--stage LOCAL=sd:/path`, using mtools
-   (`mmd`, `mcopy -n`) in a WSL distribution. Staging only happens when files
+   (`mmd`, `mcopy -n`) in a WSL distribution on Windows, or natively on macOS.
+   Staging only happens when files
    are supplied; staged files are read back before launch and after every run.
    Dolphin creates its own blank image on the first launch when none is given.
 5. Runs `Dolphin.exe --user <profile> --batch --video_backend D3D --exec <dol>
    --movie <dtm>` for each cold launch, hidden, with a timeout. A timeout is a
    forced stop and is never treated as completion.
 6. Reads guest files back from the SD image with a read-only FAT32 reader and
-   applies the scenario checks (`--scenario probe` for the asset-free probe;
-   `--scenario gx_materials`, which requires `--efb-access`, for the GX
-   materials self-test in `port/wii/gx_materials`).
-7. Queries the Windows System log (IDs 41, 1001, 6005, 6006, 6008) and the
+   applies the scenario checks: `--scenario probe` for the asset-free probe;
+   `gx_materials`, `gx_scene` and `geometry_view` (each requires
+   `--efb-access`) for the GX materials self-test, the asset-free GX scene and
+   the real-geometry diagnostic. Their pad scripts are in `tools/wii/inputs`.
+7. On Windows, queries the Windows System log (IDs 41, 1001, 6005, 6006, 6008) and the
    Application log (1000, 1002 naming Dolphin) over the batch window,
    read-only, and records only IDs, providers, times, image/module names and
    exception codes.
@@ -73,11 +75,57 @@ Dolphin lock around every batch and release it afterwards, even on failure.
 The runner's own process check is a guard, not a lock.
 
 Unit tests for the pure parts (DTM authoring, profile generation, FAT32
-read-back, staging commands, event classification, probe and gx_materials checks):
+read-back, staging commands, event classification, scenario checks):
 
 ```powershell
 python -B -m unittest discover -s tools/wii -p test_run_dolphin.py
 ```
+
+### macOS lane
+
+The same runner runs on macOS (qualified on Apple silicon, macOS 27, with
+the official notarized Dolphin 2609 universal build; see
+[the macOS lane record](evidence/2026-10-10-macos-dolphin-lane.md)). It needs
+Python 3.11 or later and mtools (for example `brew install python@3.12 mtools`).
+Install Dolphin by copying `Dolphin.app` out of the official disk image into a
+user folder; no administrator rights, Gatekeeper or quarantine changes are
+needed for a notarized build.
+
+```sh
+python3.12 -B tools/wii/run_dolphin.py   --dolphin <folder>/Dolphin.app --dolphin-sha256 <sha256 of Contents/MacOS/Dolphin>   --dol <gx_materials.dol> --build-info <gx_materials-build-info.json>   --out <new directory outside Git> --runs 2 --timeout 120 --dump-frames   --efb-access --input-script tools/wii/inputs/gx-materials.json --scenario gx_materials
+```
+
+Differences from Windows:
+
+- `--dolphin` accepts the `.app` bundle and runs `Contents/MacOS/Dolphin`.
+  `--dolphin-sha256` pins that executable only; the bundle's code signature
+  covers the rest.
+- The default backend is `Vulkan` (MoltenVK, bundled with Dolphin). The `Metal`
+  backend fails two mip-LOD checks of the GX materials self-test
+  (`mip_max_lod_1`, `mip_min_lod_2`, CRC `2efb1ade`) that pass under Vulkan,
+  OpenGL and Windows D3D. Do not use Metal for EFB evidence.
+- Process exclusivity uses `pgrep -x Dolphin`; staging runs native mtools.
+- Launch: Dolphin is executed directly by the runner, which keeps the real
+  exit status, stdout/stderr and timeout control. This works from an SSH
+  session as long as the same user has an active desktop login session; the
+  render window appears on that desktop. `open -W -n` was not used because it
+  loses the exit status. A host with no desktop login session is untested.
+- `--user` keeps all Dolphin state in the new profile; no global Dolphin
+  configuration is created in the user's Library.
+- Dolphin creates its own blank SD image in the profile when no `--sd-image`
+  is given. Staging needs an existing image; use a Dolphin-created blank image
+  (FAT32, 128 MiB, label `DOLPHINSD`).
+- OS stability (read-only, batch window only): `kern.boottime` (a boot after
+  the window start), file names and times in the system and user
+  `DiagnosticReports` folders (kernel panic reports and Dolphin crash reports;
+  only the kind is kept), and `log show` over the window for kernel
+  panic/GPU-restart/watchdog messages, ReportCrash naming Dolphin and
+  fault-level messages from Dolphin. A panic restarts the host and ends the
+  runner, so it would show up as a later boot time or panic report rather than
+  in that batch's record.
+
+On a shared host, wrap every batch in the host's own exclusive Dolphin lock,
+as on Windows.
 
 ## Physical console loop
 
