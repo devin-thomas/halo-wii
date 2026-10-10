@@ -308,3 +308,9 @@ flat diagnostic shading. Across two cold launches, four load/use/unload cycles
 each reproduce an identical sampled frame, stale views and malformed inputs
 reject, and the heap does not grow. Halo materials, lightmaps, gameplay and
 physical Wii remain untested.
+
+[Winding is qualified](evidence/2026-10-10-geometry-winding.md) for the real
+section: all 2,990 triangles are clockwise-front, matching the engine and GX,
+and 1,528/1,528 shared edges are consistent. The diagnostic now renders with
+back-face culling; in-guest EFB checks show GX_CULL_BACK keeps only lit
+surfaces and GX_CULL_FRONT none. Two cold launches pass all prior checks.
