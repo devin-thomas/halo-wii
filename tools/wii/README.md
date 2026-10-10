@@ -38,6 +38,18 @@ exit 3 and DIA/property/output errors exit 5. Address coverage alone does not
 prove callback ownership, thread state or shutdown cause. Keep local PDBs,
 compiled binaries and reports containing private paths out of Git.
 
+## Stock Dolphin runner
+
+`run_dolphin.py` runs a built DOL in stock Dolphin from a fresh isolated
+stock-limit profile, authors the DTM input, optionally stages SD files with
+mtools in WSL, performs cold launches and records guest, persistence, host
+lifecycle and OS-stability outcomes separately. Usage, exit codes and limits
+are in [running](../../docs/wii/RUNNING.md#supported-launch-and-evidence-runner).
+
+```powershell
+python -B -m unittest discover -s tools/wii -p test_run_dolphin.py
+```
+
 ## Toolchain preflight
 
 Run the read-only preflight from the repository root:

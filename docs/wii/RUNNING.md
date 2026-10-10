@@ -8,6 +8,75 @@ Use a pinned Dolphin build and launch the Wii DOL/ELF through the options that b
 
 A Dolphin pass supports emulator development. It is not a physical-Wii pass, especially for memory/cache behavior, storage, real controllers and sensors, networking or performance. Keep [status](STATUS.md) scoped to the tested feature and binary.
 
+### Supported launch and evidence runner
+
+`tools/wii/run_dolphin.py` is the supported way to run a Wii DOL in stock
+Dolphin and record evidence. It was qualified with stock Dolphin
+(`Dolphin.exe` SHA-256 `1ed5e3f6…0dac`) on Windows 11; see
+[the evidence loop record](evidence/2026-10-10-dolphin-evidence-loop.md).
+
+```powershell
+python configure.py --wii --wii-devkitpro <devkitPro root> --wii-probe-frames 1800
+ninja wii_probe
+python -B tools/wii/run_dolphin.py `
+  --dolphin <stock Dolphin.exe> --dolphin-sha256 <pinned sha256> `
+  --dol build/wii/probe.dol --build-info build/wii/build-info.json `
+  --out <new local directory outside Git> --runs 2 --timeout 120 --dump-frames `
+  --input-script tools/wii/inputs/probe-start.json --scenario probe `
+  --tolerated-host-exit 0xc0000409
+```
+
+What one invocation does:
+
+1. Refuses to start if any `Dolphin.exe` is already running, if the output
+   directory exists, if the Dolphin hash differs from `--dolphin-sha256`, or
+   if the DOL hash differs from the build manifest.
+2. Creates a new profile under `<out>/profile`: Wii mode, stock clock and
+   memory (no overclock, VI overclock or RAM override), no cheats, normal
+   emulation speed, single-core, 1x internal resolution, a standard GC
+   controller on port 1, Wii remotes disabled, a writable emulated SD card
+   with folder sync off. `--efb-access` adds CPU EFB peeks for GX self-checks.
+3. Authors a DTM from the JSON pad script (one entry per controller poll).
+   Dolphin derives a DOL's game ID from its file name (`ID-` plus the stem,
+   compared on six bytes) and silently ignores a movie whose ID differs, so
+   the runner writes the matching ID. A supplied `--movie` is refused if its
+   ID does not match.
+4. Optionally copies a FAT32 image (`--sd-image`, never modified) into the
+   profile and stages files with `--stage LOCAL=sd:/path`, using mtools
+   (`mmd`, `mcopy -n`) in a WSL distribution. Staging only happens when files
+   are supplied; staged files are read back before launch and after every run.
+   Dolphin creates its own blank image on the first launch when none is given.
+5. Runs `Dolphin.exe --user <profile> --batch --video_backend D3D --exec <dol>
+   --movie <dtm>` for each cold launch, hidden, with a timeout. A timeout is a
+   forced stop and is never treated as completion.
+6. Reads guest files back from the SD image with a read-only FAT32 reader and
+   applies the scenario checks (`--scenario probe` for the asset-free probe).
+7. Queries the Windows System log (IDs 41, 1001, 6005, 6006, 6008) and the
+   Application log (1000, 1002 naming Dolphin) over the batch window,
+   read-only, and records only IDs, providers, times, image/module names and
+   exception codes.
+
+`<out>/runtime.json` keeps build identity, guest, persistence, host lifecycle
+and OS stability as separate outcomes, with hashes and names rather than local
+paths. The runner exits 0 when every outcome is accepted, 1 for a guest or
+persistence failure or a missing run, 2 for a refused precondition, 3 for a
+host exit that is neither zero nor named with `--tolerated-host-exit` (or a
+forced stop), and 4 when OS instability events are observed. A tolerated code
+is still recorded as `nonzero_exit_tolerated` with the actual exit code; it is
+never rewritten as zero. The SD image, frame dumps, guest logs and profile stay
+in the output directory, outside Git.
+
+When several agents or people share the host, take an exclusive host-wide
+Dolphin lock around every batch and release it afterwards, even on failure.
+The runner's own process check is a guard, not a lock.
+
+Unit tests for the pure parts (DTM authoring, profile generation, FAT32
+read-back, staging commands, event classification, probe checks):
+
+```powershell
+python -B -m unittest discover -s tools/wii -p test_run_dolphin.py
+```
+
 ## Physical console loop
 
 Use an already working Homebrew Channel setup. Inventory the actual Wii model, controller ports, storage and network access before changing anything. These documents do not authorize installing channels/IOS, updating firmware, formatting media or replacing an existing homebrew setup.
