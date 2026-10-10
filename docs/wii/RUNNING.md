@@ -50,7 +50,9 @@ What one invocation does:
    --movie <dtm>` for each cold launch, hidden, with a timeout. A timeout is a
    forced stop and is never treated as completion.
 6. Reads guest files back from the SD image with a read-only FAT32 reader and
-   applies the scenario checks (`--scenario probe` for the asset-free probe).
+   applies the scenario checks (`--scenario probe` for the asset-free probe;
+   `--scenario gx_materials`, which requires `--efb-access`, for the GX
+   materials self-test in `port/wii/gx_materials`).
 7. Queries the Windows System log (IDs 41, 1001, 6005, 6006, 6008) and the
    Application log (1000, 1002 naming Dolphin) over the batch window,
    read-only, and records only IDs, providers, times, image/module names and
@@ -71,7 +73,7 @@ Dolphin lock around every batch and release it afterwards, even on failure.
 The runner's own process check is a guard, not a lock.
 
 Unit tests for the pure parts (DTM authoring, profile generation, FAT32
-read-back, staging commands, event classification, probe checks):
+read-back, staging commands, event classification, probe and gx_materials checks):
 
 ```powershell
 python -B -m unittest discover -s tools/wii -p test_run_dolphin.py

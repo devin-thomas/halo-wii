@@ -355,6 +355,114 @@ class ProbeScenarioTests(unittest.TestCase):
                                                    "existing_log_changed_while_storage_refused"])
 
 
+GXM_CRC = "53843a35"
+
+
+def gxm_log(previous=0, build=BUILD, failed_check=False, crc2=GXM_CRC, heap_after3="100", missed_negative=False,
+            result="pass", exit_reason="pad_start", toggles=2, loop_growth="0", unexpected="0"):
+    """An authored gx_materials guest log for one launch."""
+    lines = [f"BEGIN target=gx_materials build={build} previous_runs={previous} storage=1 video=640x480 "
+             "efb_height=480 mode=0 aa=0"]
+    for n in range(1, 5):
+        for name in ("tex_i8", "control_rgb565_untiled_order"):
+            ok = "fail" if failed_check and n == 2 and name == "tex_i8" else "pass"
+            lines.append(f"CHECK cycle={n} name={name} kind=positive probes=4 matched=4 max_err=0 result={ok}")
+        if n == 1:
+            lines.append("NEGATIVE case=misaligned_base detected=1")
+            lines.append(f"NEGATIVE case=overlaps_gx_fifo detected={0 if missed_negative else 1}")
+        lines.append(f"CYCLE n={n} checks_passed=2 total=2 crc={crc2 if n == 2 else GXM_CRC} heap_before=100 "
+                     f"heap_loaded=200 heap_after={heap_after3 if n == 3 else '100'} texture_bytes=10 pool_peak=64 "
+                     "upload_us=1 checks_us=2 fifo_check_peak=8")
+    lines.append(f"SUMMARY checks_passed=8 total=8 per_cycle=2 cycles=4 crc_stable={int(crc2 == GXM_CRC)} "
+                 "heap_growth_max=0 heap_peak=200 negatives=2/2 guard_failures=0 leaks=0 "
+                 f"libogc_size_disagreements=1 unexpected_failures={unexpected}")
+    lines.append("FIFO bytes=262144 gallery_per_frame_peak=47680 avg=46399")
+    lines.append(f"HEAP start=1 baseline=100 peak=200 display_loaded=200 loop_end=200 end=100 growth=0 "
+                 f"loop_growth={loop_growth} max_cycle_growth=0 arena2_restored=1")
+    lines.append(f"END target=gx_materials build={build} frames=600 connected=1 activity=1 toggles={toggles} "
+                 f"exit={exit_reason} storage=1 checks=8/8 negatives=2/2 unexpected={unexpected} heap_growth=0 "
+                 f"crc_stable=1 result={result}")
+    return "\n".join(lines) + "\n"
+
+
+class GxMaterialsScenarioTests(unittest.TestCase):
+    @staticmethod
+    def files(counter, log):
+        return {rd.GXM_RUNS: counter, rd.GXM_LOG: log.encode()}
+
+    def test_two_cold_launches_pass(self):
+        first = gxm_log(0)
+        guest, persistence = rd.check_gx_materials(BUILD, 1, 0, "", self.files(b"halo-wii-gxm-v1 1\n", first))
+        self.assertEqual((guest["failures"], persistence["failures"]), ([], []))
+        obs = guest["observations"]
+        self.assertEqual(obs["checks"], {"lines": 8, "distinct": 2, "failed": [], "controls": 1})
+        self.assertEqual(len(obs["cycles"]), 4)
+        self.assertEqual(obs["summary"]["libogc_size_disagreements"], "1")
+        self.assertEqual(obs["fifo"]["gallery_per_frame_peak"], "47680")
+        both = first + gxm_log(1)
+        guest, persistence = rd.check_gx_materials(BUILD, 2, 0, first, self.files(b"halo-wii-gxm-v1 2\n", both))
+        self.assertEqual((guest["failures"], persistence["failures"]), ([], []))
+        self.assertTrue(persistence["prior_log_preserved"])
+
+    def test_guest_failures_are_reported_in_the_guest_category(self):
+        cases = [
+            (dict(build="ffffffffffffffff"), "build_id_mismatch"),
+            (dict(failed_check=True), "efb_checks_failed_or_missing"),
+            (dict(crc2="00000000"), "cycle_results_differ"),
+            (dict(heap_after3="132"), "heap_grew_across_load_cycles"),
+            (dict(missed_negative=True), "deliberate_invalid_case_not_detected"),
+            (dict(result="fail"), "guest_reported_fail"),
+            (dict(exit_reason="auto_exit"), "exit_not_pad_start"),
+            (dict(toggles=1), "input_toggles_not_observed"),
+            (dict(loop_growth="16"), "heap_growth_nonzero"),
+            (dict(unexpected="1"), "summary_unexpected_failures_nonzero"),
+        ]
+        for options, failure in cases:
+            guest, persistence = rd.check_gx_materials(BUILD, 1, 0, "", self.files(b"halo-wii-gxm-v1 1\n",
+                                                                                 gxm_log(0, **options)))
+            self.assertIn(failure, guest["failures"], failure)
+            self.assertEqual(persistence["failures"], [], failure)
+
+    def test_persistence_failures_stay_separate(self):
+        guest, persistence = rd.check_gx_materials(BUILD, 1, 0, "", self.files(b"halo-wii-gxm-v1 0\n", gxm_log(0)))
+        self.assertEqual(guest["failures"], [])
+        self.assertIn("run_counter_did_not_advance_across_cold_process", persistence["failures"])
+        _, persistence = rd.check_gx_materials(BUILD, 2, 0, "something else\n",
+                                               self.files(b"halo-wii-gxm-v1 2\n", gxm_log(1)))
+        self.assertIn("prior_guest_log_not_preserved", persistence["failures"])
+        guest, persistence = rd.check_gx_materials(BUILD, 1, 0, "", {})
+        self.assertIn("guest_log_missing", guest["failures"])
+        self.assertIn("run_counter_missing", persistence["failures"])
+        guest, _ = rd.check_gx_materials(BUILD, 1, 0, "", self.files(b"halo-wii-gxm-v1 1\n",
+                                                                     gxm_log(0).rsplit("END ", 1)[0]))
+        self.assertTrue(any(f.startswith("expected_one_BEGIN") for f in guest["failures"]))
+
+    def test_repeated_log_keys_are_kept(self):
+        self.assertEqual(rd.fields("TIMING frames=667 submit_us_avg=723 max=726 copy_us_avg=2 max=2"),
+                         {"frames": "667", "submit_us_avg": "723", "max": "726", "copy_us_avg": "2", "max_2": "2"})
+
+    def test_run_counter_parsing_never_resets_an_invalid_counter(self):
+        self.assertEqual(rd.gxm_runs_count(None), 0)
+        self.assertEqual(rd.gxm_runs_count(b"halo-wii-gxm-v1 5\n"), 5)
+        with self.assertRaises(ValueError):
+            rd.gxm_runs_count(b"halo-wii-gxm-v1 x\n")
+
+    def test_scenario_requires_build_info_and_efb_access(self):
+        base = ["--dolphin", "D.exe", "--dol", "gx_materials.dol", "--out", "o", "--scenario", "gx_materials"]
+        with self.assertRaises(SystemExit):
+            rd.parse_args(base + ["--build-info", "b.json"])
+        with self.assertRaises(SystemExit):
+            rd.parse_args(base + ["--efb-access"])
+        self.assertTrue(rd.parse_args(base + ["--build-info", "b.json", "--efb-access"]).efb_access)
+
+    def test_shipped_materials_script_toggles_then_exits(self):
+        script = json.loads((Path(__file__).parent / "inputs/gx-materials.json").read_text(encoding="utf-8"))
+        labels = [step["label"] for step in script["steps"]]
+        self.assertLess(labels.index("a_press_spin"), labels.index("b_press_overlay"))
+        self.assertLess(labels.index("b_press_overlay"), labels.index("start_press"))
+        self.assertEqual(len(rd.pad_entries(script)) % 8, 0)
+
+
 class OutcomeTests(unittest.TestCase):
     def record(self, guest="passed", persistence="passed", host="exit_zero", os="no_instability_events_observed"):
         run = {"guest": {"result": guest}, "persistence": {"result": persistence}, "host": {"outcome": host}}

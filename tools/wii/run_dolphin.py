@@ -539,6 +539,136 @@ def check_probe(build_id, run_number, initial_count, previous_log, files, expect
     return guest, persistence
 
 
+GXM_LOG, GXM_RUNS = "halo-wii-gxm/materials.log", "halo-wii-gxm/runs.txt"
+GXM_RUNS_TEXT = re.compile(r"halo-wii-gxm-v1 (\d+)\n$")
+GXM_CYCLES = 4
+
+
+def fields(line):
+    """key=value pairs of one guest log line (values never contain spaces).
+
+    A repeated key keeps every value: the second becomes key_2, and so on.
+    """
+    result = {}
+    for key, value in re.findall(r"(\w+)=(\S+)", line):
+        name, index = key, 1
+        while name in result:
+            index += 1
+            name = f"{key}_{index}"
+        result[name] = value
+    return result
+
+
+def gxm_runs_count(data):
+    if data is None:
+        return 0
+    match = GXM_RUNS_TEXT.fullmatch(data.decode("ascii", "replace"))
+    if not match:
+        raise ValueError("existing gx_materials run counter is not valid; preserved, not reset")
+    return int(match.group(1))
+
+
+def check_gx_materials(build_id, run_number, initial_count, previous_log, files, expect_exit="pad_start"):
+    """Evaluate one cold launch of the GX materials self-test from its SD log.
+
+    The guest decides each EFB check itself; this checker requires every
+    check and deliberate negative case to be reported, all checks to pass,
+    identical results across the repeated load cycles, zero heap growth and
+    no unexpected resource failure. Returns (guest, persistence).
+    """
+    guest = {"failures": [], "observations": {}}
+    persistence = {"failures": []}
+    expected_count = initial_count + run_number
+    persistence["expected_run_counter"] = expected_count
+    counter, log_bytes = files.get(GXM_RUNS), files.get(GXM_LOG)
+    if counter is None:
+        persistence["failures"].append("run_counter_missing")
+    else:
+        persistence["run_counter_text"] = counter.decode("ascii", "replace")
+        if counter != f"halo-wii-gxm-v1 {expected_count}\n".encode():
+            persistence["failures"].append("run_counter_did_not_advance_across_cold_process")
+    if log_bytes is None:
+        guest["failures"].append("guest_log_missing")
+        persistence["failures"].append("guest_log_missing")
+        return guest, persistence
+    log = log_bytes.decode("ascii", "replace").replace("\r\n", "\n")
+    preserved = log.startswith(previous_log)
+    persistence["prior_log_preserved"] = preserved
+    if not preserved:
+        persistence["failures"].append("prior_guest_log_not_preserved")
+    lines = (log[len(previous_log):] if preserved else log).splitlines()
+    obs = guest["observations"]
+    begins = [fields(line) for line in lines if line.startswith("BEGIN target=gx_materials ")]
+    ends = [fields(line) for line in lines if line.startswith("END target=gx_materials ")]
+    if len(begins) != 1 or len(ends) != 1 or not lines[-1].startswith("END "):
+        guest["failures"].append(f"expected_one_BEGIN_and_final_END_found_{len(begins)}_{len(ends)}")
+        return guest, persistence
+    begin, end = begins[0], ends[0]
+    obs["build_id"] = begin.get("build")
+    if begin.get("build") != build_id or end.get("build") != build_id:
+        guest["failures"].append("build_id_mismatch")
+    if begin.get("previous_runs") != str(expected_count - 1):
+        persistence["failures"].append("guest_previous_runs_mismatch")
+    if begin.get("storage") != "1" or end.get("storage") != "1":
+        persistence["failures"].append("guest_storage_not_ready")
+    checks = [fields(line) for line in lines if line.startswith("CHECK ")]
+    failed = sorted({f"{c.get('cycle')}:{c.get('name')}" for c in checks if c.get("result") != "pass"})
+    names = sorted({c.get("name") for c in checks})
+    obs["checks"] = {"lines": len(checks), "distinct": len(names), "failed": failed,
+                     "controls": len([n for n in names if n.startswith("control_")])}
+    if not checks or failed:
+        guest["failures"].append("efb_checks_failed_or_missing")
+    cycles = [fields(line) for line in lines if line.startswith("CYCLE ")]
+    obs["cycles"] = [{k: c.get(k) for k in ("n", "checks_passed", "total", "crc", "heap_before", "heap_after",
+                                            "texture_bytes", "pool_peak", "upload_us", "checks_us",
+                                            "fifo_check_peak")} for c in cycles]
+    if len(cycles) != GXM_CYCLES:
+        guest["failures"].append(f"expected_{GXM_CYCLES}_load_cycles_found_{len(cycles)}")
+    elif len({c.get("crc") for c in cycles}) != 1:
+        guest["failures"].append("cycle_results_differ")
+    if cycles and len(checks) != sum(int(c.get("total", -1)) for c in cycles):
+        guest["failures"].append("check_lines_do_not_match_cycle_totals")
+    if cycles and len({c.get("heap_after") for c in cycles} | {cycles[0].get("heap_before")}) != 1:
+        guest["failures"].append("heap_grew_across_load_cycles")
+    negatives = [fields(line) for line in lines if line.startswith("NEGATIVE ")]
+    obs["negatives"] = {n.get("case"): n.get("detected") == "1" for n in negatives}
+    if not negatives or not all(obs["negatives"].values()):
+        guest["failures"].append("deliberate_invalid_case_not_detected")
+    summary = [fields(line) for line in lines if line.startswith("SUMMARY ")]
+    if len(summary) != 1:
+        guest["failures"].append("SUMMARY_missing")
+    else:
+        s = summary[0]
+        obs["summary"] = s
+        for key in ("unexpected_failures", "guard_failures", "leaks", "heap_growth_max"):
+            if s.get(key) != "0":
+                guest["failures"].append(f"summary_{key}_nonzero")
+        if s.get("crc_stable") != "1":
+            guest["failures"].append("cycle_results_differ")
+        counts = s.get("negatives", "").split("/")
+        if len(counts) != 2 or counts[0] != counts[1] or counts[0] != str(len(negatives)):
+            guest["failures"].append("negative_count_mismatch")
+    for prefix in ("FIFO ", "TIMING ", "HEAP ", "PEEK ", "EFB ", "XFB ", "POOL ", "STACK ", "NEGATIVES "):
+        found = [fields(line) for line in lines if line.startswith(prefix)]
+        if found:
+            obs[prefix.strip().lower()] = found[-1]
+    obs["texture_sizes"] = [fields(line) for line in lines if line.startswith("TEXBYTES ")]
+    obs["inputs"] = [fields(line) for line in lines if line.startswith("INPUT ")]
+    obs["end"] = end
+    if end.get("result") != "pass":
+        guest["failures"].append("guest_reported_fail")
+    if end.get("exit") != expect_exit:
+        guest["failures"].append(f"exit_not_{expect_exit}")
+    if not int(end.get("connected", "0"), 16) & 1:
+        guest["failures"].append("pad0_not_connected")
+    if int(end.get("toggles", "0")) < 2:
+        guest["failures"].append("input_toggles_not_observed")
+    heap = obs.get("heap", {})
+    if heap.get("growth") != "0" or heap.get("loop_growth") != "0":
+        guest["failures"].append("heap_growth_nonzero")
+    return guest, persistence
+
+
 # ---------------------------------------------------------------------------
 # Batch execution
 # ---------------------------------------------------------------------------
@@ -607,8 +737,8 @@ def parse_args(argv):
                         help="LOCAL=sd:/path, copied into the profile's SD image with mtools in WSL")
     parser.add_argument("--wsl-distro", default="Debian")
     parser.add_argument("--read-back", action="append", default=[], help="SD path to read after each launch")
-    parser.add_argument("--scenario", choices=("none", "probe"), default="none")
-    parser.add_argument("--probe-exit", default="pad_start", help="expected probe END exit reason")
+    parser.add_argument("--scenario", choices=("none", "probe", "gx_materials"), default="none")
+    parser.add_argument("--probe-exit", default="pad_start", help="expected guest END exit reason")
     parser.add_argument("--tolerated-host-exit", action="append", default=[],
                         help="nonzero host exit code (hex) disclosed as tolerated, e.g. 0xc0000409")
     parser.add_argument("--event-settle", type=float, default=10.0,
@@ -618,8 +748,10 @@ def parse_args(argv):
         parser.error("--runs must be positive")
     if args.stage and not args.sd_image:
         parser.error("--stage needs --sd-image (Dolphin only creates its image during a launch)")
-    if args.scenario == "probe" and not args.build_info:
-        parser.error("--scenario probe needs --build-info for the expected build ID")
+    if args.scenario in ("probe", "gx_materials") and not args.build_info:
+        parser.error(f"--scenario {args.scenario} needs --build-info for the expected build ID")
+    if args.scenario == "gx_materials" and not args.efb_access:
+        parser.error("--scenario gx_materials reads the EFB from the CPU and needs --efb-access")
     return args
 
 
@@ -705,6 +837,8 @@ def main(argv=None):
     read_paths = [sd_relative(p) for p in args.read_back]
     if args.scenario == "probe":
         read_paths = [PROBE_SENTINEL, PROBE_LOG] + [p for p in read_paths if p not in (PROBE_SENTINEL, PROBE_LOG)]
+    elif args.scenario == "gx_materials":
+        read_paths = [GXM_RUNS, GXM_LOG] + [p for p in read_paths if p not in (GXM_RUNS, GXM_LOG)]
     staged_hashes = {sd_relative(d): sha256(s) for s, d in args.stage}
     read_paths += [p for p in staged_hashes if p not in read_paths]
     initial = {"sd_image_present": sd.is_file()}
@@ -720,6 +854,14 @@ def main(argv=None):
                 initial_count = probe_sentinel_count(initial_sentinel)
             except ValueError:
                 invalid_control = True
+            previous_log = initial_log.decode("ascii", "replace").replace("\r\n", "\n") if initial_log else ""
+        elif args.scenario == "gx_materials":
+            initial_log = fat.read(GXM_LOG)
+            try:
+                initial_count = gxm_runs_count(fat.read(GXM_RUNS))
+            except ValueError:
+                print("existing gx_materials run counter is invalid; refusing to run", file=sys.stderr)
+                return 2
             previous_log = initial_log.decode("ascii", "replace").replace("\r\n", "\n") if initial_log else ""
     initial["probe_sentinel_count"] = initial_count if args.scenario == "probe" and not invalid_control else None
     initial["probe_sentinel_valid"] = not invalid_control if args.scenario == "probe" else None
@@ -798,6 +940,12 @@ def main(argv=None):
         elif args.scenario == "probe":
             guest, persistence = check_probe(build_id, number, initial_count, previous_log, read, args.probe_exit)
             log = read.get(PROBE_LOG)
+            if log is not None:
+                previous_log = log.decode("ascii", "replace").replace("\r\n", "\n")
+        elif args.scenario == "gx_materials":
+            guest, persistence = check_gx_materials(build_id, number, initial_count, previous_log, read,
+                                                    args.probe_exit)
+            log = read.get(GXM_LOG)
             if log is not None:
                 previous_log = log.decode("ascii", "replace").replace("\r\n", "\n")
         else:

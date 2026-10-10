@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "description": "GX materials self-test: neutral while the guest runs its EFB check cycles, then A (toggle the trilinear mip view), B (toggle the resource overlay) and START (exit=pad_start). One entry per guest controller poll on GC port 1.",
+  "port": 1,
+  "steps": [
+    {"label": "neutral_during_self_test", "polls": 900},
+    {"label": "a_press_spin", "polls": 12, "buttons": ["A"]},
+    {"label": "neutral", "polls": 180},
+    {"label": "b_press_overlay", "polls": 12, "buttons": ["B"]},
+    {"label": "neutral", "polls": 240},
+    {"label": "start_press", "polls": 12, "buttons": ["START"]},
+    {"label": "neutral_tail", "polls": 1200}
+  ]
+}
