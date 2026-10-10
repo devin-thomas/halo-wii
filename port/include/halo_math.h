@@ -40,6 +40,25 @@ double halo_log2(double x);
 double halo_log10(double x);
 double halo_pow(double x, double y);
 
+/* A C library may already define any of these names as a function-like
+macro: newlib's <math.h> (the Wii) has #define log2(x) (log(x)/_M_LN2),
+which would make the definition below a conflicting redefinition. This
+header is included after the C library's <math.h>, so drop any such
+macro first (ADR-018); on the other ports none is defined and the
+#undefs change nothing. */
+#undef sin
+#undef cos
+#undef tan
+#undef asin
+#undef acos
+#undef atan
+#undef atan2
+#undef exp
+#undef log
+#undef log2
+#undef log10
+#undef pow
+
 #define sin(x) halo_sin(x)
 #define cos(x) halo_cos(x)
 #define tan(x) halo_tan(x)

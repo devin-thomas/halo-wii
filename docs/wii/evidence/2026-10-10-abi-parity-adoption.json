@@ -1,0 +1,865 @@
+{
+  "schema_version": 1,
+  "ticket": "HWI-006",
+  "date": "2026-10-10",
+  "scope": "adr_018_parity_rules_adopted_in_engine_source_and_semantics_fixture_host_vs_ppc_rerun",
+  "decision": "ADR-018 (accepted 2026-10-10)",
+  "source_commit": "360b0c06d65fea5e9ac86453dea807c4c4740f4e",
+  "source_dirty": {
+    "host": false,
+    "ppc": false
+  },
+  "previous_evidence": "docs/wii/evidence/2026-10-10-abi-semantics.md (pre-adoption: 41 PPC failures, 66 differences; preserved)",
+  "rules": {
+    "fp_environment": {
+      "status": "adopted",
+      "implementation": "port/wii/runtime/runtime_start.c wii_runtime_start: mtfsb0 29 (FPSCR[NI]) first in main",
+      "measured_fpscr": {
+        "before": "0x4",
+        "after": "0x0"
+      },
+      "scope_note": "called by the semantics fixture; no other current Wii main runs engine code; FPSCR is per libogc thread context, so engine threads must call it at entry (HWI-015)"
+    },
+    "signed_char": {
+      "status": "adopted",
+      "implementation": "tools/wii/build.py ENGINE_SEMANTIC_FLAGS, tools/wii_build.py ENGINE_CFLAGS; fixture engine units",
+      "authored_diagnostics": "unchanged (CFLAGS)"
+    },
+    "external_bitfields": {
+      "status": "adopted",
+      "recorded_animation_header": "source/cutscene/recorded_animation_playback.c recorded_animation_decode_event_header (shift/mask kind and type, LE16 word delta, truncation returns 0 with outputs untouched)",
+      "network_message_header": "source/bungie_net/common/message_encryption.c: GET_MESSAGE_FLAGS/GET_MESSAGE_SIZE replace the bit-field union; sizes below the 2-byte header are left untouched; TEA blocks and remainder key bytes loaded/stored little-endian",
+      "players_bsp_switch": "no change: the byte alias is never read or written, the fields are used by name, and players globals live in the native game-state image (not a wire format); in-memory bit-field allowed by ADR-018",
+      "encoder": "no engine writer of animation headers exists; message header encoding is build_message_header (shift/mask, unchanged)"
+    },
+    "wchar": {
+      "status": "adopted as -fshort-wchar with a mechanical gate",
+      "audit": {
+        "engine_files_using_wchar_t": 47,
+        "wchar_t_occurrences": 586,
+        "wide_string_literals": 398,
+        "files_calling_c_library_wide_functions": {
+          "source/text/unicode.c": 105,
+          "source/interface/ui_widget.c": 5,
+          "source/cseries/cseries.c": 4
+        },
+        "functions_called": [
+          "_vsnwprintf",
+          "_wcsicmp",
+          "_wcslwr",
+          "_wcsnicmp",
+          "_wcsupr",
+          "_wfopen",
+          "fgetws",
+          "fputws",
+          "iswalnum",
+          "iswalpha",
+          "iswcntrl",
+          "iswdigit",
+          "iswgraph",
+          "iswlower",
+          "iswprint",
+          "iswpunct",
+          "iswspace",
+          "iswupper",
+          "iswxdigit",
+          "towlower",
+          "towupper",
+          "vswprintf",
+          "vwprintf",
+          "wcscat",
+          "wcschr",
+          "wcscmp",
+          "wcscoll",
+          "wcscpy",
+          "wcscspn",
+          "wcslen",
+          "wcsncat",
+          "wcsncmp",
+          "wcsncpy",
+          "wcspbrk",
+          "wcsrchr",
+          "wcsspn",
+          "wcsstr",
+          "wcstod",
+          "wcstok",
+          "wcstol",
+          "wcstoul",
+          "wcsxfrm"
+        ],
+        "conclusion": "bare -fshort-wchar against newlib is not safe (these calls would reach newlib's 4-byte wchar_t implementations). A separate 16-bit code-unit type would rewrite ~586 declarations and ~398 literals and diverge from every other port. Linux and Android already use -fshort-wchar with a replacement <wchar.h> routing every wide name to 16-bit implementations (port/linux/include/wchar.h, port/linux/src/msvc_wide.c). Adopted: the same model on Wii, enforced by engine_wide_references (nm -u on every engine object)."
+      },
+      "gate_results": {
+        "host": {},
+        "ppc": {},
+        "objects": [
+          "math_corpus.o",
+          "abi_engine.o",
+          "engine_probe.o"
+        ],
+        "negative_control": "an authored PPC object calling wcslen/towlower is reported (towlower, wcslen)"
+      },
+      "remaining": "HWI-015 must compile the engine's wide calls against a 16-bit replacement <wchar.h> (the Linux one or a shared copy) and pass the gate"
+    },
+    "math_header_macros": {
+      "status": "adopted",
+      "implementation": "port/include/halo_math.h #undefs the 12 renamed names before defining them",
+      "proof": "the fixture's engine_shim.h #undef log2 workaround was removed; the PPC build compiles with -Werror"
+    }
+  },
+  "fixture": {
+    "generator": "tools/wii/run_abi_semantics.py",
+    "comparer": "tools/wii/compare_abi_semantics.py",
+    "harness": "port/wii/abi/semantics/",
+    "runtime": "port/wii/runtime/",
+    "extracted_actual_engine_pieces": {
+      "source/cseries/cseries.h": [
+        {
+          "kind": "line",
+          "selector": "typedef unsigned char byte;",
+          "sha256": "5b95506716bea7a3d83cfdf0ad622386d9febf37a0d4b638588ce8db81be98c7"
+        },
+        {
+          "kind": "line",
+          "selector": "typedef unsigned short word;",
+          "sha256": "536c1ee20c5a2c2f5fba13cba040c26a0dd9abf68f7232677ed1e8be3415fbbc"
+        },
+        {
+          "kind": "line",
+          "selector": "typedef float real;",
+          "sha256": "3905c74b03ea7503448479ede8ab32230ddb95cb019306d7b4a546d0f095ac8c"
+        },
+        {
+          "kind": "line",
+          "selector": "typedef byte boolean;",
+          "sha256": "d1a65593a6aea4c5ee092fe4040d971c8d598a0de1769037ee0a5d353206967e"
+        },
+        {
+          "kind": "enum",
+          "selector": "\n\tTICKS_PER_SECOND = 30,",
+          "sha256": "69cb471a4c455b763642dce460f2ae2c17ff23f2160d160b50c78970fbfd9dca"
+        },
+        {
+          "kind": "enum",
+          "selector": "\n\t_x = 0,",
+          "sha256": "083a281541a2171f3bde9f7ea5c3725209e4d2a94d615d1e35fbe2d6c8e09c6d"
+        },
+        {
+          "kind": "define",
+          "selector": "NONE",
+          "sha256": "b97afbd969447dbb7980a47842c399ecfe80812779bbc97d57791bbb505e1056"
+        },
+        {
+          "kind": "define",
+          "selector": "MIN",
+          "sha256": "53a06f74d476479a48e66e97657df0e5d4d08ecacb85a7607de602e9f3edc16e"
+        },
+        {
+          "kind": "define",
+          "selector": "MAX",
+          "sha256": "a8ab4608b840f1a239768d01c0e5dab4ee214340f83b689cef0f6c86f3296d9b"
+        },
+        {
+          "kind": "define",
+          "selector": "FLOOR",
+          "sha256": "6a9dca42cb2bbd54029675d20ae6b7b20bbdc454c51871eed0344bddc1f8be23"
+        },
+        {
+          "kind": "define",
+          "selector": "CEILING",
+          "sha256": "09a2b49e90b79c7c2c727513094916556ecd632255c7c8c99d56e37e3a49ab00"
+        },
+        {
+          "kind": "define",
+          "selector": "PIN",
+          "sha256": "93bbf4738bef0a808f5594c94a5d0e9f9027e1d7655dadf76d149d491d6b3460"
+        },
+        {
+          "kind": "define",
+          "selector": "FLAG",
+          "sha256": "4dee1a881f142d36719955b91536b215ec82d8137b7357f8e9be564d127ca0c5"
+        },
+        {
+          "kind": "define",
+          "selector": "NUMBEROF",
+          "sha256": "b46e15861e5fc976120ea569002493ba39884e7713bec471a7b4aed06d8faca0"
+        },
+        {
+          "kind": "define",
+          "selector": "TEST_FLAG",
+          "sha256": "2b59095ba9578c4c484b0a6e86885d0bfafdf564557a13018dc52da9051d6041"
+        },
+        {
+          "kind": "function",
+          "selector": "fast_ftol",
+          "sha256": "287aab9dababd4386a2f1cf2504278abc3f1b23508e16c636183573ab1941b34"
+        }
+      ],
+      "source/bungie_net/common/message_header.h": [
+        {
+          "kind": "include",
+          "selector": "bungie_net/common/message_header.h",
+          "sha256": "e073c472cf9988fe6b11d9d7472c981fca589cf5f353ea5c7d7cd81d81db44ad"
+        }
+      ],
+      "source/bungie_net/common/message_encryption.h": [
+        {
+          "kind": "include",
+          "selector": "bungie_net/common/message_encryption.h",
+          "sha256": "d1c87f779fd14ff4fffae65c912d7827729ec9a184c6b7bc499ef0ed87613344"
+        }
+      ],
+      "source/bungie_net/common/message_encryption.c": [
+        {
+          "kind": "enum",
+          "selector": "\n\tMESSAGE_ENCRYPTED_FLAG = FLAG(0),",
+          "sha256": "0b5907dbd3a4ac61945d301c1c1d3caaf5cf4cceea5f7fbe2a2343d4ec0eae09"
+        },
+        {
+          "kind": "function",
+          "selector": "message_block_load",
+          "sha256": "78464e9f0b182d05f74ed65a94abc7adfbaffd77ab4fa1fe604969b014c65171"
+        },
+        {
+          "kind": "function",
+          "selector": "message_block_store",
+          "sha256": "f36a727121f85a709717d87f968a22b479e50607286cfd2aa5ea4c0c9c0b8622"
+        },
+        {
+          "kind": "function",
+          "selector": "message_key_bytes",
+          "sha256": "1f771cba1aac8a0263de365d1515cf4664a1567ca881978cd64add03974c8726"
+        },
+        {
+          "kind": "function",
+          "selector": "reversible_crypt",
+          "sha256": "2a82705fdf102d87f610a0dedb47ee205b7def2f9dd475f33c524877e5321bd7"
+        },
+        {
+          "kind": "function",
+          "selector": "tea_encipher",
+          "sha256": "b27d2a758cd8f045e571c7bcc56078a7f28e1b65feafe16634f1a57b3056003f"
+        },
+        {
+          "kind": "function",
+          "selector": "tea_decipher",
+          "sha256": "7010b83ba3a90d2e69a013a769ffa8297f1307afb026707dbf55fdefae3d1b89"
+        },
+        {
+          "kind": "function",
+          "selector": "message_encrypt",
+          "sha256": "9243adc31b6892292156230fd01ec68448c341ffc580d927dce173b632eb2c3b"
+        },
+        {
+          "kind": "function",
+          "selector": "message_decrypt",
+          "sha256": "d19a3e61800bf2068246cd0ff4e84d9cffb94556b8228f3209db50a09b8bb8df"
+        }
+      ],
+      "source/cutscene/recorded_animation_playback.c": [
+        {
+          "kind": "enum",
+          "selector": "\n\t_playback_end = 1,",
+          "sha256": "cbc20ff2d823f71135f2e905bfbe406984060d9722ae18d854178bcfcaf71dcd"
+        },
+        {
+          "kind": "enum",
+          "selector": "\n\t_time_delta_zero,",
+          "sha256": "fcbc6b7115628eb787b160e0174b8472c2a90bf001610776143827f963e09e02"
+        },
+        {
+          "kind": "aggregate",
+          "selector": "struct animation_event_header",
+          "sha256": "569664161a53c266ce0cf4647cdb4e746b65762aac319c13d9ee24317d535414"
+        },
+        {
+          "kind": "aggregate",
+          "selector": "struct vector_char_difference_data",
+          "sha256": "bfdf6739738726fe0cc4707667cfb8bc0002716215f4683fa591dc26220cad1f"
+        },
+        {
+          "kind": "aggregate",
+          "selector": "struct vector_short_difference_data",
+          "sha256": "9c631b90f9ee1ceb12e8502fe3f280f1a5fc37f5a0108c7f1c82ef3de0cf70fe"
+        },
+        {
+          "kind": "aggregate",
+          "selector": "struct direction_playback_controller",
+          "sha256": "0b99b3b49f87e3659e1a5176a55365f1734a356ffeaabeec2816c8e851af5dbc"
+        },
+        {
+          "kind": "aggregate",
+          "selector": "struct animation_playback_controller",
+          "sha256": "fd9bdb8f6a4af0efe432d3c30396361b28d2162b996bba2ada329d3f4227db8a"
+        },
+        {
+          "kind": "aggregate",
+          "selector": "struct recorded_unit_control",
+          "sha256": "abbd2c4f78573632361fa24f39a8171883b1bca6286b69caac226b487b060590"
+        },
+        {
+          "kind": "statement",
+          "selector": "typedef void (*recorded_animation_apply_proc)(",
+          "sha256": "1a13bd43074b92470aa2ac5880c83543e581b0cdbb3ecd0faafe7e2dfe91cdd1"
+        },
+        {
+          "kind": "define",
+          "selector": "apply_funcs",
+          "sha256": "29a4630704703f0295a9ae14646415387b2f8149a018e984deee7eb5a28113e0"
+        },
+        {
+          "kind": "statement",
+          "selector": "static byte const event_data_sizes[NUMBEROF(apply_funcs)] =",
+          "sha256": "ef029345e613a5a0d9a05e02981ec3b12f1d5abd015fd46eb608b832019bb3e0"
+        },
+        {
+          "kind": "function",
+          "selector": "recorded_animation_decode_event_header",
+          "sha256": "bf9e37d65ef5e812cd81fcf51ddbff3a164f9677a11fb3324149e4e6ad7d9998"
+        },
+        {
+          "kind": "function",
+          "selector": "recorded_animation_apply_event_stream",
+          "sha256": "fc251de21ea43171ce3ae37fed531faf08bc4bd7280e54fe06870c3f0ee4140e"
+        }
+      ],
+      "source/game/players.h": [
+        {
+          "kind": "enum",
+          "selector": "\n\t_local_player_triggered_switch_none = NONE,",
+          "sha256": "548f939e699979d344d5bcb7b2b08b47a4a188c71dcade073990f91c45ac9cbd"
+        },
+        {
+          "kind": "anonymous_union",
+          "selector": "union\n\t{\n\t\tbyte bsp_switch_state;",
+          "sha256": "88ea1eff7f71c9e5904d7d0d5a9829bd06b39df3a57519be11d8e6a4e22eacb3"
+        }
+      ],
+      "source/interface/hud_nav_points.c": [
+        {
+          "kind": "aggregate",
+          "selector": "struct hud_nav_point_datum",
+          "sha256": "e494443902040861a8cd3ef1063b2bf03237a6c141c47b269a5133bebe2bcc6d"
+        }
+      ],
+      "source/math/real_math.h": [
+        {
+          "kind": "include",
+          "selector": "math/real_math.h",
+          "sha256": "ec43d13e5d76a498b33deaf41090358b2d7ce20bfb7a7a76ceeda8fbf49b85ad"
+        }
+      ],
+      "source/math/random_math.c": [
+        {
+          "kind": "enum",
+          "selector": "\n\tRANDOM_A= 1664525L,",
+          "sha256": "6108b38cc3829ea85564f1ed708b7fb2617d5011911693cf4f4858d9616c0e47"
+        },
+        {
+          "kind": "function",
+          "selector": "seed_random",
+          "sha256": "32ab961ac627097023b7f66578c5b8e5dab607e40e3eea6666773261bf353d47"
+        },
+        {
+          "kind": "function",
+          "selector": "seed_random_range",
+          "sha256": "4bc2a4d550bbf8de400a4fed90f2d0f57573742c10e5309c3a124e09c32d7a39"
+        },
+        {
+          "kind": "function",
+          "selector": "real_seed_random",
+          "sha256": "83beb5560e9913518baf5259f0d5770f948dab5c7a7e9537f99322100d748162"
+        },
+        {
+          "kind": "function",
+          "selector": "real_seed_random_range",
+          "sha256": "c73e70ea04dd99b46a0f0f17e9899a6af45385de6742b04dbf3cc3320512afdf"
+        }
+      ],
+      "source/math/matrix_math.c": [
+        {
+          "kind": "line",
+          "selector": "static short data_0030790c[7] = { 1, 2, 0, 0, 1, 2, 0 };",
+          "sha256": "c50471d89ac62b2848afad1fdab3d94b688c8b400c1915471bdc87ef7fcebe6f"
+        },
+        {
+          "kind": "define",
+          "selector": "matrix4x3_next",
+          "sha256": "f9ee6b2b09e6f2881dc52641b658ae70bf11726fdd75a362d8490aa55f272b5d"
+        },
+        {
+          "kind": "function",
+          "selector": "matrix4x3_rotation_from_quaternion",
+          "sha256": "6b3155d01dd78d63933955730c2dd828151d192ed8aef53204028f249fc215ff"
+        },
+        {
+          "kind": "function",
+          "selector": "matrix4x3_rotation_to_quaternion",
+          "sha256": "a2286f1809d2286b3becb638a6039c36432baf2b929c1d393c21383aac5df99d"
+        },
+        {
+          "kind": "function",
+          "selector": "matrix4x3_inverse",
+          "sha256": "37200774d9b1e09598bab3ff5e77798ae4c7692ac1fcc0f6c0be8f33a3a1a1dc"
+        },
+        {
+          "kind": "function",
+          "selector": "matrix4x3_transform_point",
+          "sha256": "d50f8a6c839d953635a773492abc9802176b3bfdc635fd84e85e1c9761c3324f"
+        },
+        {
+          "kind": "function",
+          "selector": "matrix4x3_transform_vector",
+          "sha256": "96807f01f969960ded8915d2fe336c70ebe43cc026721aada7c59921fdebacf4"
+        },
+        {
+          "kind": "function",
+          "selector": "matrix4x3_multiply",
+          "sha256": "5ffa27d6029e39db3ee02409325b490de9450ad24c9d738fa63b0d42a1e68951"
+        }
+      ],
+      "source/bungie_net/common/message_header.c": [
+        {
+          "kind": "function",
+          "selector": "build_message_header",
+          "sha256": "93d819e8b27bf8621fb28a1933742554ee5fbb46b87080e2b11a52424d4ef649"
+        },
+        {
+          "kind": "function",
+          "selector": "byte_swap_message_header",
+          "sha256": "128058af180a54678ab6d37d04aa2e63319432b0339e25513246200373dfda33"
+        }
+      ],
+      "port/linux/src/xbox_kernel.c": [
+        {
+          "kind": "function",
+          "selector": "halo_linux_InterlockedIncrement",
+          "sha256": "ac87efb218d7c9ccf7b2b8c920089d220ae7e9883a1ea48fc5d8baa5c80ddf7d"
+        },
+        {
+          "kind": "function",
+          "selector": "halo_linux_InterlockedDecrement",
+          "sha256": "a12ac4858c9ba6069c652a5478efb276c3bf9984657c1edb97277476c2dcd869"
+        },
+        {
+          "kind": "function",
+          "selector": "halo_linux_InterlockedExchange",
+          "sha256": "8aa87f47a4d00c413121369847356e626656b46259f3fddf42132b4fa9eaf4bf"
+        },
+        {
+          "kind": "function",
+          "selector": "halo_linux_InterlockedExchangeAdd",
+          "sha256": "94f9eed85e618b9b8feaf64ea3aa15302eabe1728b5ea22e4e0b3f953cb2a24f"
+        },
+        {
+          "kind": "function",
+          "selector": "halo_linux_InterlockedCompareExchange",
+          "sha256": "737bae3eee7ad0c152287740f6b1f6d2e126ffc71045bf1ec8a4e0ab53dd6558"
+        }
+      ],
+      "source/math/real_math.c": [
+        {
+          "kind": "function",
+          "selector": "perpendicular3d",
+          "sha256": "99a3c9e4cd00511e93990a13fb41cf53dd63a53c8e71d4e390e5f0a00ecbce2e"
+        },
+        {
+          "kind": "function",
+          "selector": "rotate_vector_about_axis",
+          "sha256": "f1b7e7a570275efc42baf6c8dee006959f1201c8d1500e85977ff28f8b78124a"
+        },
+        {
+          "kind": "function",
+          "selector": "quaternions_multiply",
+          "sha256": "e217217afaaf7c63f0d46afdeed245d574e71e4628ab2c40200a3e88f8b86162"
+        },
+        {
+          "kind": "function",
+          "selector": "quaternions_interpolate",
+          "sha256": "37fdc39905067bf61d7ae7340b5e712973e390969786bb8bd25f7a41b487f572"
+        },
+        {
+          "kind": "function",
+          "selector": "quaternion_transform_point",
+          "sha256": "83ef8bd4460eeb784bff72dc5431ebf25d3fb94014cf095fe41e4636e53c6dc9"
+        },
+        {
+          "kind": "function",
+          "selector": "quaternion_normalize",
+          "sha256": "bb60d7c84c825a0615ba51fde510cc995a7f2920c4418d0ad2a5307a20f27d1d"
+        },
+        {
+          "kind": "function",
+          "selector": "angle_between_vectors3d",
+          "sha256": "5390a80a9f9778a2d469d3b0a6fbd1642c793150e4f09b3510af65b15f96a894"
+        }
+      ]
+    },
+    "flags": {
+      "strict": [
+        "-std=c11",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-ffp-contract=off",
+        "-DGEKKO",
+        "-mrvl",
+        "-mcpu=750",
+        "-meabi",
+        "-mhard-float"
+      ],
+      "engine": [
+        "-std=c11",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-ffp-contract=off",
+        "-fsigned-char",
+        "-fshort-wchar",
+        "-fno-strict-aliasing",
+        "-fwrapv",
+        "-fno-delete-null-pointer-checks",
+        "-fno-builtin-wcslen",
+        "-fno-builtin-wcsnlen",
+        "-fno-builtin-wcschr",
+        "-fno-builtin-wcsrchr",
+        "-fno-builtin-wcscmp",
+        "-fno-builtin-wcsncmp",
+        "-fno-builtin-wcscpy",
+        "-fno-builtin-wcsncpy",
+        "-fno-builtin-wcscat",
+        "-fno-builtin-wcsncat",
+        "-fno-builtin-wmemchr",
+        "-fno-builtin-wmemcmp",
+        "-fno-builtin-wmemcpy",
+        "-fno-builtin-wmemmove",
+        "-fno-builtin-wmemset",
+        "-DGEKKO",
+        "-mrvl",
+        "-mcpu=750",
+        "-meabi",
+        "-mhard-float"
+      ],
+      "engine_generated_unit": [
+        "-std=c11",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-ffp-contract=off",
+        "-fsigned-char",
+        "-fshort-wchar",
+        "-fno-strict-aliasing",
+        "-fwrapv",
+        "-fno-delete-null-pointer-checks",
+        "-fno-builtin-wcslen",
+        "-fno-builtin-wcsnlen",
+        "-fno-builtin-wcschr",
+        "-fno-builtin-wcsrchr",
+        "-fno-builtin-wcscmp",
+        "-fno-builtin-wcsncmp",
+        "-fno-builtin-wcscpy",
+        "-fno-builtin-wcsncpy",
+        "-fno-builtin-wcscat",
+        "-fno-builtin-wcsncat",
+        "-fno-builtin-wmemchr",
+        "-fno-builtin-wmemcmp",
+        "-fno-builtin-wmemcpy",
+        "-fno-builtin-wmemmove",
+        "-fno-builtin-wmemset",
+        "-Wno-type-limits",
+        "-Wno-unused-parameter",
+        "-DGEKKO",
+        "-mrvl",
+        "-mcpu=750",
+        "-meabi",
+        "-mhard-float"
+      ],
+      "musl": [
+        "-std=gnu11",
+        "-O2",
+        "-ffp-contract=off",
+        "-fno-strict-aliasing",
+        "-fwrapv",
+        "-w",
+        "-I",
+        "port\\third_party\\musl-math\\include",
+        "-include",
+        "port\\third_party\\musl-math\\include\\libm.h",
+        "-DGEKKO",
+        "-mrvl",
+        "-mcpu=750",
+        "-meabi",
+        "-mhard-float"
+      ]
+    }
+  },
+  "host": {
+    "compiler": "gcc.exe (Rev3, Built by MSYS2 project) 16.2.0",
+    "compiler_sha256": "75e87953e9d04e8a5d81225397292e9f8ae599a0ed85f70ed175767577aaa9f6",
+    "target": "x86_64-w64-mingw32",
+    "build_id": "9e52a32a284ac798",
+    "exit_code": 0,
+    "report_sha256": "3073c00464cc710dbc7de6c9b53b69ca7e4a4a1f3339e0975df5c273b9e653b9",
+    "summary": [
+      "ABI_SEMANTICS SUMMARY checks=240 failures=0 contract_failures=0 engine_assumption_failures=0 candidate_failures=0 observations=22 math=66"
+    ],
+    "artifacts_sha256": {
+      "abi_regression.exe": "e29b0a48c24c7568dbc59242af6f1e6417b1ef07f81ec2deb70bf00cde8d585c",
+      "abi_semantics.exe": "24c474f103ded54ec4b9426d420de310d09956ac8d90e72e0757b5fc425921ce"
+    }
+  },
+  "ppc": {
+    "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+    "compiler_sha256": "692e3f84b35b7622f90d9fa2eae47c21cab88d3d95f857fc2381c4593765e814",
+    "target": "powerpc-eabi",
+    "sdk_identity": {
+      "toolchain_tree_sha256": "d0ca79f317d44426f5563ff60121b344cb3a1148e5ec7a901ad5739b73ba6441"
+    },
+    "build_id": "ef10ed0bb5c6643d",
+    "elf": {
+      "class": "ELF32",
+      "endian": "big",
+      "machine": "PowerPC",
+      "entry_point": "0x80003f00"
+    },
+    "artifacts_sha256": {
+      "abi_semantics.dol": "052fbf204c4a470ca0e6acd616848e4d9743231721119e7c4f7a4683a1054c56",
+      "abi_semantics.elf": "3a2b3e6f028b1671d27d7930529ca8443929ee2003513fac03e335b001e473c5",
+      "abi_semantics.map": "c7221a619b97fd03d9b9eed83a2a35393e13804b9330d0b1a84b2b000011f334"
+    },
+    "state": "compile_pass"
+  },
+  "dolphin_runs": [
+    {
+      "dol_sha256": "052fbf204c4a470ca0e6acd616848e4d9743231721119e7c4f7a4683a1054c56",
+      "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+      "arguments_shape": [
+        "Dolphin.exe",
+        "--user",
+        "<new isolated profile>",
+        "--batch",
+        "--video_backend",
+        "D3D",
+        "--exec",
+        "abi_semantics.dol"
+      ],
+      "sd_report": "halo-wii-memory/abi-semantics.log",
+      "timeout_seconds": 300,
+      "forced_stop": false,
+      "host_exit_hex": "0x0",
+      "elapsed_seconds": 4.503,
+      "guest_report_sha256": "3dca21a980a2112816aa8ac26be7150c4a0d127e695366080ab3c26fc150504c",
+      "begin": "BEGIN ABI_SEMANTICS build=ef10ed0bb5c6643d",
+      "end": "END ABI_SEMANTICS build=ef10ed0bb5c6643d result=0",
+      "summaries": [
+        "ABI_SEMANTICS SUMMARY checks=240 failures=0 contract_failures=0 engine_assumption_failures=0 candidate_failures=0 observations=22 math=66"
+      ]
+    },
+    {
+      "dol_sha256": "052fbf204c4a470ca0e6acd616848e4d9743231721119e7c4f7a4683a1054c56",
+      "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+      "arguments_shape": [
+        "Dolphin.exe",
+        "--user",
+        "<new isolated profile>",
+        "--batch",
+        "--video_backend",
+        "D3D",
+        "--exec",
+        "abi_semantics.dol"
+      ],
+      "sd_report": "halo-wii-memory/abi-semantics.log",
+      "timeout_seconds": 300,
+      "forced_stop": false,
+      "host_exit_hex": "0x0",
+      "elapsed_seconds": 4.466,
+      "guest_report_sha256": "3dca21a980a2112816aa8ac26be7150c4a0d127e695366080ab3c26fc150504c",
+      "begin": "BEGIN ABI_SEMANTICS build=ef10ed0bb5c6643d",
+      "end": "END ABI_SEMANTICS build=ef10ed0bb5c6643d result=0",
+      "summaries": [
+        "ABI_SEMANTICS SUMMARY checks=240 failures=0 contract_failures=0 engine_assumption_failures=0 candidate_failures=0 observations=22 math=66"
+      ]
+    }
+  ],
+  "dolphin_runs_identical_report": true,
+  "dolphin_lock": "dolphin_lock.py acquire/release hwi-006 around the two launches",
+  "comparison": {
+    "compared_ids": 328,
+    "identical": 320,
+    "unexplained": 0,
+    "difference_counts": {},
+    "only_host": [],
+    "only_ppc": [],
+    "host_report_sha256": "3073c00464cc710dbc7de6c9b53b69ca7e4a4a1f3339e0975df5c273b9e653b9",
+    "ppc_report_sha256": "3dca21a980a2112816aa8ac26be7150c4a0d127e695366080ab3c26fc150504c",
+    "target_specific_excluded": [
+      {
+        "id": "runtime.fp_control_before_start",
+        "kind": "OBS",
+        "host": "0x0",
+        "ppc": "0x4"
+      },
+      {
+        "id": "target.pointer_bytes",
+        "kind": "OBS",
+        "host": "0x8",
+        "ppc": "0x4"
+      },
+      {
+        "id": "varargs.mixed.06",
+        "kind": "CHECK",
+        "host": "0xa79c9ff8ac",
+        "ppc": "0x8008aa50",
+        "class": "contract",
+        "reference": "0xa79c9ff8ac",
+        "host_result": "pass",
+        "ppc_result": "pass"
+      }
+    ],
+    "classified": [
+      {
+        "id": "engine.layout.animation_header.byte_2_5",
+        "kind": "OBS",
+        "host": "0x16",
+        "ppc": "0x85",
+        "classification": "in_memory_bitfield_layout",
+        "reason": "The raw byte of an in-memory bit-field: GCC on PowerPC EABI allocates bit-fields from the high bit, x86 from the low bit. ADR-018 allows compiler layout for data that never crosses an external boundary; the field round trips (engine.bitfield.*) are identical contracts.",
+        "consumer_impact": "none: recorded_animation_playback.c now decodes the Xbox-authored header byte explicitly into this in-memory struct (engine.animation_header.*, engine.playback.*)."
+      },
+      {
+        "id": "engine.layout.hud_nav_point.unit_bytes",
+        "kind": "OBS",
+        "host": "5d00",
+        "ppc": "d500",
+        "classification": "in_memory_bitfield_layout",
+        "reason": "The raw byte of an in-memory bit-field: GCC on PowerPC EABI allocates bit-fields from the high bit, x86 from the low bit. ADR-018 allows compiler layout for data that never crosses an external boundary; the field round trips (engine.bitfield.*) are identical contracts.",
+        "consumer_impact": "none: hud_nav_point_datum is a runtime-only datum, never persisted or sent."
+      },
+      {
+        "id": "engine.layout.players_switch.state_byte_2_12",
+        "kind": "OBS",
+        "host": "0xc2",
+        "ppc": "0x2c",
+        "classification": "in_memory_bitfield_layout",
+        "reason": "The raw byte of an in-memory bit-field: GCC on PowerPC EABI allocates bit-fields from the high bit, x86 from the low bit. ADR-018 allows compiler layout for data that never crosses an external boundary; the field round trips (engine.bitfield.*) are identical contracts.",
+        "consumer_impact": "none: players_globals->bsp_switch_state is never read or written as a byte (the fields are used by name); players globals live in the native game-state image, whose cross-target representation is the open HWI-024 save policy, not a wire format."
+      },
+      {
+        "id": "float.signaling_nan_widened_bits",
+        "kind": "OBS",
+        "host": "0x7ff82468a0000000",
+        "ppc": "0x7ff02468a0000000",
+        "classification": "signalling_nan_widening",
+        "reason": "Widening a signalling-NaN float to double: x86 cvtss2sd quiets it (0x7ff8...), PowerPC lfs keeps it signalling (0x7ff0...). The payload is otherwise identical.",
+        "consumer_impact": "none known: signalling NaNs are not produced by IEEE arithmetic (only by bit patterns, e.g. corrupt data); quiet-NaN results and NaN classification agree. Simulation that branches on NaN payload bits would differ; no such engine code is known."
+      },
+      {
+        "id": "musl.atan.f64",
+        "kind": "MATH",
+        "host": "df958358ebae9364",
+        "ppc": "39a957d477cf533c",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          14
+        ],
+        "subnormal_inputs": {
+          "host": 2,
+          "ppc": 2
+        },
+        "subnormal_results": {
+          "host": 1,
+          "ppc": 1
+        },
+        "zero_results": {
+          "host": 2,
+          "ppc": 2
+        },
+        "nan_results": {
+          "host": 2,
+          "ppc": 2
+        },
+        "classification": "signalling_nan_widening",
+        "reason": "Widening a signalling-NaN float to double: x86 cvtss2sd quiets it (0x7ff8...), PowerPC lfs keeps it signalling (0x7ff0...). The payload is otherwise identical. atan returns a NaN argument unchanged, so the corpus's one signalling-NaN case gives a different raw result; the NaN-canonical digest is identical.",
+        "requires_identical": [
+          "musl.atan.nan_canonical",
+          "musl.atan.narrowed_f32"
+        ],
+        "consumer_impact": "same as float.signaling_nan_widened_bits"
+      }
+    ],
+    "differences": []
+  },
+  "x86_regression": {
+    "command": "run_abi_semantics.py --regression-base 7a7168ca (host)",
+    "base_commit": "7a7168cacfba517234eac63d1b4eec6bad1d508b",
+    "original_pieces": [
+      {
+        "path": "source/bungie_net/common/message_encryption.c",
+        "kind": "aggregate",
+        "selector": "union message_header_value",
+        "sha256": "6b07519702968cc59953daf404904c96fbbde1a321258bea93efbd49cbe9c058"
+      },
+      {
+        "path": "source/cutscene/recorded_animation_playback.c",
+        "kind": "define",
+        "selector": "apply_funcs",
+        "sha256": "29a4630704703f0295a9ae14646415387b2f8149a018e984deee7eb5a28113e0"
+      },
+      {
+        "path": "source/cutscene/recorded_animation_playback.c",
+        "kind": "statement",
+        "selector": "static byte const event_data_sizes[NUMBEROF(apply_funcs)] =",
+        "sha256": "ef029345e613a5a0d9a05e02981ec3b12f1d5abd015fd46eb608b832019bb3e0"
+      },
+      {
+        "path": "source/bungie_net/common/message_encryption.c",
+        "kind": "function",
+        "selector": "message_encrypt",
+        "sha256": "75e3ec1f0bebfecf7e4534ac7b5ddcfb6e1549a283553157d560e0f8dea92893"
+      },
+      {
+        "path": "source/bungie_net/common/message_encryption.c",
+        "kind": "function",
+        "selector": "message_decrypt",
+        "sha256": "c778ffe507ca4cffd02b75258493bfea02d81d807474570dc7012c188d1addfc"
+      },
+      {
+        "path": "source/cutscene/recorded_animation_playback.c",
+        "kind": "function",
+        "selector": "recorded_animation_apply_event_stream",
+        "sha256": "2f4f9175e43b6e9958c2bdc4d4c98514d66190581d484ed410833b33d717fd3f"
+      }
+    ],
+    "exit_code": 0,
+    "report_sha256": "387a8b2a51206ec6ad444185880ab0e51a7a5b424a6135bf19f7125e04620719",
+    "lines": [
+      "REGRESSION message_crypt cases=8188 mismatches=0 excluded_sizes=0,1",
+      "REGRESSION playback_exhaustive_3_bytes cases=50529027 mismatches=0 damaged=24896996 assertions=16715063",
+      "REGRESSION playback_generated cases=262144 mismatches=0 damaged=154477 assertions=109982 advanced=147541",
+      "REGRESSION result=0"
+    ],
+    "intended_difference": "message headers with size 0 or 1: the original wraps its block count and enciphers up to 0xFFFF blocks past the message; the new code leaves the message untouched (excluded from the byte comparison, checked as engine.message_crypt.undersized_header_untouched_failures)"
+  },
+  "ci_equivalent_local": {
+    "python_unit_tests": "tools/wii: 270 tests OK on Python 3.14 and 3.11",
+    "host_fixtures": "run_abi_host.py and the four run_cache_address.py variants: exit 0",
+    "wii_targets": "configure.py --wii; ninja wii_probe wii_gx_scene wii_geometry_view: 20/20",
+    "artifact_inspection": "package_artifacts.py stage + inspect --require-clean: PASS, 0 problems",
+    "pytest_tools_test_wii_build": "8 passed, 1 pre-existing failure (test_sdk_and_git_identity_are_reconfigure_dependencies expects .git/HEAD; a linked worktree has a .git file), also failing at 7a7168ca",
+    "other_ports": "Linux/Windows/Android builds were not run locally (no i686 clang/MSVC here); the changed functions compile under -Wall -Wextra -Werror in the fixture on both targets, and a standalone gnu89 syntax pass shows the same pre-existing header errors before and after"
+  },
+  "not_established": [
+    "Real Gekko hardware: NI clearing, denormal performance with NI clear (HWI-040/041), generated NaN bits",
+    "libogc threads other than main: FPSCR is per-thread context; only the main thread is covered",
+    "Full engine translation units: no Wii engine build exists yet (HWI-015); the flags and gate are defined and exercised by the fixture's engine units only",
+    "Recorded-animation streams beyond the header: event payloads (control flags, throttle, short deltas, unit control) are still read native-endian and byte_swap_recording_stream is a no-op; v1 streams read a native word time delta",
+    "Network wire ordering of the message header: byte_swap_message_header swaps unconditionally (BE wire on the Xbox, LE on a BE host); tracked under the packet/caller evidence, not changed here",
+    "Message encryption has no caller in source/ or port/; its interop with a real peer is not executed",
+    "Concurrent atomics and out-of-range float-to-integer conversions (unchanged from the previous record)",
+    "Script-cell upper-bit/save policy and executed consumers (open under HWI-006/HWI-024)"
+  ]
+}

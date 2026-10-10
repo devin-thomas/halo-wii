@@ -4,6 +4,7 @@
 #include "fpenv.h"
 #include "math_corpus.h"
 #include "report.h"
+#include "runtime_start.h"
 #include "semantics.h"
 #include <stdio.h>
 
@@ -21,6 +22,9 @@ unsigned long wii_abi_engine_assertions;
 
 int main(void)
 {
+    /* ADR-018: the shared Wii runtime start runs before any engine code */
+    struct wii_runtime_start_record start;
+    const int ieee = wii_runtime_start(&start);
     FILE *out = stdout;
 #ifdef GEKKO
     VIDEO_Init();
@@ -40,24 +44,15 @@ int main(void)
     struct wii_abi_report report = {out, 0, 0, 0, 0, 0, 0, 0, NULL, NULL};
     if (fprintf(out, "BEGIN %s build=%s\n", REPORT_KIND, WII_ABI_SEMANTICS_BUILD_ID) < 0 || fflush(out)) return 2;
     const uint32_t flush_mask = wii_abi_fp_flush_mask();
-    wii_abi_observe_u64(&report, "target.fp_control_at_start", wii_abi_fp_control());
-    wii_abi_observe_u64(&report, "fp.flush_bits_at_start", wii_abi_fp_control() & flush_mask);
-    /* pass 1: the floating-point environment the runtime starts the program with */
+    /* FPSCR on the Wii (libogc starts it with NI set), 0 on the host */
+    wii_abi_observe_u64(&report, "runtime.fp_control_before_start", start.fp_control_before);
+    wii_abi_observe_u64(&report, "runtime.fp_control_after_start", start.fp_control_after);
+    wii_abi_check_u64(&report, "runtime.ieee_after_start", WII_ABI_CONTRACT, ieee, 1);
+    wii_abi_check_u64(&report, "runtime.flush_bits_at_report", WII_ABI_CONTRACT, wii_abi_fp_control() & flush_mask, 0);
     wii_abi_semantics(&report);
-    wii_abi_engine_probe_baseline(&report);
-    wii_abi_engine_probe_signed_char(&report);
+    wii_abi_engine_probe(&report);
     wii_abi_math_corpus(&report);
-    /* pass 2 (candidate): IEEE subnormals (PPC FPSCR[NI] clear; x86 FTZ/DAZ clear) */
-    uint32_t saved = wii_abi_fp_ieee_subnormals();
-    report.prefix = "ieee_subnormals.";
-    report.contract_as = WII_ABI_CANDIDATE;
-    wii_abi_observe_u64(&report, "fp.flush_bits", wii_abi_fp_control() & flush_mask);
-    wii_abi_semantics(&report);
-    wii_abi_math_corpus(&report);
-    wii_abi_fp_restore(saved);
-    report.prefix = NULL;
-    report.contract_as = NULL;
-    wii_abi_observe_u64(&report, "fp.flush_bits_restored", wii_abi_fp_control() & flush_mask);
+    wii_abi_check_u64(&report, "runtime.flush_bits_at_end", WII_ABI_CONTRACT, wii_abi_fp_control() & flush_mask, 0);
     int result = report.contract_failures != 0 || report.candidate_failures != 0;
     fprintf(out, "%s SUMMARY checks=%lu failures=%lu contract_failures=%lu engine_assumption_failures=%lu "
             "candidate_failures=%lu observations=%lu math=%lu\n", REPORT_KIND, report.checks, report.failures,

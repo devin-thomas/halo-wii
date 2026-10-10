@@ -10,12 +10,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-/* newlib's <math.h> defines log2 as a function-like macro (log(x)/_M_LN2);
-   the game's math.h on the Wii must drop it before halo_math.h renames log2
-   (measured by this fixture's PPC compile). */
-#undef log2
 /* sin, cos, pow and the rest are the shared halo_ versions on every native
-   port (port/include/halo_math.h, port/third_party/musl-math) */
+   port (port/include/halo_math.h, port/third_party/musl-math). newlib's
+   <math.h> defines log2 as a function-like macro; halo_math.h itself drops
+   such macros (ADR-018), so no #undef is needed here. */
 #include "halo_math.h"
 
 #ifndef M_PI
@@ -46,6 +44,10 @@ extern unsigned long wii_abi_engine_assertions;
 #define match_dassert(file, line, expr, diagnostic) do { match_vassert(file, line, expr, diagnostic); } while (FALSE)
 #define assert(expr) match_assert(__FILE__, __LINE__, expr)
 #define vassert(expr, string) match_vassert(__FILE__, __LINE__, expr, string)
+
+/* cseries.h's limits enum member; the enum is not extracted because its
+   CHAR_MAX/LONG_MAX/... members collide with <limits.h>. */
+enum { UNSIGNED_CHAR_MAX = 255 };
 
 /* Win32 spellings of port/linux/src/xbox_kernel.c's interlocked bodies:
    LONG is 32 bits on the XDK, LLP64 Windows and PPC32 alike. */
