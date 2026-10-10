@@ -166,6 +166,8 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--stem", default="probe", help="artifact stem for the manifest step")
     parser.add_argument("--scope", default="asset_free_probe", help="manifest scope label")
+    parser.add_argument("--extra-flag", action="append", default=[], dest="extra_flags",
+                        help="a compile flag after the configured ones (repeatable; spell it --extra-flag=-f...)")
     parser.add_argument("objects", nargs="*")
     # Intermixed parsing keeps trailing object files positional on Python < 3.12.
     args = parser.parse_intermixed_args()
@@ -178,7 +180,7 @@ def main() -> int:
         if args.step == "compile":
             if args.source is None:
                 parser.error("compile needs --source")
-            subprocess.run([compiler, *config["public"]["compile_flags"],
+            subprocess.run([compiler, *config["public"]["compile_flags"], *args.extra_flags,
                             *prefix_map_flags(Path.cwd(), root),
                             "-I", str(root / "libogc/include"), "-I", "build/wii",
                             "-MMD", "-MF", str(args.output) + ".d", "-MT", args.output.as_posix(),

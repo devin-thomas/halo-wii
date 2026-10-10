@@ -114,6 +114,25 @@ failures but explicitly BLOCKED compatibility qualification. Only nine new
 layout/catalog units use short-wchar; a separate default-width unit and all
 prior/production flags remain unchanged. No actual engine cache/startup runs.
 
+## Memory strategy diagnostic
+
+`ninja wii_memory_strategy` builds `build/wii/memory_strategy.dol`. It
+measures the memory map and the fit of the upstream reservations. It also
+runs relocation cycles on a private tag graph and on the full upstream game
+state ([target README](../../port/wii/memory_strategy/README.md),
+[evidence](evidence/2026-10-10-memory-strategy.md)).
+
+Its two engine units, `source/memory/data.c` and `memory_pool.c`, build with
+`-fsigned-char` (ADR-018) through an authored service shim.
+
+The schema and census tables it uses are generated on the upstream i686 ABI
+with clang in WSL Debian:
+
+```powershell
+python tools/wii/export_tag_schema.py
+python tools/wii/game_state_census.py --output .local/game-state-census.json --emit-c tools/wii/game_state_census_table.c
+```
+
 ## Installation and provenance
 
 Use the [official installer](https://github.com/devkitPro/installer) and [official Wii examples](https://github.com/devkitPro/wii-examples). Verify the current Windows installation instructions and Wii development package group when installing. Record package/compiler versions, Python/Ninja versions, source commit, environment variables and the exact successful commands. Do not mix an unrelated MSYS installation with the devkitPro shell without proving path compatibility.

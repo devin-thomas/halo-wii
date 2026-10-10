@@ -17,6 +17,22 @@ GEOMETRY_VIEW_SOURCES = [Path("port/wii/geometry_view/main.c"),
                          *(Path("tools/wii") / name for name in (
                              "cache_arena_plan.c", "cache_stream_io.c", "cache_address_owned.c",
                              "cache_address_probe.c", "cache_bsp_probe.c", "cache_material_probe.c"))]
+# HWI-007 memory strategy diagnostic: authored units, and the actual engine units
+# source/memory/data.c and memory_pool.c built with an authored service shim.
+MEMORY_STRATEGY_SOURCES = [Path("port/wii/memory_strategy/main.c"),
+                           *(Path("tools/wii") / name for name in (
+                               "cache_arena_plan.c", "cache_stream_io.c", "cache_address_owned.c",
+                               "cache_address_probe.c", "cache_bsp_probe.c", "cache_schema_graph.c",
+                               "cache_schema_tables.c", "game_state_image.c", "game_state_census_table.c"))]
+MEMORY_STRATEGY_ENGINE_SOURCES = [Path("source/memory/data.c"), Path("source/memory/memory_pool.c")]
+MEMORY_STRATEGY_HEADERS = [*(Path("tools/wii") / name for name in (
+                               "cache_schema_graph.h", "cache_schema_tables.h", "game_state_image.h")),
+                           *sorted(Path("port/wii/memory_strategy/engine_shim").glob("*.h")),
+                           Path("source/memory/data.h"), Path("source/memory/memory_pool.h")]
+MEMORY_STRATEGY_INCLUDES = ["-Iport/wii/memory_strategy/engine_shim", "-Isource/memory"]
+# ADR-018: engine translation units use signed plain char; the engine code is verbatim, so its
+# warnings are not errors here.
+MEMORY_STRATEGY_ENGINE_FLAGS = ["-fsigned-char", "-w", *MEMORY_STRATEGY_INCLUDES]
 MACHINE_FLAGS = ["-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float"]
 CFLAGS = ["-std=c11", "-O2", "-g", "-Wall", "-Wextra", "-Werror", "-ffp-contract=off", *MACHINE_FLAGS]
 # ADR-018: engine translation units (HWI-015 onwards) compile with the
@@ -30,7 +46,8 @@ LIBRARIES = ("libfat.a", "libwiiuse.a", "libbte.a", "libogc.a")
 def source_inputs():
     return [Path("tools/wii_build.py"), Path("tools/wii/build.py"),
             Path("tools/wii/check_toolchain.py"), *SOURCES, *GX_SCENE_SOURCES, *GX_MATERIALS_SOURCES,
-            *GEOMETRY_VIEW_SOURCES,
+            *GEOMETRY_VIEW_SOURCES, *MEMORY_STRATEGY_SOURCES, *MEMORY_STRATEGY_ENGINE_SOURCES,
+            *MEMORY_STRATEGY_HEADERS,
             *sorted(Path("port/wii/abi").glob("*.h")),
             *(Path("tools/wii") / name for name in (
                 "cache_arena_plan.h", "cache_stream_io.h", "cache_address_owned.h",
@@ -97,6 +114,7 @@ def generate_wii_build(n, sln):
         "compiler_target": inventory["tools"]["powerpc-eabi-gcc"]["target"],
         "binutils": inventory["tools"]["powerpc-eabi-ld"]["version"],
         "compile_flags": CFLAGS, "probe_auto_exit_frames": sln.wii_probe_frames,
+        "memory_strategy_flags": {"authored": MEMORY_STRATEGY_INCLUDES, "engine": MEMORY_STRATEGY_ENGINE_FLAGS},
         # build.py maps these build-machine roots in debug info and link maps.
         "path_prefix_map": {"checkout": CHECKOUT_PREFIX, "devkitpro": DEVKITPRO_PREFIX},
         "wii_rules_sha256": hashlib.sha256((root / "devkitPPC/wii_rules").read_bytes()).hexdigest(),
@@ -115,6 +133,8 @@ def generate_wii_build(n, sln):
     config = "--config build/wii/local-config.json"
     n.rule("wii_cc", f'{runner} compile {config} --source "$in" --output "$out"',
            description="PPC CC $in", depfile="$out.d", deps="gcc")
+    n.rule("wii_cc_flags", f'{runner} compile {config} $extra --source "$in" --output "$out"',
+           description="PPC CC $in", depfile="$out.d", deps="gcc")
     n.rule("wii_link", f'{runner} link {config} --output "$out" $in', description="PPC LINK $out")
     n.rule("wii_dol", f'{runner} convert {config} --source "$in" --output "$out"', description="ELF2DOL $out")
     n.rule("wii_manifest", f'{runner} manifest {config} --stem $stem --scope $scope --output "$out"',
@@ -127,12 +147,22 @@ def generate_wii_build(n, sln):
                ("wii_gx_materials", "gx_materials", "asset_free_gx_materials", GX_MATERIALS_SOURCES,
                 BUILD / "gx_materials", BUILD / "gx_materials-build-info.json"),
                ("wii_geometry_view", "geometry_view", "owned_geometry_diagnostic_no_embedded_assets",
-                GEOMETRY_VIEW_SOURCES, BUILD / "geometry_view", BUILD / "geometry_view-build-info.json"))
+                GEOMETRY_VIEW_SOURCES, BUILD / "geometry_view", BUILD / "geometry_view-build-info.json"),
+               ("wii_memory_strategy", "memory_strategy", "memory_strategy_diagnostic_no_embedded_assets",
+                [*MEMORY_STRATEGY_SOURCES, *MEMORY_STRATEGY_ENGINE_SOURCES], BUILD / "memory_strategy",
+                BUILD / "memory_strategy-build-info.json"))
     for target, stem, scope, sources, object_dir, manifest in targets:
         objects = []
         for source in sources:
             obj = object_dir / (source.stem + ".o")
-            n.build(obj, "wii_cc", source, implicit=[BUILD / "local-config.json", BUILD / "build_id.h"])
+            implicit = [BUILD / "local-config.json", BUILD / "build_id.h"]
+            if target == "wii_memory_strategy":
+                engine = source in MEMORY_STRATEGY_ENGINE_SOURCES
+                flags = MEMORY_STRATEGY_ENGINE_FLAGS if engine else MEMORY_STRATEGY_INCLUDES
+                n.build(obj, "wii_cc_flags", source, implicit=implicit,
+                        variables={"extra": " ".join(f"--extra-flag={flag}" for flag in flags)})
+            else:
+                n.build(obj, "wii_cc", source, implicit=implicit)
             objects.append(obj)
         elf, dol, link_map = BUILD / f"{stem}.elf", BUILD / f"{stem}.dol", BUILD / f"{stem}.map"
         n.build(elf, "wii_link", objects, implicit=[BUILD / "local-config.json", *libraries],

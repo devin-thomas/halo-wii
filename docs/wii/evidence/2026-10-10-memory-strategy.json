@@ -1,0 +1,614 @@
+{
+  "schema_version": 1,
+  "tickets": [
+    "HWI-007"
+  ],
+  "date": "2026-10-10",
+  "scope": "measured Wii memory map, upstream reservation fit, whole-map tag graph relocation and game-state ownership prototype in stock Dolphin Wii mode",
+  "source_commit": "03d28d6cb1e960621f64e6b7cd94fa2845bc6937",
+  "source_dirty": false,
+  "build_id": "a96965edd20918c2",
+  "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+  "binutils": "GNU ld (GNU Binutils) 2.46.0.20260210",
+  "compile_flags": [
+    "-std=c11",
+    "-O2",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-ffp-contract=off",
+    "-DGEKKO",
+    "-mrvl",
+    "-mcpu=750",
+    "-meabi",
+    "-mhard-float"
+  ],
+  "engine_unit_flags": [
+    "-fsigned-char",
+    "-w",
+    "-Iport/wii/memory_strategy/engine_shim",
+    "-Isource/memory"
+  ],
+  "engine_units": [
+    "source/memory/data.c",
+    "source/memory/memory_pool.c"
+  ],
+  "engine_change": {
+    "commit": "2b7a3745",
+    "file": "source/memory/data.c",
+    "what": "datum identifier seed composed in little-endian order on every target"
+  },
+  "artifacts": {
+    "memory_strategy.elf": {
+      "sha256": "df70a9ef7e4577cf5a55967ba701e86e6fe0bd62995f0186c29b9c6baca31887",
+      "bytes": 2165648
+    },
+    "memory_strategy.dol": {
+      "sha256": "892ad40ba15e246ae921256fce8e710eeb4ac19bc4282a60391a2fcdfdd98156",
+      "bytes": 482656
+    },
+    "memory_strategy.map": {
+      "sha256": "02d423dc48082bd2701f2063b4059802bc63667fb55aac6b878711f093799d6a",
+      "bytes": 602184
+    }
+  },
+  "emulator": {
+    "dolphin_executable_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+    "profile": "new isolated Wii-mode profile; stock clock/memory; no cheats/overclock/RAM override; D3D; SD writes on; no input movie",
+    "arguments": [
+      "--user",
+      "<profile>",
+      "--batch",
+      "--video_backend",
+      "D3D",
+      "--exec",
+      "<dol>"
+    ],
+    "blank_sd_sha256": "ed845a516ee8f992683c88954ff2125768decf527bd6e740a6038d08c009c8e7",
+    "staging": "private tag/BSP blobs and a guest manifest copied with mtools into a copy of a Dolphin-created SD image (guest directory removed)"
+  },
+  "input_identity": {
+    "tag_bytes": 16995988,
+    "bsp_bytes": 1288192,
+    "bsp_ordinal": 12,
+    "note": "the selected campaign map tags and one structure BSP used by the earlier geometry evidence; names and bytes stay private"
+  },
+  "memory_map": {
+    "measured_on": "PPC guest in Dolphin, IOS 58.6176",
+    "link": {
+      "app_start": "0x80003f00",
+      "bss": "0x80079d70..0x800c03c0",
+      "sbss": "0x80079b60",
+      "arena1_link": "0x800c03c0..0x81800000",
+      "arena2_link": "0x90002000..0x933e0000"
+    },
+    "entry": {
+      "arena1": "0x800d03c0..0x81800000",
+      "arena1_bytes": 24312896,
+      "libogc_arena1_taken": 65536,
+      "ios_reserved_above_mem2": 12713984,
+      "main_stack": 131072
+    },
+    "entry_arena2": "0x90002000..0x933e0000",
+    "entry_arena2_bytes": 54386688,
+    "gx": {
+      "bytes": "262144",
+      "xfb_bytes_each": "614400",
+      "video": "640x480",
+      "heap_in_use": "1659832",
+      "arena1": "0x8026a000"
+    },
+    "graph_workspace_bytes": 5570566,
+    "heap_in_use_with_workspace": 7230408,
+    "fpscr": {
+      "entry": "00000004",
+      "engine": "00000000",
+      "ni_entry": "1",
+      "ni_engine": "0"
+    }
+  },
+  "upstream_fit": {
+    "mem2_tags_state_sound_xbox_textures": {
+      "requested": "71303168",
+      "available": "54368224",
+      "fits": "0",
+      "required": "71303168",
+      "shortfall": "16934944",
+      "failing_slot": "3"
+    },
+    "mem2_tags_state_sound_desktop_textures": {
+      "requested": "316669952",
+      "available": "54368224",
+      "fits": "0",
+      "required": "316669952",
+      "shortfall": "262301728",
+      "failing_slot": "3"
+    },
+    "mem2_tags_state_sound_io_reserve": {
+      "requested": "50462720",
+      "available": "54368224",
+      "fits": "1",
+      "required": "50462720",
+      "remaining": "3905504",
+      "failing_slot": "-1"
+    },
+    "mem2_tags_census_state_sound_io_reserve": {
+      "requested": "47695904",
+      "available": "54368224",
+      "fits": "1",
+      "required": "47695936",
+      "remaining": "6672288",
+      "failing_slot": "-1"
+    },
+    "mem1_xbox_textures_after_gx": {
+      "requested": "23068672",
+      "available": "22634496",
+      "fits": "0",
+      "required": "23068672",
+      "shortfall": "434176",
+      "failing_slot": "0"
+    }
+  },
+  "game_state_census": {
+    "compiler": "Debian clang version 19.1.7 (3+b1)",
+    "abi": "upstream i686 (tools/linux_build.py layout flags)",
+    "sites": 75,
+    "allocations": 81,
+    "cpu_requested": 18040844,
+    "cpu_reservation": 20709376,
+    "gpu_requested": 163840,
+    "gpu_reservation": 262144,
+    "largest": [
+      {
+        "label": "objects (memory pool)",
+        "bytes": 8388664
+      },
+      {
+        "label": "prop",
+        "bytes": 2555960
+      },
+      {
+        "label": "actor",
+        "bytes": 1871928
+      },
+      {
+        "label": "particle",
+        "bytes": 917560
+      },
+      {
+        "label": "particle system particles",
+        "bytes": 524344
+      },
+      {
+        "label": "effect",
+        "bytes": 516152
+      },
+      {
+        "label": "lights",
+        "bytes": 507960
+      },
+      {
+        "label": "contrail point",
+        "bytes": 458808
+      }
+    ]
+  },
+  "engine_image_estimate": {
+    "what": "sum of the engine units the Linux build compiles (466 source/ + 34 port/linux/game), each compiled alone for the upstream i686 ABI at -O2 without -g; not linked, not PPC",
+    "compiler": "Debian clang version 19.1.7 (3+b1)",
+    "units": 500,
+    "failed_units": 0,
+    "text": 2688160,
+    "rodata": 692476,
+    "data": 394823,
+    "bss": 17314882,
+    "common_unique": 1256306,
+    "bss_total_estimate": 18571188,
+    "network_and_coop_units_bss": 4332501,
+    "custom_edition_units_bss": 6623569,
+    "largest_bss_units": [
+      {
+        "unit": "port/linux/game/custom_edition_maps.c",
+        "bss": 6557772
+      },
+      {
+        "unit": "port/linux/game/tag_validate.c",
+        "bss": 3014772
+      },
+      {
+        "unit": "port/linux/game/network_objects.c",
+        "bss": 1652280
+      },
+      {
+        "unit": "source/cseries/profile.c",
+        "bss": 1129816
+      },
+      {
+        "unit": "port/linux/game/network_damage.c",
+        "bss": 880300
+      },
+      {
+        "unit": "source/game/player_queues_new.c",
+        "bss": 664704
+      },
+      {
+        "unit": "port/linux/game/network_coop.c",
+        "bss": 600398
+      },
+      {
+        "unit": "source/networking/network_server_manager.c",
+        "bss": 535868
+      },
+      {
+        "unit": "source/rasterizer/rasterizer_lights.c",
+        "bss": 442409
+      },
+      {
+        "unit": "port/linux/game/network_actors.c",
+        "bss": 322085
+      }
+    ],
+    "not_included": "platform layer (port/linux/src), libc/libogc, stacks, heap"
+  },
+  "identifier_seeds": {
+    "object": "e26f",
+    "object_unported_copy": "ef62",
+    "players": "ec70",
+    "players_unported_copy": "f06c",
+    "arrays": "36",
+    "arrays_where_unported_copy_differs": "36"
+  },
+  "graph": {
+    "host_references": {
+      "i686": "gcc -m32 (Debian 14.2.0)",
+      "x86_64": "MSYS2 gcc 16.2.0",
+      "reports_equal": true
+    },
+    "counts": {
+      "tags": "3647",
+      "scenario": "0",
+      "roots": "3633",
+      "roots_without_schema": "2",
+      "bsp": "1",
+      "blocks": "21430",
+      "nonempty": "12719",
+      "elements": "227472",
+      "structs": "2215",
+      "data": "18652/6156945",
+      "file_data": "7802/167843196",
+      "references": "16879",
+      "references_none": "8977",
+      "references_resolved": "7902",
+      "names": "7902/8977",
+      "tag_indices": "1799",
+      "tag_indices_none": "0",
+      "tag_indices_resolved": "1799",
+      "block_indices": "247466",
+      "enums": "63810",
+      "strings": "18586",
+      "resets": "30590",
+      "checks": "6773",
+      "buffers": "1512",
+      "corrections": "0",
+      "supplementary": "3037",
+      "supplementary_none": "790",
+      "claimed": "12869918",
+      "pointer_fields": "39224",
+      "null_fields": "77470",
+      "depth": "5",
+      "edges": "9701",
+      "reachable": "3277",
+      "residual": "17868",
+      "residual_claimed_aligned": "1329",
+      "residual_claimed_unaligned": "2685",
+      "residual_unclaimed": "13854",
+      "digest": "03a00f90",
+      "edge_digest": "e977807c"
+    },
+    "representative_edges": {
+      "scnr>sbsp": 13,
+      "sbsp>senv": 22,
+      "sbsp>sgla": 15,
+      "sbsp>sotr": 14,
+      "sbsp>bitm": 292,
+      "scnr>weap": 11,
+      "weap>mode": 15,
+      "weap>antr": 9,
+      "weap>coll": 7,
+      "mode>soso": 183,
+      "mode>senv": 32,
+      "bipd>mode": 12,
+      "bipd>antr": 12,
+      "vehi>mode": 8,
+      "vehi>antr": 8
+    },
+    "group_kinds": 65,
+    "edge_kinds": 209,
+    "timing_us_dolphin": {
+      "load_us": "1487896",
+      "walk_us": "730365",
+      "relocate_us": "757560",
+      "native_walk_us": "729644"
+    }
+  },
+  "game_state": {
+    "host_reference": "i686 gcc -m32, same engine units and census table, 8 cycles",
+    "host_image_crcs": [
+      "b875f33c",
+      "08b88acb",
+      "f64ae5d0",
+      "d8e9e42c",
+      "03442b73",
+      "6d097cb7",
+      "a53087ab",
+      "d4046539"
+    ],
+    "state_line_step1": {
+      "step": "1",
+      "players": "4",
+      "objects": "90",
+      "actors": "16",
+      "props": "64",
+      "blocks": "90",
+      "pool_used": "63776",
+      "pool_free": "8324832",
+      "object_next_identifier": "e2c9",
+      "player_next_identifier": "ec74",
+      "image_bytes": "284172",
+      "image_crc": "b875f33c",
+      "stale": "0/0"
+    },
+    "build": {
+      "cycle": "0",
+      "base": "0x91602000",
+      "allocations": "81",
+      "cpu_used": "18040844",
+      "gpu_used": "163840",
+      "cpu_free": "2668532",
+      "build_us": "11943"
+    }
+  },
+  "runs": [
+    {
+      "number": 1,
+      "host_exit": "0x0",
+      "forced_stop": false,
+      "elapsed_seconds": 22.282,
+      "launch_counter": "halo-wii-memory-strategy-v1 1",
+      "guest_result": "pass",
+      "cycles_passed": "4/4",
+      "guest_elapsed_ms": 17936,
+      "graph_reports_equal_host": true,
+      "graph_cycles": 4,
+      "state_image_crcs": [
+        "b875f33c",
+        "08b88acb",
+        "f64ae5d0",
+        "d8e9e42c"
+      ],
+      "state_crcs_equal_host": true,
+      "state_restored_from_previous_launch": false,
+      "state_file_bytes_after": 284940,
+      "stale_handle_rejections": 4,
+      "arena_restored_cycles": 4,
+      "datum_stale_rejections": [
+        "0/0",
+        "9/9",
+        "10/10",
+        "9/9"
+      ],
+      "graph_faults": [
+        {
+          "kind": "block_address_outside",
+          "rejected": "1",
+          "reason": "extent",
+          "offset": "5509392",
+          "expected_offset": "5509392"
+        },
+        {
+          "kind": "tag_table_ordinal",
+          "rejected": "1",
+          "reason": "table",
+          "offset": "80",
+          "expected_offset": "80"
+        },
+        {
+          "kind": "restored_bytes",
+          "walk_ok": "1"
+        }
+      ],
+      "state_faults": [
+        {
+          "kind": "truncated",
+          "rejected": "1",
+          "reason": "truncated",
+          "live": "0"
+        },
+        {
+          "kind": "crc_flip",
+          "rejected": "1",
+          "reason": "checksum",
+          "live": "0"
+        },
+        {
+          "kind": "magic",
+          "rejected": "1",
+          "reason": "magic",
+          "live": "0"
+        },
+        {
+          "kind": "empty",
+          "rejected": "1",
+          "reason": "truncated",
+          "live": "0"
+        }
+      ],
+      "stack_peak_below_entry_bytes": 1528,
+      "heap_probe": {
+        "greedy_total": "76349440",
+        "in_mem1": "22085632",
+        "in_mem2": "54263808",
+        "arena_full": "321911872",
+        "arena_after": "267594816",
+        "in_use_after": "245482440"
+      },
+      "heap_singles": [
+        {
+          "bytes": "16777216",
+          "within_mem2_arena": "0",
+          "at": "0x80265840"
+        },
+        {
+          "bytes": "33554432",
+          "within_mem2_arena": "1",
+          "at": "0x90002040"
+        },
+        {
+          "bytes": "50331648",
+          "within_mem2_arena": "1",
+          "at": "0x90002040"
+        },
+        {
+          "bytes": "62914560",
+          "within_mem2_arena": "0",
+          "at": "0x0"
+        }
+      ],
+      "failures": []
+    },
+    {
+      "number": 2,
+      "host_exit": "0x0",
+      "forced_stop": false,
+      "elapsed_seconds": 21.451,
+      "launch_counter": "halo-wii-memory-strategy-v1 2",
+      "guest_result": "pass",
+      "cycles_passed": "4/4",
+      "guest_elapsed_ms": 17969,
+      "graph_reports_equal_host": true,
+      "graph_cycles": 4,
+      "state_image_crcs": [
+        "03442b73",
+        "6d097cb7",
+        "a53087ab",
+        "d4046539"
+      ],
+      "state_crcs_equal_host": true,
+      "state_restored_from_previous_launch": true,
+      "state_file_bytes_after": 285964,
+      "stale_handle_rejections": 4,
+      "arena_restored_cycles": 4,
+      "datum_stale_rejections": [
+        "9/9",
+        "10/10",
+        "9/9",
+        "9/9"
+      ],
+      "graph_faults": [
+        {
+          "kind": "block_address_outside",
+          "rejected": "1",
+          "reason": "extent",
+          "offset": "5509392",
+          "expected_offset": "5509392"
+        },
+        {
+          "kind": "tag_table_ordinal",
+          "rejected": "1",
+          "reason": "table",
+          "offset": "80",
+          "expected_offset": "80"
+        },
+        {
+          "kind": "restored_bytes",
+          "walk_ok": "1"
+        }
+      ],
+      "state_faults": [
+        {
+          "kind": "truncated",
+          "rejected": "1",
+          "reason": "truncated",
+          "live": "0"
+        },
+        {
+          "kind": "crc_flip",
+          "rejected": "1",
+          "reason": "checksum",
+          "live": "0"
+        },
+        {
+          "kind": "magic",
+          "rejected": "1",
+          "reason": "magic",
+          "live": "0"
+        },
+        {
+          "kind": "empty",
+          "rejected": "1",
+          "reason": "truncated",
+          "live": "0"
+        }
+      ],
+      "stack_peak_below_entry_bytes": 1560,
+      "heap_probe": {
+        "greedy_total": "76349440",
+        "in_mem1": "22085632",
+        "in_mem2": "54263808",
+        "arena_full": "321911872",
+        "arena_after": "267594816",
+        "in_use_after": "245482440"
+      },
+      "heap_singles": [
+        {
+          "bytes": "16777216",
+          "within_mem2_arena": "0",
+          "at": "0x80265840"
+        },
+        {
+          "bytes": "33554432",
+          "within_mem2_arena": "1",
+          "at": "0x90002040"
+        },
+        {
+          "bytes": "50331648",
+          "within_mem2_arena": "1",
+          "at": "0x90002040"
+        },
+        {
+          "bytes": "62914560",
+          "within_mem2_arena": "0",
+          "at": "0x0"
+        }
+      ],
+      "failures": []
+    }
+  ],
+  "os_stability": "No System 41/1001/6008 events and no Application error events naming Dolphin during the session",
+  "development_iterations": [
+    {
+      "name": "dev-1",
+      "dirty": true,
+      "guest_result": "pass",
+      "runner_failure": "graph comparison mixed the cycle 0 full report with later cycles; runner fixed",
+      "heap_anomaly": "a binary search for the largest malloc (after the cycles, before the greedy probe) reported a 67,043,328-byte request as successful, larger than either bank; unexplained; the probe was replaced by fixed single requests"
+    },
+    {
+      "name": "dev-2",
+      "dirty": true,
+      "guest_result": "pass",
+      "observation": "with fixed single requests first, the heap switched to MEM2 at the 32 MiB request and the greedy probe then reached no MEM1 memory; the probe order was swapped"
+    }
+  ],
+  "limitations": [
+    "one map's tags and one structure BSP; other maps/BSPs not walked",
+    "no field byte-swapped: the relocated graph mixes native pointers with little-endian numbers",
+    "residual address-like words are counted, not classified field by field",
+    "game-state payloads are representative values, not engine objects; lruv cache and GPU decal vertices are rebuilt empty",
+    "engine element layouts on PPC unmeasured (the census compiles only on the upstream i686 ABI)",
+    "engine code/BSS size is an i686 object estimate, not a linked PPC image",
+    "texture and sound caches are reservations only",
+    "Dolphin timing, not hardware timing; physical Wii untested"
+  ]
+}

@@ -105,11 +105,12 @@ class PackageArtifactsTest(unittest.TestCase):
 
     def test_allowlist_covers_every_wii_target(self):
         names = package.allowlist()
-        for stem in ("probe", "gx_scene", "gx_materials", "geometry_view"):
+        for stem in ("probe", "gx_scene", "gx_materials", "geometry_view", "memory_strategy"):
             for suffix in (".elf", ".dol", ".map"):
                 self.assertIn(stem + suffix, names)
         self.assertIn("gx_materials-build-info.json", names)
-        self.assertEqual(len(names), 4 * 4 + 1)
+        self.assertIn("memory_strategy-build-info.json", names)
+        self.assertEqual(len(names), 5 * 4 + 1)
 
     def test_materials_scope_and_missing_artifact_are_checked(self):
         directory = self.staged()
