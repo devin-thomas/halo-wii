@@ -10,9 +10,10 @@ both run it, so their results compare tick by tick.
   main_new_map makes them.
 - Run: the engine's own 30 Hz scheduler (game_time_update), whose game_tick
   and game_frame are the engine's. The local player's input is a script
-  indexed by update number (one update per tick), put in each tick's update
-  as the update is built (update_client_handle_server_update), so every
-  render cadence gives every tick the same input.
+  indexed by update (one update a tick), handed to the update server before
+  each tick's update is built (real_map_local_ticks, in place of the local
+  game's update_client_local_ticks), so every render cadence gives every
+  tick the same input.
 - Digest after every tick: the whole game state's live bytes, allocation by
   allocation, in a form that does not depend on byte order: each word that
   points into the game state or the tag slot is first replaced by its
@@ -89,10 +90,10 @@ void real_map_unload(void);
 /* nonzero while a run is armed */
 int real_map_armed(void);
 
-/* the engine-side hooks (engine_hooks.c wraps game_tick and
-update_client_handle_server_update with them) */
+/* the engine-side hooks (engine_hooks.c's game_tick and
+update_client_local_ticks wrappers call them while a run is armed) */
 void real_map_after_tick(void);
-void real_map_scripted_actions(void *server_update, long update_number);
+void real_map_local_ticks(short ticks);
 
 /* (diagnostics) called after each tick's digest; and an allocation's address */
 void real_map_set_tick_observer(void (*observer)(long tick));

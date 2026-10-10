@@ -59,13 +59,18 @@ struct real_map_lights_globals_prefix
 
 extern struct real_map_lights_globals_prefix lights_globals_prefix __asm__("lights_globals");
 
-/* (player_queues_new.c's, private there) */
+/* (player_queues_new.c's struct server_update, private there: its action
+count, then an action per player; room for the ports' players) */
 struct real_map_server_update
 {
 	word action_count;
 	short pad;
-	struct player_action actions[1];
+	struct player_action actions[HALO_PORT_MAXIMUM_NETWORK_PLAYERS];
 };
+
+void update_server_handle_client_update(long machine_index, struct player_action *actions);
+void update_server_next_update(void);
+void update_server_build_server_update(long machine_index, void *update, long *update_number);
 
 enum
 {
@@ -113,6 +118,13 @@ struct real_map_globals
 	const unsigned long *reference;
 	void (*observer)(long tick);
 	unsigned long last_digest;
+	long updates_built;
+	/* the state's summary after the last tick (a frame may run a tick past it) */
+	unsigned long final_random_seed;
+	long final_objects;
+	long final_player_unit;
+	real_point3d final_player_position;
+	unsigned long final_tags;
 };
 
 static struct real_map_globals real_map_globals;
@@ -363,18 +375,37 @@ static unsigned long allocation_digest(
 }
 
 /* the allocations whose state follows the render frames, not only the
-ticks (measured: the only ones that differ between cadences, HWI-015B):
-- game time globals: the scheduler's remainder of frame time (leftover_dt);
-- game sound globals: game_sound_update, once a frame (game_frame);
-- first person weapons: the view model; its idle pose timer (ticks_until_pose)
-  draws on the engine's local random numbers, which the per-frame
-  presentation draws on too, so more frames a tick shift it.
-The simulation's digest leaves them out; the whole state's has them. */
+ticks. The simulation's digest leaves them out; the whole state's has them.
+- What game_frame (game.c) advances by frame time: particles
+  (particles_update), particle systems (particle_systems_update), contrails
+  (contrails_update), the objects' widgets: flags, antennas, glows, light
+  volumes and lightning (widgets_update), and the game sound
+  (game_sound_update).
+- Measured besides (HWI-015B: the only other allocations that differed
+  between cadences): the scheduler's remainder of frame time (game time
+  globals' leftover_dt); the player's screen effects (player effects: its
+  flashes and damage indicators count down by the ticks of the frame,
+  game_time_get_elapsed, and draw on the engine's local random numbers); and
+  the first-person view model (its idle pose timer draws on those local
+  random numbers, which the per-frame presentation draws on too). */
 static char const *const frame_coupled_allocations[] =
 {
 	"game time globals",
 	"game sound globals",
 	"first person weapons",
+	"player effects",
+	"particle",
+	"particle systems",
+	"particle system particles",
+	"contrail",
+	"contrail point",
+	"widget",
+	"flag",
+	"antenna",
+	"glow",
+	"glow particles",
+	"light volumes",
+	"lightnings",
 };
 
 static boolean allocation_frame_coupled(
@@ -683,16 +714,35 @@ static void scripted_action(
 	return;
 }
 
-void real_map_scripted_actions(
-	void *server_update,
-	long update_number)
+/* update_client_local_ticks (player_queues_new.c) as a local game runs it,
+but with this run's script as the local player's input of each tick: the
+local game takes its players' input once a frame and builds every tick's
+update from it (update_server_next_update copies each queue's action), so
+the action is handed to the server before each update is built rather than
+once before all of them. The update's number is the run's count of updates
+built, one a tick. */
+void real_map_local_ticks(
+	short ticks)
 {
-	struct real_map_server_update *update = server_update;
+	while (ticks-- > 0)
+	{
+		struct player_action actions[MAXIMUM_LOCAL_PLAYERS];
+		struct real_map_server_update update;
+		long update_number;
+		short index;
 
-	if (!real_map_globals.armed || !update || update->action_count < 1 || update_number < 0)
-		return;
-	/* the local player's queue is the first (the only player) */
-	scripted_action(update_number, &update->actions[0]);
+		for (index = 0; index < MAXIMUM_LOCAL_PLAYERS; index++)
+		{
+			csmemset(&actions[index], 0, sizeof(actions[index]));
+			actions[index].desired_weapon_index = NONE;
+			actions[index].desired_grenade_index = NONE;
+			actions[index].desired_zoom_level = NONE;
+		}
+		scripted_action(real_map_globals.updates_built++, &actions[0]);
+		update_server_handle_client_update(0, actions);
+		update_server_next_update();
+		update_server_build_server_update(0, &update, &update_number);
+	}
 
 	return;
 }
@@ -743,6 +793,17 @@ void real_map_after_tick(
 	}
 	if (real_map_globals.player_spawn_tick == NONE && local_player_unit() != NONE)
 		real_map_globals.player_spawn_tick = tick;
+	if (tick == REAL_MAP_TICKS)
+	{
+		long unit = local_player_unit();
+
+		real_map_globals.final_random_seed = *get_global_random_seed_address();
+		real_map_globals.final_objects = object_header_data ? object_header_data->actual_count : 0;
+		real_map_globals.final_player_unit = unit;
+		if (unit != NONE)
+			object_get_origin(unit, &real_map_globals.final_player_position);
+		real_map_globals.final_tags = tag_slot_digest();
+	}
 	if (real_map_globals.observer)
 		real_map_globals.observer(tick);
 
@@ -815,6 +876,9 @@ int real_map_begin(
 	csmemset(real_map_globals.tick_digests, 0, sizeof(real_map_globals.tick_digests));
 	crc_new(&real_map_globals.chain);
 	crc_new(&real_map_globals.simulation_chain);
+	real_map_globals.updates_built = 0;
+	real_map_globals.final_player_unit = NONE;
+	real_map_globals.final_tags = 0;
 	csmemset(real_map_globals.simulation_at, 0, sizeof(real_map_globals.simulation_at));
 	real_map_globals.last_digest = 0;
 	/* the engine's local random numbers (presentation: a first-person
@@ -848,7 +912,7 @@ int real_map_frame(
 void real_map_end(
 	struct real_map_result *result)
 {
-	long unit = local_player_unit();
+	long unit = real_map_globals.final_player_unit;
 	short index;
 
 	csmemset(result, 0, sizeof(*result));
@@ -866,18 +930,15 @@ void real_map_end(
 		result->simulation_at[index] = real_map_globals.simulation_at[index];
 	}
 	result->tags_at_start = real_map_globals.tags_at_start;
-	result->tags_at_end = tag_slot_digest();
-	result->random_seed = *get_global_random_seed_address();
-	result->objects = object_header_data ? object_header_data->actual_count : 0;
+	result->tags_at_end = real_map_globals.final_tags;
+	result->random_seed = real_map_globals.final_random_seed;
+	result->objects = real_map_globals.final_objects;
 	result->player_unit = unit;
 	if (unit != NONE)
 	{
-		real_point3d origin;
-
-		object_get_origin(unit, &origin);
-		result->player_position[0] = origin.x;
-		result->player_position[1] = origin.y;
-		result->player_position[2] = origin.z;
+		result->player_position[0] = real_map_globals.final_player_position.x;
+		result->player_position[1] = real_map_globals.final_player_position.y;
+		result->player_position[2] = real_map_globals.final_player_position.z;
 	}
 	result->player_spawn_tick = real_map_globals.player_spawn_tick;
 	result->first_divergent_tick = real_map_globals.first_divergent_tick;

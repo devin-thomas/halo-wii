@@ -12,8 +12,8 @@ engine entry points the Wii build wraps (tools/wii/engine_build.py WRAPPED):
   tick, frame and scripted input source while one is
   (fixed_step_scenario.h). After the engine's own game_tick, a real map's
   run digests the game state (real_map_scenario.h, HWI-015B).
-- update_client_handle_server_update: a real map's run puts its scripted
-  input in each tick's update as the update is built.
+- update_client_local_ticks: a real map's run hands its scripted input to
+  the update server before each tick's update is built.
 
 Compiled as an engine unit.
 */
@@ -219,21 +219,12 @@ void __real_update_client_local_ticks(short ticks);
 void __wrap_update_client_local_ticks(
 	short ticks)
 {
-	if (!fixed_step_scenario_armed())
+	/* (a real map's run: its script is the local player's input, tick by
+	tick, real_map_scenario.c) */
+	if (real_map_armed())
+		real_map_local_ticks(ticks);
+	else if (!fixed_step_scenario_armed())
 		__real_update_client_local_ticks(ticks);
-}
-
-/* each tick's update, as update_server_next_update builds it: a real map's
-run puts its scripted input in it first (the update's number is its tick's) */
-struct server_update;
-void __real_update_client_handle_server_update(struct server_update *update, long update_number);
-
-void __wrap_update_client_handle_server_update(
-	struct server_update *update,
-	long update_number)
-{
-	real_map_scripted_actions(update, update_number);
-	__real_update_client_handle_server_update(update, update_number);
 }
 
 /* a local game ticks only as far as its players' input reaches; the
@@ -299,6 +290,23 @@ void __wrap_texture_cache_close(
 	void)
 {
 	wii_unsupported("render", "texture_cache_close (no texture cache: no rasterizer)");
+}
+
+/* A bitmap's texture (texture_cache.h _texture_cache_bitmap_get_hardware_format,
+which loads it when asked): with no texture cache there is none, and the
+engine takes its own path for a texture not available. The draw paths draw
+nothing of it; a transient decal (decals.c decal_new_from_collision) is not
+made, so a shot leaves no mark in the game state's decals: a measured gap
+until the Wii has a texture cache (HWI-032). */
+struct bitmap_data;
+
+void *__wrap__texture_cache_bitmap_get_hardware_format(
+	struct bitmap_data *bitmap,
+	boolean block,
+	boolean load)
+{
+	wii_unsupported("render", "texture_cache_bitmap_get_hardware_format (no texture cache: none)");
+	return NULL;
 }
 
 /* The sound cache likewise (source/cache/xbox_sound_cache.c) is made by

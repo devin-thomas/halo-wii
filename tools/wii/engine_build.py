@@ -96,13 +96,14 @@ PLATFORM_DIALECT_FLAGS = ["-std=gnu11", "-D_GNU_SOURCE", "-DHALO_LINUX_PLATFORM_
 # fixed-step scenario while no map is loaded, else the engine's own.
 WRAPPED = ("main", "halt_and_catch_fire", "game_tick", "game_frame", "update_client_get_maximum_possible_server_time",
            "update_client_local_ticks", "rasterizer_decals_initialize", "rasterizer_decals_dispose",
-           # HWI-015B: a real map's scripted input, and the game state's
-           # allocations, recorded for its digests (real_map_scenario.c)
-           "update_client_handle_server_update", "game_state_malloc", "game_state_gpu_malloc",
+           # HWI-015B: the game state's allocations, recorded for a real
+           # map's digests (real_map_scenario.c)
+           "game_state_malloc", "game_state_gpu_malloc",
            "game_state_data_new", "game_state_memory_pool_new", "game_state_lruv_cache_new",
            # HWI-015B: the texture cache rasterizer_initialize would have made
            "texture_cache_open", "texture_cache_close", "sound_cache_open", "sound_cache_close",
-           "predicted_resources_precache", "_rasterizer_decals_dispose_from_old_map")
+           "predicted_resources_precache", "_rasterizer_decals_dispose_from_old_map",
+           "_texture_cache_bitmap_get_hardware_format")
 # Diagnostic storage (HWI-015D): "omit" (the default) compiles the engine
 # without the AI's debug records and the profiler's frame history; "keep"
 # compiles them as the other ports do, and then wraps ai_debug_initialize
