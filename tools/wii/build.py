@@ -104,7 +104,8 @@ def main() -> int:
     parser.add_argument("--stem", default="probe", help="artifact stem for the manifest step")
     parser.add_argument("--scope", default="asset_free_probe", help="manifest scope label")
     parser.add_argument("objects", nargs="*")
-    args = parser.parse_args()
+    # Intermixed parsing keeps trailing object files positional on Python < 3.12.
+    args = parser.parse_intermixed_args()
     try:
         config = json.loads(args.config.read_text(encoding="utf-8"))
         root = Path(config["devkitpro"])
