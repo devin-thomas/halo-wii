@@ -1,0 +1,436 @@
+{
+  "schema_version": 1,
+  "tickets": [
+    "HWI-007A",
+    "HWI-016A"
+  ],
+  "date": "2026-10-10",
+  "scope": "one_owned_BSP_material_section_streamed_and_rendered_in_stock_dolphin_wii_mode",
+  "source_commit": "2ba65deaade9b85db95ec14f400b5863e5fa251b",
+  "source_dirty": false,
+  "build_id": "207ac4aede0d411f",
+  "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+  "compile_flags": [
+    "-std=c11",
+    "-O2",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-ffp-contract=off",
+    "-DGEKKO",
+    "-mrvl",
+    "-mcpu=750",
+    "-meabi",
+    "-mhard-float"
+  ],
+  "artifacts": {
+    "geometry_view.elf": {
+      "sha256": "817798ce9645edcd413685a3a92aed9756fe76e34bca3047af8134208cedcfae",
+      "bytes": 2608672
+    },
+    "geometry_view.dol": {
+      "sha256": "5d4e2e51431d086c3bdc55dd1091c465ad7591dc4e67e90e69d19d321fbb4565",
+      "bytes": 543072
+    },
+    "geometry_view.map": {
+      "sha256": "733f05a1a05b7dca9c66096ae90c1b4d3dcb7b1277caf77db7b57f889410beb7",
+      "bytes": 851218
+    }
+  },
+  "auto_exit_backstop_frames": 1800,
+  "input_identity": {
+    "section_sha256": "79cb1e25375dcac92544a0269012b03707ec1c98ecfedbf69757855d59627565",
+    "bsp_ordinal": 12,
+    "material": 3,
+    "surfaces": 2990,
+    "vertices": 5863,
+    "tag_bytes": 16995988,
+    "bsp_bytes": 1288192,
+    "staging": "private blobs and manifest copied with mtools mcopy into a copy of a Dolphin-created SD image; never in Git"
+  },
+  "memory_plan": {
+    "mem2_usable_bytes": 54284128,
+    "plan_required_bytes": 50579712,
+    "mem2_remaining_bytes_placement0": 3704416,
+    "mem2_remaining_bytes_placement1": 3700320,
+    "reserve_bytes": 2097152,
+    "slots": [
+      "tag slot 23,068,672 (tags + selected BSP at its select offset)",
+      "game state placeholder",
+      "sound placeholder 4,194,304",
+      "two 65,536-byte IO buffers",
+      "BSP and material controls",
+      "material workspace 16,384",
+      "positions 70,368 (5,863 x 12, 32-aligned)",
+      "indices 17,952",
+      "shades 11,968"
+    ],
+    "mem1": "heap in use 1,669,488 bytes after load (FIFO 262,144 + two XFBs 614,400 each + libogc); no growth through cycles",
+    "unmeasured": [
+      "IOS/MEM2 use outside the arena",
+      "GP FIFO occupancy peak",
+      "stack peak (sampled 624 bytes)",
+      "system fragmentation beyond the two placements"
+    ],
+    "placeholder_note": "state and sound slots are reservations, not engine pools; this is not the full-game memory strategy"
+  },
+  "emulator": {
+    "dolphin_executable_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+    "profile": "new isolated Wii-mode profile; stock clock/memory; no cheats/overclock/RAM override; D3D 1x; EFB CPU access enabled",
+    "arguments": [
+      "Dolphin.exe",
+      "--user",
+      "<isolated profile>",
+      "--batch",
+      "--video_backend",
+      "D3D",
+      "--exec",
+      "geometry_view.dol",
+      "--movie",
+      "geometry-input.dtm"
+    ]
+  },
+  "input": {
+    "kind": "authored DTM, standard GC pad port 1, repeating pattern; virtual input",
+    "movie_sha256": "f66418ae74e62d5ba199c0129477d5a33216d9b700fe65c9a63334581576ebc5",
+    "pattern": [
+      [
+        "stick_right",
+        100
+      ],
+      [
+        "neutral",
+        40
+      ],
+      [
+        "stick_up",
+        60
+      ],
+      [
+        "neutral",
+        40
+      ],
+      [
+        "cstick_down_zoom_out",
+        80
+      ],
+      [
+        "neutral",
+        40
+      ],
+      [
+        "b_reset",
+        4
+      ],
+      [
+        "neutral",
+        100
+      ],
+      [
+        "stick_left",
+        60
+      ],
+      [
+        "neutral",
+        70
+      ],
+      [
+        "start",
+        6
+      ]
+    ],
+    "repeats": 60
+  },
+  "runs": [
+    {
+      "number": 1,
+      "guest_scope": "passed",
+      "end": {
+        "target": "geometry_view",
+        "build": "207ac4aede0d411f",
+        "cycles": "4",
+        "stale_rejected": "4",
+        "faults_rejected": "2",
+        "failures": "0",
+        "result": "pass"
+      },
+      "cycles": [
+        {
+          "n": "0",
+          "placement": "0",
+          "required": "50579712",
+          "charge": "50579712",
+          "remaining": "3704416",
+          "load_us": "1632645",
+          "index_crc": "bad05748",
+          "position_crc": "db11989c",
+          "degenerate": "0",
+          "floor_tris": "638",
+          "radius": "22.81",
+          "visible": "63/768",
+          "grid_crc": "aac744a4",
+          "same_as_first": "1"
+        },
+        {
+          "n": "1",
+          "placement": "1",
+          "required": "50579712",
+          "charge": "50583808",
+          "remaining": "3700320",
+          "load_us": "1632666",
+          "index_crc": "bad05748",
+          "position_crc": "db11989c",
+          "degenerate": "0",
+          "floor_tris": "638",
+          "radius": "22.81",
+          "visible": "63/768",
+          "grid_crc": "aac744a4",
+          "same_as_first": "1"
+        },
+        {
+          "n": "2",
+          "placement": "0",
+          "required": "50579712",
+          "charge": "50579712",
+          "remaining": "3704416",
+          "load_us": "1632202",
+          "index_crc": "bad05748",
+          "position_crc": "db11989c",
+          "degenerate": "0",
+          "floor_tris": "638",
+          "radius": "22.81",
+          "visible": "63/768",
+          "grid_crc": "aac744a4",
+          "same_as_first": "1"
+        },
+        {
+          "n": "3",
+          "placement": "1",
+          "required": "50579712",
+          "charge": "50583808",
+          "remaining": "3700320",
+          "load_us": "1632667",
+          "index_crc": "bad05748",
+          "position_crc": "db11989c",
+          "degenerate": "0",
+          "floor_tris": "638",
+          "radius": "22.81",
+          "visible": "63/768",
+          "grid_crc": "aac744a4",
+          "same_as_first": "1"
+        }
+      ],
+      "interactive": {
+        "activity": "1",
+        "stick_seen": "1",
+        "input_yaw": "8.418",
+        "input_zoom": "46.72",
+        "resets": "2",
+        "exit": "pad_start"
+      },
+      "faults": [
+        {
+          "kind": "bsp_crc_flip",
+          "reason": "crc",
+          "clean": "1"
+        },
+        {
+          "kind": "tag_length_minus_one",
+          "reason": "trailing",
+          "clean": "1"
+        }
+      ],
+      "malformed_manifest": {
+        "manifest_rejections": "3/3"
+      },
+      "memory": {
+        "mem2_bytes": "54284128",
+        "plan_required_max": "50579712",
+        "mem2_unplanned": "3704416",
+        "heap_start": "178320",
+        "heap_loaded": "1669488",
+        "heap_end": "1669488",
+        "mem2_restored": "1",
+        "state_sound": "placeholder_reservations"
+      },
+      "gx": {
+        "fifo_bytes": "262144",
+        "fifo_submitted_peak": "77056",
+        "render_max_us": "305",
+        "frames": "804"
+      },
+      "stack": {
+        "depth_sampled": "624",
+        "scope": "frame_address_samples_not_peak"
+      },
+      "run_counter": "halo-wii-geometry-v1 1",
+      "host_lifecycle": {
+        "exit_code": "0x0",
+        "forced_stop": false,
+        "elapsed_seconds": 26.274
+      },
+      "frame_dumps": {
+        "count": 801,
+        "selected_sha256": {
+          "framedump_100.png": "080c0debd5605ac8be0ea6714f680259087668db9c58f5d730775828b0a4f35a",
+          "framedump_520.png": "1c27bccaeb5aa5642bdc4983c42a74305a702c0da7579c39fca3823434cedef0"
+        }
+      }
+    },
+    {
+      "number": 2,
+      "guest_scope": "passed",
+      "end": {
+        "target": "geometry_view",
+        "build": "207ac4aede0d411f",
+        "cycles": "4",
+        "stale_rejected": "4",
+        "faults_rejected": "2",
+        "failures": "0",
+        "result": "pass"
+      },
+      "cycles": [
+        {
+          "n": "0",
+          "placement": "0",
+          "required": "50579712",
+          "charge": "50579712",
+          "remaining": "3704416",
+          "load_us": "1632415",
+          "index_crc": "bad05748",
+          "position_crc": "db11989c",
+          "degenerate": "0",
+          "floor_tris": "638",
+          "radius": "22.81",
+          "visible": "63/768",
+          "grid_crc": "aac744a4",
+          "same_as_first": "1"
+        },
+        {
+          "n": "1",
+          "placement": "1",
+          "required": "50579712",
+          "charge": "50583808",
+          "remaining": "3700320",
+          "load_us": "1632666",
+          "index_crc": "bad05748",
+          "position_crc": "db11989c",
+          "degenerate": "0",
+          "floor_tris": "638",
+          "radius": "22.81",
+          "visible": "63/768",
+          "grid_crc": "aac744a4",
+          "same_as_first": "1"
+        },
+        {
+          "n": "2",
+          "placement": "0",
+          "required": "50579712",
+          "charge": "50579712",
+          "remaining": "3704416",
+          "load_us": "1632202",
+          "index_crc": "bad05748",
+          "position_crc": "db11989c",
+          "degenerate": "0",
+          "floor_tris": "638",
+          "radius": "22.81",
+          "visible": "63/768",
+          "grid_crc": "aac744a4",
+          "same_as_first": "1"
+        },
+        {
+          "n": "3",
+          "placement": "1",
+          "required": "50579712",
+          "charge": "50583808",
+          "remaining": "3700320",
+          "load_us": "1632667",
+          "index_crc": "bad05748",
+          "position_crc": "db11989c",
+          "degenerate": "0",
+          "floor_tris": "638",
+          "radius": "22.81",
+          "visible": "63/768",
+          "grid_crc": "aac744a4",
+          "same_as_first": "1"
+        }
+      ],
+      "interactive": {
+        "activity": "1",
+        "stick_seen": "1",
+        "input_yaw": "8.418",
+        "input_zoom": "46.72",
+        "resets": "2",
+        "exit": "pad_start"
+      },
+      "faults": [
+        {
+          "kind": "bsp_crc_flip",
+          "reason": "crc",
+          "clean": "1"
+        },
+        {
+          "kind": "tag_length_minus_one",
+          "reason": "trailing",
+          "clean": "1"
+        }
+      ],
+      "malformed_manifest": {
+        "manifest_rejections": "3/3"
+      },
+      "memory": {
+        "mem2_bytes": "54284128",
+        "plan_required_max": "50579712",
+        "mem2_unplanned": "3704416",
+        "heap_start": "178320",
+        "heap_loaded": "1669488",
+        "heap_end": "1669488",
+        "mem2_restored": "1",
+        "state_sound": "placeholder_reservations"
+      },
+      "gx": {
+        "fifo_bytes": "262144",
+        "fifo_submitted_peak": "77056",
+        "render_max_us": "305",
+        "frames": "804"
+      },
+      "stack": {
+        "depth_sampled": "624",
+        "scope": "frame_address_samples_not_peak"
+      },
+      "run_counter": "halo-wii-geometry-v1 2",
+      "host_lifecycle": {
+        "exit_code": "0x0",
+        "forced_stop": false,
+        "elapsed_seconds": 26.311
+      },
+      "frame_dumps": {
+        "count": 801,
+        "selected_sha256": {
+          "framedump_100.png": "080c0debd5605ac8be0ea6714f680259087668db9c58f5d730775828b0a4f35a",
+          "framedump_520.png": "1c27bccaeb5aa5642bdc4983c42a74305a702c0da7579c39fca3823434cedef0"
+        }
+      }
+    }
+  ],
+  "os_stability": "No System 41/1001/6005/6006/6008 events and no Application 1000/1002 events naming Dolphin in the window covering both runs; last boot predates the session. Session-scoped observation only.",
+  "development_iterations": [
+    {
+      "name": "dev-1",
+      "result": "fail",
+      "finding": "Load, CRCs, views and stale rejection passed; the EFB coverage threshold (1/8 of a 16x12 grid) was arbitrary for this sparse section (8/192). Frame dumps showed correct geometry."
+    },
+    {
+      "name": "dev-2",
+      "result": "pass",
+      "finding": "Denser 32x24 grid, closer camera (1.6x radius), floor of 16 samples; identical grid CRC across four cycles. One-time 200-byte newlib float-format allocation then moved before the heap baseline."
+    }
+  ],
+  "limitations": [
+    "Back-face culling disabled; winding of this content not yet qualified",
+    "Flat per-triangle diagnostic shading; no Halo shaders, textures or lightmaps",
+    "Visual recognisability judged from frame dumps only",
+    "Physical Wii untested"
+  ]
+}

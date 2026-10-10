@@ -198,6 +198,32 @@
           "evidence": []
         }
       }
+    },
+    {
+      "id": "geometry_view",
+      "environments": {
+        "compile": {
+          "state": "pass",
+          "reason": "Clean-source strict C11 build of wii_geometry_view; no embedded game data.",
+          "evidence": [
+            "evidence/2026-10-10-geometry-view.md",
+            "evidence/2026-10-10-geometry-view.json"
+          ]
+        },
+        "dolphin": {
+          "state": "pass",
+          "reason": "Scoped diagnostic: one owned BSP section streamed and rendered; two cold launches, four identical load/use/unload cycles each, stale/malformed rejection, no heap growth; host exit 0x0. Not Halo materials or gameplay.",
+          "evidence": [
+            "evidence/2026-10-10-geometry-view.md",
+            "evidence/2026-10-10-geometry-view.json"
+          ]
+        },
+        "hardware": {
+          "state": "untested",
+          "reason": "Not run on a physical Wii.",
+          "evidence": []
+        }
+      }
     }
   ],
   "updated": "2026-10-10",

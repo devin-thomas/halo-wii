@@ -9,6 +9,7 @@ and [build setup](BUILDING.md). Dolphin and physical Wii remain separate gates.
 |---|---|---|---|
 | Asset-free Wii diagnostic | Passed: asset-free probe | Blocked: host teardown | Untested |
 | Asset-free GX scene | Passed: clean build | Passed: scoped guest, two cold launches, host exit 0x0 | Untested |
+| Real geometry section (diagnostic) | Passed: clean build | Passed: scoped guest, two cold launches, host exit 0x0 | Untested |
 | Halo combat slice | Untested | Untested | Untested |
 | Complete campaign | Untested | Untested | Untested |
 | IR / motion | Untested | Untested | Untested |
@@ -299,3 +300,11 @@ The [selected geometry section](evidence/2026-10-10-geometry-section.md) is one
 real environment material: 2,990 triangles and 5,863 vertices, all indices in
 bounds and all positions finite, 88,296 native bytes. Repeated selection is
 byte-identical. It has not been rendered yet.
+
+[Real Halo geometry](evidence/2026-10-10-geometry-view.md) now renders natively:
+one owned BSP section (2,990 original triangles) streams from the emulated SD
+card into a measured MEM2 plan (50.58 MB of 54.28 MB) and draws through GX with
+flat diagnostic shading. Across two cold launches, four load/use/unload cycles
+each reproduce an identical sampled frame, stale views and malformed inputs
+reject, and the heap does not grow. Halo materials, lightmaps, gameplay and
+physical Wii remain untested.
