@@ -280,6 +280,18 @@ symbols in this file:
 
 /* ---------- constants */
 
+/* port: HALO_PROFILE_FRAME_HISTORY 0 leaves out the history of the last
+MAXIMUM_PROFILE_FRAMES frames' timings (1,124,352 bytes; HWI-015D, the Wii
+build's default). Only the profile graph (interface.c, profile_graph) and the
+frame dump (profile_dump_frames) read it; nothing in the game does (the audit:
+docs/wii/evidence/2026-10-10-diagnostics-storage-audit.md). Without it the
+graph draws no frames and the frame dump writes each frame as it ends; the
+section profile (profile_dump, profile_display) is unchanged. Every other
+build keeps the history (1). */
+#ifndef HALO_PROFILE_FRAME_HISTORY
+#define HALO_PROFILE_FRAME_HISTORY 1
+#endif
+
 enum
 {
 	MAXIMUM_PROFILE_SECTIONS = 256,
@@ -387,9 +399,19 @@ struct profile_globals
 	boolean framedump_flush_pending;
 	short current_frame_history_count;
 	short current_frame_history_index;
+#if HALO_PROFILE_FRAME_HISTORY
 	struct profile_frame frames[MAXIMUM_PROFILE_FRAMES];
+#endif
 	struct profile_frame current_frame;
 };
+
+/* a frame of the history (port: without the history, which then stays empty,
+the current frame) */
+#if HALO_PROFILE_FRAME_HISTORY
+#define PROFILE_HISTORY_FRAME(index) (&profile_globals.frames[(index)])
+#else
+#define PROFILE_HISTORY_FRAME(index) (&profile_globals.current_frame)
+#endif
 
 /* ---------- prototypes */
 
@@ -633,7 +655,7 @@ long profile_frame_get_stalls(
 	short *stall_index,
 	real *stall_msec)
 {
-	struct profile_frame *frame = &profile_globals.frames[iterator->current_buffer_index];
+	struct profile_frame *frame = PROFILE_HISTORY_FRAME(iterator->current_buffer_index);
 
 	match_assert("c:\\halo\\SOURCE\\cseries\\profile.c", 1480, (iterator->current_buffer_index >= 0) && (iterator->current_buffer_index < profile_globals.current_frame_history_count));
 	match_assert("c:\\halo\\SOURCE\\cseries\\profile.c", 1481, iterator->current_buffer_index != profile_globals.current_frame_history_index);
@@ -748,7 +770,7 @@ real profile_frame_get_value(
 	short section_index)
 {
 	struct profile_frame *frame =
-		&profile_globals.frames[iterator->current_buffer_index];
+		PROFILE_HISTORY_FRAME(iterator->current_buffer_index);
 	real value = 0.0f;
 
 	match_assert("c:\\halo\\SOURCE\\cseries\\profile.c", 1239,
@@ -1008,7 +1030,7 @@ boolean profile_frame_iterator_next(
 
 		if (info)
 		{
-			info->vertical_blank_index = profile_globals.frames[buffer_index].vertical_blank_index;
+			info->vertical_blank_index = PROFILE_HISTORY_FRAME(buffer_index)->vertical_blank_index;
 		}
 
 		iterator->next_buffer_index = (iterator->current_buffer_index+MAXIMUM_PROFILE_FRAMES-1)%MAXIMUM_PROFILE_FRAMES;
@@ -1497,10 +1519,12 @@ void profile_frame_end(
 
 	profile_timesection_inherit(&profile_globals.current_frame.frame, &profile_globals.current_frame.idle);
 
+#if HALO_PROFILE_FRAME_HISTORY
 	profile_globals.frames[profile_globals.current_frame_history_index] = profile_globals.current_frame;
 
 	profile_globals.current_frame_history_count = MAX(profile_globals.current_frame_history_count, profile_globals.current_frame_history_index+1);
 	profile_globals.current_frame_history_index = (profile_globals.current_frame_history_index+1)%MAXIMUM_PROFILE_FRAMES;
+#endif
 
 	if (profile_globals.current_frame.lapsed_msec_valid)
 	{
@@ -1518,6 +1542,9 @@ void profile_frame_end(
 
 	if (profile_dump_frames || (profile_dump_lost_frames && profile_globals.lost_frame_count<=3))
 	{
+#if !HALO_PROFILE_FRAME_HISTORY
+		profile_dump_frame(&profile_globals.current_frame);
+#else
 		frame_index = (profile_globals.current_frame_history_index+MAXIMUM_PROFILE_FRAMES-3)%MAXIMUM_PROFILE_FRAMES;
 
 		do
@@ -1530,6 +1557,7 @@ void profile_frame_end(
 			frame_index = (frame_index+1)%MAXIMUM_PROFILE_FRAMES;
 		}
 		while (frame_index!=profile_globals.current_frame_history_index);
+#endif
 	}
 
 	return;

@@ -25,6 +25,14 @@ services the engine calls (port/wii/engine), and converts it to a DOL.
 - Gates before the link (tools/wii/build.py): no engine object references a
   newlib wide-character function (ADR-018), and no object uses thread-local
   storage (libogc has no thread pointer).
+- Diagnostic storage (HWI-015D, configure.py --wii-diagnostic-storage): by
+  default the engine units compile without the AI's debug records
+  (HALO_AI_DEBUG_RECORDS 0, source/ai/ai_debug.h) and the profiler's frame
+  history (HALO_PROFILE_FRAME_HISTORY 0, source/cseries/profile.c), which the
+  audit (docs/wii/evidence/2026-10-10-diagnostics-storage-audit.md) shows
+  nothing in the game reads; ai_debug_initialize then runs as upstream's.
+  "keep" compiles them as the other ports do, and ai_debug_initialize, whose
+  records then need 30.36 MB of heap, is reported unsupported.
 """
 
 import json
@@ -83,9 +91,24 @@ PLATFORM_DIALECT_FLAGS = ["-std=gnu11", "-D_GNU_SOURCE", "-DHALO_LINUX_PLATFORM_
 # Wii build does not have; game_tick/game_frame run the controlled
 # fixed-step scenario while no map is loaded, else the engine's own.
 WRAPPED = ("main", "halt_and_catch_fire", "game_tick", "game_frame", "update_client_get_maximum_possible_server_time",
-           "update_client_local_ticks", "rasterizer_decals_initialize", "rasterizer_decals_dispose",
-           "ai_debug_initialize")
-LINK_FLAGS = ["-Wl,--gc-sections", *(f"-Wl,--wrap={name}" for name in WRAPPED)]
+           "update_client_local_ticks", "rasterizer_decals_initialize", "rasterizer_decals_dispose")
+# Diagnostic storage (HWI-015D): "omit" (the default) compiles the engine
+# without the AI's debug records and the profiler's frame history; "keep"
+# compiles them as the other ports do, and then wraps ai_debug_initialize
+# (port/wii/engine/engine_hooks.c), whose records do not fit.
+DIAGNOSTIC_STORAGE = ("omit", "keep")
+DIAGNOSTIC_STORAGE_OMITTED = ["-DHALO_AI_DEBUG_RECORDS=0", "-DHALO_PROFILE_FRAME_HISTORY=0"]
+
+
+def wrapped(diagnostic_storage: str = "omit") -> Tuple[str, ...]:
+    return WRAPPED + (("ai_debug_initialize",) if diagnostic_storage == "keep" else ())
+
+
+def link_flags(diagnostic_storage: str = "omit") -> List[str]:
+    return ["-Wl,--gc-sections", *(f"-Wl,--wrap={name}" for name in wrapped(diagnostic_storage))]
+
+
+LINK_FLAGS = link_flags()
 
 
 def _port_config() -> dict:
@@ -123,9 +146,12 @@ def object_path(unit: Path) -> Path:
     return ENGINE_BUILD / "obj" / Path(unit.as_posix().replace(" ", "_")).with_suffix(".o")
 
 
-def engine_flags(semantic_flags: List[str]) -> List[str]:
+def engine_flags(semantic_flags: List[str], diagnostic_storage: str = "omit") -> List[str]:
+    if diagnostic_storage not in DIAGNOSTIC_STORAGE:
+        raise ValueError(f"diagnostic storage must be one of {DIAGNOSTIC_STORAGE}")
     game = _port_config()["game"]
-    return [*semantic_flags, *ENGINE_DIALECT_FLAGS,
+    omitted = DIAGNOSTIC_STORAGE_OMITTED if diagnostic_storage == "omit" else []
+    return [*semantic_flags, *ENGINE_DIALECT_FLAGS, *omitted,
             "-include", PREFIX.as_posix(), "-include", SEMANTICS.as_posix(),
             "-Iport/linux/include", "-iquote", LINUX_GAME.as_posix(),
             *(f"-D{define}" for define in game.get("defines", [])),
@@ -141,10 +167,10 @@ def platform_flags(semantic_flags: List[str]) -> List[str]:
             "-Isource", "-Isource/cseries", "-idirafter", XDK_INCLUDE.as_posix()]
 
 
-def flag_sets(semantic_flags: List[str]) -> Dict[str, List[str]]:
+def flag_sets(semantic_flags: List[str], diagnostic_storage: str = "omit") -> Dict[str, List[str]]:
     platform = platform_flags(semantic_flags)
     return {
-        "engine": engine_flags(semantic_flags),
+        "engine": engine_flags(semantic_flags, diagnostic_storage),
         # the Linux layer is written for -Wall without -Werror
         "platform_reused": [*platform, "-w"],
         # msvc_wide.c keeps wcstok's position in a __thread variable; libogc
@@ -196,11 +222,12 @@ def engine_inputs() -> List[Path]:
             *REPLACED.values(), *sorted(set(headers))]
 
 
-def generate_engine_build(n, semantic_flags: List[str], libraries: List[Path]) -> None:
+def generate_engine_build(n, semantic_flags: List[str], libraries: List[Path],
+                          diagnostic_storage: str = "omit") -> None:
     """the wii_engine target; tools/wii_build.py has written local-config.json
     and build_id.h and defined the wii_cc_flags/wii_link/wii_dol/wii_manifest rules"""
     flag_files = {}
-    for name, flags in flag_sets(semantic_flags).items():
+    for name, flags in flag_sets(semantic_flags, diagnostic_storage).items():
         path = ENGINE_BUILD / f"flags-{name}.json"
         text = json.dumps(flags, indent=1) + "\n"
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -259,7 +286,8 @@ def generate_engine_build(n, semantic_flags: List[str], libraries: List[Path]) -
                                               BUILD / "local-config.json", *libraries],
             implicit_outputs=link_map,
             variables={"objects": all_list.as_posix(), "engine_objects": engine_list.as_posix(),
-                       "link_flags": " ".join(f"--extra-link-flag={flag}" for flag in LINK_FLAGS)})
+                       "link_flags": " ".join(f"--extra-link-flag={flag}"
+                                              for flag in link_flags(diagnostic_storage))})
     n.build(dol, "wii_dol", elf, implicit=BUILD / "local-config.json")
     manifest = BUILD / "engine-build-info.json"
     n.build(manifest, "wii_manifest", implicit=[elf, dol, link_map, BUILD / "local-config.json"],

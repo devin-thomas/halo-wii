@@ -397,6 +397,7 @@ int __wrap_main(void)
 		wii_log("STAGE game_initialize result=%d game_state_used=%lu heap_in_use=%d (before %d) unsupported=%lu\n",
 			game, wii_engine_game_state_used(), mallinfo().uordblks, before.uordblks, wii_unsupported_names());
 		check(game, "game_initialize");
+		check(wii_engine_report_diagnostic_storage(), "diagnostic_storage");
 		stage = "engine_report";
 		wii_engine_report_warning("HWI-015 engine warning report check");
 		/* the engine keeps d:\debug.txt open, and libfat writes a file's size

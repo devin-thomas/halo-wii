@@ -266,10 +266,18 @@ void ai_debug_initialize(
 	ai_debug.last_render_id = 1;
 	ai_debug.render = TRUE;
 
+#if HALO_AI_DEBUG_RECORDS
 	actor_debug_array = actor_debug_array==NULL ? (struct actor_debug_info *)debug_malloc(sizeof(*actor_debug_array) * MAXIMUM_NUMBER_OF_ACTORS, FALSE, "c:\\halo\\SOURCE\\ai\\ai_debug.c", 147) : actor_debug_array;
 	actor_path_debug_array = actor_path_debug_array==NULL ? (struct path_debug_storage *)debug_malloc(sizeof(*actor_path_debug_array) * MAXIMUM_NUMBER_OF_ACTOR_PATHS, FALSE, "c:\\halo\\SOURCE\\ai\\ai_debug.c", 148) : actor_path_debug_array;
 
 	match_assert("c:\\halo\\SOURCE\\ai\\ai_debug.c", 150, actor_debug_array && actor_path_debug_array);
+#else
+	/* port: the one record every actor's debug information is written to
+	(ACTOR_DEBUG_INFO); no path debug storage */
+	actor_debug_array = actor_debug_array==NULL ? (struct actor_debug_info *)debug_malloc(sizeof(*actor_debug_array), FALSE, "c:\\halo\\SOURCE\\ai\\ai_debug.c", 147) : actor_debug_array;
+
+	match_assert("c:\\halo\\SOURCE\\ai\\ai_debug.c", 150, actor_debug_array);
+#endif
 
 	return;
 }
@@ -320,10 +328,14 @@ void ai_debug_clear_storage(
 {
 	match_assert("c:\\halo\\SOURCE\\ai\\ai_debug.c", 208, actor_debug_array);
 
+#if HALO_AI_DEBUG_RECORDS
 	memset(actor_debug_array, 0, sizeof(*actor_debug_array) * MAXIMUM_NUMBER_OF_ACTORS);
 	match_assert("c:\\halo\\SOURCE\\ai\\ai_debug.c", 211, actor_path_debug_array)
 
 	memset(actor_path_debug_array, 0, sizeof(*actor_path_debug_array) * MAXIMUM_NUMBER_OF_ACTOR_PATHS);
+#else
+	memset(actor_debug_array, 0, sizeof(*actor_debug_array));
+#endif
 
 	return;
 }
@@ -331,6 +343,7 @@ void ai_debug_clear_storage(
 void ai_debug_actor_deleted(
 	long actor_index)
 {
+#if HALO_AI_DEBUG_RECORDS
 	short path_index;
 
 	for (path_index = 0; path_index<MAXIMUM_NUMBER_OF_ACTOR_PATHS; ++path_index)
@@ -345,6 +358,7 @@ void ai_debug_actor_deleted(
 			}
 		}
 	}
+#endif
 
 	return;
 }
@@ -352,6 +366,9 @@ void ai_debug_actor_deleted(
 struct path_debug_storage *ai_debug_get_last_path(
 	long actor_index)
 {
+#if !HALO_AI_DEBUG_RECORDS
+	return NULL;
+#else
 	short path_index;
 
 	short found_path_index = NONE;
@@ -369,6 +386,7 @@ struct path_debug_storage *ai_debug_get_last_path(
 	}
 
 	return found_path_index==NONE ? NULL : &actor_path_debug_array[found_path_index];
+#endif
 }
 
 boolean ai_debug_highlight_cluster(
@@ -762,7 +780,7 @@ static void ai_debug_render_actor(
 	long *history_start_time)
 {
 	struct actor_datum* actor = actor_get(actor_index);
-	struct actor_debug_info *actor_debug_info = &actor_debug_array[DATUM_INDEX_TO_ABSOLUTE_INDEX(actor_index)];
+	struct actor_debug_info *actor_debug_info = ACTOR_DEBUG_INFO(actor_index);
 
 	if (actor_debug_info->last_render_id!=ai_debug.last_render_id)
 	{
@@ -4118,8 +4136,10 @@ void ai_debug_lineoffire_success(
 void ai_debug_lineofsight_reset(
 	void)
 {
+#if HALO_AI_DEBUG_RECORDS
 	ai_debug.lineofsight_point_count = 0;
 	ai_debug.lineofsight_pair_count = 0;
+#endif
 
 	return;
 }
@@ -4263,6 +4283,7 @@ void ai_debug_communication_focus(
 	return;
 }
 
+#if HALO_AI_DEBUG_RECORDS
 static short ai_debug_lineofsight_findpoint(
 	real_point3d const *point,
 	short key)
@@ -4361,13 +4382,17 @@ static long ai_debug_lineofsight_storeray(
 	return index;
 }
 
+#endif
+
 void ai_debug_lineofsight(
 	real_point3d const *start,
 	short start_key,
 	real_point3d const *end,
 	short end_key)
 {
+#if HALO_AI_DEBUG_RECORDS
 	ai_debug_lineofsight_storeray(ai_debug_lineofsight_findpoint(start, start_key), ai_debug_lineofsight_findpoint(end, end_key));
+#endif
 
 	return;
 }
@@ -4573,10 +4598,12 @@ void ai_debug_select_encounter(
 	if (ai_debug.selected_squad_index!=encounter_index)
 	{
 		ai_debug.selected_squad_index = encounter_index;
+#if HALO_AI_DEBUG_RECORDS
 		ai_debug.evaluation_context_valid = FALSE;
 
 		csmemset(&ai_debug.evaluation_context, 0, sizeof(ai_debug.evaluation_context));
 		csmemset(ai_debug.actor_record, 0, sizeof(ai_debug.actor_record));
+#endif
 
 		ai_debug_select_actor(encounter_index, NONE);
 	}
@@ -4590,18 +4617,22 @@ void ai_debug_select_actor(
 {
 	if (ai_debug.selected_squad_index!=encounter_index || ai_debug.selected_actor_index!=actor_index)
 	{
+#if HALO_AI_DEBUG_RECORDS
 		struct ai_debug_actor_record *record;
 		long index;
+#endif
 
 		ai_debug_select_encounter(encounter_index);
 
 		ai_debug.selected_actor_index = actor_index;
+#if HALO_AI_DEBUG_RECORDS
 		ai_debug.evaluation_context_valid = FALSE;
 
 		for (record = ai_debug.actor_record, index = NUMBER_OF_AI_DEBUG_ACTOR_RECORDS; index>0; index--, record++)
 		{
 			record->valid = FALSE;
 		}
+#endif
 
 		ai_debug_idle_look_clear(actor_index);
 	}
@@ -4624,6 +4655,7 @@ void ai_debug_initialize_for_new_map(
 void ai_debug_update(
 	void)
 {
+#if HALO_AI_DEBUG_RECORDS
 	if (ai_debug.render_lineofsight)
 	{
 		ai_debug.lineofsight_point_count = 0;
@@ -4734,6 +4766,7 @@ void ai_debug_update(
 			ai_debug.path_storage.actor_index = NONE;
 		}
 	}
+#endif
 
 	if (ai_debug.fix_defending_guard_firing_positions && game_in_editor())
 	{
@@ -4975,6 +5008,11 @@ void ai_debug_teleport_to(
 struct path_debug_storage *ai_debug_get_path_storage(
 	long actor_index)
 {
+#if !HALO_AI_DEBUG_RECORDS
+	/* port: no path debug storage; the pathfinder runs without (state->debug
+	NULL), as it does for every other caller of path_state_new */
+	return NULL;
+#else
 	short storage_index = NONE;
 	short index;
 
@@ -5029,6 +5067,7 @@ struct path_debug_storage *ai_debug_get_path_storage(
 	}
 
 	return NULL;
+#endif
 }
 
 static void ai_debug_render_lineoffire(
@@ -5133,6 +5172,7 @@ static void ai_debug_render_lineofsight(
 		&global_real_argb_white
 	};
 
+#if HALO_AI_DEBUG_RECORDS
 	for (index = 0; index<ai_debug.lineofsight_point_count; index++)
 	{
 		sprintf(temporary, "%d", ai_debug.lineofsight_point_reference_count[index]);
@@ -5159,6 +5199,7 @@ static void ai_debug_render_lineofsight(
 			&ai_debug.lineofsight_point[pair->end_index],
 			*colors[MIN(reference_count, 12)]);
 	}
+#endif
 
 	return;
 }
@@ -5581,6 +5622,7 @@ static void ai_debug_render_vehicles_enterable(
 static void ai_debug_render_path(
 	void)
 {
+#if HALO_AI_DEBUG_RECORDS
 	if (ai_debug.path_start_valid && ai_debug.path_end_valid && !ai_debug.field_608A8)
 	{
 		real_argb_color const *color;
@@ -5611,6 +5653,7 @@ static void ai_debug_render_path(
 
 		ai_debug_render_path_storage(&ai_debug.path_storage);
 	}
+#endif
 
 	return;
 }
@@ -5618,6 +5661,7 @@ static void ai_debug_render_path(
 static void ai_debug_render_paths_failed(
 	void)
 {
+#if HALO_AI_DEBUG_RECORDS
 	short index;
 
 	for (index = 0; index<MAXIMUM_AI_DEBUG_PATH_STORAGE; index++)
@@ -5640,6 +5684,7 @@ static void ai_debug_render_paths_failed(
 			ai_debug_render_path_storage(path);
 		}
 	}
+#endif
 
 	return;
 }
@@ -5880,6 +5925,7 @@ default_firing_position_colors:
 
 		ai_debug_drawstack_setup(&point);
 
+#if HALO_AI_DEBUG_RECORDS
 		if (ai_debug.render_pursuit && ai_debug.actor_record[index].pursuit)
 		{
 			boolean pursued = FALSE;
@@ -5972,6 +6018,7 @@ default_firing_position_colors:
 					csprintf(temporary, "%3.2f", ai_debug.actor_record[index].firing_position.evaluation), color);
 			}
 		}
+#endif
 	}
 
 	return;
@@ -6110,6 +6157,7 @@ static void ai_debug_speech_update(
 static void ai_debug_path_storage_update(
 	void)
 {
+#if HALO_AI_DEBUG_RECORDS
 	short index;
 	short other_index;
 
@@ -6141,6 +6189,7 @@ static void ai_debug_path_storage_update(
 			}
 		}
 	}
+#endif
 
 	return;
 }
