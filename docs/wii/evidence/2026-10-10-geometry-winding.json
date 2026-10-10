@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "tickets": [
+    "HWI-016"
+  ],
+  "follows": "HWI-016A",
+  "date": "2026-10-10",
+  "scope": "winding_qualification_and_back_face_culling_for_the_one_owned_BSP_material_section_in_stock_dolphin_wii_mode",
+  "decision": {
+    "content_cull": "GX_CULL_BACK",
+    "corner_order": "original; no indices reversed",
+    "reason": "Halo front faces are clockwise to the viewer; GX front faces are clockwise to the viewer"
+  },
+  "source_convention": {
+    "render_camera_triangle_frontfacing": "source/render/render_cameras.c:629 (front when (p1-p0)x(p2-p1) points away from the camera)",
+    "view_space": "source/render/render_cameras.c:1212-1223 right-handed (x=forward x up, y=x x forward, z=-forward); projection 1404-1412 non-mirroring",
+    "environment_cull": "D3DCULL_CCW, e.g. source/rasterizer/xbox/rasterizer_xbox_environment.c:648,1074,1369,2112",
+    "normal_decoder": "uncompress_int32_to_real_vector3d, source/rasterizer/rasterizer_geometry.c:516",
+    "gx": "libogc gx.h GX_SetCullMode: clockwise to the viewer is front-facing"
+  },
+  "input_identity": {
+    "section_sha256": "79cb1e25375dcac92544a0269012b03707ec1c98ecfedbf69757855d59627565",
+    "bsp_ordinal": 12,
+    "material": 3,
+    "triangles": 2990,
+    "vertices": 5863
+  },
+  "host_qualification": {
+    "kind": "read-only private script; reruns the selector and requires identical hashes; outputs counts only",
+    "script_sha256": "216e4bde148dfb46d6023185fb3dff1dd1e7d34841a9be036141afe6f9d77de6",
+    "output_sha256_both_runs": "e38c6d73d856e7c0963757d13933f1da734dd6ef70000bfbc2c0b4846ba53fd6",
+    "runs": 2,
+    "geometric_normal": "right-hand (p1-p0)x(p2-p0), Z-up world",
+    "normal_reference": "stored packed vertex normal, sum of the three corners",
+    "vs_vertex_normals": {
+      "agree": 0,
+      "disagree": 2990,
+      "ambiguous_abs_cos_lt_0_1": 0,
+      "strong_disagree_cos_lt_minus_0_9": 2986,
+      "median_cos": -1.0,
+      "corner_dot_positive": 2,
+      "corner_total": 8970
+    },
+    "edges": {
+      "undirected": 7442,
+      "shared_by_2": 1528,
+      "consistent_opposite_direction": 1528,
+      "inconsistent": 0,
+      "boundary": 5914,
+      "nonmanifold": 0
+    },
+    "pieces": {
+      "count": 1480,
+      "closed": 0,
+      "note": "no closed piece, so a centroid inside/outside test does not apply"
+    }
+  },
+  "guest_qualification": {
+    "load_orientation_counts": {
+      "along": 0,
+      "opposed": 2990,
+      "unclear": 0
+    },
+    "classified_pass": "CPU colours each triangle by stored-normal facing toward the eye (lit/unlit/unclear incl. edge-on |cos|<1e-3); drawn under each GX cull mode; 32x24 EFB grid",
+    "poses": {
+      "pose0": "yaw 0.8 pitch 0.55 distance 1.6 x radius (historical fixed pose)",
+      "pose1": "yaw 3.94 pitch -0.15 distance 1.6 x radius"
+    },
+    "criteria": "per pose: content mode unlit==0 and lit>0; opposite mode lit==0 and unlit>0; whole result identical to cycle 0",
+    "classified": {
+      "none": {
+        "pose0": {"lit": 30, "unlit": 33, "unclear": 0},
+        "pose1": {"lit": 22, "unlit": 34, "unclear": 0}
+      },
+      "GX_CULL_BACK": {
+        "pose0": {"lit": 47, "unlit": 0, "unclear": 0, "same_as_none": 735},
+        "pose1": {"lit": 44, "unlit": 0, "unclear": 0, "same_as_none": 734}
+      },
+      "GX_CULL_FRONT": {
+        "pose0": {"lit": 0, "unlit": 52, "unclear": 0, "same_as_none": 738},
+        "pose1": {"lit": 0, "unlit": 48, "unclear": 0, "same_as_none": 746}
+      }
+    },
+    "shaded_pose0": {
+      "none": {"visible": 63, "same_as_none": 768, "grid_crc": "aac744a4", "note": "identical to HWI-016A"},
+      "GX_CULL_BACK": {"visible": 47, "same_as_none": 740, "grid_crc": "18b17d9a"},
+      "GX_CULL_FRONT": {"visible": 52, "same_as_none": 745, "grid_crc": "b9cf71f5"}
+    },
+    "qualified_cycles": "4/4 in each launch"
+  },
+  "source_commit": "5b009a82906d19fce989edcc3bccfb88e46c6fcc",
+  "source_dirty": false,
+  "build_id": "2024f5af91d4f65a",
+  "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+  "artifacts": {
+    "geometry_view.elf": {"sha256": "8fe82a88dd2cf39e0a6be771243f30a5642645c1206717ec2d8d22edadc9a55f", "bytes": 2622244},
+    "geometry_view.dol": {"sha256": "38febd31f47913f8cc380feafd37a138a0e6c4a5e94c8e1bc44e1b14200ed79a", "bytes": 547232},
+    "geometry_view.map": {"sha256": "ad2569e59d3fe43c319a3de0a63c24de9402ee09debf286b10e20a9142c40b60", "bytes": 851916}
+  },
+  "auto_exit_backstop_frames": 1800,
+  "emulator": {
+    "dolphin_executable_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+    "profile": "new isolated Wii-mode profile, unchanged from HWI-016A; D3D 1x; EFB CPU access enabled"
+  },
+  "input": {
+    "movie_sha256": "f66418ae74e62d5ba199c0129477d5a33216d9b700fe65c9a63334581576ebc5",
+    "note": "same authored repeating DTM as HWI-016A"
+  },
+  "runs": [
+    {
+      "number": 1,
+      "guest_scope": "passed",
+      "host_exit": "0x0",
+      "forced_stop": false,
+      "elapsed_seconds": 26.34,
+      "launch_counter": 1,
+      "cycles": 4,
+      "stale_rejected": 4,
+      "malformed_manifest_rejections": "3/3",
+      "faults_rejected": 2,
+      "heap_loaded_bytes": 1669488,
+      "heap_end_bytes": 1669488,
+      "mem2_plan_bytes": 50579712,
+      "mem2_usable_bytes": 54284128,
+      "load_us_cycle0": 1699738,
+      "render_max_us": 305,
+      "fifo_submitted_peak_bytes": 77312,
+      "frames": 784,
+      "dumped_frames": 782
+    },
+    {
+      "number": 2,
+      "guest_scope": "passed",
+      "host_exit": "0x0",
+      "forced_stop": false,
+      "elapsed_seconds": 26.744,
+      "launch_counter": 2,
+      "cycles": 4,
+      "stale_rejected": 4,
+      "malformed_manifest_rejections": "3/3",
+      "faults_rejected": 2,
+      "heap_loaded_bytes": 1669488,
+      "heap_end_bytes": 1669488,
+      "mem2_plan_bytes": 50579712,
+      "mem2_usable_bytes": 54284128,
+      "load_us_cycle0": 1699509,
+      "render_max_us": 305,
+      "fifo_submitted_peak_bytes": 77312,
+      "frames": 784,
+      "dumped_frames": 782
+    }
+  ],
+  "frame_dumps": {
+    "per_launch": 782,
+    "ordered_hash_of_frame_hashes_both_launches": "e34cebf710a9f6b9f3e9991e5f38441a77a99ec03f0b4625a07604f071b1a1b0",
+    "note": "renders of game content stay private; byte-identical across launches"
+  },
+  "cost_change_vs_HWI_016A": {
+    "scope": "Dolphin timing; not hardware GP cost",
+    "render_max_us": {"before": 305, "after": 305},
+    "fifo_submitted_peak_bytes": {"before": 77056, "after": 77312, "note": "culling does not change the submitted vertex stream; +256 B from overlay text/build ID and one added cull-mode write, not isolated"},
+    "fixed_pose_shaded_draw_us_max": {"none": 280, "GX_CULL_BACK": 280, "GX_CULL_FRONT": 280},
+    "classified_draw_us_max": {"none": 2228, "GX_CULL_BACK": 2228, "GX_CULL_FRONT": 2227, "note": "verification only; CPU facing per triangle"},
+    "load_us": {"before": 1632645, "after": 1699738, "note": "added per-triangle stored-normal decode"}
+  },
+  "os_stability": "No System 41/1001/1074/6005/6006/6008 or BugCheck/Kernel-Power events and no Application 1000/1001/1002 or Dolphin-naming events between 12:20 and 12:23 UTC; last boot 2026-10-08 predates the session. Session-scoped observation only.",
+  "development_iterations": [
+    {
+      "name": "dev-1",
+      "build_id": "02df8049f1720f07",
+      "source_dirty": true,
+      "result": "pass",
+      "finding": "Same cull figures and CRCs as the final runs; host exit 0x0."
+    }
+  ],
+  "limitations": [
+    "Winding qualified for this one section only",
+    "Hardware GP fill savings and physical Wii untested",
+    "Shading remains flat and two-sided; stored normals not used for lighting",
+    "No Halo shaders, textures, lightmaps, collision or gameplay"
+  ]
+}
