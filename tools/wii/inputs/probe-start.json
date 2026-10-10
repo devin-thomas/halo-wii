@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "description": "Asset-free probe: neutral pad, then A + left trigger + stick right (activity), then a START press (exit=pad_start). One entry per guest controller poll on GC port 1.",
+  "port": 1,
+  "steps": [
+    {"label": "neutral", "polls": 120},
+    {"label": "a_trigger_l_stick_right", "polls": 120, "buttons": ["A"], "trigger_l": 64, "stick": [180, 128]},
+    {"label": "neutral", "polls": 60},
+    {"label": "start_press", "polls": 12, "buttons": ["START"]},
+    {"label": "neutral_tail", "polls": 1200}
+  ]
+}
