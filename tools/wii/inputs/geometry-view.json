@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "description": "Real-geometry diagnostic (HWI-016A/016): a repeating pattern of orbit (stick right, up, left), zoom out (C-stick down), reset (B) and START. The guest honours START only after it has seen stick input and its load cycles have finished, so the pattern repeats. Same pad states as the Windows HWI-016 runs. One entry per guest controller poll on GC port 1.",
+  "port": 1,
+  "repeat": 60,
+  "steps": [
+    {"label": "stick_right", "polls": 100, "stick": [255, 128]},
+    {"label": "neutral", "polls": 40},
+    {"label": "stick_up", "polls": 60, "stick": [128, 255]},
+    {"label": "neutral", "polls": 40},
+    {"label": "cstick_down_zoom_out", "polls": 80, "cstick": [128, 0]},
+    {"label": "neutral", "polls": 40},
+    {"label": "b_reset", "polls": 4, "buttons": ["B"]},
+    {"label": "neutral", "polls": 100},
+    {"label": "stick_left", "polls": 60, "stick": [0, 128]},
+    {"label": "neutral", "polls": 70},
+    {"label": "start", "polls": 6, "buttons": ["START"]}
+  ]
+}

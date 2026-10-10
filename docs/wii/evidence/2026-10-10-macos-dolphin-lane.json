@@ -1,0 +1,1460 @@
+{
+ "schema_version": 1,
+ "date": "2026-10-10",
+ "extends": "HWI-005 Dolphin evidence loop (2026-10-10-dolphin-evidence-loop)",
+ "scope": "second Dolphin lane on macOS: installation, runner port, and cross-host consistency of the same four DOLs",
+ "physical_wii": "untested",
+ "hosts": {
+  "windows": {
+   "os": "Windows 11 Pro 10.0.26200",
+   "dolphin": "2609 x64 (official)",
+   "dolphin_exe_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+   "backend": "D3D",
+   "python": "3.14",
+   "mtools": "Debian WSL"
+  },
+  "macos": {
+   "os": "macOS 27.0 (26A425)",
+   "cpu": "Apple M5 Max, 18 cores",
+   "memory_gb": 36,
+   "machine": "arm64",
+   "dolphin": "2609 universal (official)",
+   "backend": "Vulkan (MoltenVK 1.2.8, bundled)",
+   "python": "3.12.15 (Homebrew)",
+   "mtools": "4.0.49 (Homebrew, native)"
+  }
+ },
+ "macos_installation": {
+  "dolphin_dmg": {
+   "url": "https://dl.dolphin-emu.org/releases/2609/dolphin-2609-universal.dmg",
+   "bytes": 41965559,
+   "sha256": "b8910a6f8710cbe93b916f5b3867a46e67e49aa8272657d282d4accae359cd6b",
+   "download": "curl; no extended attributes on the downloaded file",
+   "install": "hdiutil attach -readonly -nobrowse, ditto Dolphin.app into a user Applications subfolder, detach; no sudo"
+  },
+  "dolphin_executable_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+  "dolphin_executable": "Dolphin.app/Contents/MacOS/Dolphin (Mach-O universal x86_64 + arm64)",
+  "code_signature": "Developer ID Application: Stichting Dolphin Emulator (97835T4369), hardened runtime",
+  "gatekeeper_assessment": "accepted, source=Notarized Developer ID",
+  "quarantine_attribute": "absent; macOS added com.apple.provenance only",
+  "security_settings_changed": false,
+  "homebrew": {
+   "requested": {
+    "python@3.12": "3.12.15",
+    "mtools": "4.0.49"
+   },
+   "installed_as_required_dependencies": {
+    "ca-certificates": "2026-09-25",
+    "mpdecimal": "4.0.1",
+    "openssl@3": "3.6.5"
+   }
+  },
+  "global_dolphin_state_created": "none (no Dolphin folder in Application Support, Preferences, Caches or Saved Application State)"
+ },
+ "private_inputs": {
+  "storage": "private folder on the macOS host outside any Git checkout; never committed",
+  "transfer": "scp over the private network; SHA-256 computed on both ends and equal",
+  "files": {
+   "owned_xbox_iso": "43ec0813edadd592b7b489a930f108d289db9313ac337611110ffca8be0a7258",
+   "bsp_sample": "7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b",
+   "tag_proof": "8501f4ad215a630d14220140e27f8a9c30a5ed18fe459ac07c686e827a0ab7bc",
+   "section_selector_manifest": "3cf8781519c8a9057dce802cfcf2f8b22a0812592f84924c80f62b2f7d7f71fa",
+   "guest_section_manifest_crlf": "b59ee04e514f971e1d9ff3c732f896c4392e8b64e41c8c427448b98a96cf40a4",
+   "dolphin_created_blank_sd_image": "ed845a516ee8f992683c88954ff2125768decf527bd6e740a6038d08c009c8e7"
+  },
+  "iso_used_by_these_runs": false
+ },
+ "macos_launch_method": {
+  "supported": "runner executes Contents/MacOS/Dolphin directly as a child process (subprocess.Popen, stdin closed) from the caller's session, including an SSH session",
+  "requirement": "the same user has an active desktop (Aqua) login session; the render window appears there",
+  "why_not_open": "open -W -n loses the Dolphin exit status and stdout/stderr",
+  "launchctl_asuser": "not used (needs root)",
+  "untested": "a host with no desktop login session",
+  "observed": "SSH session manager is 'Background'; Dolphin started, rendered (EFB readbacks correct) and exited with status 0 under Vulkan, OpenGL and Metal"
+ },
+ "runner": {
+  "commit": "f5261f8c",
+  "tool": "tools/wii/run_dolphin.py",
+  "changes": [
+   "--dolphin accepts Dolphin.app",
+   "pgrep -x process exclusivity on macOS",
+   "native mtools staging on macOS",
+   "read-only macOS OS-stability observation",
+   "host-dependent default backend (D3D / Vulkan)",
+   "POSIX signal recorded on negative exit",
+   "gx_scene and geometry_view scenario checkers",
+   "pad-script repeat count",
+   "tools/wii/inputs/gx-scene.json and geometry-view.json (pad states byte-identical to the Windows HWI-014A and HWI-016 runs)"
+  ],
+  "dtm_header_note": "the Windows HWI-014A/016 movies reused a reference header whose frame/input counts did not match the body; the runner writes the true counts. Pad bodies are byte-identical."
+ },
+ "build": {
+  "source_commit": "f5261f8c",
+  "source_dirty": false,
+  "build_id": "92a310eb7a383c2e",
+  "compiler": "devkitPPC GCC 16.1.0",
+  "command": "python configure.py --wii --wii-devkitpro <root> --wii-probe-frames 1800; ninja wii_probe wii_gx_scene wii_gx_materials wii_geometry_view",
+  "dols": {
+   "probe.dol": [
+    455424,
+    "58803ba906ef087cfe3ac9144929c23c0fc903ab0009ed801945d8c4a6348365"
+   ],
+   "gx_scene.dol": [
+    482656,
+    "9da29c8f382c7ad5133f5bdeb7f4ca25385b7dd2b7a1c95e747e153a6f490599"
+   ],
+   "gx_materials.dol": [
+    512224,
+    "3d4464858608cf0f45605599b85bb8680f2896a11e351f9ba4e0d82e61e7cd60"
+   ],
+   "geometry_view.dol": [
+    547232,
+    "04eaf8d86a3bcd14202af64d9bb2c41aa8bdb0aeef07473f99e12889ab38ef72"
+   ]
+  },
+  "copied_to_macos": "same files; SHA-256 equal on both hosts"
+ },
+ "locks": "each batch held the host's own exclusive Dolphin lock (atomic directory create) and released it afterwards",
+ "pixel_comparison_of_frame_dumps": {
+  "method": "decoded PNG RGB pixels, Windows D3D vs macOS Vulkan, run 1",
+  "probe_only_frame": {
+   "max_channel_diff": 1,
+   "differing_channels": 1881,
+   "of_channels": 1123200
+  },
+  "gx_scene_five_sampled_frames": {
+   "max_channel_diff": 1,
+   "differing_channels_each": [
+    900,
+    833,
+    865,
+    861,
+    940
+   ]
+  },
+  "geometry_view_frames_400_782": {
+   "max_channel_diff": 1,
+   "differing_channels": [
+    2307,
+    2093
+   ]
+  },
+  "gx_materials_frame_300": {
+   "max_channel_diff": 1,
+   "differing_channels": 5842
+  },
+  "gx_materials_frame_667": {
+   "max_channel_diff": 28,
+   "differing_channels": 30246
+  },
+  "note": "frame names compared by identical dump index; first frames of gx_materials and geometry_view are byte-identical PNGs"
+ },
+ "unit_tests": {
+  "windows_python_3.14": {
+   "test_run_dolphin": "50/50",
+   "tools_wii_all": "295/295"
+  },
+  "wsl_debian_python_3.13": {
+   "tools_wii_all": "295/295"
+  },
+  "macos_python_3.12.15": {
+   "test_run_dolphin": "50/50",
+   "tools_wii_all": "293/295",
+   "failures": [
+    "test_inspect_bsp_residency.FileTests.test_path_replacement_guard_without_descriptor_change",
+    "test_inspect_material_graph.FileTests.test_changed_path_inode_rejected_with_same_size_and_mtime"
+   ],
+   "failure_kind": "pre-existing inspector tests outside the runner: the expected 'changed' InspectionError for a replaced path with equal size and mtime is not raised on APFS"
+  },
+  "python_3.11_syntax": "no PEP 701 f-string forms in the runner or its tests (tokenizer check); hosted CI (Debian Python 3.11) not run: the branch is not pushed"
+ },
+ "targets": {
+  "gx_materials": {
+   "windows": {
+    "backend": "D3D",
+    "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+    "input_polls": 2556,
+    "staging": {
+     "used": false
+    },
+    "os_stability": {
+     "observation": "no_instability_events_observed",
+     "instability_events": [],
+     "window_utc": [
+      "2026-10-10T14:25:00+00:00",
+      "2026-10-10T14:25:47+00:00"
+     ],
+     "last_boot_utc": "2026-10-08T13:53:48.5000000Z",
+     "dolphin_application_events": [],
+     "source": null
+    },
+    "outcomes": {
+     "guest": "passed",
+     "persistence": "passed",
+     "host": [
+      "exit_zero"
+     ],
+     "os_stability": "no_instability_events_observed",
+     "physical_wii": "untested"
+    },
+    "tool_exit": 0,
+    "runs": [
+     {
+      "number": 1,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 18.441,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-gxm/runs.txt": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "halo-wii-gxm/materials.log": "8b42031e04b4dc7e6c4c5fe87596391ff06d572510e7c9b54272ead15098bad6"
+      },
+      "frame_dump": {
+       "count": 667,
+       "first_sha256": "5a854ae63d07b63fc89a4697039598e62fa4f8ec024510ec3dec75b5ab5b548a",
+       "last_sha256": "b78a0978a11c6953c0a23ca1be78c584dc15f71d49939ca11a90313c841e5a0e"
+      },
+      "cycle_crcs": [
+       "53843a35",
+       "53843a35",
+       "53843a35",
+       "53843a35"
+      ],
+      "checks": "196/196",
+      "negatives": "17/17",
+      "end": {
+       "frames": "667",
+       "exit": "pad_start",
+       "toggles": "2",
+       "result": "pass"
+      }
+     },
+     {
+      "number": 2,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 16.732,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-gxm/runs.txt": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "halo-wii-gxm/materials.log": "a9f29e4464c7ffb47bd19b3bf788f45bf212a86cc98e12dd00aee15df98c64c1"
+      },
+      "frame_dump": {
+       "count": 667,
+       "first_sha256": "5a854ae63d07b63fc89a4697039598e62fa4f8ec024510ec3dec75b5ab5b548a",
+       "last_sha256": "b78a0978a11c6953c0a23ca1be78c584dc15f71d49939ca11a90313c841e5a0e"
+      },
+      "cycle_crcs": [
+       "53843a35",
+       "53843a35",
+       "53843a35",
+       "53843a35"
+      ],
+      "checks": "196/196",
+      "negatives": "17/17",
+      "end": {
+       "frames": "667",
+       "exit": "pad_start",
+       "toggles": "2",
+       "result": "pass"
+      }
+     }
+    ]
+   },
+   "macos": {
+    "backend": "Vulkan",
+    "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+    "input_polls": 2556,
+    "staging": {
+     "used": false
+    },
+    "os_stability": {
+     "observation": "no_instability_events_observed",
+     "instability_events": [],
+     "window_utc": [
+      "2026-10-10T14:21:33+00:00",
+      "2026-10-10T14:22:07+00:00"
+     ],
+     "last_boot_utc": "2026-10-10T00:33:25+00:00",
+     "dolphin_application_events": [],
+     "source": "macos"
+    },
+    "outcomes": {
+     "guest": "passed",
+     "persistence": "passed",
+     "host": [
+      "exit_zero"
+     ],
+     "os_stability": "no_instability_events_observed",
+     "physical_wii": "untested"
+    },
+    "tool_exit": 0,
+    "runs": [
+     {
+      "number": 1,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 12.156,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-gxm/runs.txt": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "halo-wii-gxm/materials.log": "8b42031e04b4dc7e6c4c5fe87596391ff06d572510e7c9b54272ead15098bad6"
+      },
+      "frame_dump": {
+       "count": 667,
+       "first_sha256": "5a854ae63d07b63fc89a4697039598e62fa4f8ec024510ec3dec75b5ab5b548a",
+       "last_sha256": "dcc4dd091c51a94c75d53ac09b58e2b6e3b31158938fbf0137751a03d91aae44"
+      },
+      "cycle_crcs": [
+       "53843a35",
+       "53843a35",
+       "53843a35",
+       "53843a35"
+      ],
+      "checks": "196/196",
+      "negatives": "17/17",
+      "end": {
+       "frames": "667",
+       "exit": "pad_start",
+       "toggles": "2",
+       "result": "pass"
+      }
+     },
+     {
+      "number": 2,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 12.105,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-gxm/runs.txt": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "halo-wii-gxm/materials.log": "a9f29e4464c7ffb47bd19b3bf788f45bf212a86cc98e12dd00aee15df98c64c1"
+      },
+      "frame_dump": {
+       "count": 667,
+       "first_sha256": "5a854ae63d07b63fc89a4697039598e62fa4f8ec024510ec3dec75b5ab5b548a",
+       "last_sha256": "dcc4dd091c51a94c75d53ac09b58e2b6e3b31158938fbf0137751a03d91aae44"
+      },
+      "cycle_crcs": [
+       "53843a35",
+       "53843a35",
+       "53843a35",
+       "53843a35"
+      ],
+      "checks": "196/196",
+      "negatives": "17/17",
+      "end": {
+       "frames": "667",
+       "exit": "pad_start",
+       "toggles": "2",
+       "result": "pass"
+      }
+     }
+    ]
+   },
+   "cross_host": {
+    "guest_sd_read_back_identical": true,
+    "input_movie_identical": true,
+    "frame_dump_first_identical": [
+     true,
+     true
+    ],
+    "frame_dump_last_identical": [
+     false,
+     false
+    ],
+    "elapsed_seconds_windows": [
+     18.441,
+     16.732
+    ],
+    "elapsed_seconds_macos": [
+     12.156,
+     12.105
+    ]
+   }
+  },
+  "gx_scene": {
+   "windows": {
+    "backend": "D3D",
+    "input_movie_sha256": "667aab6d866b775d430d717da6c7f958982087a3669b54e20d7fb581204ed193",
+    "input_polls": 1278,
+    "staging": {
+     "used": false
+    },
+    "os_stability": {
+     "observation": "no_instability_events_observed",
+     "instability_events": [],
+     "window_utc": [
+      "2026-10-10T14:25:49+00:00",
+      "2026-10-10T14:26:31+00:00"
+     ],
+     "last_boot_utc": "2026-10-08T13:53:48.5000000Z",
+     "dolphin_application_events": [],
+     "source": null
+    },
+    "outcomes": {
+     "guest": "passed",
+     "persistence": "passed",
+     "host": [
+      "exit_zero"
+     ],
+     "os_stability": "no_instability_events_observed",
+     "physical_wii": "untested"
+    },
+    "tool_exit": 0,
+    "runs": [
+     {
+      "number": 1,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 11.881,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-gx/runs.txt": "9a572c1352eff70267aed78a37710698f743bfa5861e6ebcd495a60d80926244",
+       "halo-wii-gx/scene.log": "d22992801051358a8153e48d267183867b8937af907b21f52830575e2b7809dd"
+      },
+      "frame_dump": {
+       "count": 430,
+       "first_sha256": "4d258ba6f9e09596331636f53aef94eeaa8d71af1be74b729b9b914b0c75e506",
+       "last_sha256": "4c0240e156cf9e49f5f3dd2172ba2fe75dcd33fa8f03d43ab262d19e16ba8eb3"
+      },
+      "calibration": "9/9",
+      "end": {
+       "frames": "431",
+       "exit": "pad_start",
+       "toggles": "1",
+       "resets": "1",
+       "result": "pass"
+      }
+     },
+     {
+      "number": 2,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 17.529,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-gx/runs.txt": "9ba66873aa662ad68d64b28d7a0875d5b36c2a64586a7cf4ebe6fe95b152a976",
+       "halo-wii-gx/scene.log": "27c38700c7f2d900fae439e6460de099c01ae4ee91d17e8bca0782bbc3403b34"
+      },
+      "frame_dump": {
+       "count": 430,
+       "first_sha256": "4d258ba6f9e09596331636f53aef94eeaa8d71af1be74b729b9b914b0c75e506",
+       "last_sha256": "4c0240e156cf9e49f5f3dd2172ba2fe75dcd33fa8f03d43ab262d19e16ba8eb3"
+      },
+      "calibration": "9/9",
+      "end": {
+       "frames": "431",
+       "exit": "pad_start",
+       "toggles": "1",
+       "resets": "1",
+       "result": "pass"
+      }
+     }
+    ]
+   },
+   "macos": {
+    "backend": "Vulkan",
+    "input_movie_sha256": "667aab6d866b775d430d717da6c7f958982087a3669b54e20d7fb581204ed193",
+    "input_polls": 1278,
+    "staging": {
+     "used": false
+    },
+    "os_stability": {
+     "observation": "no_instability_events_observed",
+     "instability_events": [],
+     "window_utc": [
+      "2026-10-10T14:22:47+00:00",
+      "2026-10-10T14:23:13+00:00"
+     ],
+     "last_boot_utc": "2026-10-10T00:33:25+00:00",
+     "dolphin_application_events": [],
+     "source": "macos"
+    },
+    "outcomes": {
+     "guest": "passed",
+     "persistence": "passed",
+     "host": [
+      "exit_zero"
+     ],
+     "os_stability": "no_instability_events_observed",
+     "physical_wii": "untested"
+    },
+    "tool_exit": 0,
+    "runs": [
+     {
+      "number": 1,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 8.403,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-gx/runs.txt": "9a572c1352eff70267aed78a37710698f743bfa5861e6ebcd495a60d80926244",
+       "halo-wii-gx/scene.log": "d22992801051358a8153e48d267183867b8937af907b21f52830575e2b7809dd"
+      },
+      "frame_dump": {
+       "count": 430,
+       "first_sha256": "760bea30e5180f7c7fd4017fe37cd799084d543385e68c2e8e82f75acc976520",
+       "last_sha256": "12cf1d3f784edd2a1cb5ab5e2149c38eda7eb93d8eff3d614ffebeb651c537d5"
+      },
+      "calibration": "9/9",
+      "end": {
+       "frames": "431",
+       "exit": "pad_start",
+       "toggles": "1",
+       "resets": "1",
+       "result": "pass"
+      }
+     },
+     {
+      "number": 2,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 8.102,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-gx/runs.txt": "9ba66873aa662ad68d64b28d7a0875d5b36c2a64586a7cf4ebe6fe95b152a976",
+       "halo-wii-gx/scene.log": "27c38700c7f2d900fae439e6460de099c01ae4ee91d17e8bca0782bbc3403b34"
+      },
+      "frame_dump": {
+       "count": 430,
+       "first_sha256": "760bea30e5180f7c7fd4017fe37cd799084d543385e68c2e8e82f75acc976520",
+       "last_sha256": "12cf1d3f784edd2a1cb5ab5e2149c38eda7eb93d8eff3d614ffebeb651c537d5"
+      },
+      "calibration": "9/9",
+      "end": {
+       "frames": "431",
+       "exit": "pad_start",
+       "toggles": "1",
+       "resets": "1",
+       "result": "pass"
+      }
+     }
+    ]
+   },
+   "cross_host": {
+    "guest_sd_read_back_identical": true,
+    "input_movie_identical": true,
+    "frame_dump_first_identical": [
+     false,
+     false
+    ],
+    "frame_dump_last_identical": [
+     false,
+     false
+    ],
+    "elapsed_seconds_windows": [
+     11.881,
+     17.529
+    ],
+    "elapsed_seconds_macos": [
+     8.403,
+     8.102
+    ]
+   }
+  },
+  "probe": {
+   "windows": {
+    "backend": "D3D",
+    "input_movie_sha256": "829e51ed1cfac0f9620a691f84a48734f5602071a62d3817c08783bad0dfb229",
+    "input_polls": 1512,
+    "staging": {
+     "used": false
+    },
+    "os_stability": {
+     "observation": "no_instability_events_observed",
+     "instability_events": [],
+     "window_utc": [
+      "2026-10-10T14:26:36+00:00",
+      "2026-10-10T14:27:02+00:00"
+     ],
+     "last_boot_utc": "2026-10-08T13:53:48.5000000Z",
+     "dolphin_application_events": [],
+     "source": null
+    },
+    "outcomes": {
+     "guest": "passed",
+     "persistence": "passed",
+     "host": [
+      "exit_zero"
+     ],
+     "os_stability": "no_instability_events_observed",
+     "physical_wii": "untested"
+    },
+    "tool_exit": 0,
+    "runs": [
+     {
+      "number": 1,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 6.887,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-probe/sentinel.txt": "b8be899fb8dd8c529e33f339be87f61d1306782abddc67c4a83f24a6f0230ee9",
+       "halo-wii-probe/probe.log": "62e6d609d62f284a3e3c0481f3d9a5c0985a429e0c8b85c5da1bbcc74ff64742"
+      },
+      "frame_dump": {
+       "count": 1,
+       "first_sha256": "36275973a185c4b15410d46e0d239e9b1e1e509ff28147352ab07f5d89c749df",
+       "last_sha256": "36275973a185c4b15410d46e0d239e9b1e1e509ff28147352ab07f5d89c749df"
+      },
+      "sentinel": "halo-wii-probe-v1 1",
+      "end": {
+       "frames": 146,
+       "ticks_per_frame": 0.4932,
+       "exit": "pad_start"
+      }
+     },
+     {
+      "number": 2,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 6.569,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-probe/sentinel.txt": "09d554bd625ce2522ab6cd72e021b8a20d1438f30f0992520a44ffc0b9de619b",
+       "halo-wii-probe/probe.log": "64805bcbc3e041ae37dfafb08b8ef955a32e7f12a5a20d8130aa009e7f67fd68"
+      },
+      "frame_dump": {
+       "count": 1,
+       "first_sha256": "162f5a9fe2a42e95bcc5cb2b0586b805d2ec1e7323c4858ff4655ce18cb78637",
+       "last_sha256": "162f5a9fe2a42e95bcc5cb2b0586b805d2ec1e7323c4858ff4655ce18cb78637"
+      },
+      "sentinel": "halo-wii-probe-v1 2",
+      "end": {
+       "frames": 146,
+       "ticks_per_frame": 0.4932,
+       "exit": "pad_start"
+      }
+     }
+    ]
+   },
+   "macos": {
+    "backend": "Vulkan",
+    "input_movie_sha256": "829e51ed1cfac0f9620a691f84a48734f5602071a62d3817c08783bad0dfb229",
+    "input_polls": 1512,
+    "staging": {
+     "used": false
+    },
+    "os_stability": {
+     "observation": "no_instability_events_observed",
+     "instability_events": [],
+     "window_utc": [
+      "2026-10-10T14:23:14+00:00",
+      "2026-10-10T14:23:31+00:00"
+     ],
+     "last_boot_utc": "2026-10-10T00:33:25+00:00",
+     "dolphin_application_events": [],
+     "source": "macos"
+    },
+    "outcomes": {
+     "guest": "passed",
+     "persistence": "passed",
+     "host": [
+      "exit_zero"
+     ],
+     "os_stability": "no_instability_events_observed",
+     "physical_wii": "untested"
+    },
+    "tool_exit": 0,
+    "runs": [
+     {
+      "number": 1,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 3.317,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-probe/sentinel.txt": "b8be899fb8dd8c529e33f339be87f61d1306782abddc67c4a83f24a6f0230ee9",
+       "halo-wii-probe/probe.log": "62e6d609d62f284a3e3c0481f3d9a5c0985a429e0c8b85c5da1bbcc74ff64742"
+      },
+      "frame_dump": {
+       "count": 1,
+       "first_sha256": "9747425902ffd2fd7bfcc5d585b5346ca32d293eb43548128388a903ecc2ace1",
+       "last_sha256": "9747425902ffd2fd7bfcc5d585b5346ca32d293eb43548128388a903ecc2ace1"
+      },
+      "sentinel": "halo-wii-probe-v1 1",
+      "end": {
+       "frames": 146,
+       "ticks_per_frame": 0.4932,
+       "exit": "pad_start"
+      }
+     },
+     {
+      "number": 2,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 3.344,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-probe/sentinel.txt": "09d554bd625ce2522ab6cd72e021b8a20d1438f30f0992520a44ffc0b9de619b",
+       "halo-wii-probe/probe.log": "64805bcbc3e041ae37dfafb08b8ef955a32e7f12a5a20d8130aa009e7f67fd68"
+      },
+      "frame_dump": {
+       "count": 1,
+       "first_sha256": "ec8df7c735a09c1665e4bfd49a7aa8c1b85fe4cd06057e7fb16e8846bf9bd5b8",
+       "last_sha256": "ec8df7c735a09c1665e4bfd49a7aa8c1b85fe4cd06057e7fb16e8846bf9bd5b8"
+      },
+      "sentinel": "halo-wii-probe-v1 2",
+      "end": {
+       "frames": 146,
+       "ticks_per_frame": 0.4932,
+       "exit": "pad_start"
+      }
+     }
+    ]
+   },
+   "cross_host": {
+    "guest_sd_read_back_identical": true,
+    "input_movie_identical": true,
+    "frame_dump_first_identical": [
+     false,
+     false
+    ],
+    "frame_dump_last_identical": [
+     false,
+     false
+    ],
+    "elapsed_seconds_windows": [
+     6.887,
+     6.569
+    ],
+    "elapsed_seconds_macos": [
+     3.317,
+     3.344
+    ]
+   }
+  },
+  "geometry_view": {
+   "windows": {
+    "backend": "D3D",
+    "input_movie_sha256": "f96fa62922df2b9fa1e56e1d22ab40f96ab16ff260ca414f14feeaeecad1401f",
+    "input_polls": 36000,
+    "staging": {
+     "used": true,
+     "sd_image_sha256_before": "ed845a516ee8f992683c88954ff2125768decf527bd6e740a6038d08c009c8e7",
+     "files": [
+      {
+       "sd_path": "sd:/halo-wii-geometry/tags.bin",
+       "sha256": "8501f4ad215a630d14220140e27f8a9c30a5ed18fe459ac07c686e827a0ab7bc",
+       "verified": true
+      },
+      {
+       "sd_path": "sd:/halo-wii-geometry/bsp.bin",
+       "sha256": "7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b",
+       "verified": true
+      },
+      {
+       "sd_path": "sd:/halo-wii-geometry/section.txt",
+       "sha256": "b59ee04e514f971e1d9ff3c732f896c4392e8b64e41c8c427448b98a96cf40a4",
+       "verified": true
+      }
+     ],
+     "commands": [
+      {
+       "tool": "mmd",
+       "target": "::/halo-wii-geometry",
+       "exit_code": 0
+      },
+      {
+       "tool": "mcopy",
+       "target": "::/halo-wii-geometry/tags.bin",
+       "exit_code": 0
+      },
+      {
+       "tool": "mcopy",
+       "target": "::/halo-wii-geometry/bsp.bin",
+       "exit_code": 0
+      },
+      {
+       "tool": "mcopy",
+       "target": "::/halo-wii-geometry/section.txt",
+       "exit_code": 0
+      }
+     ],
+     "sd_image_sha256_after_staging": "f0b627d1643ecbadeecf3510d573bcf99c51de12edb37ab623d3ee4c3e993e62"
+    },
+    "os_stability": {
+     "observation": "no_instability_events_observed",
+     "instability_events": [],
+     "window_utc": [
+      "2026-10-10T14:27:12+00:00",
+      "2026-10-10T14:28:19+00:00"
+     ],
+     "last_boot_utc": "2026-10-08T13:53:48.5000000Z",
+     "dolphin_application_events": [],
+     "source": null
+    },
+    "outcomes": {
+     "guest": "passed",
+     "persistence": "passed",
+     "host": [
+      "exit_zero"
+     ],
+     "os_stability": "no_instability_events_observed",
+     "physical_wii": "untested"
+    },
+    "tool_exit": 0,
+    "runs": [
+     {
+      "number": 1,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 27.422,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-geometry/runs.txt": "22c45bbea4daf97fbe233583b01d9dded590f6decfcaa1f4cda37ca48228796e",
+       "halo-wii-geometry/view.log": "b3da41549b2bfb4a373821871c8ef41ff58997e8468a9dde83ec9086b49f4515",
+       "halo-wii-geometry/tags.bin": "8501f4ad215a630d14220140e27f8a9c30a5ed18fe459ac07c686e827a0ab7bc",
+       "halo-wii-geometry/bsp.bin": "7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b",
+       "halo-wii-geometry/section.txt": "b59ee04e514f971e1d9ff3c732f896c4392e8b64e41c8c427448b98a96cf40a4"
+      },
+      "frame_dump": {
+       "count": 782,
+       "first_sha256": "fe049f0a7d074d3124ff381d8f328ae9696bc17d3f26c158d05b2a7f01720d21",
+       "last_sha256": "a7987b3251da45ba56d7c644fc88f8ee53c1f48d48313a7fb14f614607525af9"
+      },
+      "cycles": [
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       },
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       },
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       },
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       }
+      ],
+      "cull_pose0": {
+       "none": {
+        "crc": "aac744a4",
+        "visible": "63",
+        "same_as_none": "768",
+        "classified_pose0_lit_unlit": [
+         "30",
+         "33"
+        ],
+        "classified_pose1_lit_unlit": [
+         "22",
+         "34"
+        ]
+       },
+       "content_back": {
+        "crc": "18b17d9a",
+        "visible": "47",
+        "same_as_none": "740",
+        "classified_pose0_lit_unlit": [
+         "47",
+         "0"
+        ],
+        "classified_pose1_lit_unlit": [
+         "44",
+         "0"
+        ]
+       },
+       "opposite_front": {
+        "crc": "b9cf71f5",
+        "visible": "52",
+        "same_as_none": "745",
+        "classified_pose0_lit_unlit": [
+         "0",
+         "52"
+        ],
+        "classified_pose1_lit_unlit": [
+         "0",
+         "48"
+        ]
+       }
+      },
+      "end": {
+       "cycles": "4",
+       "stale_rejected": "4",
+       "faults_rejected": "2",
+       "failures": "0",
+       "result": "pass"
+      },
+      "load_us": [
+       "1699738",
+       "1699759",
+       "1699759",
+       "1699759"
+      ],
+      "fifo_submitted_peak": "77632"
+     },
+     {
+      "number": 2,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 27.109,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-geometry/runs.txt": "3c90f26ec0488f11c263e58c4be76487b9e8088dade4e94f40bb3e6a7b5da223",
+       "halo-wii-geometry/view.log": "d263ecf20ae82bc36945387ead2756e2c9d2b7e159c1ffcc33801f5710079541",
+       "halo-wii-geometry/tags.bin": "8501f4ad215a630d14220140e27f8a9c30a5ed18fe459ac07c686e827a0ab7bc",
+       "halo-wii-geometry/bsp.bin": "7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b",
+       "halo-wii-geometry/section.txt": "b59ee04e514f971e1d9ff3c732f896c4392e8b64e41c8c427448b98a96cf40a4"
+      },
+      "frame_dump": {
+       "count": 782,
+       "first_sha256": "fe049f0a7d074d3124ff381d8f328ae9696bc17d3f26c158d05b2a7f01720d21",
+       "last_sha256": "a7987b3251da45ba56d7c644fc88f8ee53c1f48d48313a7fb14f614607525af9"
+      },
+      "cycles": [
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       },
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       },
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       },
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       }
+      ],
+      "cull_pose0": {
+       "none": {
+        "crc": "aac744a4",
+        "visible": "63",
+        "same_as_none": "768",
+        "classified_pose0_lit_unlit": [
+         "30",
+         "33"
+        ],
+        "classified_pose1_lit_unlit": [
+         "22",
+         "34"
+        ]
+       },
+       "content_back": {
+        "crc": "18b17d9a",
+        "visible": "47",
+        "same_as_none": "740",
+        "classified_pose0_lit_unlit": [
+         "47",
+         "0"
+        ],
+        "classified_pose1_lit_unlit": [
+         "44",
+         "0"
+        ]
+       },
+       "opposite_front": {
+        "crc": "b9cf71f5",
+        "visible": "52",
+        "same_as_none": "745",
+        "classified_pose0_lit_unlit": [
+         "0",
+         "52"
+        ],
+        "classified_pose1_lit_unlit": [
+         "0",
+         "48"
+        ]
+       }
+      },
+      "end": {
+       "cycles": "4",
+       "stale_rejected": "4",
+       "faults_rejected": "2",
+       "failures": "0",
+       "result": "pass"
+      },
+      "load_us": [
+       "1699508",
+       "1699759",
+       "1699760",
+       "1699759"
+      ],
+      "fifo_submitted_peak": "77632"
+     }
+    ]
+   },
+   "macos": {
+    "backend": "Vulkan",
+    "input_movie_sha256": "f96fa62922df2b9fa1e56e1d22ab40f96ab16ff260ca414f14feeaeecad1401f",
+    "input_polls": 36000,
+    "staging": {
+     "used": true,
+     "sd_image_sha256_before": "ed845a516ee8f992683c88954ff2125768decf527bd6e740a6038d08c009c8e7",
+     "files": [
+      {
+       "sd_path": "sd:/halo-wii-geometry/tags.bin",
+       "sha256": "8501f4ad215a630d14220140e27f8a9c30a5ed18fe459ac07c686e827a0ab7bc",
+       "verified": true
+      },
+      {
+       "sd_path": "sd:/halo-wii-geometry/bsp.bin",
+       "sha256": "7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b",
+       "verified": true
+      },
+      {
+       "sd_path": "sd:/halo-wii-geometry/section.txt",
+       "sha256": "b59ee04e514f971e1d9ff3c732f896c4392e8b64e41c8c427448b98a96cf40a4",
+       "verified": true
+      }
+     ],
+     "commands": [
+      {
+       "tool": "mmd",
+       "target": "::/halo-wii-geometry",
+       "exit_code": 0
+      },
+      {
+       "tool": "mcopy",
+       "target": "::/halo-wii-geometry/tags.bin",
+       "exit_code": 0
+      },
+      {
+       "tool": "mcopy",
+       "target": "::/halo-wii-geometry/bsp.bin",
+       "exit_code": 0
+      },
+      {
+       "tool": "mcopy",
+       "target": "::/halo-wii-geometry/section.txt",
+       "exit_code": 0
+      }
+     ],
+     "sd_image_sha256_after_staging": "84e0ab27e97dbdf2510f3f69d8c6f935e18fe7baaa3dbdfb35f2e6fe14044cc8"
+    },
+    "os_stability": {
+     "observation": "no_instability_events_observed",
+     "instability_events": [],
+     "window_utc": [
+      "2026-10-10T14:23:32+00:00",
+      "2026-10-10T14:24:30+00:00"
+     ],
+     "last_boot_utc": "2026-10-10T00:33:25+00:00",
+     "dolphin_application_events": [],
+     "source": "macos"
+    },
+    "outcomes": {
+     "guest": "passed",
+     "persistence": "passed",
+     "host": [
+      "exit_zero"
+     ],
+     "os_stability": "no_instability_events_observed",
+     "physical_wii": "untested"
+    },
+    "tool_exit": 0,
+    "runs": [
+     {
+      "number": 1,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 23.833,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-geometry/runs.txt": "22c45bbea4daf97fbe233583b01d9dded590f6decfcaa1f4cda37ca48228796e",
+       "halo-wii-geometry/view.log": "b3da41549b2bfb4a373821871c8ef41ff58997e8468a9dde83ec9086b49f4515",
+       "halo-wii-geometry/tags.bin": "8501f4ad215a630d14220140e27f8a9c30a5ed18fe459ac07c686e827a0ab7bc",
+       "halo-wii-geometry/bsp.bin": "7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b",
+       "halo-wii-geometry/section.txt": "b59ee04e514f971e1d9ff3c732f896c4392e8b64e41c8c427448b98a96cf40a4"
+      },
+      "frame_dump": {
+       "count": 782,
+       "first_sha256": "fe049f0a7d074d3124ff381d8f328ae9696bc17d3f26c158d05b2a7f01720d21",
+       "last_sha256": "6370c5c6160688b09ac2c2e56754ab5719cfa2a24c9d3f77f0c681f13fd787f1"
+      },
+      "cycles": [
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       },
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       },
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       },
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       }
+      ],
+      "cull_pose0": {
+       "none": {
+        "crc": "aac744a4",
+        "visible": "63",
+        "same_as_none": "768",
+        "classified_pose0_lit_unlit": [
+         "30",
+         "33"
+        ],
+        "classified_pose1_lit_unlit": [
+         "22",
+         "34"
+        ]
+       },
+       "content_back": {
+        "crc": "18b17d9a",
+        "visible": "47",
+        "same_as_none": "740",
+        "classified_pose0_lit_unlit": [
+         "47",
+         "0"
+        ],
+        "classified_pose1_lit_unlit": [
+         "44",
+         "0"
+        ]
+       },
+       "opposite_front": {
+        "crc": "b9cf71f5",
+        "visible": "52",
+        "same_as_none": "745",
+        "classified_pose0_lit_unlit": [
+         "0",
+         "52"
+        ],
+        "classified_pose1_lit_unlit": [
+         "0",
+         "48"
+        ]
+       }
+      },
+      "end": {
+       "cycles": "4",
+       "stale_rejected": "4",
+       "faults_rejected": "2",
+       "failures": "0",
+       "result": "pass"
+      },
+      "load_us": [
+       "1699738",
+       "1699759",
+       "1699759",
+       "1699759"
+      ],
+      "fifo_submitted_peak": "77632"
+     },
+     {
+      "number": 2,
+      "host_outcome": "exit_zero",
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 23.83,
+      "dolphin_processes_after": 0,
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "persistence_failures": [],
+      "read_back_sha256": {
+       "halo-wii-geometry/runs.txt": "3c90f26ec0488f11c263e58c4be76487b9e8088dade4e94f40bb3e6a7b5da223",
+       "halo-wii-geometry/view.log": "d263ecf20ae82bc36945387ead2756e2c9d2b7e159c1ffcc33801f5710079541",
+       "halo-wii-geometry/tags.bin": "8501f4ad215a630d14220140e27f8a9c30a5ed18fe459ac07c686e827a0ab7bc",
+       "halo-wii-geometry/bsp.bin": "7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b",
+       "halo-wii-geometry/section.txt": "b59ee04e514f971e1d9ff3c732f896c4392e8b64e41c8c427448b98a96cf40a4"
+      },
+      "frame_dump": {
+       "count": 782,
+       "first_sha256": "fe049f0a7d074d3124ff381d8f328ae9696bc17d3f26c158d05b2a7f01720d21",
+       "last_sha256": "6370c5c6160688b09ac2c2e56754ab5719cfa2a24c9d3f77f0c681f13fd787f1"
+      },
+      "cycles": [
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       },
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       },
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       },
+       {
+        "index_crc": "bad05748",
+        "position_crc": "db11989c",
+        "none_grid_crc": "aac744a4"
+       }
+      ],
+      "cull_pose0": {
+       "none": {
+        "crc": "aac744a4",
+        "visible": "63",
+        "same_as_none": "768",
+        "classified_pose0_lit_unlit": [
+         "30",
+         "33"
+        ],
+        "classified_pose1_lit_unlit": [
+         "22",
+         "34"
+        ]
+       },
+       "content_back": {
+        "crc": "18b17d9a",
+        "visible": "47",
+        "same_as_none": "740",
+        "classified_pose0_lit_unlit": [
+         "47",
+         "0"
+        ],
+        "classified_pose1_lit_unlit": [
+         "44",
+         "0"
+        ]
+       },
+       "opposite_front": {
+        "crc": "b9cf71f5",
+        "visible": "52",
+        "same_as_none": "745",
+        "classified_pose0_lit_unlit": [
+         "0",
+         "52"
+        ],
+        "classified_pose1_lit_unlit": [
+         "0",
+         "48"
+        ]
+       }
+      },
+      "end": {
+       "cycles": "4",
+       "stale_rejected": "4",
+       "faults_rejected": "2",
+       "failures": "0",
+       "result": "pass"
+      },
+      "load_us": [
+       "1699508",
+       "1699759",
+       "1699760",
+       "1699759"
+      ],
+      "fifo_submitted_peak": "77632"
+     }
+    ]
+   },
+   "cross_host": {
+    "guest_sd_read_back_identical": true,
+    "input_movie_identical": true,
+    "frame_dump_first_identical": [
+     true,
+     true
+    ],
+    "frame_dump_last_identical": [
+     false,
+     false
+    ],
+    "elapsed_seconds_windows": [
+     27.422,
+     27.109
+    ],
+    "elapsed_seconds_macos": [
+     23.833,
+     23.83
+    ]
+   }
+  }
+ },
+ "metal_backend_control": {
+  "backend": "Metal",
+  "outcomes": {
+   "guest": "failed",
+   "persistence": "passed",
+   "host": [
+    "exit_zero"
+   ],
+   "os_stability": "no_instability_events_observed",
+   "physical_wii": "untested"
+  },
+  "tool_exit": 1,
+  "runs": [
+   {
+    "number": 1,
+    "host_outcome": "exit_zero",
+    "exit_code_hex": "0x00000000",
+    "forced_stop": false,
+    "elapsed_seconds": 12.11,
+    "dolphin_processes_after": 0,
+    "guest": "failed",
+    "guest_failures": [
+     "efb_checks_failed_or_missing",
+     "guest_reported_fail"
+    ],
+    "persistence": "passed",
+    "persistence_failures": [],
+    "read_back_sha256": {
+     "halo-wii-gxm/runs.txt": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+     "halo-wii-gxm/materials.log": "b650ca0c28f1abe8e01339374373da9af4930f16e5aac4ce1fb52d731ec60bfb"
+    },
+    "frame_dump": {
+     "count": 667,
+     "first_sha256": "5a854ae63d07b63fc89a4697039598e62fa4f8ec024510ec3dec75b5ab5b548a",
+     "last_sha256": "34d0767e33ffd632f07ba23d067098785c9d557b1b3ccb6412c0f9dba9451fc2"
+    },
+    "cycle_crcs": [
+     "2efb1ade",
+     "2efb1ade",
+     "2efb1ade",
+     "2efb1ade"
+    ],
+    "checks": "188/196",
+    "negatives": "17/17",
+    "end": {
+     "frames": "667",
+     "exit": "pad_start",
+     "toggles": "2",
+     "result": "fail"
+    }
+   },
+   {
+    "number": 2,
+    "host_outcome": "exit_zero",
+    "exit_code_hex": "0x00000000",
+    "forced_stop": false,
+    "elapsed_seconds": 12.093,
+    "dolphin_processes_after": 0,
+    "guest": "failed",
+    "guest_failures": [
+     "efb_checks_failed_or_missing",
+     "guest_reported_fail"
+    ],
+    "persistence": "passed",
+    "persistence_failures": [],
+    "read_back_sha256": {
+     "halo-wii-gxm/runs.txt": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+     "halo-wii-gxm/materials.log": "86cc3a75a0b3ee6ecc8cdf25a652dd31e8ff149797f5d9064326fc25941ff025"
+    },
+    "frame_dump": {
+     "count": 667,
+     "first_sha256": "5a854ae63d07b63fc89a4697039598e62fa4f8ec024510ec3dec75b5ab5b548a",
+     "last_sha256": "34d0767e33ffd632f07ba23d067098785c9d557b1b3ccb6412c0f9dba9451fc2"
+    },
+    "cycle_crcs": [
+     "2efb1ade",
+     "2efb1ade",
+     "2efb1ade",
+     "2efb1ade"
+    ],
+    "checks": "188/196",
+    "negatives": "17/17",
+    "end": {
+     "frames": "667",
+     "exit": "pad_start",
+     "toggles": "2",
+     "result": "fail"
+    }
+   }
+  ],
+  "failed_checks": [
+   "1:mip_max_lod_1",
+   "1:mip_min_lod_2",
+   "2:mip_max_lod_1",
+   "2:mip_min_lod_2",
+   "3:mip_max_lod_1",
+   "3:mip_min_lod_2",
+   "4:mip_max_lod_1",
+   "4:mip_min_lod_2"
+  ]
+ }
+}

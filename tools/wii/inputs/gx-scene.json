@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "description": "Asset-free GX scene (HWI-014A): neutral while calibration runs, main stick right (yaw) and up (pitch), C-stick down (zoom out), A (toggle spin), B (reset pose), then START (exit=pad_start). Same pad states as the Windows HWI-014A run. One entry per guest controller poll on GC port 1.",
+  "port": 1,
+  "steps": [
+    {"label": "neutral", "polls": 200},
+    {"label": "stick_right_yaw", "polls": 120, "stick": [255, 128]},
+    {"label": "neutral", "polls": 40},
+    {"label": "stick_up_pitch", "polls": 80, "stick": [128, 255]},
+    {"label": "neutral", "polls": 40},
+    {"label": "cstick_down_zoom_out", "polls": 80, "cstick": [128, 0]},
+    {"label": "neutral", "polls": 40},
+    {"label": "a_toggle_spin", "polls": 6, "buttons": ["A"]},
+    {"label": "neutral_spinning", "polls": 200},
+    {"label": "b_reset_pose", "polls": 6, "buttons": ["B"]},
+    {"label": "neutral", "polls": 60},
+    {"label": "start_exit", "polls": 6, "buttons": ["START"]},
+    {"label": "neutral_tail", "polls": 400}
+  ]
+}

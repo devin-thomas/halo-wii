@@ -13,13 +13,19 @@ and classified "tolerated", never "exit_zero". Forced stops are never tolerated.
 No local path is hard-coded: Dolphin, the DOL, build manifest, SD image and staged
 files are arguments. The JSON record stores file names and hashes, not the
 caller's directories, so it can be reviewed for publication.
+
+Two hosts are supported: Windows (Dolphin.exe, tasklist, mtools through WSL,
+the Windows event logs) and macOS (Dolphin.app/Contents/MacOS/Dolphin, pgrep,
+native mtools, kern.boottime, DiagnosticReports and the unified log).
 """
 
 import argparse
 import datetime
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath, PureWindowsPath
+import platform
 import re
 import shutil
 import struct
@@ -29,6 +35,25 @@ import time
 
 SCHEMA_VERSION = 1
 TOOL = "tools/wii/run_dolphin.py"
+
+# Video backend per host. On macOS the Metal backend failed two mip LOD checks
+# of the GX materials self-test that pass under Vulkan (MoltenVK), OpenGL and
+# Windows D3D, so Vulkan is the macOS default; see RUNNING.md.
+DEFAULT_BACKEND = {"windows": "D3D", "macos": "Vulkan"}
+
+
+def host_platform(name=None):
+    """'windows' or 'macos' for the two qualified hosts, else 'unsupported'."""
+    name = sys.platform if name is None else name
+    return {"win32": "windows", "darwin": "macos"}.get(name, "unsupported")
+
+
+def resolve_dolphin(path):
+    """Accept Dolphin.exe, the macOS executable, or a Dolphin.app bundle."""
+    path = Path(path)
+    if path.suffix.lower() == ".app":
+        return path / "Contents" / "MacOS" / "Dolphin"
+    return path
 
 # ---------------------------------------------------------------------------
 # DTM authoring (Dolphin's 256-byte DTMHeader followed by 8-byte pad states)
@@ -77,7 +102,10 @@ def pad_entries(script):
         entries.append(struct.pack("<H6B", bits, *values) * polls)
     if not entries:
         raise ValueError("input script has no steps")
-    return b"".join(entries)
+    repeat = script.get("repeat", 1)
+    if not isinstance(repeat, int) or isinstance(repeat, bool) or repeat <= 0:
+        raise ValueError("input script repeat must be a positive integer")
+    return b"".join(entries) * repeat
 
 
 def author_dtm(game_id, body, tick_count=DEFAULT_TICK_COUNT):
@@ -256,7 +284,8 @@ def sd_relative(path):
 
 
 # ---------------------------------------------------------------------------
-# SD staging through mtools in WSL (only used when files are supplied)
+# SD staging through mtools: in WSL on Windows, native on macOS (only used
+# when files are supplied)
 # ---------------------------------------------------------------------------
 
 def wsl_path(path):
@@ -267,19 +296,30 @@ def wsl_path(path):
     return "/mnt/" + windows.drive[0].lower() + "/" + "/".join(windows.parts[1:])
 
 
-def staging_commands(image, staged, existing_dirs):
-    """mtools argv lists: create missing directories, then copy without clobbering."""
+def staging_commands(image, staged, existing_dirs, host_path=wsl_path):
+    """mtools argv lists: create missing directories, then copy without clobbering.
+
+    host_path maps a local path to the one mtools sees: wsl_path for mtools in
+    WSL on Windows, str for native mtools on macOS.
+    """
     commands, made = [], set(existing_dirs)
     for _, destination in staged:
         parts = sd_relative(destination).split("/")
         for depth in range(1, len(parts)):
             directory = "/".join(parts[:depth])
             if directory.lower() not in made:
-                commands.append(["mmd", "-i", wsl_path(image), "::/" + directory])
+                commands.append(["mmd", "-i", host_path(image), "::/" + directory])
                 made.add(directory.lower())
     for source, destination in staged:
-        commands.append(["mcopy", "-n", "-i", wsl_path(image), wsl_path(source), "::/" + sd_relative(destination)])
+        commands.append(["mcopy", "-n", "-i", host_path(image), host_path(source), "::/" + sd_relative(destination)])
     return commands
+
+
+def staging_argv(argv, host, wsl_distro="Debian"):
+    """The process to run for one mtools command on this host."""
+    if host == "windows":
+        return ["wsl", "-d", wsl_distro, "--", *argv]
+    return [str(a) for a in argv]
 
 
 def parse_stage(value):
@@ -291,7 +331,7 @@ def parse_stage(value):
 
 
 # ---------------------------------------------------------------------------
-# Host process helpers (Windows)
+# Host process helpers (Windows tasklist, macOS pgrep)
 # ---------------------------------------------------------------------------
 
 def parse_tasklist(text, image_name):
@@ -303,7 +343,19 @@ def parse_tasklist(text, image_name):
     return count
 
 
-def running_count(image_name):
+def parse_pgrep(text):
+    """Count PIDs printed by `pgrep -x <name>` (one per line)."""
+    return sum(1 for line in text.splitlines() if line.strip().isdigit())
+
+
+def running_count(image_name, host="windows"):
+    """Processes with this exact image/process name; any count blocks a launch."""
+    if host == "macos":
+        # pgrep exits 1 when nothing matches; anything else is a failed query.
+        result = subprocess.run(["pgrep", "-x", image_name], capture_output=True, text=True)
+        if result.returncode not in (0, 1):
+            raise RuntimeError("pgrep failed; cannot establish exclusive Dolphin ownership")
+        return parse_pgrep(result.stdout)
     result = subprocess.run(["tasklist", "/FI", f"IMAGENAME eq {image_name}", "/FO", "CSV", "/NH"],
                             capture_output=True, text=True)
     if result.returncode != 0:
@@ -311,10 +363,14 @@ def running_count(image_name):
     return parse_tasklist(result.stdout, image_name)
 
 
-def exit_fields(status):
+def exit_fields(status, posix=False):
+    """Exit status as recorded; on POSIX a negative status names the killing signal."""
     unsigned = status & 0xFFFFFFFF
     signed = unsigned - 0x100000000 if unsigned & 0x80000000 else unsigned
-    return {"exit_code_hex": f"0x{unsigned:08x}", "exit_code_signed": signed}
+    fields = {"exit_code_hex": f"0x{unsigned:08x}", "exit_code_signed": signed}
+    if posix and status < 0:
+        fields["terminated_by_signal"] = -status
+    return fields
 
 
 def host_outcome(status, forced_stop, tolerated):
@@ -415,6 +471,134 @@ def query_os_events(window_start_utc, window_end_utc):
         if isinstance(parsed.get(key), dict):
             parsed[key] = [parsed[key]]
     return classify_events(parsed, window_start_utc)
+
+
+# ---------------------------------------------------------------------------
+# OS stability: read-only macOS observation
+# ---------------------------------------------------------------------------
+
+MACOS_REPORT_DIRS = (("system", Path("/Library/Logs/DiagnosticReports")),
+                     ("user", Path.home() / "Library/Logs/DiagnosticReports"))
+# Kernel panic/GPU-restart/watchdog messages, crash reporting that names
+# Dolphin, and fault-level (type 17) messages from the Dolphin process itself.
+MACOS_LOG_PREDICATE = (
+    '(process == "kernel" AND (eventMessage CONTAINS[c] "panic" OR eventMessage CONTAINS[c] "GPU restart"'
+    ' OR eventMessage CONTAINS[c] "watchdog")) OR (process == "ReportCrash" AND eventMessage CONTAINS[c] "dolphin")'
+    ' OR (processImagePath ENDSWITH "/Dolphin" AND messageType == 17)')
+MACOS_KERNEL_INSTABILITY = re.compile(r"(?i)panic\(|gpu restart|gpu hang|watchdog timeout")
+MACOS_LIMITS = ("Read-only, batch window only: kern.boottime; names and modification times of files in the "
+                "system and user DiagnosticReports folders (only their kind is kept); `log show` over the window "
+                "for kernel panic/GPU-restart/watchdog messages, ReportCrash naming Dolphin and fault-level "
+                "Dolphin messages. A kernel panic restarts the host and ends this runner, so it would appear as a "
+                "later boot time or panic report, not in this record. Absence of events is not a guarantee of "
+                "stability.")
+
+
+def scrub(text, limit=200):
+    """Drop home-directory user names and bound the length of a log message."""
+    return re.sub(r"/Users/[^/\s]+", "/Users/<user>", text or "")[:limit]
+
+
+def macos_report_kind(name):
+    lower = name.lower()
+    if "panic" in lower or lower.startswith("kernel"):
+        return "kernel_panic_report"
+    if lower.startswith("dolphin"):
+        return "dolphin_crash_report"
+    return None
+
+
+def parse_boottime(text):
+    """`sysctl -n kern.boottime` -> ISO UTC, or None."""
+    match = re.search(r"sec\s*=\s*(\d+)", text or "")
+    if not match:
+        return None
+    return datetime.datetime.fromtimestamp(int(match.group(1)), datetime.timezone.utc).isoformat(timespec="seconds")
+
+
+def classify_macos(reports, log_entries, boot_utc, window_start_utc, log_ok=True):
+    """Separate macOS instability from Dolphin crash/fault reports.
+
+    reports: [(file name, modification time UTC)] already limited to the window.
+    log_entries: decoded `log show --style ndjson` records.
+    """
+    instability, application, kernel = [], [], []
+    for name, time_utc in reports:
+        kind = macos_report_kind(name)
+        if kind == "kernel_panic_report":
+            instability.append({"meaning": kind, "time_utc": time_utc})
+        elif kind == "dolphin_crash_report":
+            application.append({"kind": kind, "time_utc": time_utc})
+    for entry in log_entries:
+        if "eventMessage" not in entry:
+            continue
+        process = PurePosixPath(entry.get("processImagePath") or "").name
+        item = {"time": entry.get("timestamp"), "process": process, "message": scrub(entry.get("eventMessage"))}
+        if process == "kernel":
+            kernel.append(item)
+            if MACOS_KERNEL_INSTABILITY.search(entry.get("eventMessage") or ""):
+                instability.append(dict(item, meaning="kernel_panic_gpu_restart_or_watchdog_message"))
+        else:
+            application.append(dict(item, kind="dolphin_fault_or_crash_log_message"))
+    rebooted = bool(boot_utc and parse_utc(boot_utc) > parse_utc(window_start_utc))
+    if rebooted:
+        instability.append({"meaning": "boot_after_window_start", "time_utc": boot_utc})
+    if instability:
+        observation = "instability_observed"
+    elif not log_ok:
+        observation = "unmeasured"
+    else:
+        observation = "no_instability_events_observed"
+    return {
+        "observation": observation,
+        "source": "macos",
+        "instability_events": instability,
+        "kernel_log_matched": kernel,
+        "dolphin_application_events": application[:20],
+        "dolphin_application_event_count": len(application),
+        "last_boot_utc": boot_utc,
+        "limits": MACOS_LIMITS,
+    }
+
+
+def query_macos_os(window_start_utc, window_end_utc):
+    start = datetime.datetime.fromisoformat(window_start_utc)
+    end = datetime.datetime.fromisoformat(window_end_utc)
+    boot = subprocess.run(["sysctl", "-n", "kern.boottime"], capture_output=True, text=True)
+    reports, unreadable = [], []
+    for label, folder in MACOS_REPORT_DIRS:
+        try:
+            names = os.listdir(folder)
+        except OSError:
+            unreadable.append(label)
+            continue
+        for name in names:
+            try:
+                mtime = datetime.datetime.fromtimestamp((folder / name).stat().st_mtime, datetime.timezone.utc)
+            except OSError:
+                continue
+            if start <= mtime <= end:
+                reports.append((name, mtime.isoformat(timespec="seconds")))
+    local = lambda moment: moment.astimezone().strftime("%Y-%m-%d %H:%M:%S")
+    log = subprocess.run(["log", "show", "--style", "ndjson", "--start", local(start), "--end", local(end),
+                          "--predicate", MACOS_LOG_PREDICATE], capture_output=True, text=True)
+    entries = []
+    for line in log.stdout.splitlines():
+        try:
+            entries.append(json.loads(line))
+        except ValueError:
+            continue
+    result = classify_macos(reports, entries, parse_boottime(boot.stdout), window_start_utc, log.returncode == 0)
+    result["report_folders_unreadable"] = unreadable
+    if log.returncode != 0:
+        result["log_show_error"] = scrub((log.stderr.strip().splitlines() or [""])[0])
+    return result
+
+
+def query_host_os(host, window_start_utc, window_end_utc):
+    if host == "macos":
+        return query_macos_os(window_start_utc, window_end_utc)
+    return query_os_events(window_start_utc, window_end_utc)
 
 
 # ---------------------------------------------------------------------------
@@ -669,6 +853,191 @@ def check_gx_materials(build_id, run_number, initial_count, previous_log, files,
     return guest, persistence
 
 
+GXS_LOG, GXS_RUNS, GXS_MAGIC = "halo-wii-gx/scene.log", "halo-wii-gx/runs.txt", "halo-wii-gx-v1"
+GXS_CALIBRATION = 9
+GEO_LOG, GEO_RUNS, GEO_MAGIC = "halo-wii-geometry/view.log", "halo-wii-geometry/runs.txt", "halo-wii-geometry-v1"
+GEO_CYCLES = 4
+
+# Counter-based scenarios: (run counter, guest log, counter magic).
+COUNTER_SCENARIOS = {"gx_materials": (GXM_RUNS, GXM_LOG, "halo-wii-gxm-v1"),
+                     "gx_scene": (GXS_RUNS, GXS_LOG, GXS_MAGIC),
+                     "geometry_view": (GEO_RUNS, GEO_LOG, GEO_MAGIC)}
+
+
+def run_counter(data, magic):
+    """Value of a '<magic> N' guest run counter; 0 when absent, never reset when invalid."""
+    if data is None:
+        return 0
+    match = re.fullmatch(re.escape(magic) + r" (\d+)\n", data.decode("ascii", "replace"))
+    if not match:
+        raise ValueError(f"existing {magic} run counter is not valid; preserved, not reset")
+    return int(match.group(1))
+
+
+def counter_and_report(files, counter_path, log_path, magic, expected_count, previous_log):
+    """Shared persistence checks; returns (guest, persistence, new report lines or None)."""
+    guest = {"failures": [], "observations": {}}
+    persistence = {"failures": [], "expected_run_counter": expected_count}
+    counter, log_bytes = files.get(counter_path), files.get(log_path)
+    if counter is None:
+        persistence["failures"].append("run_counter_missing")
+    else:
+        persistence["run_counter_text"] = counter.decode("ascii", "replace")
+        if counter != f"{magic} {expected_count}\n".encode():
+            persistence["failures"].append("run_counter_did_not_advance_across_cold_process")
+    if log_bytes is None:
+        guest["failures"].append("guest_log_missing")
+        persistence["failures"].append("guest_log_missing")
+        return guest, persistence, None
+    log = log_bytes.decode("ascii", "replace").replace("\r\n", "\n")
+    preserved = log.startswith(previous_log)
+    persistence["prior_log_preserved"] = preserved
+    if not preserved:
+        persistence["failures"].append("prior_guest_log_not_preserved")
+    return guest, persistence, (log[len(previous_log):] if preserved else log).splitlines()
+
+
+def check_begin_end(target, lines, build_id, expected_count, guest, persistence):
+    """One BEGIN and a final END for the target; returns their fields or None."""
+    begins = [fields(line) for line in lines if line.startswith(f"BEGIN target={target} ")]
+    ends = [fields(line) for line in lines if line.startswith(f"END target={target} ")]
+    if len(begins) != 1 or len(ends) != 1 or not lines[-1].startswith("END "):
+        guest["failures"].append(f"expected_one_BEGIN_and_final_END_found_{len(begins)}_{len(ends)}")
+        return None
+    begin, end = begins[0], ends[0]
+    guest["observations"]["build_id"] = begin.get("build")
+    if begin.get("build") != build_id or end.get("build") != build_id:
+        guest["failures"].append("build_id_mismatch")
+    if begin.get("previous_runs") != str(expected_count - 1):
+        persistence["failures"].append("guest_previous_runs_mismatch")
+    if begin.get("storage") != "1":
+        persistence["failures"].append("guest_storage_not_ready")
+    return begin, end
+
+
+def last_fields(lines, prefixes, obs):
+    """Record the last line of each prefix (key=value fields) under its lower-case name."""
+    for prefix in prefixes:
+        found = [fields(line) for line in lines if line.startswith(prefix)]
+        if found:
+            obs[prefix.strip().lower()] = found[-1]
+
+
+def check_gx_scene(build_id, run_number, initial_count, previous_log, files, expect_exit="pad_start"):
+    """Evaluate one cold launch of the asset-free GX scene (HWI-014A) from its SD log.
+
+    Requires the nine EFB calibration checks to pass, input to be observed,
+    no owned-range failure, no heap leak since init and a passing END.
+    """
+    expected_count = initial_count + run_number
+    guest, persistence, lines = counter_and_report(files, GXS_RUNS, GXS_LOG, GXS_MAGIC, expected_count, previous_log)
+    if lines is None:
+        return guest, persistence
+    found = check_begin_end("gx_scene", lines, build_id, expected_count, guest, persistence)
+    if found is None:
+        return guest, persistence
+    _, end = found
+    obs = guest["observations"]
+    cal = [fields(line) for line in lines if line.startswith("CAL ")]
+    obs["calibration_checks"] = {c.get("name"): c.get("pass") == "1" for c in cal}
+    calibration = [fields(line) for line in lines if line.startswith("CALIBRATION ")]
+    if len(calibration) != 1:
+        guest["failures"].append("CALIBRATION_missing")
+    else:
+        passed, total = calibration[0].get("passed"), calibration[0].get("total")
+        obs["calibration"] = f"{passed}/{total}"
+        if passed != total or total != str(GXS_CALIBRATION) or len(cal) != GXS_CALIBRATION:
+            guest["failures"].append("calibration_failed_or_incomplete")
+    if not cal or not all(obs["calibration_checks"].values()):
+        guest["failures"].append("calibration_check_failed")
+    heaps = [fields(line) for line in lines if line.startswith("HEAP end=")]
+    if not heaps or heaps[-1].get("leak_since_init") != "0":
+        guest["failures"].append("heap_leak_since_init")
+    last_fields(lines, ("PROJECTION ", "FIFO ", "TIMING ", "STACK "), obs)
+    obs["inputs"] = [fields(line) for line in lines if line.startswith("INPUT ")]
+    obs["end"] = end
+    if end.get("result") != "pass":
+        guest["failures"].append("guest_reported_fail")
+    if end.get("exit") != expect_exit:
+        guest["failures"].append(f"exit_not_{expect_exit}")
+    if end.get("storage") != "1":
+        persistence["failures"].append("guest_storage_not_ready")
+    if end.get("range_failures") != "0":
+        guest["failures"].append("owned_range_failures")
+    if not int(end.get("connected", "0"), 16) & 1:
+        guest["failures"].append("pad0_not_connected")
+    if end.get("activity") != "1" or int(end.get("toggles", "0")) < 1 or int(end.get("resets", "0")) < 1:
+        guest["failures"].append("input_not_observed")
+    return guest, persistence
+
+
+def cull_signature(record):
+    """A CULL line without its cycle number and timing fields, for cross-cycle comparison."""
+    return {k: v for k, v in record.items() if not k.startswith("draw_us") and k != "n"}
+
+
+def check_geometry_view(build_id, run_number, initial_count, previous_log, files, expect_exit="pad_start"):
+    """Evaluate one cold launch of the real-geometry diagnostic (HWI-016A/016) from its SD log.
+
+    Requires a valid staged manifest, four load/use/unload cycles with
+    identical geometry CRCs, cull results identical in every cycle (timings
+    excluded), every negative case rejected, MEM2 restored and a passing END.
+    """
+    expected_count = initial_count + run_number
+    guest, persistence, lines = counter_and_report(files, GEO_RUNS, GEO_LOG, GEO_MAGIC, expected_count, previous_log)
+    if lines is None:
+        return guest, persistence
+    found = check_begin_end("geometry_view", lines, build_id, expected_count, guest, persistence)
+    if found is None:
+        return guest, persistence
+    _, end = found
+    obs = guest["observations"]
+    manifest = [fields(line) for line in lines if line.startswith("MANIFEST ")]
+    obs["manifest"] = manifest[-1] if manifest else None
+    if len(manifest) != 1 or manifest[0].get("ok") != "1":
+        guest["failures"].append("manifest_not_accepted")
+    cycles = [fields(line) for line in lines if line.startswith("CYCLE ")]
+    keep = ("n", "placement", "load_us", "index_crc", "position_crc", "none_grid_crc", "none_visible",
+            "normals_along", "opposed", "unclear", "degenerate")
+    obs["cycles"] = [{k: c.get(k) for k in keep} for c in cycles]
+    if len(cycles) != GEO_CYCLES:
+        guest["failures"].append(f"expected_{GEO_CYCLES}_load_cycles_found_{len(cycles)}")
+    elif len({(c.get("index_crc"), c.get("position_crc"), c.get("none_grid_crc")) for c in cycles}) != 1:
+        guest["failures"].append("cycle_results_differ")
+    culls = [fields(line) for line in lines if line.startswith("CULL ")]
+    by_cycle = {}
+    for cull in culls:
+        by_cycle.setdefault(cull.get("n"), {})[cull.get("mode")] = cull_signature(cull)
+    obs["cull"] = by_cycle.get("0", {})
+    obs["cull_draw_us"] = {c.get("mode"): [v for k, v in c.items() if k.startswith("draw_us")]
+                           for c in culls if c.get("n") == "0"}
+    if not culls or len(by_cycle) != len(cycles) or any(v != obs["cull"] for v in by_cycle.values()):
+        guest["failures"].append("cull_results_differ_or_missing")
+    malformed = [fields(line) for line in lines if line.startswith("MALFORMED ")]
+    counts = malformed[-1].get("manifest_rejections", "").split("/") if malformed else []
+    obs["malformed_manifest_rejections"] = "/".join(counts) or None
+    if len(counts) != 2 or counts[0] != counts[1] or counts[0] in ("", "0"):
+        guest["failures"].append("malformed_manifest_not_rejected")
+    faults = [fields(line) for line in lines if line.startswith("FAULT ")]
+    obs["faults"] = {f.get("kind"): f.get("clean") == "1" for f in faults}
+    if not faults or not all(obs["faults"].values()):
+        guest["failures"].append("fault_case_not_rejected_cleanly")
+    last_fields(lines, ("INTERACTIVE ", "MEMORY ", "GX ", "GX_VERIFY ", "STACK "), obs)
+    if obs.get("memory", {}).get("mem2_restored") != "1":
+        guest["failures"].append("mem2_not_restored")
+    interactive = obs.get("interactive", {})
+    if interactive.get("exit") != expect_exit:
+        guest["failures"].append(f"exit_not_{expect_exit}")
+    if interactive.get("activity") != "1" or interactive.get("stick_seen") != "1":
+        guest["failures"].append("input_not_observed")
+    obs["end"] = end
+    if end.get("result") != "pass" or end.get("failures") != "0":
+        guest["failures"].append("guest_reported_fail")
+    if end.get("cycles") != str(GEO_CYCLES):
+        guest["failures"].append("END_cycle_count_mismatch")
+    return guest, persistence
+
+
 # ---------------------------------------------------------------------------
 # Batch execution
 # ---------------------------------------------------------------------------
@@ -717,16 +1086,41 @@ def overall_exit(record):
     return 0
 
 
+def host_record(host):
+    """Host OS and architecture only: no host name, user name or path."""
+    if host == "macos":
+        return {"os": "macOS", "version": platform.mac_ver()[0], "machine": platform.machine(),
+                "python": platform.python_version()}
+    return {"os": platform.system(), "version": platform.version(), "machine": platform.machine(),
+            "python": platform.python_version()}
+
+
+def launch_options(host):
+    """Popen options for one Dolphin launch.
+
+    Windows: hidden window. macOS: Dolphin is executed directly from the
+    caller's session (for example SSH) with stdin closed; it needs the same
+    user to have an active login session and shows its render window there.
+    """
+    if host == "windows":
+        startup = subprocess.STARTUPINFO()
+        startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startup.wShowWindow = 0
+        return {"startupinfo": startup}
+    return {"stdin": subprocess.DEVNULL}
+
+
 def parse_args(argv):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--dolphin", type=Path, required=True, help="stock Dolphin.exe")
+    parser.add_argument("--dolphin", type=Path, required=True,
+                        help="stock Dolphin.exe, or Dolphin.app (or its Contents/MacOS/Dolphin) on macOS")
     parser.add_argument("--dolphin-sha256", help="refuse to run a different Dolphin executable")
     parser.add_argument("--dol", type=Path, required=True, help="guest DOL to --exec")
     parser.add_argument("--build-info", type=Path, help="build manifest whose artifacts must hash-match the DOL")
     parser.add_argument("--out", type=Path, required=True, help="new output directory (must not exist)")
     parser.add_argument("--runs", type=int, default=2, help="cold launches sharing one profile")
     parser.add_argument("--timeout", type=float, default=120.0, help="seconds before a launch is force-stopped")
-    parser.add_argument("--backend", default="D3D")
+    parser.add_argument("--backend", help="video backend (default: D3D on Windows, Vulkan on macOS)")
     parser.add_argument("--efb-access", action="store_true", help="enable CPU EFB peeks (GFX Hacks)")
     parser.add_argument("--dump-frames", action="store_true", help="dump rendered frames as PNG")
     movie = parser.add_mutually_exclusive_group()
@@ -734,10 +1128,12 @@ def parse_args(argv):
     movie.add_argument("--movie", type=Path, help="existing DTM; its game ID must match the DOL name")
     parser.add_argument("--sd-image", type=Path, help="FAT32 image copied (never modified) into the profile")
     parser.add_argument("--stage", type=parse_stage, action="append", default=[],
-                        help="LOCAL=sd:/path, copied into the profile's SD image with mtools in WSL")
-    parser.add_argument("--wsl-distro", default="Debian")
+                        help="LOCAL=sd:/path, copied into the profile's SD image with mtools "
+                             "(in WSL on Windows, native on macOS)")
+    parser.add_argument("--wsl-distro", default="Debian", help="WSL distribution with mtools (Windows only)")
     parser.add_argument("--read-back", action="append", default=[], help="SD path to read after each launch")
-    parser.add_argument("--scenario", choices=("none", "probe", "gx_materials"), default="none")
+    parser.add_argument("--scenario", choices=("none", "probe", "gx_materials", "gx_scene", "geometry_view"),
+                        default="none")
     parser.add_argument("--probe-exit", default="pad_start", help="expected guest END exit reason")
     parser.add_argument("--tolerated-host-exit", action="append", default=[],
                         help="nonzero host exit code (hex) disclosed as tolerated, e.g. 0xc0000409")
@@ -748,20 +1144,28 @@ def parse_args(argv):
         parser.error("--runs must be positive")
     if args.stage and not args.sd_image:
         parser.error("--stage needs --sd-image (Dolphin only creates its image during a launch)")
-    if args.scenario in ("probe", "gx_materials") and not args.build_info:
+    if args.scenario != "none" and not args.build_info:
         parser.error(f"--scenario {args.scenario} needs --build-info for the expected build ID")
-    if args.scenario == "gx_materials" and not args.efb_access:
-        parser.error("--scenario gx_materials reads the EFB from the CPU and needs --efb-access")
+    if args.scenario in COUNTER_SCENARIOS and not args.efb_access:
+        parser.error(f"--scenario {args.scenario} reads the EFB from the CPU and needs --efb-access")
     return args
 
 
 def main(argv=None):
     args = parse_args(argv)
+    host = host_platform()
+    if host == "unsupported":
+        print("launching is supported on Windows and macOS only", file=sys.stderr)
+        return 2
+    backend = args.backend or DEFAULT_BACKEND[host]
     out = args.out.resolve()
     if out.exists():
         print("output directory must be new", file=sys.stderr)
         return 2
-    exe, dol = args.dolphin.resolve(), args.dol.resolve()
+    exe, dol = resolve_dolphin(args.dolphin).resolve(), args.dol.resolve()
+    if not exe.is_file():
+        print("Dolphin executable not found", file=sys.stderr)
+        return 2
     exe_hash, dol_hash = sha256(exe), sha256(dol)
     if args.dolphin_sha256 and exe_hash != args.dolphin_sha256.lower():
         print(f"Dolphin hash {exe_hash} does not match the pinned value", file=sys.stderr)
@@ -780,9 +1184,9 @@ def main(argv=None):
         identity.update(build_id=build_id, source_commit=info.get("source_commit"),
                         source_dirty=info.get("source_dirty"), scope=info.get("scope"),
                         compiler=info.get("compiler"), auto_exit_frames=info.get("probe_auto_exit_frames"))
-    files = profile_files(args.backend, args.efb_access, args.dump_frames)
+    files = profile_files(backend, args.efb_access, args.dump_frames)
     check_stock_limits(files)
-    if running_count(exe.name):
+    if running_count(exe.name, host):
         print("another Dolphin process is running; exclusive ownership required", file=sys.stderr)
         return 2
 
@@ -818,8 +1222,9 @@ def main(argv=None):
         if args.stage:
             fat = Fat32(sd.read_bytes())
             dirs = {name.lower() for name, attr, _, _ in fat.entries(fat.root) if attr & 0x10}
-            for argv in staging_commands(sd, args.stage, dirs):
-                result = subprocess.run(["wsl", "-d", args.wsl_distro, "--", *argv], capture_output=True, text=True)
+            host_path = wsl_path if host == "windows" else str
+            for argv in staging_commands(sd, args.stage, dirs, host_path):
+                result = subprocess.run(staging_argv(argv, host, args.wsl_distro), capture_output=True, text=True)
                 staging["commands"].append({"tool": argv[0], "target": argv[-1], "exit_code": result.returncode})
                 if result.returncode != 0:
                     print(f"staging failed: {argv[0]} {argv[-1]}: {result.stderr.strip()}", file=sys.stderr)
@@ -837,8 +1242,9 @@ def main(argv=None):
     read_paths = [sd_relative(p) for p in args.read_back]
     if args.scenario == "probe":
         read_paths = [PROBE_SENTINEL, PROBE_LOG] + [p for p in read_paths if p not in (PROBE_SENTINEL, PROBE_LOG)]
-    elif args.scenario == "gx_materials":
-        read_paths = [GXM_RUNS, GXM_LOG] + [p for p in read_paths if p not in (GXM_RUNS, GXM_LOG)]
+    elif args.scenario in COUNTER_SCENARIOS:
+        counter_path, log_path, _ = COUNTER_SCENARIOS[args.scenario]
+        read_paths = [counter_path, log_path] + [p for p in read_paths if p not in (counter_path, log_path)]
     staged_hashes = {sd_relative(d): sha256(s) for s, d in args.stage}
     read_paths += [p for p in staged_hashes if p not in read_paths]
     initial = {"sd_image_present": sd.is_file()}
@@ -855,24 +1261,26 @@ def main(argv=None):
             except ValueError:
                 invalid_control = True
             previous_log = initial_log.decode("ascii", "replace").replace("\r\n", "\n") if initial_log else ""
-        elif args.scenario == "gx_materials":
-            initial_log = fat.read(GXM_LOG)
+        elif args.scenario in COUNTER_SCENARIOS:
+            counter_path, log_path, magic = COUNTER_SCENARIOS[args.scenario]
+            initial_log = fat.read(log_path)
             try:
-                initial_count = gxm_runs_count(fat.read(GXM_RUNS))
+                initial_count = run_counter(fat.read(counter_path), magic)
             except ValueError:
-                print("existing gx_materials run counter is invalid; refusing to run", file=sys.stderr)
+                print(f"existing {args.scenario} run counter is invalid; refusing to run", file=sys.stderr)
                 return 2
             previous_log = initial_log.decode("ascii", "replace").replace("\r\n", "\n") if initial_log else ""
     initial["probe_sentinel_count"] = initial_count if args.scenario == "probe" and not invalid_control else None
     initial["probe_sentinel_valid"] = not invalid_control if args.scenario == "probe" else None
 
-    launch = ["Dolphin.exe", "--user", "<new isolated profile>", "--batch", "--video_backend", args.backend,
+    launch = [exe.name, "--user", "<new isolated profile>", "--batch", "--video_backend", backend,
               "--exec", dol.name] + (["--movie", "input.dtm"] if movie_path else [])
     record = {
         "schema_version": SCHEMA_VERSION, "tool": TOOL, "scenario": args.scenario,
+        "host": host_record(host),
         "identity": identity,
         "profile": {"new": True, "isolated": True, "stock_limits": {f"{s}.{k}": v for (s, k), v in STOCK_REQUIRED.items()},
-                    "backend": args.backend, "efb_access": args.efb_access, "dump_frames": args.dump_frames,
+                    "backend": backend, "efb_access": args.efb_access, "dump_frames": args.dump_frames,
                     "config_sha256": {n: hashlib.sha256(t.encode()).hexdigest() for n, t in files.items()},
                     "controllers": "GC port 1 standard controller; Wii remotes disabled"},
         "input": input_record, "staging": staging, "initial_sd": initial,
@@ -891,28 +1299,25 @@ def main(argv=None):
     save()
     window_start = utc_now()
     for number in range(1, args.runs + 1):
-        if running_count(exe.name):
+        if running_count(exe.name, host):
             record["aborted"] = f"run {number}: another Dolphin process appeared"
             break
-        argv = [str(exe), "--user", str(profile), "--batch", "--video_backend", args.backend, "--exec", str(dol)]
+        argv = [str(exe), "--user", str(profile), "--batch", "--video_backend", backend, "--exec", str(dol)]
         if movie_path:
             argv += ["--movie", str(movie_path)]
         run = {"number": number, "cold_process": True, "started_utc": utc_now()}
-        startup = subprocess.STARTUPINFO()
-        startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        startup.wShowWindow = 0
         begin = time.monotonic()
         with (out / f"run{number}.stdout.txt").open("wb") as so, (out / f"run{number}.stderr.txt").open("wb") as se:
-            process = subprocess.Popen(argv, stdout=so, stderr=se, startupinfo=startup)
+            process = subprocess.Popen(argv, stdout=so, stderr=se, **launch_options(host))
             try:
                 status, forced = process.wait(timeout=args.timeout), False
             except subprocess.TimeoutExpired:
                 process.kill()
                 status, forced = process.wait(), True
         elapsed = round(time.monotonic() - begin, 3)
-        run["host"] = {**exit_fields(status), "forced_stop": forced, "elapsed_seconds": elapsed,
-                       "outcome": host_outcome(status, forced, tolerated),
-                       "dolphin_processes_after": running_count(exe.name)}
+        run["host"] = {**exit_fields(status, posix=host != "windows"), "forced_stop": forced,
+                       "elapsed_seconds": elapsed, "outcome": host_outcome(status, forced, tolerated),
+                       "dolphin_processes_after": running_count(exe.name, host)}
         run["ended_utc"] = utc_now()
         frames_dir = profile / "Dump" / "Frames"
         if frames_dir.is_dir():
@@ -942,10 +1347,11 @@ def main(argv=None):
             log = read.get(PROBE_LOG)
             if log is not None:
                 previous_log = log.decode("ascii", "replace").replace("\r\n", "\n")
-        elif args.scenario == "gx_materials":
-            guest, persistence = check_gx_materials(build_id, number, initial_count, previous_log, read,
-                                                    args.probe_exit)
-            log = read.get(GXM_LOG)
+        elif args.scenario in COUNTER_SCENARIOS:
+            checker = {"gx_materials": check_gx_materials, "gx_scene": check_gx_scene,
+                       "geometry_view": check_geometry_view}[args.scenario]
+            guest, persistence = checker(build_id, number, initial_count, previous_log, read, args.probe_exit)
+            log = read.get(COUNTER_SCENARIOS[args.scenario][1])
             if log is not None:
                 previous_log = log.decode("ascii", "replace").replace("\r\n", "\n")
         else:
@@ -969,7 +1375,7 @@ def main(argv=None):
             break
     time.sleep(args.event_settle)
     window_end = utc_now()
-    record["os_stability"] = query_os_events(window_start, window_end)
+    record["os_stability"] = query_host_os(host, window_start, window_end)
     record["os_stability"]["window_utc"] = [window_start, window_end]
     record["outcomes"] = {
         "guest": combine([r["guest"]["result"] for r in record["runs"]], args.runs),
