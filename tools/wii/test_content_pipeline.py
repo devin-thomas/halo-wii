@@ -9,13 +9,11 @@ import contextlib
 import hashlib
 import io
 import json
-import os
 from pathlib import Path
 import struct
 import sys
 import tempfile
 import unittest
-import zlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import content_convert as cc  # noqa: E402
