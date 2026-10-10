@@ -15,15 +15,69 @@ MAP_TEXT = ("Archive member included to satisfy reference by file (symbol)\n\n"
             "Linker script and memory map\n\n .text 0x80004000 0x100 build/wii/main.o\n")
 
 
-def synthetic_elf(extra: bytes = b"") -> bytes:
-    header = bytearray(52)
-    header[:7] = b"\x7fELF\x01\x02\x01"
-    struct.pack_into(">HH", header, 16, 2, 20)
-    struct.pack_into(">II", header, 24, 0x80004000, 52)
-    struct.pack_into(">HH", header, 42, 32, 1)
-    program = struct.pack(">8I", 1, 0x100, 0x80004000, 0x80004000, 0x100, 0x100, 5, 4)
-    body = bytes(header) + program
-    return body + bytes(0x100 - len(body)) + bytes(0x100) + extra
+def synthetic_elf(extra: bytes = b"", sections: dict | None = None, wide=False, order=">") -> bytes:
+    """An executable ELF with a .text load segment, `extra` as .rodata, the
+    given extra sections (name -> contents) and a section header table."""
+    head = order + ("16sHHIQQQIHHHHHH" if wide else "16sHHIIIIIHHHHHH")
+    entry_format = order + ("IIQQQQIIQQ" if wide else "10I")
+    program = (struct.pack(order + "IIQQQQQQ", 1, 5, 0x100, 0x80004000, 0x80004000, 0x100, 0x100, 4) if wide
+               else struct.pack(order + "8I", 1, 0x100, 0x80004000, 0x80004000, 0x100, 0x100, 5, 4))
+    body = bytearray(0x200)  # headers, then .text at 0x100
+    names = bytearray(b"\0")
+    table = [(0, 0, 0, 0, 0, 0)]  # name, type, flags, address, offset, size
+
+    def add(name, kind, flags, address, offset, size):
+        table.append((len(names), kind, flags, address, offset, size))
+        names.extend(name.encode() + b"\0")
+
+    add(".text", 1, 0x6, 0x80004000, 0x100, 0x100)
+    for name, content in {".rodata": extra, **(sections or {})}.items():
+        flags = 0x2 if name == ".rodata" else 0x30 if name in (".comment", ".debug_str", ".debug_line_str") else 0
+        add(name, 1, flags, 0, len(body), len(content))
+        body += content
+    add(".shstrtab", 3, 0, 0, len(body), 0)
+    table[-1] = table[-1][:5] + (len(names),)
+    body += names + bytes(-len(body + names) % 8)
+    shoff = len(body)
+    for name, kind, flags, address, offset, size in table:
+        body += struct.pack(entry_format, name, kind, flags, address, offset, size, 0, 0, 1, 0)
+    ident = b"\x7fELF" + bytes([2 if wide else 1, 2 if order == ">" else 1, 1]) + bytes(9)
+    struct.pack_into(head, body, 0, ident, 2, 20, 1, 0x80004000, struct.calcsize(head), shoff, 0,
+                     struct.calcsize(head), len(program), 1, struct.calcsize(entry_format), len(table), len(table) - 1)
+    body[struct.calcsize(head):struct.calcsize(head) + len(program)] = program
+    return bytes(body)
+
+
+def uleb(value: int) -> bytes:
+    out = bytearray()
+    while True:
+        byte, value = value & 0x7F, value >> 7
+        out.append(byte | (0x80 if value else 0))
+        if not value:
+            return bytes(out)
+
+
+STANDARD_OPCODE_LENGTHS = bytes([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1])
+
+
+def line_unit_v3(directories, files, program=b"") -> bytes:
+    """A DWARF 3 .debug_line unit with inline directory and file tables."""
+    tables = (b"".join(name + b"\0" for name in directories) + b"\0"
+              + b"".join(name + b"\0" + uleb(1) + uleb(0) + uleb(0) for name in files) + b"\0")
+    header = bytes([4, 1, 0xFB, 14, 13]) + STANDARD_OPCODE_LENGTHS + tables
+    unit = struct.pack(">HI", 3, len(header)) + header + program
+    return struct.pack(">I", len(unit)) + unit
+
+
+def line_unit_v5(directory, md5, program=b"") -> bytes:
+    """A DWARF 5 .debug_line unit: an inline (DW_FORM_string) directory, and a
+    file named through .debug_line_str with a directory index and an MD5."""
+    directories = bytes([1]) + uleb(1) + uleb(0x08) + uleb(1) + directory + b"\0"
+    files = (bytes([3]) + uleb(1) + uleb(0x1F) + uleb(2) + uleb(0x0F) + uleb(5) + uleb(0x1E)
+             + uleb(1) + struct.pack(">I", 0) + uleb(0) + md5)
+    header = bytes([4, 1, 1, 0xFB, 14, 13]) + STANDARD_OPCODE_LENGTHS + directories + files
+    unit = struct.pack(">HBBI", 5, 4, 0, len(header)) + header + program
+    return struct.pack(">I", len(unit)) + unit
 
 
 def synthetic_dol(extra: bytes = b"") -> bytes:
@@ -35,11 +89,13 @@ def synthetic_dol(extra: bytes = b"") -> bytes:
     return bytes(header) + bytes(0x100) + extra
 
 
-def make_build(root: Path, elf_extra=b"", dol_extra=b"", map_extra="", **info_overrides) -> Path:
+def make_build(root: Path, elf_extra=b"", dol_extra=b"", map_extra="", elf_sections=None, probe_elf=None,
+               **info_overrides) -> Path:
     build = root / "build"
     build.mkdir()
     for stem, (info, scope) in package.TARGETS.items():
-        (build / f"{stem}.elf").write_bytes(synthetic_elf(elf_extra if stem == "probe" else b""))
+        elf = synthetic_elf(elf_extra, elf_sections) if stem == "probe" else synthetic_elf()
+        (build / f"{stem}.elf").write_bytes(elf if probe_elf is None or stem != "probe" else probe_elf)
         (build / f"{stem}.dol").write_bytes(synthetic_dol(dol_extra if stem == "probe" else b""))
         (build / f"{stem}.map").write_text(MAP_TEXT + (map_extra if stem == "probe" else ""), encoding="utf-8")
         record = {
@@ -141,6 +197,86 @@ class PackageArtifactsTest(unittest.TestCase):
         # Printable bytes from a line-number program, not NUL-terminated.
         self.assertTrue(self.inspect(self.staged(elf_extra=b"\x05/K/0gg\x05\x06x:/ab\x01"))["pass"])
 
+    def test_drive_path_shape_in_encoded_debug_info_is_noise(self):
+        # A NUL-terminated printable run inside a DIE tree, as in CI run 38071749042.
+        result = self.inspect(self.staged(elf_sections={".debug_info": b"\x01\x07q:/)\0A:/K\0\x08"}))
+        self.assertTrue(result["pass"], result)
+
+    def test_drive_path_shape_in_rodata_fails(self):
+        result = self.inspect(self.staged(elf_extra=b"\x01q:/)\0",
+                                          elf_sections={".debug_info": b"\x01\x07q:/)\0"}))
+        self.assertFalse(result["pass"])
+        self.assertEqual([(f["category"]) for f in result["findings"]], ["windows-drive-path"])
+
+    def test_debug_string_sections_and_comment_are_scanned(self):
+        for section in (".debug_str", ".debug_line_str", ".comment", ".strtab"):
+            with self.subTest(section=section):
+                self.temporary.cleanup()
+                self.temporary = tempfile.TemporaryDirectory()
+                self.root = Path(self.temporary.name)
+                result = self.inspect(self.staged(elf_sections={section: b"\0C:\\work\\halo\\main.c\0"}))
+                self.assertEqual(self.categories(result), {"windows-drive-path"})
+
+    def test_build_host_path_secret_and_owner_in_debug_info_still_fail(self):
+        token = "ghp_" + "A1b2C3d4E5" * 4
+        noise = b"\x01\x07/srv/build/checkout/src/main.c\0\x02 by alice \x03" + token.encode() + b"\x04"
+        directory = self.staged(elf_sections={".debug_info": noise, ".debug_loclists": noise})
+        result = self.inspect(directory, forbid_paths=["/srv/build/checkout"], forbid_texts=["alice"])
+        self.assertEqual(self.categories(result), {"build-host-path", "forbidden-text", "github-token"})
+        self.assertEqual(len(result["findings"]), 6)
+        self.assertNotIn(token, json.dumps(result))
+
+    def test_debug_line_directory_and_file_tables_are_scanned(self):
+        program = b"\x00\x05\x02q:/)\0\x01"  # line-number program bytes: noise
+        line = (line_unit_v3([b"src", b"C:\\Users\\bob\\halo"], [b"main.c", b"q:/x.c"], program)
+                + line_unit_v5(b"D:\\build\\wii", b"q:/)\0" + bytes(11), program))
+        result = self.inspect(self.staged(elf_sections={".debug_line": line}))
+        self.assertEqual(self.categories(result), {"windows-drive-path"})
+        self.assertEqual(len(result["findings"]), 3, result)  # C:\Users..., q:/x.c, D:\build...
+        clean = line_unit_v3([b"src"], [b"main.c"], program) + line_unit_v5(b"src", b"q:/)\0" + bytes(11), program)
+        self.temporary.cleanup()
+        self.temporary = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary.name)
+        self.assertTrue(self.inspect(self.staged(elf_sections={".debug_line": clean}))["pass"])
+
+    def test_malformed_debug_line_is_a_problem_and_scanned_whole(self):
+        result = self.inspect(self.staged(elf_sections={".debug_line": b"\0\0\0\x08\0\x09\0\0\0\0\0\0",
+                                                        ".debug_info": b"\x01q:/)\0"}))
+        self.assertFalse(result["pass"])
+        self.assertIn("probe.elf: unreadable ELF sections", "\n".join(result["problems"]))
+        self.assertIn("windows-drive-path", self.categories(result))
+
+    def test_truncated_or_malformed_elf_is_a_problem(self):
+        good = synthetic_elf(sections={".debug_info": b"\x01q:/)\0"})
+        past_end = bytearray(good)
+        struct.pack_into(">I", past_end, 32, len(good) + 4096)  # e_shoff beyond the file
+        bad_size = bytearray(good)
+        struct.pack_into(">H", bad_size, 46, 64)  # ELF32 with 64-byte section entries
+        for label, data in (("truncated", good[:40]), ("table past end", bytes(past_end)),
+                            ("entry size", bytes(bad_size)), ("not elf", b"\0" * 600)):
+            with self.subTest(label):
+                self.temporary.cleanup()
+                self.temporary = tempfile.TemporaryDirectory()
+                self.root = Path(self.temporary.name)
+                result = self.inspect(self.staged(probe_elf=data))
+                self.assertFalse(result["pass"])
+                self.assertIn("probe.elf: unreadable ELF sections", "\n".join(result["problems"]))
+
+    def test_section_parser_is_generic_over_class_and_byte_order(self):
+        for wide in (False, True):
+            for order in ("<", ">"):
+                with self.subTest(wide=wide, order=order):
+                    data = synthetic_elf(b"\0q:/)\0", {".debug_info": b"\x01q:/)\0"}, wide, order)
+                    sections, _ = package.elf_sections(data)
+                    self.assertEqual([s["name"] for s in sections],
+                                     ["", ".text", ".rodata", ".debug_info", ".shstrtab"])
+                    rodata, debug = sections[2], sections[3]
+                    regions = package.elf_path_regions(data)
+                    covered = lambda offset: any(a <= offset < b for a, b in regions)  # noqa: E731
+                    self.assertTrue(covered(rodata["offset"] + 1))
+                    self.assertFalse(covered(debug["offset"] + 1))
+                    self.assertFalse(covered(0))  # the ELF header itself
+
     def test_home_paths_fail_except_reviewed_upstream_prefixes(self):
         reviewed = self.inspect(self.staged(
             dol_extra=b"/home/davem/projects/devkitpro/pacman-packages/newlib/dtoa.c\0"))
@@ -178,7 +314,8 @@ class PackageArtifactsTest(unittest.TestCase):
 
     def test_xbox_game_data_signatures_fail(self):
         cache = b"daeh" + bytes(package.CACHE_FOOT_OFFSET - 4) + b"toof"
-        result = self.inspect(self.staged(elf_extra=cache + package.XISO_MAGIC + b"XBEH"))
+        # In encoded debug data: the signatures are checked on every byte.
+        result = self.inspect(self.staged(elf_sections={".debug_info": cache + package.XISO_MAGIC + b"XBEH"}))
         self.assertTrue({"halo-cache-header-signature", "xbox-image-signature",
                          "xbox-executable-signature"} <= self.categories(result))
 

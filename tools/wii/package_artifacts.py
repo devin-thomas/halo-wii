@@ -23,6 +23,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import struct
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -57,12 +58,11 @@ REVIEWED_PATH_PREFIXES = ("/opt/devkitpro/", "/home/davem/projects/devkitpro/pac
 # files): the original build tree in its assertion messages
 # (c:\halo\SOURCE\...), the Xbox's drives (d:\ the DVD, t:\ u:\ z:\ the hard
 # disk, h:\ a Custom Edition install), the settings file's example
-# (port/linux/src/port_config.c) and the Wii driver's own check file. "d:/)"
-# is a run of debug-information bytes that happens to end in a NUL. They are
+# (port/linux/src/port_config.c) and the Wii driver's own check file. They are
 # reviewed in the engine's artifacts only (HWI-015); a build machine's own
 # paths are still caught by the host-path checks.
 REVIEWED_ENGINE_PATH_PREFIXES = ("c:\\halo\\SOURCE\\", "c:\\halo\\source\\", "d:\\", "t:\\", "u:\\", "z:\\", "h:\\",
-                                 "C:\\Games\\Halo'", "Z:\\HWI015\\", "d:/)")
+                                 "C:\\Games\\Halo'", "Z:\\HWI015\\")
 REVIEWED_ENGINE_STEMS = ("engine",)
 GENERIC_NAMES = {"root", "runner", "home", "user", "users", "admin", "administrator",
                  "github", "build", "builder", "default", "public", "guest", "docker"}
@@ -98,6 +98,196 @@ CACHE_HEAD, CACHE_FOOT, CACHE_FOOT_OFFSET = b"daeh", b"toof", 0x7FC
 ASCII_RUN = re.compile(rb"[\x20-\x7e\t\r\n]{4,}")
 UTF16_RUN = re.compile(rb"(?:[\x20-\x7e]\x00){4,}")
 
+# ELF section handling for the generic path shapes. Encoded debug information
+# (DIE trees, line-number programs, location lists, ...) is binary data whose
+# printable runs are encoding noise, and its exact bytes move whenever the code
+# does, so the generic shapes skip it. The strings compilers and linkers record
+# are still scanned: allocated sections, string tables, .comment, .debug_str,
+# .debug_line_str and the directory/file tables of every .debug_line unit.
+SHT_SYMTAB, SHT_RELA, SHT_NOBITS, SHT_REL, SHT_DYNSYM = 2, 4, 8, 9, 11
+SHF_ALLOC, SHF_COMPRESSED = 0x2, 0x800
+DEBUG_STRING_SECTIONS = (".debug_str", ".debug_line_str")
+# DWARF forms that can appear in DWARF 5 line-table entry formats: form ->
+# fixed size in bytes, or "uleb"/"sleb"/"block"/"string"/"offset".
+DW_FORMS = {
+    0x03: 2, 0x04: 4, 0x05: 2, 0x06: 4, 0x07: 8, 0x08: "string", 0x09: "block", 0x0a: "block1",
+    0x0b: 1, 0x0d: "sleb", 0x0e: "offset", 0x0f: "uleb", 0x1a: "uleb", 0x1e: 16, 0x1f: "offset",
+    0x25: 1, 0x26: 2, 0x27: 3, 0x28: 4,
+}
+
+
+def elf_sections(data: bytes) -> tuple[list[dict], list[tuple[int, int]]]:
+    """Section headers of a 32/64-bit, either-endian ELF file, and the file
+    ranges of its own headers. Raises ValueError on anything malformed."""
+    if len(data) < 16 or data[:4] != b"\x7fELF":
+        raise ValueError("not an ELF file")
+    wide, order = {1: False, 2: True}.get(data[4]), {1: "<", 2: ">"}.get(data[5])
+    if wide is None or order is None:
+        raise ValueError("unknown ELF class or data encoding")
+    head = order + ("16xHHIQQQIHHHHHH" if wide else "16xHHIIIIIHHHHHH")
+    if len(data) < struct.calcsize(head):
+        raise ValueError("truncated ELF header")
+    (_, _, _, _, phoff, shoff, _, ehsize, phentsize, phnum,
+     shentsize, shnum, shstrndx) = struct.unpack_from(head, data, 0)
+    section = order + ("IIQQQQIIQQ" if wide else "IIIIIIIIII")
+    if ehsize < struct.calcsize(head) or ehsize > len(data):
+        raise ValueError("invalid ELF header size")
+    headers = [(0, ehsize)]
+    if phnum:
+        if phoff + phentsize * phnum > len(data):
+            raise ValueError("program header table falls outside the file")
+        headers.append((phoff, phoff + phentsize * phnum))
+    if not shoff:
+        if shnum:
+            raise ValueError("section count without a section header table")
+        return [], headers
+    if shentsize != struct.calcsize(section) or shoff + shentsize > len(data):
+        raise ValueError("section header table falls outside the file")
+    first = struct.unpack_from(section, data, shoff)
+    shnum = shnum or first[5]  # extended numbering keeps the count in section 0
+    shstrndx = first[6] if shstrndx == 0xFFFF else shstrndx
+    if not shnum or shoff + shentsize * shnum > len(data) or shstrndx >= shnum:
+        raise ValueError("section header table falls outside the file")
+    headers.append((shoff, shoff + shentsize * shnum))
+    sections = []
+    for index in range(shnum):
+        name, kind, flags, _, offset, size, *_ = struct.unpack_from(section, data, shoff + index * shentsize)
+        if kind != SHT_NOBITS and offset + size > len(data):
+            raise ValueError(f"section {index} falls outside the file")
+        sections.append({"name": name, "type": kind, "flags": flags, "offset": offset,
+                         "size": 0 if kind == SHT_NOBITS else size})
+    names = sections[shstrndx]
+    for entry in sections:
+        if entry["name"] >= names["size"]:
+            raise ValueError("section name outside the section name table")
+        start = names["offset"] + entry["name"]
+        end = data.find(b"\0", start, names["offset"] + names["size"])
+        if end < 0:
+            raise ValueError("unterminated section name")
+        entry["name"] = data[start:end].decode("latin-1")
+    return sections, headers
+
+
+def debug_line_strings(data: bytes, start: int, end: int, order: str):
+    """Yield (offset, end) of the NUL-terminated strings stored inline in the
+    directory and file tables of each .debug_line unit (DWARF 2-5); the
+    line-number programs themselves are skipped. Raises ValueError."""
+    def uleb(position):
+        value = shift = 0
+        while True:
+            if position >= header_end:
+                raise ValueError("truncated .debug_line header")
+            byte = data[position]
+            value |= (byte & 0x7F) << shift
+            position, shift = position + 1, shift + 7
+            if byte < 0x80:
+                return value, position
+
+    def string(position):
+        nul = data.find(b"\0", position, header_end)
+        if nul < 0:
+            raise ValueError("unterminated .debug_line string")
+        return nul + 1
+
+    def fixed(position, size):
+        if position + size > header_end:
+            raise ValueError("truncated .debug_line header")
+        return int.from_bytes(data[position:position + size], "big" if order == ">" else "little"), position + size
+
+    position = start
+    while position < end:
+        header_end = end
+        length, position = fixed(position, 4)
+        offset_size = 4
+        if length == 0xFFFFFFFF:
+            length, position = fixed(position, 8)
+            offset_size = 8
+        unit_end = position + length
+        if unit_end > end:
+            raise ValueError(".debug_line unit runs past its section")
+        header_end = unit_end
+        version, position = fixed(position, 2)
+        if not 2 <= version <= 5:
+            raise ValueError(f"unsupported .debug_line version {version}")
+        if version >= 5:
+            position += 2  # address_size, segment_selector_size
+        header_length, position = fixed(position, offset_size)
+        header_end = position + header_length
+        if header_end > unit_end:
+            raise ValueError(".debug_line header runs past its unit")
+        position += 4 if version < 4 else 5  # instruction length .. line_range
+        opcode_base, position = fixed(position, 1)
+        position += max(opcode_base - 1, 0)
+        if version < 5:
+            for table in range(2):  # include_directories, then file_names
+                while True:
+                    if position >= header_end:
+                        raise ValueError("truncated .debug_line header")
+                    if data[position] == 0:
+                        position += 1
+                        break
+                    text_end = string(position)
+                    yield position, text_end
+                    position = text_end
+                    if table:
+                        for _ in range(3):  # directory index, time, length
+                            _, position = uleb(position)
+        else:
+            for _ in range(2):  # directories, then file names
+                count, position = fixed(position, 1)
+                forms = []
+                for _ in range(count):
+                    _, position = uleb(position)
+                    form, position = uleb(position)
+                    if form not in DW_FORMS:
+                        raise ValueError(f"unsupported .debug_line form 0x{form:x}")
+                    forms.append(DW_FORMS[form])
+                entries, position = uleb(position)
+                for _ in range(entries):
+                    for form in forms:
+                        if form == "string":
+                            text_end = string(position)
+                            yield position, text_end
+                            position = text_end
+                        elif form in ("uleb", "sleb"):
+                            _, position = uleb(position)
+                        elif form == "block":
+                            size, position = uleb(position)
+                            position += size
+                        elif form == "block1":
+                            size, position = fixed(position, 1)
+                            position += size
+                        else:
+                            position += offset_size if form == "offset" else form
+                if position > header_end:
+                    raise ValueError("truncated .debug_line header")
+        position = unit_end
+
+
+def elf_path_regions(data: bytes) -> list[tuple[int, int]]:
+    """File ranges of an ELF where the generic path shapes apply: everything
+    except its own headers and encoded debug/symbol data. Raises ValueError."""
+    sections, headers = elf_sections(data)
+    order = {1: "<", 2: ">"}[data[5]]
+    noise = bytearray(len(data))  # 1 = encoded data, skipped by the generic shapes
+    for start, end in headers:
+        noise[start:end] = b"\1" * (end - start)
+    strings = []
+    for entry in sections:
+        name, start, end = entry["name"], entry["offset"], entry["offset"] + entry["size"]
+        if entry["flags"] & SHF_COMPRESSED or name.startswith(".zdebug"):
+            raise ValueError(f"compressed section {name} cannot be inspected")
+        if entry["flags"] & SHF_ALLOC or name in DEBUG_STRING_SECTIONS:
+            continue  # program data and string sections: scanned
+        if name.startswith(".debug_") or entry["type"] in (SHT_SYMTAB, SHT_DYNSYM, SHT_REL, SHT_RELA):
+            noise[start:end] = b"\1" * (end - start)
+            if name == ".debug_line":
+                strings += debug_line_strings(data, start, end, order)
+        # anything else (.comment, .strtab, .shstrtab, unknown sections): scanned
+    for start, end in strings:
+        noise[start:end] = bytes(end - start)
+    return [(match.start(), match.end()) for match in re.finditer(rb"\x00+", noise)]
+
 
 def allowlist() -> list[str]:
     names = [MANIFEST]
@@ -118,13 +308,15 @@ def kind_of(name: str) -> str:
     return {".elf": "elf", ".dol": "dol", ".map": "linker-map"}[Path(name).suffix]
 
 
-def text_runs(data: bytes):
-    """Yield (offset, text, is_c_string, bytes_per_char) for printable runs."""
-    for match in ASCII_RUN.finditer(data):
-        yield match.start(), match.group().decode("ascii"), data[match.end():match.end() + 1] == b"\0", 1
-    for match in UTF16_RUN.finditer(data):
+def text_runs(data: bytes, start: int = 0, end: int | None = None):
+    """Yield (offset, text, is_c_string, bytes_per_char) for printable runs in
+    data[start:end]; a run is a C string when its NUL lies inside that range."""
+    end = len(data) if end is None else end
+    for match in ASCII_RUN.finditer(data, start, end):
+        yield match.start(), match.group().decode("ascii"), data[match.end():min(match.end() + 1, end)] == b"\0", 1
+    for match in UTF16_RUN.finditer(data, start, end):
         yield (match.start(), match.group().decode("utf-16-le"),
-               data[match.end():match.end() + 2] == b"\0\0", 2)
+               data[match.end():min(match.end() + 2, end)] == b"\0\0", 2)
 
 
 def path_pattern(path: str) -> re.Pattern | None:
@@ -152,11 +344,13 @@ def host_identity(environ=os.environ) -> tuple[list[str], list[str]]:
 
 
 def scan_content(name: str, data: bytes, forbid_paths, forbid_texts, findings, reviewed,
-                 binary: bool = False) -> None:
+                 binary: bool = False, path_regions=None) -> None:
     """Report forbidden content. In ELF/DOL files the generic path shapes are
     matched only in NUL-terminated strings, where compilers, linkers and C code
-    store paths; debug line-number programs otherwise produce printable noise
-    such as "/K/0". Specific host paths/names and secrets match everywhere."""
+    store paths, and only inside path_regions (for an ELF, elf_path_regions:
+    not its encoded debug data, whose printable runs such as "/K/0" or "q:/)"
+    are noise). Specific host paths/names, secrets and Xbox data signatures
+    match on every byte of every file."""
     def add(category, offset):
         findings.append({"file": name, "category": category, "offset": offset})
 
@@ -165,14 +359,16 @@ def scan_content(name: str, data: bytes, forbid_paths, forbid_texts, findings, r
         REVIEWED_ENGINE_PATH_PREFIXES if Path(name).stem in REVIEWED_ENGINE_STEMS else ())
     text_res = [re.compile(r"(?<![A-Za-z0-9])" + re.escape(text) + r"(?![A-Za-z0-9])", re.IGNORECASE)
                 for text in forbid_texts if text]
-    for start, text, c_string, width in text_runs(data):
-        for category, pattern in (PATH_PATTERNS if c_string or not binary else ()):
-            for match in pattern.finditer(text):
-                rest = text[match.start():]
-                if any(rest.startswith(prefix) for prefix in reviewed_prefixes):
-                    reviewed[name] = reviewed.get(name, 0) + 1
-                else:
-                    add(category, start + width * match.start())
+    for region_start, region_end in [(0, len(data))] if path_regions is None else path_regions:
+        for start, text, c_string, width in text_runs(data, region_start, region_end):
+            for category, pattern in (PATH_PATTERNS if c_string or not binary else ()):
+                for match in pattern.finditer(text):
+                    rest = text[match.start():]
+                    if any(rest.startswith(prefix) for prefix in reviewed_prefixes):
+                        reviewed[name] = reviewed.get(name, 0) + 1
+                    else:
+                        add(category, start + width * match.start())
+    for start, text, _, width in text_runs(data):
         for pattern in path_res:
             for match in pattern.finditer(text):
                 add("build-host-path", start + width * match.start())
@@ -316,7 +512,13 @@ def inspect(directory: Path, forbid_paths=(), forbid_texts=(), require_clean=Fal
                     infos[stem] = record
         except (ValueError, UnicodeError) as error:
             problems.append(f"{name}: invalid {kind}: {error}")
-        scan_content(name, data, forbid_paths, forbid_texts, findings, reviewed, kind in ("elf", "dol"))
+        regions = None  # the whole file
+        if kind == "elf":
+            try:
+                regions = elf_path_regions(data)
+            except (ValueError, struct.error) as error:
+                problems.append(f"{name}: unreadable ELF sections, scanned whole: {error}")
+        scan_content(name, data, forbid_paths, forbid_texts, findings, reviewed, kind in ("elf", "dol"), regions)
     if total > MAX_TOTAL_BYTES:
         problems.append(f"total {total} bytes exceeds the {MAX_TOTAL_BYTES}-byte cap")
     for stem, record in infos.items():
