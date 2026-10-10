@@ -4,6 +4,9 @@
 builds the asset-free Wii targets and runs the authored checks on every push
 and pull request to `wii` (Markdown-only changes excluded) and on manual
 dispatch. It needs no private repository, game data, dump or secret.
+Local verification of its commands and of the inspection:
+[evidence](evidence/2026-10-10-ci-build-only.md). The hosted run is recorded
+separately once it has happened.
 
 ## What a green run proves
 
