@@ -14,6 +14,11 @@ BUILD = Path("build/wii")
 SOURCES = [Path("port/wii/probe/main.c"), Path("port/wii/abi/boundary.c"), Path("port/wii/abi/fixture.c")]
 GX_SCENE_SOURCES = [Path("port/wii/gx_scene/main.c")]
 GX_MATERIALS_SOURCES = [Path("port/wii/gx_materials/main.c")]
+# HWI-008C content loader self-test: the HWT1/HRA1/HWS1 runtime loaders and their DOL.
+CONTENT_LOADER_SOURCES = [Path("port/wii/content") / name for name in (
+    "main.c", "content_check.c", "content_common.c", "hwt_texture.c", "hra_animation.c", "hws_sound.c")]
+CONTENT_LOADER_HEADERS = [Path("port/wii/content") / name for name in (
+    "content_check.h", "content_common.h", "hwt_texture.h", "hra_animation.h", "hws_sound.h")]
 GEOMETRY_VIEW_SOURCES = [Path("port/wii/geometry_view/main.c"),
                          *(Path("tools/wii") / name for name in (
                              "cache_arena_plan.c", "cache_stream_io.c", "cache_address_owned.c",
@@ -55,7 +60,8 @@ TARGET_ARCHIVES = {"wii_media_bench": ("libasnd.a",)}
 def source_inputs():
     return [Path("tools/wii_build.py"), Path("tools/wii/build.py"),
             Path("tools/wii/check_toolchain.py"), *SOURCES, *GX_SCENE_SOURCES, *GX_MATERIALS_SOURCES,
-            *GEOMETRY_VIEW_SOURCES, *MEMORY_STRATEGY_SOURCES, *MEMORY_STRATEGY_ENGINE_SOURCES,
+            *GEOMETRY_VIEW_SOURCES, *CONTENT_LOADER_SOURCES, *CONTENT_LOADER_HEADERS,
+            *MEMORY_STRATEGY_SOURCES, *MEMORY_STRATEGY_ENGINE_SOURCES,
             *MEMORY_STRATEGY_HEADERS, *MEDIA_BENCH_SOURCES, *MEDIA_BENCH_HEADERS,
             *sorted(Path("port/wii/abi").glob("*.h")),
             *(Path("tools/wii") / name for name in (
@@ -163,6 +169,8 @@ def generate_wii_build(n, sln):
                 BUILD / "gx_materials", BUILD / "gx_materials-build-info.json"),
                ("wii_geometry_view", "geometry_view", "owned_geometry_diagnostic_no_embedded_assets",
                 GEOMETRY_VIEW_SOURCES, BUILD / "geometry_view", BUILD / "geometry_view-build-info.json"),
+               ("wii_content_loaders", "content_loaders", "owned_content_loader_diagnostic_no_embedded_assets",
+                CONTENT_LOADER_SOURCES, BUILD / "content_loaders", BUILD / "content_loaders-build-info.json"),
                ("wii_memory_strategy", "memory_strategy", "memory_strategy_diagnostic_no_embedded_assets",
                 [*MEMORY_STRATEGY_SOURCES, *MEMORY_STRATEGY_ENGINE_SOURCES], BUILD / "memory_strategy",
                 BUILD / "memory_strategy-build-info.json"),
