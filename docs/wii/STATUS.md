@@ -336,3 +336,17 @@ Four real target differences are open. Not fixed yet:
 - bit-fields are laid out in reverse order, which breaks Xbox animation and
   message headers;
 - `wchar_t` is 4 bytes.
+
+[GX primitives and materials](evidence/2026-10-10-gx-materials.md): the new
+asset-free `wii_gx_materials` self-test passes 196/196 in-guest EFB checks over
+four load cycles with identical results, in two cold launches. Coverage:
+- depth, culling and perspective depth;
+- I8, IA8, RGB565, RGB5A3, RGBA8, CI8+TLUT and CMPR converted from DXT1;
+- repeat, clamp and mirror wrap; blending and alpha test;
+- mip level selection and LOD bias/min/max;
+- one- and two-stage TEV.
+
+Discriminating controls change the answer, and a wrong texel block order fails
+as intended. All 17 deliberate range, alignment, leak and overrun cases are
+detected, and the heap does not grow. Real-Wii cache and DMA behaviour is
+untested.
