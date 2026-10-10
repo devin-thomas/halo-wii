@@ -3,10 +3,40 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
+import re
 import struct
 import subprocess
 import sys
+
+# Published debug info and linker maps name the checkout and the devkitPro
+# root by these host-independent prefixes instead of build-machine paths.
+# /opt/devkitpro is the official installation prefix, which the official
+# prebuilt libraries already record in their own debug info.
+CHECKOUT_PREFIX = "."
+DEVKITPRO_PREFIX = "/opt/devkitpro"
+
+
+def prefix_map_flags(checkout: Path, root: Path) -> list[str]:
+    return [f"-ffile-prefix-map={checkout}={CHECKOUT_PREFIX}",
+            f"-ffile-prefix-map={root}={DEVKITPRO_PREFIX}"]
+
+
+def normalize_link_map(path: Path, checkout: Path, root: Path) -> None:
+    """Rewrite the build-machine roots in a GNU ld map like -ffile-prefix-map."""
+    text = path.read_bytes().decode("utf-8", "surrogateescape")
+    flags = re.IGNORECASE if os.name == "nt" else 0
+    # Longest root first, so a toolchain inside the checkout keeps its prefix.
+    for prefix, replacement in sorted(((root, DEVKITPRO_PREFIX), (checkout, CHECKOUT_PREFIX)),
+                                      key=lambda item: -len(str(item[0]))):
+        parts = [re.escape(part) for part in re.split(r"[\\/]+", str(prefix).rstrip("\\/")) if part]
+        anchor = "" if os.name == "nt" else "/"
+        pattern = r"(?<![\w.~-])" + anchor + r"[\\/]+".join(parts) + r"(?=[\\/]|$|\s|\()"
+        text = re.sub(pattern, lambda _: replacement, text, flags=flags | re.MULTILINE)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_bytes(text.encode("utf-8", "surrogateescape"))
+    temporary.replace(path)
 
 
 def verify_elf(path: Path) -> dict:
@@ -85,6 +115,7 @@ def main() -> int:
             if args.source is None:
                 parser.error("compile needs --source")
             subprocess.run([compiler, *config["public"]["compile_flags"],
+                            *prefix_map_flags(Path.cwd(), root),
                             "-I", str(root / "libogc/include"), "-I", "build/wii",
                             "-MMD", "-MF", str(args.output) + ".d", "-MT", args.output.as_posix(),
                             "-c", str(args.source), "-o", str(args.output)], check=True)
@@ -94,6 +125,7 @@ def main() -> int:
             subprocess.run([compiler, *machine, "-g", "-Wl,-Map," + str(args.output.with_suffix(".map")),
                             *args.objects, "-L", str(root / "libogc/lib/wii"),
                             "-lfat", "-lwiiuse", "-lbte", "-logc", "-lm", "-o", str(args.output)], check=True)
+            normalize_link_map(args.output.with_suffix(".map"), Path.cwd(), root)
             verify_elf(args.output)
         elif args.step == "convert":
             if args.source is None:

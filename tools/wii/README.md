@@ -65,6 +65,20 @@ with a non-PPC target. It exits nonzero if a dependency check fails. It installs
 nothing, changes no environment variables and does not compile or run code on Wii.
 `--json` prints local tool paths; review the output before publishing it.
 
+## Build-only artifact package
+
+```sh
+python -B tools/wii/package_artifacts.py stage --build build/wii --output dist/wii-build-only
+python -B tools/wii/package_artifacts.py inspect dist/wii-build-only --require-clean
+python -B -m unittest discover -s tools/wii -p test_package_artifacts.py
+```
+
+`stage` copies only the allowlisted ELF/DOL/map/build-info files of the three
+asset-free targets into a new directory and writes a build-only `MANIFEST.json`.
+`inspect` exits 1 on any unlisted file, hash mismatch, runtime/hardware claim,
+host path, user name, private address, secret-like text or Xbox data signature;
+findings report category and offset only. See [CI](../../docs/wii/CI.md).
+
 ## Binary sender
 
 `Send-WiiBuild.ps1` sends an **already-built** DOL/ELF with an installed wiiload executable to an explicitly selected private IPv4 address. It is convenience tooling, not game implementation or an automatic Wii installer.

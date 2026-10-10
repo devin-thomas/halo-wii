@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "ticket": "HWI-009",
+  "date": "2026-10-10",
+  "scope": "build_only_ci_and_artifact_inspection",
+  "label": "build-only",
+  "verified": [
+    "compile",
+    "link",
+    "elf2dol conversion",
+    "static ELF/DOL structure checks",
+    "artifact allowlist and content inspection"
+  ],
+  "not_verified": [
+    "emulator execution",
+    "gameplay",
+    "full engine ABI",
+    "host process lifecycle",
+    "persistence",
+    "physical Wii hardware"
+  ],
+  "hosted_ci_run": "unverified: the workflow has not yet run on GitHub",
+  "source_commit": "f52bb4c3191cf92dcb078c8b09fc5725794f5129",
+  "source_dirty": false,
+  "build_id": "25eb7e1f3e12fc78",
+  "previous_build_id_same_sources": "c5157fc31c88fb66",
+  "workflow": {
+    "file": ".github/workflows/wii-build-only.yml",
+    "runs_on": "ubuntu-24.04 (GitHub-hosted only; self-hosted refused)",
+    "triggers": [
+      "push to wii",
+      "pull_request to wii",
+      "workflow_dispatch"
+    ],
+    "permissions": {
+      "contents": "read"
+    },
+    "secrets_used": [],
+    "container_image": "devkitpro/devkitppc:20260503@sha256:44cb1a920e1ec3ec7c06767493c3b85f8d643d6137cc4661f0201895ac6e4967",
+    "container_image_amd64_manifest": "sha256:4c919aa26151dd43d88ca28c922d1fe2409579a8ba60ef56517baf1abdfb1a48",
+    "actions": {
+      "actions/checkout": {
+        "version": "v7.0.1",
+        "commit": "3d3c42e5aac5ba805825da76410c181273ba90b1"
+      },
+      "actions/upload-artifact": {
+        "version": "v7.0.1",
+        "commit": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
+      }
+    },
+    "upstream_build_yml_changed": false
+  },
+  "local_environments": {
+    "windows": {
+      "devkitpro_packages": {
+        "devkitPPC": "r50-1",
+        "devkitppc-binutils": "2.46.0-1",
+        "devkitppc-gcc": "16.1.0-1",
+        "devkitppc-newlib": "4.6.0.20260123-4",
+        "devkitppc-rules": "1.2.1-1",
+        "devkitppc-crtls": "2.1.0-1",
+        "libogc": "3.1.0-1",
+        "libfat-ogc": "2.1.0-4",
+        "gamecube-tools": "1.0.7-1",
+        "wii-examples": "20260510-1"
+      },
+      "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+      "binutils": "GNU ld (GNU Binutils) 2.46.0.20260210",
+      "libogc_sha256": "fb0c956ee3b5d08fede5240472205102ebe1fde94197d36705cf2b44f3eeb906",
+      "wii_rules_sha256": "67d76ea672fa26110f25bae945ca25786d5218f5f017c9f92e0c836e7b0fc710",
+      "toolchain_sha256": "d0ca79f317d44426f5563ff60121b344cb3a1148e5ec7a901ad5739b73ba6441",
+      "ninja": "1.13.2",
+      "host_cc": "MSYS2 UCRT64 gcc 16.2.0",
+      "python": {
+        "workflow_sequence": "MSYS2 UCRT64 3.14.7",
+        "unit_test_reruns": [
+          "CPython 3.14.0",
+          "CPython 3.11.4"
+        ]
+      }
+    },
+    "debian_12": {
+      "host_cc": "gcc (Debian 12.2.0-14+deb12u1) 12.2.0",
+      "python": "3.11.2",
+      "checkout": "fresh clone of source_commit",
+      "devkitppc": "not available"
+    }
+  },
+  "commands": [
+    {
+      "command": "dkp-pacman -Q (locally: devkitPro pacman -Q)",
+      "windows": "exit 0"
+    },
+    {
+      "command": "python tools/wii/check_toolchain.py --devkitpro <devkitPro root>",
+      "windows": "exit 0"
+    },
+    {
+      "command": "cd tools/wii && python -B -m unittest discover -s . -p \"test_*.py\"",
+      "windows_cpython_3_14_0": "232 OK",
+      "windows_cpython_3_11_4": "232 OK",
+      "windows_msys2_ucrt64_python_3_14_7": "232 run, 2 failures in unchanged existing tests (Path.iterdir separator spelling): test_inspect_cache_residency, test_xiso_inventory",
+      "debian_12_python_3_11_2": "232 OK"
+    },
+    {
+      "command": "python -B tools/wii/run_abi_host.py --cc <gcc> --output build/ci-fixtures/abi-host",
+      "windows": "exit 0",
+      "debian_12": "exit 0"
+    },
+    {
+      "command": "python -B tools/wii/run_cache_address.py --cc <gcc> --output build/ci-fixtures/cache-default",
+      "windows": "exit 0 execution_pass",
+      "debian_12": "exit 0 execution_pass"
+    },
+    {
+      "command": "python -B tools/wii/run_cache_address.py --cc <gcc> --output build/ci-fixtures/cache-widget --widget-fixture",
+      "windows": "exit 0 execution_pass",
+      "debian_12": "exit 0 execution_pass"
+    },
+    {
+      "command": "python -B tools/wii/run_cache_address.py --cc <gcc> --output build/ci-fixtures/cache-bsp --bsp-fixture",
+      "windows": "exit 0 execution_pass",
+      "debian_12": "exit 0 execution_pass"
+    },
+    {
+      "command": "python -B tools/wii/run_cache_address.py --cc <gcc> --output build/ci-fixtures/cache-material --material-fixture",
+      "windows": "exit 0 execution_pass",
+      "debian_12": "exit 0 execution_pass"
+    },
+    {
+      "command": "python configure.py --wii --wii-devkitpro <devkitPro root>",
+      "windows": "exit 0"
+    },
+    {
+      "command": "ninja wii_probe wii_gx_scene wii_geometry_view",
+      "windows": "exit 0, 20/20 steps"
+    },
+    {
+      "command": "python -B tools/wii/package_artifacts.py stage --build build/wii --output dist/wii-build-only --toolchain-packages <pacman -Q output>",
+      "windows": "exit 0, 13 files"
+    },
+    {
+      "command": "python -B tools/wii/package_artifacts.py inspect dist/wii-build-only --require-clean --forbid-text <repository owner>",
+      "windows": "PASS exit 0, 0 problems, 0 findings",
+      "debian_12": "PASS exit 0 on the Windows-built set"
+    }
+  ],
+  "artifacts": {
+    "build-info.json": {
+      "kind": "build-info",
+      "sha256": "0a994557a5db0be255880cb3950a68e19e13a10ac8990371686644605be3df7f",
+      "bytes": 4414
+    },
+    "geometry_view-build-info.json": {
+      "kind": "build-info",
+      "sha256": "9b0e6274bb61595fb086453fdbb487a728cce8147d244de0007811e07b422ebb",
+      "bytes": 4466
+    },
+    "geometry_view.dol": {
+      "kind": "dol",
+      "sha256": "ab822198f2786b85175a8456eb1f8da19cb1333f2acc65ca09f38a68ff42980b",
+      "bytes": 543072
+    },
+    "geometry_view.elf": {
+      "kind": "elf",
+      "sha256": "eb167042306a48d266ca24929e0fa4b3a290efb9a013e14c25994c5cda23a6bf",
+      "bytes": 2607980
+    },
+    "geometry_view.map": {
+      "kind": "linker-map",
+      "sha256": "e16d073bae3bcf4d9335d2679afbae36329db3ba04511c29bb56e994cb8a90e7",
+      "bytes": 735436
+    },
+    "gx_scene-build-info.json": {
+      "kind": "build-info",
+      "sha256": "fd5bf78fafb102a91699190f4fa55a9352600aee1542cc127176c639c3f5e46f",
+      "bytes": 4426
+    },
+    "gx_scene.dol": {
+      "kind": "dol",
+      "sha256": "bed01e0fbfc9ea1bff3721dce2c39b7e4c390f575796c904a0d2c1fc85e6e24a",
+      "bytes": 482592
+    },
+    "gx_scene.elf": {
+      "kind": "elf",
+      "sha256": "5004f89a308d84465a26f15fc81701fbd940b2fcac02d7637eaf04e1ba15692a",
+      "bytes": 2361184
+    },
+    "gx_scene.map": {
+      "kind": "linker-map",
+      "sha256": "49338b2815f9643bbf25e5c1400a7b8d0b0dfe17aad0cc470f58513a57f4a3df",
+      "bytes": 686764
+    },
+    "probe.dol": {
+      "kind": "dol",
+      "sha256": "a601d8cc40a9a389afa18aaf30f67f71847e9670c5c393d51e2ab809bd730d3e",
+      "bytes": 455392
+    },
+    "probe.elf": {
+      "kind": "elf",
+      "sha256": "8f1b1f429b54deff540d2b666d73c8c134c80ea59a6ecd3dfaf3271bacf46f0b",
+      "bytes": 2284764
+    },
+    "probe.map": {
+      "kind": "linker-map",
+      "sha256": "bb8582ad5837ffcd4f31a610195f06d7c3265dd28213e4edf09f1a70f5f82e46",
+      "bytes": 655962
+    }
+  },
+  "manifest_sha256": "0ca2e30fd02cf7449607d82e7fa4be8ea4f5418e86633b6ed5dbecec724fe518",
+  "path_independence": {
+    "second_clone_path_with_space": "byte-identical ELF/DOL/map/build-info",
+    "clean_rebuild_in_place": "byte-identical",
+    "scope": "one machine, one toolchain; CI-image reproduction not claimed"
+  },
+  "dol_code_change_from_path_normalization": {
+    "probe": 0,
+    "gx_scene": 0,
+    "geometry_view": 0,
+    "meaning": "differing DOL bytes after substituting the embedded build ID, sources unchanged"
+  },
+  "inspection_discrimination": [
+    {
+      "input": "clean staged set",
+      "result": "PASS exit 0"
+    },
+    {
+      "input": "real artifacts built before path normalization",
+      "result": "FAIL exit 1",
+      "problems": 3,
+      "findings": 14642,
+      "categories": [
+        "missing path_prefix_map",
+        "windows-drive-path (3 ELFs, 3 maps)",
+        "build-host-path (checkout in 3 ELFs)"
+      ]
+    },
+    {
+      "input": "clean set + real local-config.json + object directory",
+      "result": "FAIL exit 1",
+      "problems": [
+        "unlisted file",
+        "directory"
+      ]
+    },
+    {
+      "input": "clean set, map with appended token, drive path, private address",
+      "result": "FAIL exit 1",
+      "problems": [
+        "build-info hash mismatch",
+        "manifest hash mismatch"
+      ],
+      "findings": [
+        "github-token",
+        "windows-drive-path",
+        "private-network-address"
+      ],
+      "secret_echoed": false
+    }
+  ],
+  "unit_tests_added": {
+    "file": "tools/wii/test_package_artifacts.py",
+    "count": 18
+  },
+  "not_covered": [
+    "hosted GitHub Actions run",
+    "PPC build inside the pinned image",
+    "Dolphin",
+    "physical Wii",
+    "owned-data modes",
+    "run_memory_subset.py (LP64 static assertion; packet modes exit 1 by design)"
+  ],
+  "merge_check": {
+    "wii_commit": "d0c55ec7",
+    "conflicts": false,
+    "merged_tree_unit_tests": {
+      "windows_cpython_3_14_0": "259 OK",
+      "debian_12_python_3_11_2": "259 OK"
+    },
+    "merged_tree_ppc_build": "not run"
+  },
+  "later_test_only_commit": {
+    "commit": "7884fda8",
+    "change": "test_package_artifacts.py assembles synthetic secret shapes at run time",
+    "tests": "18 OK"
+  }
+}

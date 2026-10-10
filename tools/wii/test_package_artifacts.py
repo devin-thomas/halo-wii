@@ -1,0 +1,234 @@
+"""Synthetic checks that the build-only artifact inspection discriminates."""
+
+import hashlib
+import json
+from pathlib import Path
+import struct
+import tempfile
+import unittest
+
+import package_artifacts as package
+
+COMMIT = "0123456789abcdef0123456789abcdef01234567"
+MAP_TEXT = ("Archive member included to satisfy reference by file (symbol)\n\n"
+            "Memory Configuration\n\nName Origin Length\n\n"
+            "Linker script and memory map\n\n .text 0x80004000 0x100 build/wii/main.o\n")
+
+
+def synthetic_elf(extra: bytes = b"") -> bytes:
+    header = bytearray(52)
+    header[:7] = b"\x7fELF\x01\x02\x01"
+    struct.pack_into(">HH", header, 16, 2, 20)
+    struct.pack_into(">II", header, 24, 0x80004000, 52)
+    struct.pack_into(">HH", header, 42, 32, 1)
+    program = struct.pack(">8I", 1, 0x100, 0x80004000, 0x80004000, 0x100, 0x100, 5, 4)
+    body = bytes(header) + program
+    return body + bytes(0x100 - len(body)) + bytes(0x100) + extra
+
+
+def synthetic_dol(extra: bytes = b"") -> bytes:
+    header = bytearray(0x100)
+    struct.pack_into(">I", header, 0, 0x100)
+    struct.pack_into(">I", header, 0x48, 0x80004000)
+    struct.pack_into(">I", header, 0x90, 0x100)
+    struct.pack_into(">I", header, 0xE0, 0x80004000)
+    return bytes(header) + bytes(0x100) + extra
+
+
+def make_build(root: Path, elf_extra=b"", dol_extra=b"", map_extra="", **info_overrides) -> Path:
+    build = root / "build"
+    build.mkdir()
+    for stem, (info, scope) in package.TARGETS.items():
+        (build / f"{stem}.elf").write_bytes(synthetic_elf(elf_extra if stem == "probe" else b""))
+        (build / f"{stem}.dol").write_bytes(synthetic_dol(dol_extra if stem == "probe" else b""))
+        (build / f"{stem}.map").write_text(MAP_TEXT + (map_extra if stem == "probe" else ""), encoding="utf-8")
+        record = {
+            "schema_version": 1, "scope": scope, "source_commit": COMMIT, "source_dirty": False,
+            "build_id": "0123456789abcdef", "compiler": "powerpc-eabi-gcc (devkitPPC) 0.0",
+            "binutils": "GNU ld 0.0", "runtime_verified": False,
+            "path_prefix_map": {"checkout": ".", "devkitpro": "/opt/devkitpro"},
+            "artifacts": {name: {"sha256": hashlib.sha256((build / name).read_bytes()).hexdigest(),
+                                 "bytes": (build / name).stat().st_size}
+                          for name in (f"{stem}.elf", f"{stem}.dol", f"{stem}.map")},
+        }
+        record.update(info_overrides)
+        (build / info).write_text(json.dumps(record), encoding="utf-8")
+    return build
+
+
+class PackageArtifactsTest(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary.name)
+
+    def tearDown(self):
+        self.temporary.cleanup()
+
+    def staged(self, **kwargs) -> Path:
+        output = self.root / "dist"
+        package.stage(make_build(self.root, **kwargs), output, {"devkitPPC": "r0-1"})
+        return output
+
+    def inspect(self, directory, **kwargs):
+        return package.inspect(directory, **kwargs)
+
+    def categories(self, result):
+        return {finding["category"] for finding in result["findings"]}
+
+    def test_clean_synthetic_set_passes_and_is_labeled_build_only(self):
+        directory = self.staged()
+        result = self.inspect(directory, require_clean=True)
+        self.assertTrue(result["pass"], result)
+        manifest = json.loads((directory / package.MANIFEST).read_text(encoding="utf-8"))
+        self.assertEqual(manifest["label"], "build-only")
+        self.assertIn("physical Wii hardware", manifest["not_verified"])
+        self.assertIn("emulator execution", manifest["not_verified"])
+        self.assertEqual(sorted(p.name for p in directory.iterdir()), package.allowlist())
+
+    def test_stage_refuses_a_non_empty_output(self):
+        build = make_build(self.root)
+        output = self.root / "dist"
+        output.mkdir()
+        (output / "stale.bin").write_bytes(b"x")
+        with self.assertRaises(ValueError):
+            package.stage(build, output, {})
+
+    def test_unlisted_file_subdirectory_and_missing_file_fail(self):
+        directory = self.staged()
+        (directory / "local-config.json").write_text("{}", encoding="utf-8")
+        (directory / "extra").mkdir()
+        (directory / "probe.dol").unlink()
+        problems = "\n".join(self.inspect(directory)["problems"])
+        self.assertIn("local-config.json: not on the artifact allowlist", problems)
+        self.assertIn("extra: only regular files", problems)
+        self.assertIn("probe.dol: required allowlisted file is missing", problems)
+
+    def test_tampered_artifact_fails_hash_checks(self):
+        directory = self.staged()
+        (directory / "probe.dol").write_bytes(synthetic_dol(b"tampered"))
+        problems = "\n".join(self.inspect(directory)["problems"])
+        self.assertIn("build-info.json: recorded hash/size of probe.dol", problems)
+        self.assertIn("MANIFEST.json: recorded kind/hash/size of probe.dol", problems)
+
+    def test_windows_and_posix_drive_paths_fail(self):
+        result = self.inspect(self.staged(elf_extra=b"C:\\Users\\someone\\halo\\main.c\0",
+                                          map_extra="/d/work/checkout/build/wii/main.o\n"))
+        self.assertFalse(result["pass"])
+        self.assertTrue({"windows-drive-path", "posix-drive-path"} <= self.categories(result))
+
+    def test_debug_line_noise_is_not_a_path(self):
+        # Printable bytes from a line-number program, not NUL-terminated.
+        self.assertTrue(self.inspect(self.staged(elf_extra=b"\x05/K/0gg\x05\x06x:/ab\x01"))["pass"])
+
+    def test_home_paths_fail_except_reviewed_upstream_prefixes(self):
+        reviewed = self.inspect(self.staged(
+            dol_extra=b"/home/davem/projects/devkitpro/pacman-packages/newlib/dtoa.c\0"))
+        self.assertTrue(reviewed["pass"], reviewed)
+        self.assertEqual(reviewed["reviewed"].get("probe.dol"), 1)
+        self.temporary.cleanup()
+        self.temporary = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary.name)
+        result = self.inspect(self.staged(dol_extra=b"/home/alice/src/main.c\0/__w/repo/repo/x.c\0"))
+        self.assertEqual(self.categories(result), {"home-or-workspace-path"})
+        self.assertEqual(len(result["findings"]), 2)
+
+    def test_named_host_paths_and_user_names_fail(self):
+        directory = self.staged(map_extra="/srv/build/checkout/build/wii/main.o by alice\n")
+        result = self.inspect(directory, forbid_paths=["/srv/build/checkout"], forbid_texts=["alice"])
+        self.assertEqual(self.categories(result), {"build-host-path", "forbidden-text"})
+        self.assertTrue(self.inspect(directory)["pass"])
+
+    def test_host_identity_skips_generic_names(self):
+        paths, names = package.host_identity({"HOME": "/github/home", "USER": "root",
+                                              "USERPROFILE": "C:\\Users\\alice"})
+        self.assertIn("/github/home", paths)
+        self.assertEqual(names, ["alice"])
+
+    def test_secret_like_content_fails_without_echoing_it(self):
+        token = "ghp_" + "A1b2C3d4E5" * 4
+        # Assembled at run time so the source holds no literal secret shape.
+        secrets = (token + "\n-----BEGIN OPENSSH " + "PRIVATE KEY-----\n" + "AKIA" + "ABCDEFGHIJKLMNOP\n"
+                   "password = hunter2hunter2\nwii 192.168.1.50\n")
+        result = self.inspect(self.staged(map_extra=secrets))
+        self.assertTrue({"github-token", "private-key", "aws-access-key", "credential-assignment",
+                         "private-network-address"} <= self.categories(result))
+        self.assertNotIn(token, json.dumps(result))
+        self.assertNotIn("hunter2", json.dumps(result))
+
+    def test_xbox_game_data_signatures_fail(self):
+        cache = b"daeh" + bytes(package.CACHE_FOOT_OFFSET - 4) + b"toof"
+        result = self.inspect(self.staged(elf_extra=cache + package.XISO_MAGIC + b"XBEH"))
+        self.assertTrue({"halo-cache-header-signature", "xbox-image-signature",
+                         "xbox-executable-signature"} <= self.categories(result))
+
+    def test_binary_named_as_linker_map_fails(self):
+        directory = self.staged()
+        data = b"daeh" + bytes(16)
+        (directory / "gx_scene.map").write_bytes(data)
+        problems = "\n".join(self.inspect(directory)["problems"])
+        self.assertIn("gx_scene.map: invalid linker-map", problems)
+
+    def test_runtime_or_hardware_claims_fail(self):
+        directory = self.staged()
+        manifest = json.loads((directory / package.MANIFEST).read_text(encoding="utf-8"))
+        manifest["label"] = "pass"
+        manifest["not_verified"] = [item for item in manifest["not_verified"] if item != "physical Wii hardware"]
+        (directory / package.MANIFEST).write_text(json.dumps(manifest), encoding="utf-8")
+        problems = "\n".join(self.inspect(directory)["problems"])
+        self.assertIn("label must be exactly 'build-only'", problems)
+        self.assertIn("verified/not_verified claims differ", problems)
+
+    def test_runtime_verified_build_info_fails(self):
+        problems = "\n".join(self.inspect(self.staged(runtime_verified=True))["problems"])
+        self.assertIn("runtime_verified must be false", problems)
+
+    def test_dirty_source_fails_only_when_clean_is_required(self):
+        directory = self.staged(source_dirty=True)
+        self.assertTrue(self.inspect(directory)["pass"])
+        problems = "\n".join(self.inspect(directory, require_clean=True)["problems"])
+        self.assertIn("source tree was not clean", problems)
+
+    def test_oversized_file_fails(self):
+        directory = self.staged()
+        limit = package.MAX_FILE_BYTES
+        package.MAX_FILE_BYTES = 300
+        try:
+            problems = "\n".join(self.inspect(directory)["problems"])
+        finally:
+            package.MAX_FILE_BYTES = limit
+        self.assertIn("exceeds the 300-byte cap", problems)
+
+    def test_package_list_parser_ignores_other_lines(self):
+        listing = self.root / "packages.txt"
+        listing.write_text("devkitPPC r50-1\nlibogc 3.1.0-1\nerror: something odd\n", encoding="utf-8")
+        self.assertEqual(package.read_packages(listing), {"devkitPPC": "r50-1", "libogc": "3.1.0-1"})
+
+
+class NormalizeLinkMapTest(unittest.TestCase):
+    def test_build_machine_roots_become_public_prefixes(self):
+        import os
+        from build import normalize_link_map
+        if os.name == "nt":
+            root, checkout = Path("C:/kits/devkitpro"), Path("C:/work/halo-wii")
+            text = ("C:/kits/devkitpro/libogc/lib/wii\\libogc.a(gx.o)\n"
+                    "c:\\kits\\devkitpro/devkitPPC/bin/../lib/crtbegin.o\n"
+                    "C:\\work\\halo-wii\\build/wii/main.o\nC:/kits/devkitpro-old/x.o\n")
+        else:
+            root, checkout = Path("/srv/kits/devkitpro"), Path("/srv/work/halo-wii")
+            text = ("/srv/kits/devkitpro/libogc/lib/wii/libogc.a(gx.o)\n"
+                    "/srv/kits/devkitpro/devkitPPC/bin/../lib/crtbegin.o\n"
+                    "/srv/work/halo-wii/build/wii/main.o\n/srv/kits/devkitpro-old/x.o\n")
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "probe.map"
+            path.write_text(text, encoding="utf-8")
+            normalize_link_map(path, checkout, root)
+            lines = path.read_text(encoding="utf-8").splitlines()
+        self.assertTrue(lines[0].startswith("/opt/devkitpro/libogc/lib/wii"))
+        self.assertTrue(lines[1].startswith("/opt/devkitpro/devkitPPC/bin/../lib/crtbegin.o"))
+        self.assertTrue(lines[2].startswith("./build/wii/main.o") or lines[2].startswith(".\\build"))
+        self.assertIn("devkitpro-old", lines[3])  # a longer sibling name is not a prefix match
+        self.assertFalse(lines[3].startswith("/opt/devkitpro"))
+
+
+if __name__ == "__main__":
+    unittest.main()

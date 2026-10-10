@@ -8,7 +8,7 @@ This public fork is intended to port OpenCE to Wii using native devkitPPC/libogc
 
 ## Navigation
 
-[Build](BUILDING.md) · [Run](RUNNING.md) · [Test](TESTING.md) · [Compatibility](COMPATIBILITY.md) · [Status](STATUS.md) · [Data and licenses](DATA-AND-LICENSES.md) · [Upstream baseline](UPSTREAM.md)
+[Build](BUILDING.md) · [Run](RUNNING.md) · [Test](TESTING.md) · [CI](CI.md) · [Compatibility](COMPATIBILITY.md) · [Status](STATUS.md) · [Data and licenses](DATA-AND-LICENSES.md) · [Upstream baseline](UPSTREAM.md)
 
 ## Delivery sequence
 
