@@ -350,3 +350,15 @@ Discriminating controls change the answer, and a wrong texel block order fails
 as intended. All 17 deliberate range, alignment, leak and overrun cases are
 detected, and the heap does not grow. Real-Wii cache and DMA behaviour is
 untested.
+
+[ADR-018 parity is adopted](evidence/2026-10-10-abi-parity-adoption.md):
+- The Wii runtime start clears FPSCR NI.
+- Engine units build with `-fsigned-char` and `-fshort-wchar`, with a gate that
+  rejects any newlib wide-character symbol.
+- Xbox recorded-animation headers and network message headers decode
+  explicitly; `message_encrypt`/`message_decrypt` no longer overrun and produce
+  the same ciphertext as x86.
+
+The semantics rerun passes 240/240 checks on host and on PPC in Dolphin with
+zero unexplained differences. The x86 regression against the previous engine
+bodies shows 0 mismatches.
