@@ -1,0 +1,613 @@
+{
+  "schema_version": 1,
+  "ticket": "HWI-014A",
+  "date": "2026-10-10",
+  "scope": "asset_free_gx_scene_stock_dolphin_wii_mode",
+  "source_commit": "d4e34d7f888ce9bf25d65a21fc424a9c3db2ce2b",
+  "source_dirty": false,
+  "build_id": "7a86d9bdc21c3371",
+  "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+  "binutils": "GNU ld (GNU Binutils) 2.46.0.20260210",
+  "compile_flags": [
+    "-std=c11",
+    "-O2",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-ffp-contract=off",
+    "-DGEKKO",
+    "-mrvl",
+    "-mcpu=750",
+    "-meabi",
+    "-mhard-float"
+  ],
+  "libogc_sha256": "fb0c956ee3b5d08fede5240472205102ebe1fde94197d36705cf2b44f3eeb906",
+  "wii_rules_sha256": "67d76ea672fa26110f25bae945ca25786d5218f5f017c9f92e0c836e7b0fc710",
+  "toolchain_sha256": "d0ca79f317d44426f5563ff60121b344cb3a1148e5ec7a901ad5739b73ba6441",
+  "auto_exit_backstop_frames": 1800,
+  "artifacts": {
+    "gx_scene.elf": {
+      "sha256": "3b53eb12c7696e1df5622b8b86031a8c2483df95ed786a12cd14de30fa3ce4b3",
+      "bytes": 2361744
+    },
+    "gx_scene.dol": {
+      "sha256": "4fc08a40ece435a0ae0e955f76e5c225c474a80afe7e578374750e188e898d68",
+      "bytes": 482656
+    },
+    "gx_scene.map": {
+      "sha256": "caa4c06364f43326bb0043f173f99df5cab0ba5ab00c0b689173be8ce443c4f7",
+      "bytes": 798563
+    }
+  },
+  "elf": {
+    "class": "ELF32",
+    "endian": "big",
+    "machine": "PowerPC",
+    "entry_point": "0x80003f00"
+  },
+  "build_commands": [
+    "python configure.py --wii --wii-devkitpro <devkitPro root> --wii-probe-frames 1800",
+    "ninja wii_gx_scene wii_probe"
+  ],
+  "emulator": {
+    "dolphin_executable_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+    "profile": "new isolated Wii-mode profile",
+    "settings": {
+      "CPUThread": false,
+      "EmulationSpeed": 1.0,
+      "Overclock": "off",
+      "RAMOverride": "off",
+      "Cheats": "off",
+      "GFXBackend": "D3D",
+      "InternalResolution": 1,
+      "EFBAccessEnable": true,
+      "SIDevice0": "standard GC controller",
+      "Wiimotes": "none",
+      "WiiSDCard": "stock emulated image, writes allowed",
+      "DumpFrames": true
+    },
+    "arguments": [
+      "Dolphin.exe",
+      "--user",
+      "<isolated profile>",
+      "--batch",
+      "--video_backend",
+      "D3D",
+      "--exec",
+      "gx_scene.dol",
+      "--movie",
+      "gx-scene-input.dtm"
+    ]
+  },
+  "input": {
+    "kind": "authored Dolphin DTM, standard GC pad port 1; virtual input, not human or hardware",
+    "movie_sha256": "4f7ddeba568bd57063f6019f5de2d04f6b3b3dacb6f3a5fcbdba094f81e74b12",
+    "script_polls": [
+      {
+        "step": "neutral",
+        "polls": 200
+      },
+      {
+        "step": "stick_right_yaw",
+        "polls": 120
+      },
+      {
+        "step": "neutral",
+        "polls": 40
+      },
+      {
+        "step": "stick_up_pitch",
+        "polls": 80
+      },
+      {
+        "step": "neutral",
+        "polls": 40
+      },
+      {
+        "step": "cstick_down_zoom_out",
+        "polls": 80
+      },
+      {
+        "step": "neutral",
+        "polls": 40
+      },
+      {
+        "step": "a_toggle_spin",
+        "polls": 6
+      },
+      {
+        "step": "neutral_spinning",
+        "polls": 200
+      },
+      {
+        "step": "b_reset_pose",
+        "polls": 6
+      },
+      {
+        "step": "neutral",
+        "polls": 60
+      },
+      {
+        "step": "start_exit",
+        "polls": 6
+      },
+      {
+        "step": "neutral_tail",
+        "polls": 400
+      }
+    ]
+  },
+  "runs": [
+    {
+      "number": 1,
+      "cold_process": true,
+      "guest": {
+        "scope_result": "passed",
+        "begin": {
+          "target": "gx_scene",
+          "build": "7a86d9bdc21c3371",
+          "previous_runs": "0",
+          "storage": "1",
+          "video": "640x480",
+          "efb_height": "480",
+          "mode": "0",
+          "aa": "0"
+        },
+        "end": {
+          "target": "gx_scene",
+          "build": "7a86d9bdc21c3371",
+          "frames": "431",
+          "connected": "1",
+          "activity": "1",
+          "first_input_frame": "95",
+          "input_yaw": "9.144",
+          "input_pitch": "6.096",
+          "input_zoom": "4.096",
+          "toggles": "1",
+          "resets": "1",
+          "exit": "pad_start",
+          "storage": "1",
+          "calibration": "9/9",
+          "range_failures": "0",
+          "result": "pass"
+        },
+        "calibration": [
+          {
+            "name": "front_depth_cull",
+            "pixel": "320,240",
+            "expected": "e03030",
+            "observed": "e03030ff",
+            "z": "faf6b1",
+            "pass": "1"
+          },
+          {
+            "name": "backdrop_visible",
+            "pixel": "160,240",
+            "expected": "2040e0",
+            "observed": "2040e0ff",
+            "z": "fd3d6e",
+            "pass": "1"
+          },
+          {
+            "name": "clear_corner",
+            "pixel": "8,8",
+            "expected": "181820",
+            "observed": "181820ff",
+            "z": "ffffff",
+            "pass": "1"
+          },
+          {
+            "name": "control_cull_none",
+            "pixel": "320,240",
+            "expected": "f0f0f0",
+            "observed": "f0f0f0ff",
+            "z": "f9aee7",
+            "pass": "1"
+          },
+          {
+            "name": "control_depth_off",
+            "pixel": "320,240",
+            "expected": "2040e0",
+            "observed": "2040e0ff",
+            "z": "ffffff",
+            "pass": "1"
+          },
+          {
+            "name": "pitch_top_visible",
+            "pixel": "320,190",
+            "expected": "e8e030",
+            "observed": "e8e030ff",
+            "z": "fb005e",
+            "pass": "1"
+          },
+          {
+            "name": "pitch_front_lower",
+            "pixel": "320,289",
+            "expected": "e03030",
+            "observed": "e03030ff",
+            "z": "fb2a01",
+            "pass": "1"
+          },
+          {
+            "name": "yaw_left_visible",
+            "pixel": "259,240",
+            "expected": "c830c8",
+            "observed": "c830c8ff",
+            "z": "fb4b7d",
+            "pass": "1"
+          },
+          {
+            "name": "depth_order",
+            "z_cube": "faf6b1",
+            "z_backdrop": "fd3d6e",
+            "pass": "1"
+          }
+        ],
+        "owned_ranges": [
+          {
+            "name": "gx_fifo",
+            "base": "0x80134020",
+            "physical": "0x00134020",
+            "bytes": "262144",
+            "align": "32",
+            "region": "MEM1",
+            "cache": "zeroed_then_DCFlushRange_GP_reads"
+          },
+          {
+            "name": "xfb0",
+            "base": "0x80174040",
+            "physical": "0x00174040",
+            "bytes": "614400",
+            "align": "32",
+            "region": "MEM1",
+            "cache": "K1_uncached_CPU_never_writes_GX_copy_target"
+          },
+          {
+            "name": "xfb1",
+            "base": "0x8020a060",
+            "physical": "0x0020a060",
+            "bytes": "614400",
+            "align": "32",
+            "region": "MEM1",
+            "cache": "K1_uncached_CPU_never_writes_GX_copy_target"
+          },
+          {
+            "name": "cube_positions",
+            "base": "0x802a0080",
+            "physical": "0x002a0080",
+            "bytes": "128",
+            "align": "32",
+            "region": "MEM1",
+            "cache": "CPU_filled_then_DCFlushRange_and_GX_InvVtxCache"
+          },
+          {
+            "name": "cube_colours",
+            "base": "0x802a0120",
+            "physical": "0x002a0120",
+            "bytes": "32",
+            "align": "32",
+            "region": "MEM1",
+            "cache": "CPU_filled_then_DCFlushRange_and_GX_InvVtxCache"
+          }
+        ],
+        "fifo": {
+          "bytes": "262144",
+          "submitted_per_frame_peak": "24608",
+          "avg": "23596",
+          "scope": "PI_write_pointer_delta_scene_and_HUD_excluding_copy"
+        },
+        "timing": {
+          "frames": "431",
+          "render_us_min": "69",
+          "max": "16702",
+          "avg": "74",
+          "interval_us_min": "16434",
+          "scope": "CPU_submit_plus_GX_DrawDone"
+        },
+        "stack": {
+          "entry": "0x800ebd70",
+          "lowest_sampled": "0x800ebcf8",
+          "depth_sampled": "120",
+          "scope": "frame_address_samples_not_peak"
+        },
+        "heap": [
+          {
+            "before": "9456",
+            "after_init": "1669664",
+            "owned_ranges": "5",
+            "range_failures": "0",
+            "arena1_lo_moved": "1675264",
+            "arena2_lo_moved": "0"
+          },
+          {
+            "end": "1669664",
+            "after_init": "1669664",
+            "leak_since_init": "0"
+          }
+        ],
+        "input_events": [
+          "INPUT frame=295 auto_spin=1",
+          "INPUT frame=398 reset_pose=1"
+        ],
+        "guest_log_sha256": "136d032c2b8ede1544bb203a2d3f830f56897bee937d1b2648a6340aa0b7f75e"
+      },
+      "persistence": {
+        "runs_txt": "halo-wii-gx-v1 1",
+        "prior_log_preserved": true,
+        "read_back_after_cold_process": true
+      },
+      "host_lifecycle": {
+        "exit_code": "0x0",
+        "forced_stop": false,
+        "elapsed_seconds": 11.509,
+        "classification": "exit_zero"
+      },
+      "frame_dumps": {
+        "count": 430,
+        "selected_sha256": {
+          "framedump_100.png": "50ab30f537c664a011196fbf60c012a4e6d35269b83d564ace422d9f61842748",
+          "framedump_250.png": "b2dd2a10148dd8233fd6d93727ed44b94a710e14c31693a07298be12f3df1ea2",
+          "framedump_340.png": "3025930cbcde0cc4ec151955cb4493328e07b8a6c036d076d60f25e586ae9b73"
+        }
+      },
+      "failures": []
+    },
+    {
+      "number": 2,
+      "cold_process": true,
+      "guest": {
+        "scope_result": "passed",
+        "begin": {
+          "target": "gx_scene",
+          "build": "7a86d9bdc21c3371",
+          "previous_runs": "1",
+          "storage": "1",
+          "video": "640x480",
+          "efb_height": "480",
+          "mode": "0",
+          "aa": "0"
+        },
+        "end": {
+          "target": "gx_scene",
+          "build": "7a86d9bdc21c3371",
+          "frames": "431",
+          "connected": "1",
+          "activity": "1",
+          "first_input_frame": "95",
+          "input_yaw": "9.144",
+          "input_pitch": "6.096",
+          "input_zoom": "4.096",
+          "toggles": "1",
+          "resets": "1",
+          "exit": "pad_start",
+          "storage": "1",
+          "calibration": "9/9",
+          "range_failures": "0",
+          "result": "pass"
+        },
+        "calibration": [
+          {
+            "name": "front_depth_cull",
+            "pixel": "320,240",
+            "expected": "e03030",
+            "observed": "e03030ff",
+            "z": "faf6b1",
+            "pass": "1"
+          },
+          {
+            "name": "backdrop_visible",
+            "pixel": "160,240",
+            "expected": "2040e0",
+            "observed": "2040e0ff",
+            "z": "fd3d6e",
+            "pass": "1"
+          },
+          {
+            "name": "clear_corner",
+            "pixel": "8,8",
+            "expected": "181820",
+            "observed": "181820ff",
+            "z": "ffffff",
+            "pass": "1"
+          },
+          {
+            "name": "control_cull_none",
+            "pixel": "320,240",
+            "expected": "f0f0f0",
+            "observed": "f0f0f0ff",
+            "z": "f9aee7",
+            "pass": "1"
+          },
+          {
+            "name": "control_depth_off",
+            "pixel": "320,240",
+            "expected": "2040e0",
+            "observed": "2040e0ff",
+            "z": "ffffff",
+            "pass": "1"
+          },
+          {
+            "name": "pitch_top_visible",
+            "pixel": "320,190",
+            "expected": "e8e030",
+            "observed": "e8e030ff",
+            "z": "fb005e",
+            "pass": "1"
+          },
+          {
+            "name": "pitch_front_lower",
+            "pixel": "320,289",
+            "expected": "e03030",
+            "observed": "e03030ff",
+            "z": "fb2a01",
+            "pass": "1"
+          },
+          {
+            "name": "yaw_left_visible",
+            "pixel": "259,240",
+            "expected": "c830c8",
+            "observed": "c830c8ff",
+            "z": "fb4b7d",
+            "pass": "1"
+          },
+          {
+            "name": "depth_order",
+            "z_cube": "faf6b1",
+            "z_backdrop": "fd3d6e",
+            "pass": "1"
+          }
+        ],
+        "owned_ranges": [
+          {
+            "name": "gx_fifo",
+            "base": "0x80134020",
+            "physical": "0x00134020",
+            "bytes": "262144",
+            "align": "32",
+            "region": "MEM1",
+            "cache": "zeroed_then_DCFlushRange_GP_reads"
+          },
+          {
+            "name": "xfb0",
+            "base": "0x80174040",
+            "physical": "0x00174040",
+            "bytes": "614400",
+            "align": "32",
+            "region": "MEM1",
+            "cache": "K1_uncached_CPU_never_writes_GX_copy_target"
+          },
+          {
+            "name": "xfb1",
+            "base": "0x8020a060",
+            "physical": "0x0020a060",
+            "bytes": "614400",
+            "align": "32",
+            "region": "MEM1",
+            "cache": "K1_uncached_CPU_never_writes_GX_copy_target"
+          },
+          {
+            "name": "cube_positions",
+            "base": "0x802a0080",
+            "physical": "0x002a0080",
+            "bytes": "128",
+            "align": "32",
+            "region": "MEM1",
+            "cache": "CPU_filled_then_DCFlushRange_and_GX_InvVtxCache"
+          },
+          {
+            "name": "cube_colours",
+            "base": "0x802a0120",
+            "physical": "0x002a0120",
+            "bytes": "32",
+            "align": "32",
+            "region": "MEM1",
+            "cache": "CPU_filled_then_DCFlushRange_and_GX_InvVtxCache"
+          }
+        ],
+        "fifo": {
+          "bytes": "262144",
+          "submitted_per_frame_peak": "24608",
+          "avg": "23596",
+          "scope": "PI_write_pointer_delta_scene_and_HUD_excluding_copy"
+        },
+        "timing": {
+          "frames": "431",
+          "render_us_min": "69",
+          "max": "16702",
+          "avg": "74",
+          "interval_us_min": "16424",
+          "scope": "CPU_submit_plus_GX_DrawDone"
+        },
+        "stack": {
+          "entry": "0x800ebd70",
+          "lowest_sampled": "0x800ebcf8",
+          "depth_sampled": "120",
+          "scope": "frame_address_samples_not_peak"
+        },
+        "heap": [
+          {
+            "before": "9456",
+            "after_init": "1669664",
+            "owned_ranges": "5",
+            "range_failures": "0",
+            "arena1_lo_moved": "1675264",
+            "arena2_lo_moved": "0"
+          },
+          {
+            "end": "1669664",
+            "after_init": "1669664",
+            "leak_since_init": "0"
+          }
+        ],
+        "input_events": [
+          "INPUT frame=295 auto_spin=1",
+          "INPUT frame=398 reset_pose=1"
+        ],
+        "guest_log_sha256": "d59d153a977b54616ffcfe7840aadc37e84f83649bc6a546d9181ffadc0c65ba"
+      },
+      "persistence": {
+        "runs_txt": "halo-wii-gx-v1 2",
+        "prior_log_preserved": true,
+        "read_back_after_cold_process": true
+      },
+      "host_lifecycle": {
+        "exit_code": "0x0",
+        "forced_stop": false,
+        "elapsed_seconds": 10.66,
+        "classification": "exit_zero"
+      },
+      "frame_dumps": {
+        "count": 430,
+        "selected_sha256": {
+          "framedump_100.png": "50ab30f537c664a011196fbf60c012a4e6d35269b83d564ace422d9f61842748",
+          "framedump_250.png": "b2dd2a10148dd8233fd6d93727ed44b94a710e14c31693a07298be12f3df1ea2",
+          "framedump_340.png": "3025930cbcde0cc4ec151955cb4493328e07b8a6c036d076d60f25e586ae9b73"
+        }
+      },
+      "failures": []
+    }
+  ],
+  "os_stability": {
+    "observed": "No System 1001 bugcheck, Kernel-Power 41, 6008 unexpected shutdown or 6005/6006 boot events, and no Application 1000/1002 events naming Dolphin, in the two hours covering both runs; last boot predates the session.",
+    "limit": "Event-log observation for this session only; not a general stability guarantee."
+  },
+  "development_iterations": [
+    {
+      "name": "dev-1",
+      "source_dirty": true,
+      "host_exit": "0x0",
+      "result": "fail",
+      "findings": [
+        "All EFB peeks returned 0 (colour, alpha, Z): CPU EFB access was not enabled in the fresh profile.",
+        "DTM input ignored: header game ID ID-pro did not match the DOL-derived ID-gx_scene; the scene ran to auto-exit.",
+        "GX_GetFifoCount on the GX_Init object stayed 0; replaced with the PI write-pointer delta.",
+        "Heap grew 200 bytes once from the first newlib %f formatting; now warmed before the baseline."
+      ]
+    },
+    {
+      "name": "dev-2",
+      "source_dirty": true,
+      "host_exit": "0x0",
+      "result": "pass",
+      "findings": [
+        "EFBAccessEnable=True and DTM game ID ID-gx_ confirmed both hypotheses."
+      ]
+    }
+  ],
+  "proves": [
+    "A native libogc/GX build of the authored scene produces identified ELF/DOL/map and manifest from a clean commit.",
+    "In stock Wii-mode Dolphin the scene renders; nine EFB readback checks confirm front-face orientation, pitch/yaw face visibility, clear colour, depth order, and culling/depth behaviour with discriminating controls.",
+    "Authored GC input changes yaw, pitch, distance, spin and reset, and exits via START.",
+    "Owned FIFO/XFB/vertex buffers are aligned, in MEM1, non-overlapping and logged with cache policy; the heap does not grow during the loop.",
+    "Two cold launches complete; the launch counter reads back 1 then 2 and the prior log is preserved.",
+    "This DOL exits the Dolphin host with 0x0 in both runs."
+  ],
+  "does_not_prove": [
+    "Physical Wii behaviour: cache/DMA coherence on hardware, VI output on a display, GP throughput, controller latency.",
+    "Textures, materials, alpha, mipmaps or lighting (remain in HWI-014).",
+    "Any Halo asset rendering, engine integration, gameplay or memory feasibility.",
+    "GP FIFO occupancy peak (CPU submission per frame only) or stack peak (sampled frame addresses only).",
+    "Resolution of the deferred original-probe teardown fault (HWI-050); exit 0x0 here is scoped to this DOL and configuration."
+  ]
+}

@@ -172,8 +172,34 @@
           "evidence": []
         }
       }
+    },
+    {
+      "id": "gx_scene",
+      "environments": {
+        "compile": {
+          "state": "pass",
+          "reason": "Clean-source strict C11 build of wii_gx_scene with identified ELF/DOL/map and manifest.",
+          "evidence": [
+            "evidence/2026-10-10-gx-scene.md",
+            "evidence/2026-10-10-gx-scene.json"
+          ]
+        },
+        "dolphin": {
+          "state": "pass",
+          "reason": "Scoped: two cold stock Wii-mode launches pass 9/9 EFB readback checks, authored GC input, SD launch-counter read-back and owned-buffer accounting; host exit 0x0 both runs. Not a Halo rendering or gameplay result.",
+          "evidence": [
+            "evidence/2026-10-10-gx-scene.md",
+            "evidence/2026-10-10-gx-scene.json"
+          ]
+        },
+        "hardware": {
+          "state": "untested",
+          "reason": "Not run on a physical Wii.",
+          "evidence": []
+        }
+      }
     }
   ],
-  "updated": "2026-10-07",
+  "updated": "2026-10-10",
   "research_upstream_commit": "2b0327bc80ca38c90894cb56b19652cbe85733ff"
 }

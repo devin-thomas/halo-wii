@@ -8,6 +8,7 @@ and [build setup](BUILDING.md). Dolphin and physical Wii remain separate gates.
 | Scope | Compile | Dolphin | Physical Wii |
 |---|---|---|---|
 | Asset-free Wii diagnostic | Passed: asset-free probe | Blocked: host teardown | Untested |
+| Asset-free GX scene | Passed: clean build | Passed: scoped guest, two cold launches, host exit 0x0 | Untested |
 | Halo combat slice | Untested | Untested | Untested |
 | Complete campaign | Untested | Untested | Untested |
 | IR / motion | Untested | Untested | Untested |
@@ -277,3 +278,12 @@ Clean host133cases/91506checks0 includes all5120componentcodes and9goldens;
 strict PPC compile-only checks pass. Host float-bit agreement covers an authored
 source-order oracle under recorded GCC flags. No allocation/workspace/capacity
 growth. Original Xbox/MSVC and PPC runtime equality, full geometry and GX remain open.
+
+
+The [asset-free GX scene](evidence/2026-10-10-gx-scene.md) is the first native
+rendering result: authored cube, satellite, floor and HUD from clean source
+d4e34d7f, build 7a86d9bdc21c3371. In stock Wii-mode Dolphin, two cold launches
+pass nine EFB readback checks (orientation, depth, culling, with discriminating
+controls), authored GC input, read-back launch counting, owned FIFO/XFB/vertex
+accounting and zero loop heap growth; both exit the host 0x0. Physical Wii,
+textures/materials and any Halo geometry remain untested.
