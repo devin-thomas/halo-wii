@@ -30,6 +30,35 @@ The native pipeline uses official Wii machine flags and libogc libraries:
 configure.py -> Ninja -> devkitPPC compile/link -> probe.elf -> elf2dol -> probe.dol
 ```
 
+## Whole engine on Wii platform services (HWI-015)
+
+`ninja wii_engine` compiles every engine unit the native ports compile with
+the ADR-018 engine flags, links it with the Wii platform layer and writes
+`build/wii/engine.elf`, `engine.dol`, `engine.map` and
+`engine-build-info.json`. The DOL check is also the MEM1 check: every section
+of the image, BSS included, must lie in MEM1. It loads no map and draws
+nothing; see [port/wii/engine](../../port/wii/engine/README.md) for what runs,
+what is reported as unsupported, and its limits.
+
+```powershell
+python configure.py --wii --wii-devkitpro <devkitPro root>
+ninja wii_engine
+python tools/wii/engine_image.py build/wii/engine.map --output <file>   # MEM1 image census
+python tools/wii/engine_unsupported.py --check                         # generated stubs current
+```
+
+The host references run where an i686 clang and glibc exist (Linux or WSL):
+
+```sh
+python3 tools/wii/run_engine_scenario_host.py --cc clang --output <new directory>   # scenario digests
+python3 tools/wii/engine_layout_host.py --work <scratch> --output <i686 listing>   # i686 debug info
+```
+
+`tools/wii/engine_layout.py game-state` evaluates every game-state allocation
+with the Wii compiler and compares it with the committed i686 census;
+`engine_layout.py dwarf` compares structure layouts unit by unit from two
+`readelf --debug-dump=info` listings.
+
 ## Standalone scalar engine diagnostic
 
 The asset-free scalar subset has its own host runner and Wii executable:

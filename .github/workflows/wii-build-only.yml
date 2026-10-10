@@ -87,7 +87,8 @@ jobs:
       - name: Build the Wii targets (build-only)
         run: |
           python configure.py --wii --wii-devkitpro "$DEVKITPRO"
-          ninja wii_probe wii_gx_scene wii_gx_materials wii_geometry_view wii_memory_strategy
+          ninja wii_probe wii_gx_scene wii_gx_materials wii_geometry_view wii_memory_strategy wii_engine
+          python -B tools/wii/engine_unsupported.py --check
 
       - name: Stage the allowlisted artifacts
         run: |

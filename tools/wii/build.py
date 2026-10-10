@@ -81,6 +81,27 @@ def engine_wide_references(nm: Path, objects) -> dict:
     return result
 
 
+def thread_local_sections(text: str) -> bool:
+    """Whether `readelf -S` output lists a thread-local section (.tdata,
+    .tbss): libogc sets up no thread pointer (r2 is the EABI small-data base),
+    so a __thread access would write into small data."""
+    return any(re.search(r"\]\s+\.(?:tdata|tbss)(?:\.\S*)?\s", line) for line in text.splitlines())
+
+
+def thread_local_objects(readelf: Path, objects) -> list[str]:
+    """The objects that hold thread-local storage; empty when the gate holds."""
+    found = []
+    for obj in objects:
+        listing = subprocess.run([str(readelf), "-SW", str(obj)], capture_output=True, text=True, check=True)
+        if thread_local_sections(listing.stdout):
+            found.append(Path(obj).name)
+    return found
+
+
+def read_list(path: Path) -> list[str]:
+    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
 def prefix_map_flags(checkout: Path, root: Path) -> list[str]:
     return [f"-ffile-prefix-map={checkout}={CHECKOUT_PREFIX}",
             f"-ffile-prefix-map={root}={DEVKITPRO_PREFIX}"]
@@ -168,6 +189,15 @@ def main() -> int:
     parser.add_argument("--scope", default="asset_free_probe", help="manifest scope label")
     parser.add_argument("--extra-flag", action="append", default=[], dest="extra_flags",
                         help="a compile flag after the configured ones (repeatable; spell it --extra-flag=-f...)")
+    parser.add_argument("--extra-flags-file", type=Path,
+                        help="a JSON list of compile flags after --extra-flag's (flags holding spaces)")
+    parser.add_argument("--objects-file", type=Path,
+                        help="link: object files, one per line, after the positional ones")
+    parser.add_argument("--extra-link-flag", action="append", default=[], dest="extra_link_flags",
+                        help="link: a flag before the objects (repeatable; spell it --extra-link-flag=-W...)")
+    parser.add_argument("--engine-objects-file", type=Path,
+                        help="link: engine objects (one per line) that must pass the ADR-018 gates "
+                             "(engine_wide_references, thread_local_objects) before linking")
     parser.add_argument("objects", nargs="*")
     # Intermixed parsing keeps trailing object files positional on Python < 3.12.
     args = parser.parse_intermixed_args()
@@ -180,16 +210,37 @@ def main() -> int:
         if args.step == "compile":
             if args.source is None:
                 parser.error("compile needs --source")
-            subprocess.run([compiler, *config["public"]["compile_flags"], *args.extra_flags,
+            extra = list(args.extra_flags)
+            if args.extra_flags_file is not None:
+                extra += json.loads(args.extra_flags_file.read_text(encoding="utf-8"))
+            subprocess.run([compiler, *config["public"]["compile_flags"], *extra,
                             *prefix_map_flags(Path.cwd(), root),
                             "-I", str(root / "libogc/include"), "-I", "build/wii",
                             "-MMD", "-MF", str(args.output) + ".d", "-MT", args.output.as_posix(),
                             "-c", str(args.source), "-o", str(args.output)], check=True)
         elif args.step == "link":
-            if not args.objects:
+            objects = list(args.objects)
+            if args.objects_file is not None:
+                objects += read_list(args.objects_file)
+            if not objects:
                 parser.error("link needs object files")
+            if args.engine_objects_file is not None:
+                engine = read_list(args.engine_objects_file)
+                tools = Path(compiler).parent
+                nm = tools / Path(compiler).name.replace("gcc", "nm")
+                readelf = tools / Path(compiler).name.replace("gcc", "readelf")
+                wide = engine_wide_references(nm, engine)
+                if wide:
+                    raise ValueError(f"engine objects reference wide C-library functions (ADR-018): {wide}")
+                local = thread_local_objects(readelf, engine)
+                if local:
+                    raise ValueError(f"objects use thread-local storage, which libogc does not provide: {local}")
+            # (a response file: the engine links several hundred objects,
+            # beyond the Windows command-line limit)
+            response = args.output.with_suffix(".objects.rsp")
+            response.write_text("".join(Path(name).as_posix() + "\n" for name in objects), encoding="utf-8")
             subprocess.run([compiler, *machine, "-g", "-Wl,-Map," + str(args.output.with_suffix(".map")),
-                            *args.objects, "-L", str(root / "libogc/lib/wii"),
+                            *args.extra_link_flags, "@" + str(response), "-L", str(root / "libogc/lib/wii"),
                             "-lfat", "-lwiiuse", "-lbte", "-logc", "-lm", "-o", str(args.output)], check=True)
             normalize_link_map(args.output.with_suffix(".map"), Path.cwd(), root)
             verify_elf(args.output)

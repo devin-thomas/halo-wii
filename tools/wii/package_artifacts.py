@@ -37,13 +37,16 @@ TARGETS = {
     "gx_materials": ("gx_materials-build-info.json", "asset_free_gx_materials"),
     "geometry_view": ("geometry_view-build-info.json", "owned_geometry_diagnostic_no_embedded_assets"),
     "memory_strategy": ("memory_strategy-build-info.json", "memory_strategy_diagnostic_no_embedded_assets"),
+    "engine": ("engine-build-info.json", "engine_platform_runtime_no_embedded_assets"),
 }
 VERIFIED = ["compile", "link", "elf2dol conversion", "static ELF/DOL structure checks",
             "artifact allowlist and content inspection"]
 NOT_VERIFIED = ["emulator execution", "gameplay", "full engine ABI", "host process lifecycle",
                 "persistence", "physical Wii hardware"]
-MAX_FILE_BYTES = 16 * 1024 * 1024
-MAX_TOTAL_BYTES = 64 * 1024 * 1024
+# The whole-engine ELF (HWI-015) is about 37 MB, most of it debug information,
+# which the published artifact keeps so its addresses and layouts can be read.
+MAX_FILE_BYTES = 48 * 1024 * 1024
+MAX_TOTAL_BYTES = 128 * 1024 * 1024
 
 # Absolute paths recorded by the official prebuilt devkitPro libraries (libogc,
 # libfat, newlib) in their own debug info and assertion strings. They are the
