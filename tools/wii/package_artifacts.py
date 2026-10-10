@@ -37,19 +37,33 @@ TARGETS = {
     "gx_materials": ("gx_materials-build-info.json", "asset_free_gx_materials"),
     "geometry_view": ("geometry_view-build-info.json", "owned_geometry_diagnostic_no_embedded_assets"),
     "memory_strategy": ("memory_strategy-build-info.json", "memory_strategy_diagnostic_no_embedded_assets"),
+    "engine": ("engine-build-info.json", "engine_platform_runtime_no_embedded_assets"),
 }
 VERIFIED = ["compile", "link", "elf2dol conversion", "static ELF/DOL structure checks",
             "artifact allowlist and content inspection"]
 NOT_VERIFIED = ["emulator execution", "gameplay", "full engine ABI", "host process lifecycle",
                 "persistence", "physical Wii hardware"]
-MAX_FILE_BYTES = 16 * 1024 * 1024
-MAX_TOTAL_BYTES = 64 * 1024 * 1024
+# The whole-engine ELF (HWI-015) is about 37 MB, most of it debug information,
+# which the published artifact keeps so its addresses and layouts can be read.
+MAX_FILE_BYTES = 48 * 1024 * 1024
+MAX_TOTAL_BYTES = 128 * 1024 * 1024
 
 # Absolute paths recorded by the official prebuilt devkitPro libraries (libogc,
 # libfat, newlib) in their own debug info and assertion strings. They are the
 # same public strings for every user of those packages, not this build host.
 REVIEWED_PATH_PREFIXES = ("/opt/devkitpro/", "/home/davem/projects/devkitpro/pacman-packages/",
                           "/home/davem/projects/devkitpro/tool-packages/")
+# Drive paths the engine's own public source spells (OpenCE and the port's
+# files): the original build tree in its assertion messages
+# (c:\halo\SOURCE\...), the Xbox's drives (d:\ the DVD, t:\ u:\ z:\ the hard
+# disk, h:\ a Custom Edition install), the settings file's example
+# (port/linux/src/port_config.c) and the Wii driver's own check file. "d:/)"
+# is a run of debug-information bytes that happens to end in a NUL. They are
+# reviewed in the engine's artifacts only (HWI-015); a build machine's own
+# paths are still caught by the host-path checks.
+REVIEWED_ENGINE_PATH_PREFIXES = ("c:\\halo\\SOURCE\\", "c:\\halo\\source\\", "d:\\", "t:\\", "u:\\", "z:\\", "h:\\",
+                                 "C:\\Games\\Halo'", "Z:\\HWI015\\", "d:/)")
+REVIEWED_ENGINE_STEMS = ("engine",)
 GENERIC_NAMES = {"root", "runner", "home", "user", "users", "admin", "administrator",
                  "github", "build", "builder", "default", "public", "guest", "docker"}
 
@@ -147,13 +161,15 @@ def scan_content(name: str, data: bytes, forbid_paths, forbid_texts, findings, r
         findings.append({"file": name, "category": category, "offset": offset})
 
     path_res = [pattern for pattern in map(path_pattern, forbid_paths) if pattern]
+    reviewed_prefixes = REVIEWED_PATH_PREFIXES + (
+        REVIEWED_ENGINE_PATH_PREFIXES if Path(name).stem in REVIEWED_ENGINE_STEMS else ())
     text_res = [re.compile(r"(?<![A-Za-z0-9])" + re.escape(text) + r"(?![A-Za-z0-9])", re.IGNORECASE)
                 for text in forbid_texts if text]
     for start, text, c_string, width in text_runs(data):
         for category, pattern in (PATH_PATTERNS if c_string or not binary else ()):
             for match in pattern.finditer(text):
                 rest = text[match.start():]
-                if any(rest.startswith(prefix) for prefix in REVIEWED_PATH_PREFIXES):
+                if any(rest.startswith(prefix) for prefix in reviewed_prefixes):
                     reviewed[name] = reviewed.get(name, 0) + 1
                 else:
                     add(category, start + width * match.start())

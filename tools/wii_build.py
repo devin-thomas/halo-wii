@@ -8,6 +8,7 @@ import subprocess
 
 from .wii.build import CHECKOUT_PREFIX, DEVKITPRO_PREFIX, ENGINE_SEMANTIC_FLAGS
 from .wii.check_toolchain import inspect_toolchain, toolchain_inputs
+from .wii.engine_build import engine_flags, engine_inputs, generate_engine_build
 
 BUILD = Path("build/wii")
 SOURCES = [Path("port/wii/probe/main.c"), Path("port/wii/abi/boundary.c"), Path("port/wii/abi/fixture.c")]
@@ -52,7 +53,7 @@ def source_inputs():
             *(Path("tools/wii") / name for name in (
                 "cache_arena_plan.h", "cache_stream_io.h", "cache_address_owned.h",
                 "cache_address_probe.h", "cache_bsp_probe.h", "cache_material_probe.h")),
-            Path("port/linux/include/halo_port_capacity.h")]
+            Path("port/linux/include/halo_port_capacity.h"), *engine_inputs()]
 
 
 def wii_configure_inputs(devkitpro=None):
@@ -115,6 +116,8 @@ def generate_wii_build(n, sln):
         "binutils": inventory["tools"]["powerpc-eabi-ld"]["version"],
         "compile_flags": CFLAGS, "probe_auto_exit_frames": sln.wii_probe_frames,
         "memory_strategy_flags": {"authored": MEMORY_STRATEGY_INCLUDES, "engine": MEMORY_STRATEGY_ENGINE_FLAGS},
+        # HWI-015: wii_engine compiles engine units with ENGINE_CFLAGS plus these
+        "engine_flags": engine_flags(ENGINE_SEMANTIC_FLAGS),
         # build.py maps these build-machine roots in debug info and link maps.
         "path_prefix_map": {"checkout": CHECKOUT_PREFIX, "devkitpro": DEVKITPRO_PREFIX},
         "wii_rules_sha256": hashlib.sha256((root / "devkitPPC/wii_rules").read_bytes()).hexdigest(),
@@ -172,3 +175,4 @@ def generate_wii_build(n, sln):
                 variables={"stem": stem, "scope": scope})
         n.build(target, "phony", [dol, manifest])
     n.newline()
+    generate_engine_build(n, ENGINE_SEMANTIC_FLAGS, libraries)
