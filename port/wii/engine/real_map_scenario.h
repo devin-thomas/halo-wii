@@ -98,6 +98,7 @@ void real_map_scripted_actions(void *server_update, long update_number);
 void real_map_set_tick_observer(void (*observer)(long tick));
 void *real_map_allocation_address(long index);
 unsigned long real_map_allocation_offset(long index); /* from the game state's base */
+void *real_map_tag_slot_address(void);
 
 /* the digest of size bytes at address, as a tick's (for checks) */
 unsigned long real_map_digest_bytes(const void *address, unsigned long size);

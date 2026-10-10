@@ -20,6 +20,7 @@ i686 host reference (tools/wii/run_engine_map_host.py).
 
 #include "real_map_scenario.h"
 #include "cache_files_wii.h"
+#include "tag_schema.h"
 
 /* the engine's own (main.c, game.c, player_queues_new.c, scenario.c ...),
 as main_new_map and main_reset_map_private call them */
@@ -436,16 +437,36 @@ static unsigned long game_state_digest(
 payloads, text), which no fixed grouping keeps together in both byte orders
 and which read as words differently in each, so the tag slot is compared by
 its bytes' multiset, raw (weaker: it misses bytes only moved, not any
-changed). Pointers are not made canonical here: two runs compare equal only
-with the tag slot at the same address (the host maps the Wii's) */
+changed). Pointers into the tag slot or the game state are not made
+canonical here: two runs compare equal only with the tag slot at the same
+address (the host maps the Wii's). The one pointer into the program's own
+static data the engine writes into tags as they load (tag_validate.c points
+a reference without a tag at its empty name: measured, HWI-015B) is one
+value: the program's addresses are each build's own */
 static unsigned long digest_multiset(
 	byte const *address,
 	unsigned long size)
 {
 	unsigned long low = 0, high = 0;
 	unsigned long offset;
+	unsigned long empty_name = (unsigned long)tag_validate_empty_name_address();
 
-	for (offset = 0; offset < size; offset++)
+	for (offset = 0; offset + 4 <= size; offset += 4)
+	{
+		unsigned long word = *(unsigned long const *)(address + offset);
+		byte const *bytes = address + offset;
+		static byte const image_pointer[4] = { 0x1e, 0x1e, 0x1e, 0x1e };
+		short index;
+
+		if (word == empty_name)
+			bytes = image_pointer;
+		for (index = 0; index < 4; index++)
+		{
+			low += digest_tables[0][bytes[index]];
+			high += digest_tables[1][bytes[index]];
+		}
+	}
+	for (; offset < size; offset++)
 	{
 		low += digest_tables[0][address[offset]];
 		high += digest_tables[1][address[offset]];
@@ -902,6 +923,12 @@ void *real_map_allocation_address(
 	long index)
 {
 	return real_map_globals.allocations[index].address;
+}
+
+void *real_map_tag_slot_address(
+	void)
+{
+	return physical_memory_get_tag_cache_base_address();
 }
 
 unsigned long real_map_allocation_offset(

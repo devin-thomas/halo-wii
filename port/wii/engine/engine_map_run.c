@@ -70,6 +70,20 @@ static void dump_observer(long tick)
 
 		if (index >= real_map_allocation_count())
 			continue;
+		if (index == -2)
+		{
+			/* the tag slot's loaded ranges, one after another */
+			struct wii_cache_load_report load;
+
+			wii_cache_load_report_get(&load);
+			snprintf(path, sizeof(path), "%s/dump-%ld-tags.bin", dump_directory, dump_run);
+			file = fopen(path, "wb");
+			for (long range = 0; file && range < load.range_count; range++)
+				fwrite((const char *)real_map_tag_slot_address() + load.range_offset[range], 1, load.range_size[range], file);
+			if (file)
+				fclose(file);
+			continue;
+		}
 		if (index < 0)
 		{
 			for (long other = 0; other < real_map_allocation_count(); other++)

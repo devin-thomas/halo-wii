@@ -1,7 +1,7 @@
 {
  "generator": "tools/wii/map_layouts.py",
  "abi": "upstream i686 (Xbox cache layout)",
- "sources_sha256": "645cc96f7e94881bdb1c3ef28edbc39df24ff8fe7f774091643daddfbcd35627",
+ "sources_sha256": "1d798ca7b03ffb31233301e7119d0627162d9058637f6425cf67f2ed6f28d400",
  "compiler": "Debian clang version 19.1.7 (3+b1)",
  "definitions": [
   {

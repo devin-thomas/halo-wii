@@ -58,7 +58,8 @@ int engine_map_run(const struct engine_map_run_config *config, struct engine_map
 /* diagnosis of a divergence: spec "<allocation index>[,<index>...]:<tick>"
 writes those allocations' bytes after that tick of every run (the warm-up is
 run 1) to <directory>/dump-<run>-<index>.bin; a negative index dumps the
-whole game state the allocations span. 1 if the spec was understood. */
+whole game state the allocations span, -2 the tag slot's loaded ranges
+(dump-<run>-tags.bin). 1 if the spec was understood. */
 int engine_map_run_set_dump(const char *spec, const char *directory);
 
 #endif
