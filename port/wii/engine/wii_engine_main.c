@@ -16,11 +16,15 @@ One launch:
    shell_initialize (which reports the unsupported rasterizer and fails, as
    it must), game_initialize, and an engine warning through its error
    report into d:\debug.txt.
-4. Three load/run/unload cycles of the controlled fixed-step scenario
-   (fixed_step_scenario.h), each at six render cadences: 60, 30, 20 and
-   144 Hz, an irregular cadence with a half-second hitch, and frames paced
-   by the video's vertical retrace with measured frame times. Every run must
-   give the same state digests; the heap must not grow across cycles.
+4. The real-map run (engine_map_run.c, HWI-015B), shared with the i686 host
+   reference: the HWI-015A fixed-step scenario once (its digest must be
+   unchanged), a warm-up run, then three cycles of six runs of the map staged
+   on the card (sd:/halo-wii-engine/data/maps/<name>.wmap, named by
+   map.txt), each run loading it, running 300 of the engine's own ticks with
+   a player and scripted input at one render cadence (60, 30, 20 and 144 Hz,
+   an irregular cadence with a half-second hitch, frames paced by the video's
+   vertical retrace), and unloading it. Every run's simulation digests must
+   be the first run's; the heap must not grow across cycles.
 5. The engine's shut-down; the arena must be restored. The main stack's
    peak, the unsupported entry points called, and the result.
 6. A deliberate fatal engine assertion: its halt is reported and the
@@ -42,6 +46,7 @@ One launch:
 #include "wii_platform.h"
 #include "engine_hooks.h"
 #include "fixed_step_scenario.h"
+#include "engine_map_run.h"
 #include "../runtime/runtime_start.h"
 
 #define LOG_PATH WII_ENGINE_ROOT "/engine.log"
@@ -51,7 +56,7 @@ One launch:
 #define FIFO_BYTES (256u * 1024u)
 #define GENERAL_BYTES (1024u * 1024u)
 #define CYCLES 3
-#define SCENARIO_SEED 0x48574931UL /* "HWI1" */
+#define MAP_PATH WII_ENGINE_ROOT "/map.txt"
 #define PAINT_BYTES (112u * 1024u)
 #define PAINT ((uint32_t)0x5a17c0deu)
 #define MAIN_STACK_BYTES 0x20000u
@@ -158,7 +163,7 @@ static int read_previous_result(unsigned long *digest, unsigned long *chain)
 
 	if (!file)
 		return 0;
-	fields = fscanf(file, "digest=%lx chain=%lx", digest, chain);
+	fields = fscanf(file, "sim=%lx sim_chain=%lx", digest, chain);
 	fclose(file);
 	return fields == 2;
 }
@@ -170,7 +175,7 @@ static int write_result(unsigned long digest, unsigned long chain)
 
 	if (!file)
 		return 0;
-	written = fprintf(file, "digest=%08lx chain=%08lx build=%s\n", digest, chain, WII_BUILD_ID);
+	written = fprintf(file, "sim=%08lx sim_chain=%08lx build=%s\n", digest, chain, WII_BUILD_ID);
 	return fclose(file) == 0 && written > 0;
 }
 
@@ -204,74 +209,51 @@ static int run_full_game(void)
 	return code;
 }
 
-/* ---------- render cadences */
+/* ---------- the map run's platform half */
 
-enum cadence
+/* the scenario path of the staged map (map.txt: one line, levels\...\<name>),
+or empty when none is staged */
+static void read_scenario_path(char *path, size_t size)
 {
-	_cadence_60,
-	_cadence_30,
-	_cadence_20,
-	_cadence_144,
-	_cadence_irregular,
-	_cadence_vsync,
-	NUMBER_OF_CADENCES
-};
+	FILE *file = fopen(MAP_PATH, "rb");
+	size_t used = 0;
 
-static const char *const cadence_names[NUMBER_OF_CADENCES] =
-{
-	"60hz", "30hz", "20hz", "144hz", "irregular", "vsync_measured"
-};
-
-static float cadence_dt(enum cadence cadence, long frame, unsigned long *state, u64 *last)
-{
-	switch (cadence)
-	{
-	case _cadence_60: return 1.0f / 60.0f;
-	case _cadence_30: return 1.0f / 30.0f;
-	case _cadence_20: return 1.0f / 20.0f;
-	case _cadence_144: return 1.0f / 144.0f;
-	case _cadence_irregular:
-		/* 4 ms to 83 ms, and one 0.5 s hitch (beyond a local game's 7 ticks
-		a frame, whose time the engine discards) */
-		if (frame == 40)
-			return 0.5f;
-		*state = *state * 1664525UL + 1013904223UL;
-		return (4.0f + (float)(*state >> 16 & 0xffff) / 65535.0f * 79.0f) / 1000.0f;
-	case _cadence_vsync:
-	default:
-	{
-		u64 now;
-
-		VIDEO_WaitVSync();
-		now = gettime();
-		{
-			float dt = (float)ticks_to_microsecs(now - *last) / 1000000.0f;
-
-			*last = now;
-			return dt;
-		}
-	}
-	}
+	path[0] = 0;
+	if (!file)
+		return;
+	used = fread(path, 1, size - 1, file);
+	fclose(file);
+	path[used] = 0;
+	while (used && (path[used - 1] == '\n' || path[used - 1] == '\r' || path[used - 1] == ' '))
+		path[--used] = 0;
 }
 
-static int run_cadence(enum cadence cadence, struct fixed_step_scenario_result *result)
-{
-	unsigned long state = 12345;
-	u64 last;
-	long frame = 0;
+static u64 vsync_last;
 
-	stage = cadence_names[cadence];
-	if (!fixed_step_scenario_begin(SCENARIO_SEED))
-		return 0;
-	if (cadence == _cadence_vsync)
-	{
-		VIDEO_WaitVSync();
-	}
-	last = gettime();
-	while (frame < 100000 && fixed_step_scenario_frame(cadence_dt(cadence, frame, &state, &last)))
-		frame++;
-	fixed_step_scenario_end(result);
-	return result->ticks == FIXED_STEP_SCENARIO_TICKS;
+static void vsync_begin(void *context)
+{
+	(void)context;
+	VIDEO_WaitVSync();
+	vsync_last = gettime();
+}
+
+static float vsync_dt(void *context)
+{
+	u64 now;
+	float dt;
+
+	(void)context;
+	VIDEO_WaitVSync();
+	now = gettime();
+	dt = (float)ticks_to_microsecs(now - vsync_last) / 1000000.0f;
+	vsync_last = now;
+	return dt;
+}
+
+static long heap_in_use(void *context)
+{
+	(void)context;
+	return (long)mallinfo().uordblks;
 }
 
 /* ---------- the halt path */
@@ -299,10 +281,13 @@ int __wrap_main(void)
 	uintptr_t a1lo = (uintptr_t)SYS_GetArena1Lo(), a1hi = (uintptr_t)SYS_GetArena1Hi();
 	uintptr_t a2lo = (uintptr_t)SYS_GetArena2Lo(), a2hi = (uintptr_t)SYS_GetArena2Hi();
 	struct mallinfo heap_entry = mallinfo();
-	struct fixed_step_scenario_result reference, result;
+	struct engine_map_run_config config;
+	struct engine_map_run_report map_report;
+	struct wii_thread_report threads;
 	struct wii_arena_report arena;
+	char scenario_path[256];
 	unsigned previous_runs = 0;
-	int storage, cycle_heap[CYCLES], identical = 1, reference_set = 0;
+	int storage;
 	unsigned long previous_digest = 0, previous_chain = 0;
 	int have_previous;
 	GXRModeObj *mode;
@@ -409,51 +394,46 @@ int __wrap_main(void)
 		wii_log("MAP after_engine_start arena1_lo=%p arena2_lo=%p\n", SYS_GetArena1Lo(), SYS_GetArena2Lo());
 	}
 
-	/* ---------- load/run/unload cycles at varied render cadence */
-	for (int cycle = 0; cycle < CYCLES; cycle++)
+	/* ---------- the real map (engine_map_run.c) */
+	stage = "map_run";
+	read_scenario_path(scenario_path, sizeof(scenario_path));
 	{
-		for (int cadence = 0; cadence < NUMBER_OF_CADENCES; cadence++)
+		struct stat information;
+		char staged[320];
+		const char *name = strrchr(scenario_path, '\\');
+
+		snprintf(staged, sizeof(staged), WII_ENGINE_DATA_ROOT "/maps/%s.wmap", name ? name + 1 : scenario_path);
+		wii_log("MAP staged=%s bytes=%ld scenario=%s\n", staged,
+			stat(staged, &information) == 0 ? (long)information.st_size : -1L, scenario_path);
+	}
+	{
+		/* (diagnosis: dump.txt, "<allocation index>[,...]:<tick>", engine_map_run_set_dump) */
+		char spec[64] = "";
+		FILE *file = fopen(WII_ENGINE_ROOT "/dump.txt", "rb");
+
+		if (file)
 		{
-			int ran = run_cadence((enum cadence)cadence, &result);
-			int same;
+			size_t used = fread(spec, 1, sizeof(spec) - 1, file);
 
-			if (!reference_set && ran)
-			{
-				reference = result;
-				reference_set = 1;
-			}
-			same = ran && result.digest == reference.digest && result.chain == reference.chain &&
-				!memcmp(result.digest_at, reference.digest_at, sizeof(result.digest_at)) &&
-				result.random_seed == reference.random_seed && result.live_bodies == reference.live_bodies;
-			identical &= same;
-			wii_log("CADENCE cycle=%d cadence=%s ticks=%ld frames=%ld frames_without_ticks=%ld "
-				"most_ticks_in_a_frame=%ld digest=%08lx chain=%08lx at1=%08lx at30=%08lx at150=%08lx at300=%08lx "
-				"seed=%08lx bodies=%ld spawned=%ld deleted=%ld same=%d\n", cycle, cadence_names[cadence], result.ticks,
-				result.frames, result.frames_without_ticks, result.most_ticks_in_a_frame, result.digest, result.chain,
-				result.digest_at[0], result.digest_at[1], result.digest_at[2], result.digest_at[3], result.random_seed,
-				result.live_bodies, result.spawned, result.deleted, same);
+			fclose(file);
+			spec[used] = 0;
+			wii_log("DUMP spec=%s understood=%d\n", spec, engine_map_run_set_dump(spec, WII_ENGINE_ROOT));
 		}
-		cycle_heap[cycle] = mallinfo().uordblks;
-		wii_arena_report_get(&arena);
-		/* (mallinfo counts the gap between the banks once the heap has moved
-		into MEM2: compare it between cycles, and the arenas' low bounds, which
-		the heap moves as it grows) */
-		wii_log("CYCLE %d heap_in_use=%d arena1_lo=%p arena2_lo=%p general_in_use=%lu unsupported_names=%lu "
-			"unsupported_calls=%lu\n", cycle, cycle_heap[cycle], SYS_GetArena1Lo(), SYS_GetArena2Lo(),
-			(unsigned long)arena.general_in_use, wii_unsupported_names(), wii_unsupported_calls());
 	}
-	check(identical, "cadence_digests_identical");
-	{
-		int flat = 1;
-
-		for (int cycle = 1; cycle < CYCLES; cycle++)
-			flat &= cycle_heap[cycle] == cycle_heap[0];
-		check(flat, "heap_flat_across_cycles");
-		wii_log("CYCLES heap_flat=%d digest=%08lx chain=%08lx\n", flat, reference.digest, reference.chain);
-	}
+	memset(&config, 0, sizeof(config));
+	config.scenario_path = scenario_path;
+	config.cycles = CYCLES;
+	config.vsync_dt = vsync_dt;
+	config.vsync_begin = vsync_begin;
+	config.heap_in_use = heap_in_use;
+	check(engine_map_run(&config, &map_report), "map_run");
+	wii_log("MAP_TIMES load_ms=%lu run_ms=%lu\n", map_report.load_milliseconds, map_report.run_milliseconds);
 	if (have_previous)
-		check(previous_digest == reference.digest && previous_chain == reference.chain, "digest_same_as_last_launch");
-	check(write_result(reference.digest, reference.chain), "result_written");
+	{
+		check(previous_digest == map_report.simulation_digest && previous_chain == map_report.simulation_chain,
+			"digest_same_as_last_launch");
+	}
+	check(write_result(map_report.simulation_digest, map_report.simulation_chain), "result_written");
 
 	/* ---------- shut-down */
 	{
@@ -469,6 +449,9 @@ int __wrap_main(void)
 		check(restored, "arena_restored");
 	}
 
+	wii_thread_report_get(&threads);
+	wii_log("THREADS created=%lu fpscr_cleared=%lu measured=%lu stack_bytes=%lu stack_peak=%lu\n", threads.created,
+		threads.fpscr_cleared, threads.measured, threads.stack_bytes, threads.stack_peak);
 	{
 		uintptr_t low_water = stack_low_water();
 
@@ -479,7 +462,7 @@ int __wrap_main(void)
 	for (unsigned long index = 0; index < wii_unsupported_names(); index++)
 		wii_log("UNSUPPORTED_NAME %s\n", wii_unsupported_name(index));
 	wii_log("END target=engine build=%s cycles=%d cadences=%d failures=%d elapsed_ms=%" PRIu64 " result=%s\n",
-		WII_BUILD_ID, CYCLES, NUMBER_OF_CADENCES, failures, ticks_to_millisecs(gettime() - boot_time),
+		WII_BUILD_ID, CYCLES, ENGINE_MAP_RUN_CADENCES, failures, ticks_to_millisecs(gettime() - boot_time),
 		!failures && wii_log_healthy() ? "pass" : "fail");
 	result_written = 1;
 

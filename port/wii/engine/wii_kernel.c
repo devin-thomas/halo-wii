@@ -509,10 +509,14 @@ LONG WINAPI halo_linux_InterlockedCompareExchange(LPLONG destination, LONG excha
 }
 
 /* MSVC's compiler barrier; sync orders memory too */
+#if defined(__PPC__)
 void _ReadWriteBarrier(void)
 {
 	__asm__ volatile("sync" : : : "memory");
 }
+#endif
+/* (the i686 host reference, tools/wii/run_engine_map_host.py: clang's
+builtin, as the Linux build has it) */
 
 /* ---------- threads */
 
@@ -529,7 +533,15 @@ struct platform_thread
 	BOOL closed;
 	BOOL finished;
 	pthread_t thread;
+	size_t stack_size;
 };
+
+/* each thread's stack peak (HWI-015B): the stack below the thread's entry
+frame is painted, all but a margin of what pthread_create was asked for, and
+read back when the routine returns */
+#define THREAD_STACK_PAINT 0x5a17c0deu
+#define THREAD_STACK_MARGIN 0x2000u
+#define THREAD_STACK_ENTRY_GAP 256u
 
 static struct wii_thread_report thread_report;
 static pthread_mutex_t thread_report_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -579,7 +591,26 @@ static void *thread_main(void *context)
 		pthread_cond_wait(&handle->condition, &handle->lock);
 	pthread_mutex_unlock(&handle->lock);
 
-	exit_code = thread->start(thread->parameter);
+	{
+		volatile uint32_t entry_marker = 0;
+		uintptr_t top = ((uintptr_t)&entry_marker - THREAD_STACK_ENTRY_GAP) & ~(uintptr_t)3;
+		size_t window = thread->stack_size > THREAD_STACK_MARGIN ? thread->stack_size - THREAD_STACK_MARGIN : 0;
+		uintptr_t bottom = top - window;
+		const volatile uint32_t *word;
+
+		for (word = (volatile uint32_t *)bottom; (uintptr_t)word < top; ++word)
+			*(volatile uint32_t *)word = THREAD_STACK_PAINT;
+		exit_code = thread->start(thread->parameter);
+		for (word = (const volatile uint32_t *)bottom; (uintptr_t)word < top && *word == THREAD_STACK_PAINT; ++word)
+			;
+		pthread_mutex_lock(&thread_report_lock);
+		thread_report.measured++;
+		thread_report.stack_bytes = thread->stack_size;
+		if (top - (uintptr_t)word + THREAD_STACK_ENTRY_GAP > thread_report.stack_peak)
+			thread_report.stack_peak = top - (uintptr_t)word + THREAD_STACK_ENTRY_GAP;
+		pthread_mutex_unlock(&thread_report_lock);
+		(void)entry_marker;
+	}
 
 	pthread_mutex_lock(&handle->lock);
 	thread->exit_code = exit_code;
@@ -626,8 +657,8 @@ HANDLE WINAPI CreateThread(LPSECURITY_ATTRIBUTES attributes, DWORD stack_size,
 
 	pthread_attr_init(&thread_attributes);
 	pthread_attr_setdetachstate(&thread_attributes, PTHREAD_CREATE_DETACHED);
-	pthread_attr_setstacksize(&thread_attributes,
-		stack_size > WII_MINIMUM_THREAD_STACK ? stack_size : WII_MINIMUM_THREAD_STACK);
+	thread->stack_size = stack_size > WII_MINIMUM_THREAD_STACK ? stack_size : WII_MINIMUM_THREAD_STACK;
+	pthread_attr_setstacksize(&thread_attributes, thread->stack_size);
 	if (pthread_create(&thread->thread, &thread_attributes, thread_main, thread) != 0)
 	{
 		pthread_attr_destroy(&thread_attributes);
@@ -721,6 +752,7 @@ VOID WINAPI Sleep(DWORD milliseconds)
 microsecond */
 static unsigned long long time_base(void)
 {
+#if defined(__PPC__)
 	unsigned long upper, lower, again;
 
 	do
@@ -730,6 +762,13 @@ static unsigned long long time_base(void)
 		__asm__ volatile("mftbu %0" : "=r"(again));
 	} while (upper != again);
 	return ((unsigned long long)upper << 32) | lower;
+#else
+	/* (the i686 host reference: the monotonic clock in time-base ticks) */
+	struct timespec now;
+
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	return ((unsigned long long)now.tv_sec * 1000000ULL + (unsigned long long)now.tv_nsec / 1000ULL) * 243ULL / 4ULL;
+#endif
 }
 
 unsigned long long wii_time_microseconds(void)

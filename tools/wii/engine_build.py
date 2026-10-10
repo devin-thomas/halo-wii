@@ -51,11 +51,14 @@ SEMANTICS = ENGINE_BUILD / "halo_wii_semantics.h"
 PLATFORM_SEMANTICS = ENGINE_BUILD / "halo_wii_platform_semantics.h"
 
 # engine units with a Wii replacement, and units compiled from a rewritten copy
-REPLACED = {Path("source/cache/physical_memory_map.c"): ENGINE_DIR / "physical_memory_map_wii.c"}
+REPLACED = {Path("source/cache/physical_memory_map.c"): ENGINE_DIR / "physical_memory_map_wii.c",
+            # HWI-015B: maps staged on the SD card in place of the Xbox's hard-disk cache
+            Path("source/cache/cache_files_windows.c"): ENGINE_DIR / "cache_files_wii.c"}
 REWRITTEN = (Path("source/memory/byte_swapping.c"),)
 # Authored units compiled as engine units (the engine's headers and flags):
 # the driver's engine-side half and the controlled fixed-step scenario.
-ENGINE_AUTHORED = (ENGINE_DIR / "engine_hooks.c", ENGINE_DIR / "fixed_step_scenario.c")
+ENGINE_AUTHORED = (ENGINE_DIR / "engine_hooks.c", ENGINE_DIR / "fixed_step_scenario.c",
+                   ENGINE_DIR / "real_map_scenario.c")
 
 # Linux platform files whose code only needs a C library: reused unchanged.
 REUSED_PLATFORM = tuple(LINUX_PLATFORM / name for name in (
@@ -63,7 +66,8 @@ REUSED_PLATFORM = tuple(LINUX_PLATFORM / name for name in (
 # The Wii's own services.
 WII_PLATFORM = tuple(ENGINE_DIR / name for name in (
     "wii_log.c", "wii_kernel.c", "wii_memory.c", "wii_posix_files.c", "wii_sdl_files.c",
-    "wii_platform_checks.c", "unsupported_sdk.c", "unsupported_port.c", "wii_engine_main.c")) + (
+    "wii_platform_checks.c", "unsupported_sdk.c", "unsupported_port.c", "engine_map_run.c",
+    "wii_engine_main.c")) + (
     Path("port/wii/runtime/runtime_start.c"), Path("tools/wii/cache_arena_plan.c"))
 WII_HEADERS = tuple(sorted(ENGINE_DIR.glob("*.h"))) + (PREFIX, ENGINE_DIR / "sdl/SDL3/SDL.h")
 
@@ -91,7 +95,14 @@ PLATFORM_DIALECT_FLAGS = ["-std=gnu11", "-D_GNU_SOURCE", "-DHALO_LINUX_PLATFORM_
 # Wii build does not have; game_tick/game_frame run the controlled
 # fixed-step scenario while no map is loaded, else the engine's own.
 WRAPPED = ("main", "halt_and_catch_fire", "game_tick", "game_frame", "update_client_get_maximum_possible_server_time",
-           "update_client_local_ticks", "rasterizer_decals_initialize", "rasterizer_decals_dispose")
+           "update_client_local_ticks", "rasterizer_decals_initialize", "rasterizer_decals_dispose",
+           # HWI-015B: a real map's scripted input, and the game state's
+           # allocations, recorded for its digests (real_map_scenario.c)
+           "update_client_handle_server_update", "game_state_malloc", "game_state_gpu_malloc",
+           "game_state_data_new", "game_state_memory_pool_new", "game_state_lruv_cache_new",
+           # HWI-015B: the texture cache rasterizer_initialize would have made
+           "texture_cache_open", "texture_cache_close", "sound_cache_open", "sound_cache_close",
+           "predicted_resources_precache", "_rasterizer_decals_dispose_from_old_map")
 # Diagnostic storage (HWI-015D): "omit" (the default) compiles the engine
 # without the AI's debug records and the profiler's frame history; "keep"
 # compiles them as the other ports do, and then wraps ai_debug_initialize
@@ -197,7 +208,7 @@ def flag_sets(semantic_flags: List[str], diagnostic_storage: str = "omit") -> Di
 def platform_units() -> List[Tuple[Path, str]]:
     units = [(path, "platform_reused_wide" if path.name == "msvc_wide.c" else "platform_reused")
              for path in REUSED_PLATFORM]
-    driver = ("wii_engine_main.c", "runtime_start.c", "cache_arena_plan.c")
+    driver = ("wii_engine_main.c", "runtime_start.c", "cache_arena_plan.c", "engine_map_run.c")
     units += [(path, "platform_posix" if path.name == "wii_posix_files.c" else
                "driver" if path.name in driver else "platform_wii") for path in WII_PLATFORM]
     units += [(path, "musl_math") for path in sorted((MUSL_MATH / "src").glob("*.c"))]

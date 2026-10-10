@@ -3670,6 +3670,11 @@ static char const **enumeration_results = NULL;
 static char const *hs_enumeration_substring = NULL;
 static boolean hs_recompile_pending = FALSE;
 static boolean hs_syntax_data_allocated = FALSE;
+/* port: the array hs_allocate made (hs_syntax_data_allocated), which is
+not hs_syntax_data once a map's own script data stands in for it
+(hs_scenario_postprocess): that one is the map's, in the tag cache, and is
+never freed */
+static struct data_array *hs_allocated_syntax_data = NULL;
 /* port: the map's scripts and global initializers that call a function
 maps may not (hs_scenario_functions_check) */
 static unsigned long hs_scenario_disabled_scripts[BIT_VECTOR_SIZE_IN_LONGS(MAXIMUM_HS_SCRIPTS_PER_SCENARIO)];
@@ -13151,6 +13156,7 @@ static void hs_allocate(
 	{
 		data_make_valid(hs_syntax_data);
 		hs_syntax_data_allocated = TRUE;
+		hs_allocated_syntax_data = hs_syntax_data;
 	}
 	else
 	{
@@ -13444,11 +13450,14 @@ void hs_dispose_from_old_map(
 	if (hs_syntax_data)
 	{
 		hs_node_gc();
+		/* port: the array hs_allocate made, whichever hs_syntax_data is now
+		(the map's own in the tag cache, after hs_scenario_postprocess) */
 		if (hs_syntax_data_allocated)
 		{
-			data_make_invalid(hs_syntax_data);
-			data_dispose(hs_syntax_data);
+			data_make_invalid(hs_allocated_syntax_data);
+			data_dispose(hs_allocated_syntax_data);
 			hs_syntax_data_allocated = FALSE;
+			hs_allocated_syntax_data = NULL;
 		}
 		hs_syntax_data = NULL;
 	}
@@ -15355,9 +15364,10 @@ static boolean hs_compile_and_evaluate_command(
 				hs_node_gc();
 				if (hs_syntax_data_allocated)
 				{
-					data_make_invalid(hs_syntax_data);
-					data_dispose(hs_syntax_data);
+					data_make_invalid(hs_allocated_syntax_data);
+					data_dispose(hs_allocated_syntax_data);
 					hs_syntax_data_allocated = FALSE;
+					hs_allocated_syntax_data = NULL;
 				}
 				hs_syntax_data = NULL;
 			}

@@ -35,6 +35,7 @@ struct walk {
     size_t structure;
     int failed;
     uint32_t crc;
+    const struct cache_graph_visitor *visitor; /* (cache_graph_visit only) */
 };
 
 static uint32_t crc_table[256];
@@ -279,6 +280,8 @@ static void walk_element(struct walk *w, size_t base, int32_t definition)
         return;
     }
     w->frames[w->depth++] = base;
+    if (w->visitor && w->visitor->element)
+        w->visitor->element(w->visitor->context, base, definition);
     if ((uint32_t)w->depth > w->report->max_depth)
         w->report->max_depth = (uint32_t)w->depth;
     ++w->report->elements;
@@ -364,6 +367,8 @@ static void data_extent(struct walk *w, size_t address, const struct cache_schem
         }
         w->report->data_bytes += (uint32_t)size;
         mark(w, address + 12, 0);
+        if (w->visitor && w->visitor->data)
+            w->visitor->data(w->visitor->context, target, (size_t)size, id, address);
     } else {
         mark(w, address + 12, 1);
     }
@@ -870,6 +875,36 @@ int cache_graph_relocate(const struct cache_graph_input *in, unsigned char *tags
         else if (!marked(w.nulls, at))
             continue;
         memcpy(tags + at, &native, 4);
+    }
+    return 1;
+}
+
+int cache_graph_visit(const struct cache_graph_input *in, void *workspace, size_t workspace_bytes,
+                      struct cache_graph_report *report, struct cache_graph_result *result,
+                      const struct cache_graph_visitor *visitor)
+{
+    struct walk w;
+    if (!setup(&w, in, workspace, workspace_bytes, report, result))
+        return 0;
+    if (in->native || !visitor)
+        return fail(&w, CACHE_GRAPH_ARGUMENT, 0);
+    w.visitor = visitor;
+    if (!run(&w))
+        return 0;
+    if (!visitor->pointer)
+        return 1;
+    size_t words = in->cache_bytes / 4;
+    for (size_t index = 0; index < words; ++index) {
+        uint32_t bits = w.relocate[index / 32] | w.nulls[index / 32];
+        if (!bits) {
+            index |= 31;
+            continue;
+        }
+        size_t at = index * 4;
+        if (marked(w.relocate, at))
+            visitor->pointer(visitor->context, at, (size_t)(le32(in->tags + at) - in->encoded_base));
+        else if (marked(w.nulls, at))
+            visitor->pointer(visitor->context, at, CACHE_GRAPH_NULLED);
     }
     return 1;
 }

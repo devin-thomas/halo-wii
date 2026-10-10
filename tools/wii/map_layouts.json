@@ -1,0 +1,12192 @@
+{
+ "generator": "tools/wii/map_layouts.py",
+ "abi": "upstream i686 (Xbox cache layout)",
+ "sources_sha256": "645cc96f7e94881bdb1c3ef28edbc39df24ff8fe7f774091643daddfbcd35627",
+ "compiler": "Debian clang version 19.1.7 (3+b1)",
+ "definitions": [
+  {
+   "index": 0,
+   "name": "object_definition",
+   "size": 380,
+   "type": "struct object_definition",
+   "type_size": 380,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     15
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 1,
+   "name": "object",
+   "size": 380,
+   "type": "struct _object_definition",
+   "type_size": 380,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     15
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 2,
+   "name": "object_attachment",
+   "size": 72,
+   "type": "struct object_attachment_definition",
+   "type_size": 72,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ],
+    [
+     48,
+     2,
+     4
+    ],
+    [
+     56,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 3,
+   "name": "object_widget",
+   "size": 32,
+   "type": "struct object_definition_widget",
+   "type_size": 32,
+   "swaps": [
+    [
+     0,
+     4,
+     8
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 4,
+   "name": "object_function",
+   "size": 360,
+   "type": "struct object_function_definition",
+   "type_size": 360,
+   "swaps": [
+    [
+     0,
+     4,
+     2
+    ],
+    [
+     8,
+     2,
+     4
+    ],
+    [
+     16,
+     4,
+     3
+    ],
+    [
+     28,
+     2,
+     6
+    ],
+    [
+     40,
+     4,
+     3
+    ],
+    [
+     52,
+     2,
+     2
+    ],
+    [
+     56,
+     4,
+     68
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 5,
+   "name": "object_change_color",
+   "size": 44,
+   "type": "struct object_change_color_definition",
+   "type_size": 44,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     10
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 6,
+   "name": "object_change_color_permutation",
+   "size": 28,
+   "type": "struct object_change_color_permutation",
+   "type_size": 28,
+   "swaps": [
+    [
+     0,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 7,
+   "name": "predicted_resource",
+   "size": 8,
+   "type": "struct predicted_resource",
+   "type_size": 8,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 8,
+   "name": "unit_definition",
+   "size": 752,
+   "type": "struct unit_definition",
+   "type_size": 752,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     16
+    ],
+    [
+     384,
+     2,
+     2
+    ],
+    [
+     388,
+     4,
+     5
+    ],
+    [
+     408,
+     2,
+     4
+    ],
+    [
+     416,
+     4,
+     2
+    ],
+    [
+     488,
+     4,
+     29
+    ],
+    [
+     604,
+     2,
+     2
+    ],
+    [
+     608,
+     4,
+     14
+    ],
+    [
+     664,
+     2,
+     2
+    ],
+    [
+     668,
+     4,
+     10
+    ],
+    [
+     708,
+     2,
+     4
+    ],
+    [
+     716,
+     4,
+     9
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 9,
+   "name": "unit",
+   "size": 372,
+   "type": "struct _unit_definition",
+   "type_size": 372,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     2
+    ],
+    [
+     8,
+     4,
+     5
+    ],
+    [
+     28,
+     2,
+     4
+    ],
+    [
+     36,
+     4,
+     2
+    ],
+    [
+     108,
+     4,
+     29
+    ],
+    [
+     224,
+     2,
+     2
+    ],
+    [
+     228,
+     4,
+     14
+    ],
+    [
+     284,
+     2,
+     2
+    ],
+    [
+     288,
+     4,
+     10
+    ],
+    [
+     328,
+     2,
+     4
+    ],
+    [
+     336,
+     4,
+     9
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 10,
+   "name": "unit_camera",
+   "size": 88,
+   "type": "struct unit_camera",
+   "type_size": 88,
+   "swaps": [
+    [
+     64,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 11,
+   "name": "unit_camera_track",
+   "size": 28,
+   "type": "struct unit_camera_track",
+   "type_size": 28,
+   "swaps": [
+    [
+     0,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 12,
+   "name": "unit_hud",
+   "size": 48,
+   "type": "struct unit_hud_reference",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 13,
+   "name": "unit_dialogue_variant",
+   "size": 24,
+   "type": "struct unit_dialogue_variant_definition",
+   "type_size": 24,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     5
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 14,
+   "name": "unit_powered_seat",
+   "size": 68,
+   "type": "struct powered_seat_definition",
+   "type_size": 68,
+   "swaps": [
+    [
+     0,
+     4,
+     17
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 15,
+   "name": "unit_initial_weapon",
+   "size": 36,
+   "type": "struct unit_initial_weapon",
+   "type_size": 36,
+   "swaps": [
+    [
+     0,
+     4,
+     9
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 16,
+   "name": "unit_seat",
+   "size": 284,
+   "type": "struct unit_seat",
+   "type_size": 284,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     68,
+     4,
+     16
+    ],
+    [
+     196,
+     4,
+     10
+    ],
+    [
+     236,
+     2,
+     2
+    ],
+    [
+     240,
+     4,
+     11
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 17,
+   "name": "biped_definition",
+   "size": 1268,
+   "type": "struct biped_definition",
+   "type_size": 1268,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     16
+    ],
+    [
+     384,
+     2,
+     2
+    ],
+    [
+     388,
+     4,
+     5
+    ],
+    [
+     408,
+     2,
+     4
+    ],
+    [
+     416,
+     4,
+     2
+    ],
+    [
+     488,
+     4,
+     29
+    ],
+    [
+     604,
+     2,
+     2
+    ],
+    [
+     608,
+     4,
+     14
+    ],
+    [
+     664,
+     2,
+     2
+    ],
+    [
+     668,
+     4,
+     10
+    ],
+    [
+     708,
+     2,
+     4
+    ],
+    [
+     716,
+     4,
+     16
+    ],
+    [
+     780,
+     2,
+     4
+    ],
+    [
+     788,
+     4,
+     116
+    ],
+    [
+     1252,
+     2,
+     2
+    ],
+    [
+     1256,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 18,
+   "name": "biped",
+   "size": 516,
+   "type": "struct _biped_definition",
+   "type_size": 516,
+   "swaps": [
+    [
+     0,
+     4,
+     7
+    ],
+    [
+     28,
+     2,
+     4
+    ],
+    [
+     36,
+     4,
+     116
+    ],
+    [
+     500,
+     2,
+     2
+    ],
+    [
+     504,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 19,
+   "name": "biped_contact_point",
+   "size": 64,
+   "type": "struct biped_contact_point",
+   "type_size": 64,
+   "swaps": [],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 20,
+   "name": "vehicle_definition",
+   "size": 1008,
+   "type": "struct vehicle_definition",
+   "type_size": 1008,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     16
+    ],
+    [
+     384,
+     2,
+     2
+    ],
+    [
+     388,
+     4,
+     5
+    ],
+    [
+     408,
+     2,
+     4
+    ],
+    [
+     416,
+     4,
+     2
+    ],
+    [
+     488,
+     4,
+     29
+    ],
+    [
+     604,
+     2,
+     2
+    ],
+    [
+     608,
+     4,
+     14
+    ],
+    [
+     664,
+     2,
+     2
+    ],
+    [
+     668,
+     4,
+     10
+    ],
+    [
+     708,
+     2,
+     4
+    ],
+    [
+     716,
+     4,
+     10
+    ],
+    [
+     756,
+     2,
+     2
+    ],
+    [
+     760,
+     4,
+     9
+    ],
+    [
+     796,
+     2,
+     4
+    ],
+    [
+     816,
+     4,
+     2
+    ],
+    [
+     832,
+     4,
+     2
+    ],
+    [
+     868,
+     4,
+     1
+    ],
+    [
+     944,
+     4,
+     16
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 21,
+   "name": "item_definition",
+   "size": 776,
+   "type": "struct item_definition",
+   "type_size": 776,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     16
+    ],
+    [
+     384,
+     2,
+     2
+    ],
+    [
+     388,
+     4,
+     1
+    ],
+    [
+     392,
+     2,
+     2
+    ],
+    [
+     396,
+     4,
+     4
+    ],
+    [
+     412,
+     2,
+     4
+    ],
+    [
+     420,
+     4,
+     89
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 22,
+   "name": "item",
+   "size": 396,
+   "type": "struct _item_definition",
+   "type_size": 396,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     2
+    ],
+    [
+     8,
+     4,
+     1
+    ],
+    [
+     12,
+     2,
+     2
+    ],
+    [
+     16,
+     4,
+     4
+    ],
+    [
+     32,
+     2,
+     4
+    ],
+    [
+     40,
+     4,
+     89
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 23,
+   "name": "weapon_definition",
+   "size": 1288,
+   "type": "struct weapon_definition",
+   "type_size": 1288,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     16
+    ],
+    [
+     384,
+     2,
+     2
+    ],
+    [
+     388,
+     4,
+     1
+    ],
+    [
+     392,
+     2,
+     2
+    ],
+    [
+     396,
+     4,
+     4
+    ],
+    [
+     412,
+     2,
+     4
+    ],
+    [
+     420,
+     4,
+     90
+    ],
+    [
+     812,
+     2,
+     6
+    ],
+    [
+     824,
+     4,
+     40
+    ],
+    [
+     984,
+     2,
+     2
+    ],
+    [
+     988,
+     4,
+     8
+    ],
+    [
+     1020,
+     2,
+     2
+    ],
+    [
+     1024,
+     4,
+     56
+    ],
+    [
+     1248,
+     2,
+     2
+    ],
+    [
+     1252,
+     4,
+     9
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 24,
+   "name": "weapon",
+   "size": 512,
+   "type": "struct _weapon_definition",
+   "type_size": 512,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     36,
+     2,
+     6
+    ],
+    [
+     48,
+     4,
+     40
+    ],
+    [
+     208,
+     2,
+     2
+    ],
+    [
+     212,
+     4,
+     8
+    ],
+    [
+     244,
+     2,
+     2
+    ],
+    [
+     248,
+     4,
+     56
+    ],
+    [
+     472,
+     2,
+     2
+    ],
+    [
+     476,
+     4,
+     9
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 25,
+   "name": "weapon_magazine",
+   "size": 112,
+   "type": "struct weapon_magazine_definition",
+   "type_size": 112,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     8
+    ],
+    [
+     20,
+     4,
+     1
+    ],
+    [
+     24,
+     2,
+     2
+    ],
+    [
+     28,
+     4,
+     3
+    ],
+    [
+     40,
+     2,
+     8
+    ],
+    [
+     56,
+     4,
+     14
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 26,
+   "name": "weapon_ammunition_object",
+   "size": 28,
+   "type": "struct weapon_ammunition_object",
+   "type_size": 28,
+   "swaps": [
+    [
+     0,
+     2,
+     6
+    ],
+    [
+     12,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 27,
+   "name": "weapon_trigger",
+   "size": 276,
+   "type": "struct weapon_trigger_definition",
+   "type_size": 276,
+   "swaps": [
+    [
+     0,
+     4,
+     8
+    ],
+    [
+     32,
+     2,
+     8
+    ],
+    [
+     48,
+     4,
+     8
+    ],
+    [
+     80,
+     2,
+     2
+    ],
+    [
+     84,
+     4,
+     6
+    ],
+    [
+     108,
+     2,
+     2
+    ],
+    [
+     112,
+     4,
+     41
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 28,
+   "name": "weapon_firing_effect",
+   "size": 132,
+   "type": "struct weapon_firing_effect",
+   "type_size": 132,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     32
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 29,
+   "name": "equipment_definition",
+   "size": 800,
+   "type": "struct equipment_definition",
+   "type_size": 800,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     16
+    ],
+    [
+     384,
+     2,
+     2
+    ],
+    [
+     388,
+     4,
+     1
+    ],
+    [
+     392,
+     2,
+     2
+    ],
+    [
+     396,
+     4,
+     4
+    ],
+    [
+     412,
+     2,
+     4
+    ],
+    [
+     420,
+     4,
+     89
+    ],
+    [
+     776,
+     2,
+     2
+    ],
+    [
+     780,
+     4,
+     5
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 30,
+   "name": "equipment",
+   "size": 24,
+   "type": "struct _equipment_definition",
+   "type_size": 24,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     5
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 31,
+   "name": "garbage_definition",
+   "size": 776,
+   "type": "struct item_definition",
+   "type_size": 776,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     16
+    ],
+    [
+     384,
+     2,
+     2
+    ],
+    [
+     388,
+     4,
+     1
+    ],
+    [
+     392,
+     2,
+     2
+    ],
+    [
+     396,
+     4,
+     4
+    ],
+    [
+     412,
+     2,
+     4
+    ],
+    [
+     420,
+     4,
+     89
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 32,
+   "name": "projectile_definition",
+   "size": 588,
+   "type": "struct projectile_definition",
+   "type_size": 588,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     16
+    ],
+    [
+     384,
+     2,
+     6
+    ],
+    [
+     396,
+     4,
+     25
+    ],
+    [
+     496,
+     2,
+     2
+    ],
+    [
+     500,
+     4,
+     22
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 33,
+   "name": "projectile",
+   "size": 208,
+   "type": "struct _projectile_definition",
+   "type_size": 208,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     6
+    ],
+    [
+     16,
+     4,
+     25
+    ],
+    [
+     116,
+     2,
+     2
+    ],
+    [
+     120,
+     4,
+     22
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 34,
+   "name": "projectile_material_response",
+   "size": 160,
+   "type": "struct projectile_material_response_definition",
+   "type_size": 160,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     4
+    ],
+    [
+     36,
+     2,
+     2
+    ],
+    [
+     40,
+     4,
+     9
+    ],
+    [
+     92,
+     2,
+     2
+    ],
+    [
+     96,
+     4,
+     6
+    ],
+    [
+     144,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 35,
+   "name": "scenery_definition",
+   "size": 380,
+   "type": "struct object_definition",
+   "type_size": 380,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     15
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 36,
+   "name": "sound_scenery_definition",
+   "size": 380,
+   "type": "struct object_definition",
+   "type_size": 380,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     15
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 37,
+   "name": "placeholder_definition",
+   "size": 380,
+   "type": "struct object_definition",
+   "type_size": 380,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     15
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 38,
+   "name": "device_definition",
+   "size": 656,
+   "type": "struct device_definition",
+   "type_size": 656,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     22
+    ],
+    [
+     408,
+     2,
+     4
+    ],
+    [
+     416,
+     4,
+     60
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 39,
+   "name": "device",
+   "size": 276,
+   "type": "struct _device_definition",
+   "type_size": 276,
+   "swaps": [
+    [
+     0,
+     4,
+     7
+    ],
+    [
+     28,
+     2,
+     4
+    ],
+    [
+     36,
+     4,
+     60
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 40,
+   "name": "machine_definition",
+   "size": 804,
+   "type": "struct machine_definition",
+   "type_size": 804,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     22
+    ],
+    [
+     408,
+     2,
+     4
+    ],
+    [
+     416,
+     4,
+     60
+    ],
+    [
+     656,
+     2,
+     2
+    ],
+    [
+     660,
+     4,
+     21
+    ],
+    [
+     744,
+     2,
+     2
+    ],
+    [
+     748,
+     4,
+     14
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 41,
+   "name": "machine",
+   "size": 148,
+   "type": "struct _machine_definition",
+   "type_size": 148,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     21
+    ],
+    [
+     88,
+     2,
+     2
+    ],
+    [
+     92,
+     4,
+     14
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 42,
+   "name": "control_definition",
+   "size": 792,
+   "type": "struct control_definition",
+   "type_size": 804,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     22
+    ],
+    [
+     408,
+     2,
+     4
+    ],
+    [
+     416,
+     4,
+     60
+    ],
+    [
+     656,
+     2,
+     2
+    ],
+    [
+     660,
+     4,
+     1
+    ],
+    [
+     744,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 43,
+   "name": "control",
+   "size": 136,
+   "type": "struct _control_definition",
+   "type_size": 148,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     1
+    ],
+    [
+     88,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 44,
+   "name": "light_fixture_definition",
+   "size": 656,
+   "type": "struct device_definition",
+   "type_size": 656,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     65
+    ],
+    [
+     264,
+     2,
+     4
+    ],
+    [
+     272,
+     4,
+     11
+    ],
+    [
+     316,
+     2,
+     2
+    ],
+    [
+     320,
+     4,
+     22
+    ],
+    [
+     408,
+     2,
+     4
+    ],
+    [
+     416,
+     4,
+     60
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 45,
+   "name": "actor_definition",
+   "size": 1272,
+   "type": "struct actor_definition",
+   "type_size": 1272,
+   "swaps": [
+    [
+     0,
+     4,
+     5
+    ],
+    [
+     20,
+     2,
+     2
+    ],
+    [
+     24,
+     4,
+     148
+    ],
+    [
+     616,
+     2,
+     4
+    ],
+    [
+     624,
+     4,
+     2
+    ],
+    [
+     632,
+     2,
+     2
+    ],
+    [
+     636,
+     4,
+     10
+    ],
+    [
+     676,
+     2,
+     2
+    ],
+    [
+     680,
+     4,
+     20
+    ],
+    [
+     760,
+     2,
+     2
+    ],
+    [
+     764,
+     4,
+     22
+    ],
+    [
+     852,
+     2,
+     2
+    ],
+    [
+     856,
+     4,
+     104
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 46,
+   "name": "actor_variant_definition",
+   "size": 568,
+   "type": "struct actor_variant_definition",
+   "type_size": 568,
+   "swaps": [
+    [
+     0,
+     4,
+     19
+    ],
+    [
+     76,
+     2,
+     2
+    ],
+    [
+     80,
+     4,
+     65
+    ],
+    [
+     340,
+     2,
+     2
+    ],
+    [
+     344,
+     4,
+     10
+    ],
+    [
+     384,
+     2,
+     4
+    ],
+    [
+     392,
+     4,
+     18
+    ],
+    [
+     464,
+     2,
+     2
+    ],
+    [
+     468,
+     4,
+     3
+    ],
+    [
+     480,
+     2,
+     2
+    ],
+    [
+     484,
+     4,
+     10
+    ],
+    [
+     524,
+     2,
+     2
+    ],
+    [
+     528,
+     4,
+     10
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 47,
+   "name": "actor_variant_change_colors",
+   "size": 32,
+   "type": "struct actor_variant_change_colors",
+   "type_size": 32,
+   "swaps": [
+    [
+     0,
+     4,
+     8
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 48,
+   "name": "dialogue_definition",
+   "size": 4112,
+   "type": "struct dialogue_definition",
+   "type_size": 4112,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     1027
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 49,
+   "name": "item_collection_definition",
+   "size": 92,
+   "type": "struct item_collection_definition",
+   "type_size": 92,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ],
+    [
+     12,
+     2,
+     2
+    ],
+    [
+     16,
+     4,
+     19
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 50,
+   "name": "item_permutation",
+   "size": 84,
+   "type": "struct item_permutation_definition",
+   "type_size": 84,
+   "swaps": [
+    [
+     0,
+     4,
+     21
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 51,
+   "name": "model",
+   "size": 232,
+   "type": "struct model",
+   "type_size": 232,
+   "swaps": [
+    [
+     0,
+     4,
+     7
+    ],
+    [
+     28,
+     2,
+     6
+    ],
+    [
+     40,
+     4,
+     48
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 52,
+   "name": "model_marker",
+   "size": 64,
+   "type": "struct model_marker",
+   "type_size": 64,
+   "swaps": [
+    [
+     32,
+     4,
+     8
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 53,
+   "name": "model_marker_instance",
+   "size": 32,
+   "type": "struct model_marker_instance",
+   "type_size": 32,
+   "swaps": [
+    [
+     4,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 54,
+   "name": "model_node",
+   "size": 156,
+   "type": "struct model_node",
+   "type_size": 156,
+   "swaps": [
+    [
+     32,
+     2,
+     4
+    ],
+    [
+     40,
+     4,
+     29
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 55,
+   "name": "model_region",
+   "size": 76,
+   "type": "struct model_region",
+   "type_size": 76,
+   "swaps": [
+    [
+     32,
+     4,
+     11
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 56,
+   "name": "model_region_permutation",
+   "size": 88,
+   "type": "struct model_region_permutation",
+   "type_size": 88,
+   "swaps": [
+    [
+     32,
+     4,
+     1
+    ],
+    [
+     36,
+     2,
+     2
+    ],
+    [
+     40,
+     4,
+     6
+    ],
+    [
+     64,
+     2,
+     6
+    ],
+    [
+     76,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 57,
+   "name": "model_region_permutation_marker",
+   "size": 80,
+   "type": "struct model_region_permutation_marker",
+   "type_size": 80,
+   "swaps": [
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 58,
+   "name": "model_geometry",
+   "size": 48,
+   "type": "struct model_geometry",
+   "type_size": 48,
+   "swaps": [
+    [
+     36,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 59,
+   "name": "model_geometry_part",
+   "size": 104,
+   "type": "struct model_geometry_part",
+   "type_size": 104,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     1
+    ],
+    [
+     8,
+     2,
+     2
+    ],
+    [
+     12,
+     4,
+     14
+    ],
+    [
+     68,
+     2,
+     2
+    ],
+    [
+     72,
+     4,
+     3
+    ],
+    [
+     84,
+     2,
+     2
+    ],
+    [
+     88,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 60,
+   "name": "model_vertex_uncompressed",
+   "size": 68,
+   "type": "struct model_vertex_uncompressed_element",
+   "type_size": 68,
+   "swaps": [],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 61,
+   "name": "model_vertex_compressed",
+   "size": 32,
+   "type": "struct model_vertex_compressed_element",
+   "type_size": 32,
+   "swaps": [],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 62,
+   "name": "model_triangle",
+   "size": 6,
+   "type": "struct model_triangle_element",
+   "type_size": 6,
+   "swaps": [
+    [
+     0,
+     2,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 63,
+   "name": "model_shader_reference",
+   "size": 32,
+   "type": "struct model_shader_reference",
+   "type_size": 32,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ],
+    [
+     16,
+     2,
+     2
+    ],
+    [
+     20,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 64,
+   "name": "animation_graph",
+   "size": 128,
+   "type": "struct animation_graph",
+   "type_size": 128,
+   "swaps": [
+    [
+     0,
+     4,
+     25
+    ],
+    [
+     100,
+     2,
+     2
+    ],
+    [
+     104,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 65,
+   "name": "animation_graph_object_overlay",
+   "size": 20,
+   "type": "struct animation_graph_object_overlay",
+   "type_size": 20,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 66,
+   "name": "animation_graph_unit_seat",
+   "size": 100,
+   "type": "struct animation_graph_unit_seat",
+   "type_size": 100,
+   "swaps": [
+    [
+     32,
+     4,
+     2
+    ],
+    [
+     40,
+     2,
+     2
+    ],
+    [
+     44,
+     4,
+     2
+    ],
+    [
+     52,
+     2,
+     2
+    ],
+    [
+     56,
+     4,
+     11
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 67,
+   "name": "animation_index",
+   "size": 2,
+   "type": "struct animation_graph_animation_index",
+   "type_size": 2,
+   "swaps": [
+    [
+     0,
+     2,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 68,
+   "name": "animation_graph_ik_point",
+   "size": 64,
+   "type": "struct animation_graph_ik_point",
+   "type_size": 64,
+   "swaps": [],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 69,
+   "name": "animation_graph_weapon_class",
+   "size": 188,
+   "type": "struct animation_graph_weapon_class",
+   "type_size": 188,
+   "swaps": [
+    [
+     96,
+     4,
+     2
+    ],
+    [
+     104,
+     2,
+     2
+    ],
+    [
+     108,
+     4,
+     2
+    ],
+    [
+     116,
+     2,
+     2
+    ],
+    [
+     120,
+     4,
+     17
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 70,
+   "name": "animation_graph_weapon_type",
+   "size": 60,
+   "type": "struct animation_graph_weapon_type",
+   "type_size": 60,
+   "swaps": [
+    [
+     32,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 71,
+   "name": "animation_graph_weapon_animations",
+   "size": 28,
+   "type": "struct animation_graph_weapon_animations",
+   "type_size": 28,
+   "swaps": [
+    [
+     0,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 72,
+   "name": "vehicle_animation",
+   "size": 116,
+   "type": "struct vehicle_animation",
+   "type_size": 116,
+   "swaps": [
+    [
+     0,
+     4,
+     2
+    ],
+    [
+     8,
+     2,
+     2
+    ],
+    [
+     12,
+     4,
+     2
+    ],
+    [
+     20,
+     2,
+     2
+    ],
+    [
+     24,
+     4,
+     23
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 73,
+   "name": "vehicle_suspension",
+   "size": 20,
+   "type": "struct vehicle_suspension",
+   "type_size": 20,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 74,
+   "name": "animation_graph_device_animations",
+   "size": 96,
+   "type": "struct animation_graph_device_animations",
+   "type_size": 96,
+   "swaps": [
+    [
+     0,
+     4,
+     24
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 75,
+   "name": "animation_graph_first_person_weapon_animations",
+   "size": 28,
+   "type": "struct animation_graph_weapon_animations",
+   "type_size": 28,
+   "swaps": [
+    [
+     0,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 76,
+   "name": "animation_graph_sound_reference",
+   "size": 20,
+   "type": "struct animation_graph_sound_reference",
+   "type_size": 20,
+   "swaps": [
+    [
+     0,
+     4,
+     5
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 77,
+   "name": "animation_graph_node",
+   "size": 64,
+   "type": "struct animation_graph_node",
+   "type_size": 64,
+   "swaps": [
+    [
+     32,
+     2,
+     4
+    ],
+    [
+     40,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 78,
+   "name": "animation",
+   "size": 180,
+   "type": "struct animation",
+   "type_size": 180,
+   "swaps": [
+    [
+     32,
+     2,
+     4
+    ],
+    [
+     40,
+     4,
+     1
+    ],
+    [
+     44,
+     2,
+     2
+    ],
+    [
+     48,
+     4,
+     1
+    ],
+    [
+     52,
+     2,
+     6
+    ],
+    [
+     66,
+     2,
+     1
+    ],
+    [
+     68,
+     4,
+     28
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 79,
+   "name": "collision_model",
+   "size": 664,
+   "type": "struct collision_model",
+   "type_size": 664,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     2
+    ],
+    [
+     8,
+     4,
+     50
+    ],
+    [
+     208,
+     2,
+     2
+    ],
+    [
+     212,
+     4,
+     6
+    ],
+    [
+     236,
+     2,
+     2
+    ],
+    [
+     240,
+     4,
+     106
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 80,
+   "name": "damage_resistance",
+   "size": 600,
+   "type": "struct damage_resistance",
+   "type_size": 600,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     2
+    ],
+    [
+     8,
+     4,
+     50
+    ],
+    [
+     208,
+     2,
+     2
+    ],
+    [
+     212,
+     4,
+     6
+    ],
+    [
+     236,
+     2,
+     2
+    ],
+    [
+     240,
+     4,
+     90
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 81,
+   "name": "damage_resistance_material",
+   "size": 72,
+   "type": "struct damage_resistance_material",
+   "type_size": 72,
+   "swaps": [
+    [
+     32,
+     4,
+     1
+    ],
+    [
+     36,
+     2,
+     2
+    ],
+    [
+     40,
+     4,
+     8
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 82,
+   "name": "damage_region",
+   "size": 84,
+   "type": "struct damage_region",
+   "type_size": 84,
+   "swaps": [
+    [
+     32,
+     4,
+     13
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 83,
+   "name": "damage_permutation",
+   "size": 32,
+   "type": "struct damage_permutation",
+   "type_size": 32,
+   "swaps": [],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 84,
+   "name": "pathfinding_sphere",
+   "size": 32,
+   "type": "struct pathfinding_sphere",
+   "type_size": 32,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 85,
+   "name": "collision_node",
+   "size": 64,
+   "type": "struct collision_node",
+   "type_size": 64,
+   "swaps": [
+    [
+     32,
+     2,
+     4
+    ],
+    [
+     40,
+     4,
+     2
+    ],
+    [
+     48,
+     2,
+     2
+    ],
+    [
+     52,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 86,
+   "name": "collision_bsp",
+   "size": 96,
+   "type": "struct collision_bsp",
+   "type_size": 96,
+   "swaps": [
+    [
+     0,
+     4,
+     24
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 87,
+   "name": "real_plane3d",
+   "size": 16,
+   "type": "real_plane3d",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 88,
+   "name": "bsp3d_node",
+   "size": 12,
+   "type": "struct bsp3d_node",
+   "type_size": 12,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 89,
+   "name": "collision_leaf",
+   "size": 8,
+   "type": "struct collision_leaf",
+   "type_size": 8,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 90,
+   "name": "bsp2d_reference",
+   "size": 8,
+   "type": "struct bsp2d_reference",
+   "type_size": 8,
+   "swaps": [
+    [
+     0,
+     4,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 91,
+   "name": "bsp2d_node",
+   "size": 20,
+   "type": "struct bsp2d_node",
+   "type_size": 20,
+   "swaps": [
+    [
+     0,
+     4,
+     5
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 92,
+   "name": "collision_vertex",
+   "size": 16,
+   "type": "struct collision_vertex",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 93,
+   "name": "collision_edge",
+   "size": 24,
+   "type": "struct collision_edge",
+   "type_size": 24,
+   "swaps": [
+    [
+     0,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 94,
+   "name": "collision_surface",
+   "size": 12,
+   "type": "struct collision_surface",
+   "type_size": 12,
+   "swaps": [
+    [
+     0,
+     4,
+     2
+    ],
+    [
+     10,
+     2,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 95,
+   "name": "physics",
+   "size": 128,
+   "type": "struct physics_definition",
+   "type_size": 128,
+   "swaps": [
+    [
+     0,
+     4,
+     32
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 96,
+   "name": "inertial_matrix",
+   "size": 36,
+   "type": "real_matrix3x3",
+   "type_size": 36,
+   "swaps": [
+    [
+     0,
+     4,
+     9
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 97,
+   "name": "powered_mass_point",
+   "size": 128,
+   "type": "struct powered_mass_point_definition",
+   "type_size": 128,
+   "swaps": [
+    [
+     32,
+     4,
+     24
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 98,
+   "name": "mass_point",
+   "size": 128,
+   "type": "struct mass_point_definition",
+   "type_size": 128,
+   "swaps": [
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     14
+    ],
+    [
+     92,
+     2,
+     2
+    ],
+    [
+     96,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 99,
+   "name": "point_physics",
+   "size": 64,
+   "type": "struct point_physics_definition",
+   "type_size": 64,
+   "swaps": [
+    [
+     0,
+     4,
+     16
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 100,
+   "name": "structure_bsp",
+   "size": 648,
+   "type": "struct structure_bsp",
+   "type_size": 648,
+   "swaps": [
+    [
+     0,
+     4,
+     14
+    ],
+    [
+     56,
+     2,
+     2
+    ],
+    [
+     60,
+     4,
+     12
+    ],
+    [
+     108,
+     2,
+     2
+    ],
+    [
+     112,
+     4,
+     134
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 101,
+   "name": "render_lighting",
+   "size": 116,
+   "type": "struct render_lighting",
+   "type_size": 116,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ],
+    [
+     12,
+     2,
+     2
+    ],
+    [
+     16,
+     4,
+     12
+    ],
+    [
+     64,
+     2,
+     2
+    ],
+    [
+     68,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 102,
+   "name": "structure_collision_material",
+   "size": 20,
+   "type": "struct structure_collision_material",
+   "type_size": 20,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ],
+    [
+     16,
+     2,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 103,
+   "name": "collision_bsp",
+   "size": 96,
+   "type": "struct collision_bsp",
+   "type_size": 96,
+   "swaps": [
+    [
+     0,
+     4,
+     24
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 104,
+   "name": "collision_surface",
+   "size": 12,
+   "type": "struct collision_surface",
+   "type_size": 12,
+   "swaps": [
+    [
+     0,
+     4,
+     2
+    ],
+    [
+     10,
+     2,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 105,
+   "name": "structure_node",
+   "size": 6,
+   "type": "byte_rectangle3d",
+   "type_size": 6,
+   "swaps": [],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 106,
+   "name": "structure_leaf",
+   "size": 16,
+   "type": "struct structure_leaf",
+   "type_size": 16,
+   "swaps": [
+    [
+     6,
+     2,
+     3
+    ],
+    [
+     12,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 107,
+   "name": "structure_surface_reference",
+   "size": 8,
+   "type": "struct structure_surface_reference",
+   "type_size": 8,
+   "swaps": [
+    [
+     0,
+     4,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 108,
+   "name": "structure_surface",
+   "size": 6,
+   "type": "struct structure_surface",
+   "type_size": 6,
+   "swaps": [
+    [
+     0,
+     2,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 109,
+   "name": "structure_lightmap",
+   "size": 32,
+   "type": "struct structure_lightmap",
+   "type_size": 32,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 110,
+   "name": "structure_material",
+   "size": 256,
+   "type": "struct structure_material",
+   "type_size": 256,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ],
+    [
+     16,
+     2,
+     2
+    ],
+    [
+     20,
+     4,
+     8
+    ],
+    [
+     52,
+     2,
+     2
+    ],
+    [
+     56,
+     4,
+     12
+    ],
+    [
+     104,
+     2,
+     2
+    ],
+    [
+     108,
+     4,
+     16
+    ],
+    [
+     172,
+     2,
+     4
+    ],
+    [
+     180,
+     4,
+     4
+    ],
+    [
+     196,
+     2,
+     2
+    ],
+    [
+     200,
+     4,
+     14
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 111,
+   "name": "structure_lens_flare",
+   "size": 16,
+   "type": "struct structure_lens_flare",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 112,
+   "name": "structure_lens_flare_marker",
+   "size": 16,
+   "type": "struct structure_lens_flare_marker",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 113,
+   "name": "structure_cluster",
+   "size": 104,
+   "type": "struct structure_cluster_schema",
+   "type_size": 104,
+   "swaps": [
+    [
+     0,
+     2,
+     8
+    ],
+    [
+     16,
+     4,
+     12
+    ],
+    [
+     64,
+     2,
+     2
+    ],
+    [
+     68,
+     4,
+     9
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 114,
+   "name": "predicted_resource",
+   "size": 8,
+   "type": "struct predicted_resource",
+   "type_size": 8,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 115,
+   "name": "structure_subcluster",
+   "size": 36,
+   "type": "struct structure_subcluster",
+   "type_size": 36,
+   "swaps": [
+    [
+     0,
+     4,
+     9
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 116,
+   "name": "long",
+   "size": 4,
+   "type": "long",
+   "type_size": 4,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 117,
+   "name": "structure_mirror",
+   "size": 64,
+   "type": "struct structure_mirror",
+   "type_size": 64,
+   "swaps": [
+    [
+     0,
+     4,
+     16
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 118,
+   "name": "real_point3d",
+   "size": 12,
+   "type": "real_point3d",
+   "type_size": 12,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 119,
+   "name": "structure_portal_index",
+   "size": 2,
+   "type": "struct structure_portal_index",
+   "type_size": 2,
+   "swaps": [
+    [
+     0,
+     2,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 120,
+   "name": "structure_cluster_portal",
+   "size": 64,
+   "type": "struct structure_cluster_portal",
+   "type_size": 64,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     15
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 121,
+   "name": "structure_breakable_surface",
+   "size": 48,
+   "type": "struct structure_breakable_surface",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 122,
+   "name": "structure_fog_plane",
+   "size": 32,
+   "type": "struct structure_fog_plane_schema",
+   "type_size": 32,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 123,
+   "name": "structure_fog_region",
+   "size": 40,
+   "type": "struct structure_fog_region",
+   "type_size": 40,
+   "swaps": [
+    [
+     36,
+     2,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 124,
+   "name": "structure_fog_palette_entry",
+   "size": 136,
+   "type": "struct structure_fog_palette_entry",
+   "type_size": 136,
+   "swaps": [
+    [
+     32,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 125,
+   "name": "structure_weather_palette_entry",
+   "size": 240,
+   "type": "struct structure_weather_palette_entry",
+   "type_size": 240,
+   "swaps": [
+    [
+     32,
+     4,
+     4
+    ],
+    [
+     48,
+     2,
+     2
+    ],
+    [
+     84,
+     4,
+     19
+    ],
+    [
+     160,
+     2,
+     2
+    ],
+    [
+     196,
+     4,
+     11
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 126,
+   "name": "structure_weather_polyhedron",
+   "size": 32,
+   "type": "struct structure_weather_polyhedron",
+   "type_size": 32,
+   "swaps": [
+    [
+     0,
+     4,
+     8
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 127,
+   "name": "byte",
+   "size": 1,
+   "type": "byte",
+   "type_size": 1,
+   "swaps": [],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 128,
+   "name": "structure_background_sound_palette_entry",
+   "size": 116,
+   "type": "struct structure_background_sound_palette_entry",
+   "type_size": 116,
+   "swaps": [
+    [
+     32,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 129,
+   "name": "structure_sound_environment_palette_entry",
+   "size": 80,
+   "type": "struct structure_sound_environment_palette_entry",
+   "type_size": 80,
+   "swaps": [
+    [
+     32,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 130,
+   "name": "structure_detail_object_data",
+   "size": 64,
+   "type": "struct structure_detail_object_data",
+   "type_size": 64,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ],
+    [
+     52,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 131,
+   "name": "detail_object_cell",
+   "size": 32,
+   "type": "struct detail_object_cell_definition",
+   "type_size": 32,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 132,
+   "name": "detail_object",
+   "size": 6,
+   "type": "struct detail_object",
+   "type_size": 6,
+   "swaps": [
+    [
+     4,
+     2,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 133,
+   "name": "detail_object_count",
+   "size": 2,
+   "type": "word",
+   "type_size": 2,
+   "swaps": [
+    [
+     0,
+     2,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 134,
+   "name": "detail_object_z_reference_vector",
+   "size": 16,
+   "type": "real_vector4d",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 135,
+   "name": "structure_runtime_decal",
+   "size": 16,
+   "type": "struct structure_runtime_decal",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 136,
+   "name": "leaf_map",
+   "size": 28,
+   "type": "struct leaf_map",
+   "type_size": 28,
+   "swaps": [
+    [
+     0,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 137,
+   "name": "map_leaf",
+   "size": 24,
+   "type": "struct map_leaf",
+   "type_size": 24,
+   "swaps": [
+    [
+     0,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 138,
+   "name": "map_leaf_face",
+   "size": 16,
+   "type": "struct map_leaf_face",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 139,
+   "name": "real_point2d",
+   "size": 8,
+   "type": "real_point2d",
+   "type_size": 8,
+   "swaps": [
+    [
+     0,
+     4,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 140,
+   "name": "leaf_portal",
+   "size": 24,
+   "type": "struct leaf_portal",
+   "type_size": 24,
+   "swaps": [
+    [
+     0,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 141,
+   "name": "bitmap_group",
+   "size": 108,
+   "type": "struct bitmap_group",
+   "type_size": 108,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     3
+    ],
+    [
+     20,
+     2,
+     4
+    ],
+    [
+     28,
+     4,
+     12
+    ],
+    [
+     76,
+     2,
+     4
+    ],
+    [
+     84,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 142,
+   "name": "bitmap_sequence",
+   "size": 64,
+   "type": "struct bitmap_group_sequence",
+   "type_size": 64,
+   "swaps": [
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 143,
+   "name": "bitmap_sprite",
+   "size": 32,
+   "type": "struct bitmap_group_sprite",
+   "type_size": 32,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 144,
+   "name": "bitmap_data",
+   "size": 48,
+   "type": "struct bitmap_data",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     10
+    ],
+    [
+     24,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 145,
+   "name": "shader_definition",
+   "size": 40,
+   "type": "struct shader",
+   "type_size": 40,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ],
+    [
+     32,
+     2,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 146,
+   "name": "shader_transparent_chicago",
+   "size": 108,
+   "type": "struct shader_transparent_chicago_definition",
+   "type_size": 108,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ],
+    [
+     32,
+     2,
+     4
+    ],
+    [
+     42,
+     2,
+     5
+    ],
+    [
+     52,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 147,
+   "name": "shader",
+   "size": 40,
+   "type": "struct shader",
+   "type_size": 40,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ],
+    [
+     32,
+     2,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 148,
+   "name": "shader_transparent",
+   "size": 56,
+   "type": "struct shader_transparent",
+   "type_size": 56,
+   "swaps": [
+    [
+     2,
+     2,
+     5
+    ],
+    [
+     12,
+     4,
+     11
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 149,
+   "name": "shader_layer",
+   "size": 16,
+   "type": "struct shader_layer",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 150,
+   "name": "shader_transparent_chicago_map",
+   "size": 220,
+   "type": "struct shader_transparent_chicago_map",
+   "type_size": 220,
+   "swaps": [
+    [
+     0,
+     2,
+     1
+    ],
+    [
+     44,
+     2,
+     2
+    ],
+    [
+     84,
+     4,
+     10
+    ],
+    [
+     164,
+     2,
+     2
+    ],
+    [
+     168,
+     4,
+     3
+    ],
+    [
+     180,
+     2,
+     2
+    ],
+    [
+     184,
+     4,
+     3
+    ],
+    [
+     196,
+     2,
+     2
+    ],
+    [
+     200,
+     4,
+     5
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 151,
+   "name": "shader_texture_animation",
+   "size": 56,
+   "type": "struct shader_texture_animation",
+   "type_size": 56,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     3
+    ],
+    [
+     16,
+     2,
+     2
+    ],
+    [
+     20,
+     4,
+     3
+    ],
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     5
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 152,
+   "name": "shader_transparent_chicago_extended",
+   "size": 120,
+   "type": "struct shader_transparent_chicago_extended_definition",
+   "type_size": 120,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ],
+    [
+     32,
+     2,
+     4
+    ],
+    [
+     42,
+     2,
+     5
+    ],
+    [
+     52,
+     4,
+     15
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 153,
+   "name": "shader_environment",
+   "size": 836,
+   "type": "struct shader_environment_definition",
+   "type_size": 836,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ],
+    [
+     32,
+     2,
+     6
+    ],
+    [
+     44,
+     4,
+     5
+    ],
+    [
+     108,
+     2,
+     2
+    ],
+    [
+     136,
+     4,
+     4
+    ],
+    [
+     176,
+     2,
+     2
+    ],
+    [
+     180,
+     4,
+     10
+    ],
+    [
+     244,
+     2,
+     2
+    ],
+    [
+     248,
+     4,
+     8
+    ],
+    [
+     292,
+     4,
+     7
+    ],
+    [
+     336,
+     2,
+     2
+    ],
+    [
+     340,
+     4,
+     2
+    ],
+    [
+     348,
+     2,
+     2
+    ],
+    [
+     352,
+     4,
+     2
+    ],
+    [
+     384,
+     2,
+     2
+    ],
+    [
+     412,
+     4,
+     6
+    ],
+    [
+     436,
+     2,
+     2
+    ],
+    [
+     440,
+     4,
+     2
+    ],
+    [
+     472,
+     4,
+     6
+    ],
+    [
+     496,
+     2,
+     2
+    ],
+    [
+     500,
+     4,
+     2
+    ],
+    [
+     532,
+     4,
+     6
+    ],
+    [
+     556,
+     2,
+     2
+    ],
+    [
+     560,
+     4,
+     2
+    ],
+    [
+     592,
+     4,
+     5
+    ],
+    [
+     636,
+     2,
+     2
+    ],
+    [
+     720,
+     2,
+     2
+    ],
+    [
+     804,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 154,
+   "name": "shader_transparent_glass",
+   "size": 480,
+   "type": "struct shader_transparent_glass_definition",
+   "type_size": 480,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ],
+    [
+     32,
+     2,
+     6
+    ],
+    [
+     84,
+     4,
+     8
+    ],
+    [
+     136,
+     2,
+     2
+    ],
+    [
+     140,
+     4,
+     17
+    ],
+    [
+     336,
+     2,
+     2
+    ],
+    [
+     340,
+     4,
+     10
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 155,
+   "name": "shader_transparent_meter",
+   "size": 260,
+   "type": "struct shader_transparent_meter_definition",
+   "type_size": 260,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ],
+    [
+     32,
+     2,
+     6
+    ],
+    [
+     76,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 156,
+   "name": "shader_model",
+   "size": 440,
+   "type": "struct shader_model_definition",
+   "type_size": 440,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ],
+    [
+     32,
+     2,
+     6
+    ],
+    [
+     56,
+     4,
+     1
+    ],
+    [
+     76,
+     2,
+     1
+    ],
+    [
+     108,
+     2,
+     4
+    ],
+    [
+     116,
+     4,
+     7
+    ],
+    [
+     156,
+     4,
+     6
+    ],
+    [
+     188,
+     4,
+     4
+    ],
+    [
+     212,
+     2,
+     2
+    ],
+    [
+     216,
+     4,
+     6
+    ],
+    [
+     252,
+     2,
+     2
+    ],
+    [
+     256,
+     4,
+     3
+    ],
+    [
+     268,
+     2,
+     2
+    ],
+    [
+     272,
+     4,
+     3
+    ],
+    [
+     284,
+     2,
+     2
+    ],
+    [
+     288,
+     4,
+     5
+    ],
+    [
+     316,
+     4,
+     14
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 157,
+   "name": "shader_transparent_generic",
+   "size": 108,
+   "type": "struct shader_transparent_generic_definition",
+   "type_size": 108,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ],
+    [
+     32,
+     2,
+     4
+    ],
+    [
+     42,
+     2,
+     5
+    ],
+    [
+     52,
+     4,
+     14
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 158,
+   "name": "shader_transparent_generic_map",
+   "size": 100,
+   "type": "struct shader_transparent_generic_map",
+   "type_size": 100,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     10
+    ],
+    [
+     44,
+     2,
+     2
+    ],
+    [
+     48,
+     4,
+     3
+    ],
+    [
+     60,
+     2,
+     2
+    ],
+    [
+     64,
+     4,
+     3
+    ],
+    [
+     76,
+     2,
+     2
+    ],
+    [
+     80,
+     4,
+     5
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 159,
+   "name": "shader_transparent_generic_stage",
+   "size": 112,
+   "type": "struct shader_transparent_generic_stage",
+   "type_size": 112,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     13
+    ],
+    [
+     60,
+     2,
+     26
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 160,
+   "name": "shader_transparent_plasma",
+   "size": 332,
+   "type": "struct shader_transparent_plasma_definition",
+   "type_size": 332,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ],
+    [
+     32,
+     2,
+     4
+    ],
+    [
+     44,
+     2,
+     2
+    ],
+    [
+     48,
+     4,
+     1
+    ],
+    [
+     52,
+     2,
+     2
+    ],
+    [
+     56,
+     4,
+     2
+    ],
+    [
+     96,
+     4,
+     8
+    ],
+    [
+     128,
+     2,
+     1
+    ],
+    [
+     192,
+     4,
+     9
+    ],
+    [
+     264,
+     4,
+     9
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 161,
+   "name": "shader_transparent_water",
+   "size": 320,
+   "type": "struct shader_transparent_water_definition",
+   "type_size": 320,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ],
+    [
+     32,
+     2,
+     6
+    ],
+    [
+     76,
+     4,
+     4
+    ],
+    [
+     108,
+     4,
+     8
+    ],
+    [
+     156,
+     4,
+     4
+    ],
+    [
+     188,
+     4,
+     7
+    ],
+    [
+     216,
+     2,
+     2
+    ],
+    [
+     220,
+     4,
+     2
+    ],
+    [
+     292,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 162,
+   "name": "water_ripple",
+   "size": 76,
+   "type": "struct water_ripple",
+   "type_size": 76,
+   "swaps": [
+    [
+     4,
+     4,
+     1
+    ],
+    [
+     40,
+     4,
+     4
+    ],
+    [
+     56,
+     2,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 163,
+   "name": "sky",
+   "size": 208,
+   "type": "struct sky_definition",
+   "type_size": 208,
+   "swaps": [
+    [
+     0,
+     4,
+     8
+    ],
+    [
+     152,
+     4,
+     14
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 164,
+   "name": "sky_shader_function",
+   "size": 36,
+   "type": "struct sky_shader_function",
+   "type_size": 36,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 165,
+   "name": "sky_animation",
+   "size": 36,
+   "type": "struct sky_animation",
+   "type_size": 36,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 166,
+   "name": "sky_light",
+   "size": 116,
+   "type": "struct sky_light",
+   "type_size": 116,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 167,
+   "name": "fog",
+   "size": 396,
+   "type": "struct fog_definition_full",
+   "type_size": 396,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     1
+    ],
+    [
+     88,
+     4,
+     1
+    ],
+    [
+     96,
+     4,
+     1
+    ],
+    [
+     104,
+     4,
+     1
+    ],
+    [
+     116,
+     4,
+     4
+    ],
+    [
+     132,
+     2,
+     2
+    ],
+    [
+     136,
+     4,
+     5
+    ],
+    [
+     160,
+     4,
+     4
+    ],
+    [
+     184,
+     4,
+     13
+    ],
+    [
+     244,
+     4,
+     8
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 168,
+   "name": "lens_flare",
+   "size": 240,
+   "type": "struct lens_flare_definition",
+   "type_size": 240,
+   "swaps": [
+    [
+     0,
+     4,
+     5
+    ],
+    [
+     20,
+     2,
+     2
+    ],
+    [
+     24,
+     4,
+     6
+    ],
+    [
+     48,
+     2,
+     2
+    ],
+    [
+     128,
+     2,
+     2
+    ],
+    [
+     132,
+     4,
+     1
+    ],
+    [
+     160,
+     4,
+     2
+    ],
+    [
+     196,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 169,
+   "name": "lens_flare_reflection",
+   "size": 128,
+   "type": "struct lens_flare_reflection",
+   "type_size": 128,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     28,
+     4,
+     2
+    ],
+    [
+     40,
+     4,
+     2
+    ],
+    [
+     48,
+     2,
+     2
+    ],
+    [
+     52,
+     4,
+     2
+    ],
+    [
+     60,
+     2,
+     2
+    ],
+    [
+     64,
+     4,
+     12
+    ],
+    [
+     112,
+     2,
+     2
+    ],
+    [
+     116,
+     4,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 170,
+   "name": "light",
+   "size": 352,
+   "type": "struct light_definition",
+   "type_size": 352,
+   "swaps": [
+    [
+     0,
+     4,
+     11
+    ],
+    [
+     52,
+     4,
+     9
+    ],
+    [
+     100,
+     4,
+     4
+    ],
+    [
+     116,
+     2,
+     2
+    ],
+    [
+     120,
+     4,
+     5
+    ],
+    [
+     140,
+     2,
+     2
+    ],
+    [
+     144,
+     4,
+     1
+    ],
+    [
+     148,
+     2,
+     2
+    ],
+    [
+     152,
+     4,
+     1
+    ],
+    [
+     156,
+     2,
+     2
+    ],
+    [
+     160,
+     4,
+     1
+    ],
+    [
+     172,
+     4,
+     4
+    ],
+    [
+     244,
+     4,
+     1
+    ],
+    [
+     248,
+     2,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 171,
+   "name": "glow",
+   "size": 340,
+   "type": "struct glow_definition",
+   "type_size": 340,
+   "swaps": [
+    [
+     32,
+     2,
+     4
+    ],
+    [
+     40,
+     4,
+     8
+    ],
+    [
+     72,
+     2,
+     2
+    ],
+    [
+     76,
+     4,
+     1
+    ],
+    [
+     80,
+     2,
+     2
+    ],
+    [
+     84,
+     4,
+     3
+    ],
+    [
+     96,
+     2,
+     2
+    ],
+    [
+     100,
+     4,
+     3
+    ],
+    [
+     112,
+     2,
+     2
+    ],
+    [
+     116,
+     4,
+     3
+    ],
+    [
+     128,
+     2,
+     2
+    ],
+    [
+     132,
+     4,
+     6
+    ],
+    [
+     156,
+     2,
+     2
+    ],
+    [
+     160,
+     4,
+     4
+    ],
+    [
+     176,
+     2,
+     2
+    ],
+    [
+     180,
+     4,
+     40
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 172,
+   "name": "contrail",
+   "size": 324,
+   "type": "struct contrail_definition",
+   "type_size": 324,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     5
+    ],
+    [
+     24,
+     2,
+     2
+    ],
+    [
+     28,
+     4,
+     9
+    ],
+    [
+     64,
+     2,
+     2
+    ],
+    [
+     68,
+     4,
+     16
+    ],
+    [
+     132,
+     2,
+     2
+    ],
+    [
+     136,
+     4,
+     7
+    ],
+    [
+     164,
+     2,
+     4
+    ],
+    [
+     176,
+     2,
+     1
+    ],
+    [
+     312,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 173,
+   "name": "shader_effect",
+   "size": 180,
+   "type": "struct shader_effect_definition",
+   "type_size": 180,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ],
+    [
+     32,
+     2,
+     8
+    ],
+    [
+     76,
+     4,
+     4
+    ],
+    [
+     92,
+     2,
+     4
+    ],
+    [
+     100,
+     4,
+     3
+    ],
+    [
+     112,
+     2,
+     2
+    ],
+    [
+     116,
+     4,
+     3
+    ],
+    [
+     128,
+     2,
+     2
+    ],
+    [
+     132,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 174,
+   "name": "contrail_point_state",
+   "size": 104,
+   "type": "struct contrail_point_state",
+   "type_size": 104,
+   "swaps": [
+    [
+     0,
+     4,
+     26
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 175,
+   "name": "particle",
+   "size": 356,
+   "type": "struct particle_definition",
+   "type_size": 356,
+   "swaps": [
+    [
+     0,
+     4,
+     38
+    ],
+    [
+     152,
+     2,
+     4
+    ],
+    [
+     160,
+     4,
+     3
+    ],
+    [
+     172,
+     2,
+     4
+    ],
+    [
+     180,
+     4,
+     7
+    ],
+    [
+     208,
+     2,
+     8
+    ],
+    [
+     252,
+     4,
+     4
+    ],
+    [
+     268,
+     2,
+     4
+    ],
+    [
+     276,
+     4,
+     3
+    ],
+    [
+     288,
+     2,
+     2
+    ],
+    [
+     292,
+     4,
+     3
+    ],
+    [
+     304,
+     2,
+     2
+    ],
+    [
+     308,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 176,
+   "name": "particle_system",
+   "size": 104,
+   "type": "struct particle_system_definition",
+   "type_size": 104,
+   "swaps": [
+    [
+     56,
+     4,
+     4
+    ],
+    [
+     72,
+     2,
+     2
+    ],
+    [
+     76,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 177,
+   "name": "particle_system_type",
+   "size": 128,
+   "type": "struct particle_system_type",
+   "type_size": 128,
+   "swaps": [
+    [
+     32,
+     4,
+     1
+    ],
+    [
+     36,
+     2,
+     4
+    ],
+    [
+     44,
+     4,
+     1
+    ],
+    [
+     84,
+     2,
+     2
+    ],
+    [
+     88,
+     4,
+     10
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 178,
+   "name": "particle_system_physics_constant",
+   "size": 4,
+   "type": "struct particle_system_physics_constant",
+   "type_size": 4,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 179,
+   "name": "particle_system_type_state",
+   "size": 192,
+   "type": "struct particle_system_type_state",
+   "type_size": 192,
+   "swaps": [
+    [
+     32,
+     4,
+     36
+    ],
+    [
+     176,
+     2,
+     2
+    ],
+    [
+     180,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 180,
+   "name": "particle_system_particle_state",
+   "size": 376,
+   "type": "struct particle_system_type_particle_state",
+   "type_size": 376,
+   "swaps": [
+    [
+     32,
+     4,
+     8
+    ],
+    [
+     64,
+     2,
+     2
+    ],
+    [
+     68,
+     4,
+     20
+    ],
+    [
+     184,
+     2,
+     2
+    ],
+    [
+     188,
+     4,
+     7
+    ],
+    [
+     216,
+     2,
+     8
+    ],
+    [
+     260,
+     4,
+     4
+    ],
+    [
+     276,
+     2,
+     4
+    ],
+    [
+     284,
+     4,
+     3
+    ],
+    [
+     296,
+     2,
+     2
+    ],
+    [
+     300,
+     4,
+     3
+    ],
+    [
+     312,
+     2,
+     2
+    ],
+    [
+     316,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 181,
+   "name": "decal",
+   "size": 268,
+   "type": "struct decal_definition",
+   "type_size": 268,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     20
+    ],
+    [
+     88,
+     2,
+     2
+    ],
+    [
+     92,
+     4,
+     14
+    ],
+    [
+     148,
+     2,
+     2
+    ],
+    [
+     152,
+     4,
+     7
+    ],
+    [
+     180,
+     2,
+     8
+    ],
+    [
+     196,
+     4,
+     15
+    ],
+    [
+     256,
+     2,
+     2
+    ],
+    [
+     260,
+     4,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 182,
+   "name": "antenna",
+   "size": 208,
+   "type": "struct antenna_definition",
+   "type_size": 208,
+   "swaps": [
+    [
+     32,
+     4,
+     44
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 183,
+   "name": "antenna_vertex",
+   "size": 128,
+   "type": "struct antenna_vertex_definition",
+   "type_size": 128,
+   "swaps": [
+    [
+     0,
+     4,
+     10
+    ],
+    [
+     40,
+     2,
+     2
+    ],
+    [
+     44,
+     4,
+     21
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 184,
+   "name": "flag",
+   "size": 96,
+   "type": "struct flag_definition",
+   "type_size": 96,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     6
+    ],
+    [
+     16,
+     4,
+     20
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 185,
+   "name": "flag_attachment_point",
+   "size": 52,
+   "type": "struct flag_attachment_point",
+   "type_size": 52,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 186,
+   "name": "lightning",
+   "size": 264,
+   "type": "struct lightning_definition",
+   "type_size": 264,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     20,
+     4,
+     2
+    ],
+    [
+     44,
+     2,
+     4
+    ],
+    [
+     52,
+     4,
+     4
+    ],
+    [
+     152,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 187,
+   "name": "lightning_marker",
+   "size": 228,
+   "type": "struct lightning_marker_definition",
+   "type_size": 228,
+   "swaps": [
+    [
+     32,
+     2,
+     4
+    ],
+    [
+     116,
+     4,
+     9
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 188,
+   "name": "lightning_shader",
+   "size": 180,
+   "type": "struct lightning_shader",
+   "type_size": 180,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     7
+    ],
+    [
+     32,
+     2,
+     8
+    ],
+    [
+     76,
+     4,
+     4
+    ],
+    [
+     92,
+     2,
+     4
+    ],
+    [
+     100,
+     4,
+     3
+    ],
+    [
+     112,
+     2,
+     2
+    ],
+    [
+     116,
+     4,
+     3
+    ],
+    [
+     128,
+     2,
+     2
+    ],
+    [
+     132,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 189,
+   "name": "weather_particle_system",
+   "size": 48,
+   "type": "struct weather_particle_system_definition",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 190,
+   "name": "weather_particle_type",
+   "size": 604,
+   "type": "struct weather_particle_type_definition",
+   "type_size": 604,
+   "swaps": [
+    [
+     32,
+     4,
+     97
+    ],
+    [
+     420,
+     2,
+     4
+    ],
+    [
+     428,
+     4,
+     7
+    ],
+    [
+     456,
+     2,
+     8
+    ],
+    [
+     500,
+     4,
+     4
+    ],
+    [
+     516,
+     2,
+     4
+    ],
+    [
+     524,
+     4,
+     3
+    ],
+    [
+     536,
+     2,
+     2
+    ],
+    [
+     540,
+     4,
+     3
+    ],
+    [
+     552,
+     2,
+     2
+    ],
+    [
+     556,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 191,
+   "name": "wind",
+   "size": 64,
+   "type": "struct wind_definition",
+   "type_size": 64,
+   "swaps": [
+    [
+     0,
+     4,
+     16
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 192,
+   "name": "detail_object_collection",
+   "size": 128,
+   "type": "struct detail_object_collection_definition",
+   "type_size": 128,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     31
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 193,
+   "name": "detail_object_type",
+   "size": 96,
+   "type": "struct detail_object_type_definition",
+   "type_size": 96,
+   "swaps": [
+    [
+     36,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 194,
+   "name": "color_table",
+   "size": 12,
+   "type": "struct color_table_definition",
+   "type_size": 12,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 195,
+   "name": "color_table_color",
+   "size": 48,
+   "type": "struct color_table_color",
+   "type_size": 48,
+   "swaps": [
+    [
+     32,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 196,
+   "name": "effect",
+   "size": 64,
+   "type": "struct effect_definition",
+   "type_size": 64,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     2
+    ],
+    [
+     8,
+     4,
+     14
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 197,
+   "name": "effect_location",
+   "size": 32,
+   "type": "struct effect_location_definition",
+   "type_size": 32,
+   "swaps": [],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 198,
+   "name": "effect_event",
+   "size": 68,
+   "type": "struct effect_event_definition",
+   "type_size": 68,
+   "swaps": [
+    [
+     0,
+     4,
+     17
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 199,
+   "name": "effect_part",
+   "size": 104,
+   "type": "struct effect_part_definition",
+   "type_size": 104,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     24
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 200,
+   "name": "effect_particles",
+   "size": 232,
+   "type": "struct effect_particles_definition",
+   "type_size": 232,
+   "swaps": [
+    [
+     0,
+     2,
+     6
+    ],
+    [
+     12,
+     4,
+     23
+    ],
+    [
+     104,
+     2,
+     4
+    ],
+    [
+     112,
+     4,
+     30
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 201,
+   "name": "damage_effect",
+   "size": 672,
+   "type": "struct damage_effect_definition",
+   "type_size": 672,
+   "swaps": [
+    [
+     0,
+     4,
+     9
+    ],
+    [
+     36,
+     2,
+     2
+    ],
+    [
+     40,
+     4,
+     4
+    ],
+    [
+     56,
+     2,
+     2
+    ],
+    [
+     60,
+     4,
+     10
+    ],
+    [
+     100,
+     2,
+     2
+    ],
+    [
+     104,
+     4,
+     4
+    ],
+    [
+     120,
+     2,
+     2
+    ],
+    [
+     124,
+     4,
+     8
+    ],
+    [
+     156,
+     2,
+     2
+    ],
+    [
+     160,
+     4,
+     12
+    ],
+    [
+     208,
+     2,
+     2
+    ],
+    [
+     212,
+     4,
+     5
+    ],
+    [
+     232,
+     2,
+     2
+    ],
+    [
+     236,
+     4,
+     54
+    ],
+    [
+     452,
+     2,
+     2
+    ],
+    [
+     456,
+     4,
+     54
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 202,
+   "name": "vibrate_frequency",
+   "size": 20,
+   "type": "struct vibrate_frequency_definition",
+   "type_size": 20,
+   "swaps": [
+    [
+     0,
+     4,
+     2
+    ],
+    [
+     8,
+     2,
+     2
+    ],
+    [
+     12,
+     4,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 203,
+   "name": "damage",
+   "size": 220,
+   "type": "struct damage_definition",
+   "type_size": 220,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     54
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 204,
+   "name": "continuous_damage_effect",
+   "size": 512,
+   "type": "struct continuous_damage_effect_definition",
+   "type_size": 512,
+   "swaps": [
+    [
+     0,
+     4,
+     22
+    ],
+    [
+     88,
+     2,
+     2
+    ],
+    [
+     92,
+     4,
+     50
+    ],
+    [
+     292,
+     2,
+     2
+    ],
+    [
+     296,
+     4,
+     54
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 205,
+   "name": "material_effects",
+   "size": 12,
+   "type": "struct material_effects_definition",
+   "type_size": 12,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 206,
+   "name": "material_effect",
+   "size": 28,
+   "type": "struct material_effect",
+   "type_size": 28,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 207,
+   "name": "material_effect_material",
+   "size": 48,
+   "type": "struct material_effect_material",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     8
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 208,
+   "name": "sound",
+   "size": 164,
+   "type": "struct sound_definition",
+   "type_size": 164,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     2
+    ],
+    [
+     8,
+     4,
+     10
+    ],
+    [
+     60,
+     4,
+     3
+    ],
+    [
+     84,
+     4,
+     3
+    ],
+    [
+     108,
+     2,
+     2
+    ],
+    [
+     112,
+     4,
+     4
+    ],
+    [
+     128,
+     2,
+     2
+    ],
+    [
+     132,
+     4,
+     8
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 209,
+   "name": "sound_pitch_range",
+   "size": 72,
+   "type": "struct sound_pitch_range",
+   "type_size": 72,
+   "swaps": [
+    [
+     32,
+     4,
+     3
+    ],
+    [
+     44,
+     2,
+     2
+    ],
+    [
+     48,
+     4,
+     2
+    ],
+    [
+     56,
+     2,
+     2
+    ],
+    [
+     60,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 210,
+   "name": "sound_permutation",
+   "size": 124,
+   "type": "struct sound_permutation",
+   "type_size": 124,
+   "swaps": [
+    [
+     32,
+     4,
+     2
+    ],
+    [
+     40,
+     2,
+     2
+    ],
+    [
+     44,
+     4,
+     20
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 211,
+   "name": "looping_sound",
+   "size": 84,
+   "type": "struct looping_sound_definition",
+   "type_size": 84,
+   "swaps": [
+    [
+     0,
+     4,
+     21
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 212,
+   "name": "looping_sound_track",
+   "size": 160,
+   "type": "struct looping_sound_track",
+   "type_size": 160,
+   "swaps": [
+    [
+     0,
+     4,
+     40
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 213,
+   "name": "looping_sound_detail",
+   "size": 104,
+   "type": "struct looping_sound_detail",
+   "type_size": 104,
+   "swaps": [
+    [
+     0,
+     4,
+     26
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 214,
+   "name": "sound_environment",
+   "size": 72,
+   "type": "struct sound_environment_definition",
+   "type_size": 72,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     2
+    ],
+    [
+     8,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 215,
+   "name": "grenade_hud_interface",
+   "size": 504,
+   "type": "struct grenade_hud_interface_definition",
+   "type_size": 504,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     8
+    ],
+    [
+     36,
+     2,
+     2
+    ],
+    [
+     40,
+     4,
+     2
+    ],
+    [
+     48,
+     2,
+     2
+    ],
+    [
+     52,
+     4,
+     13
+    ],
+    [
+     104,
+     2,
+     2
+    ],
+    [
+     108,
+     4,
+     3
+    ],
+    [
+     120,
+     2,
+     2
+    ],
+    [
+     124,
+     4,
+     4
+    ],
+    [
+     140,
+     2,
+     2
+    ],
+    [
+     144,
+     4,
+     2
+    ],
+    [
+     152,
+     2,
+     2
+    ],
+    [
+     156,
+     4,
+     13
+    ],
+    [
+     208,
+     2,
+     2
+    ],
+    [
+     212,
+     4,
+     3
+    ],
+    [
+     224,
+     2,
+     2
+    ],
+    [
+     228,
+     4,
+     4
+    ],
+    [
+     244,
+     2,
+     2
+    ],
+    [
+     248,
+     4,
+     2
+    ],
+    [
+     256,
+     2,
+     2
+    ],
+    [
+     260,
+     4,
+     9
+    ],
+    [
+     296,
+     2,
+     2
+    ],
+    [
+     300,
+     4,
+     3
+    ],
+    [
+     316,
+     4,
+     3
+    ],
+    [
+     328,
+     2,
+     2
+    ],
+    [
+     332,
+     4,
+     43
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 216,
+   "name": "hud_absolute_placement",
+   "size": 36,
+   "type": "struct hud_absolute_placement_definition",
+   "type_size": 36,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     8
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 217,
+   "name": "optional_static_hud_element",
+   "size": 104,
+   "type": "struct optional_static_hud_element",
+   "type_size": 104,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     2
+    ],
+    [
+     12,
+     2,
+     2
+    ],
+    [
+     16,
+     4,
+     13
+    ],
+    [
+     68,
+     2,
+     2
+    ],
+    [
+     72,
+     4,
+     3
+    ],
+    [
+     84,
+     2,
+     2
+    ],
+    [
+     88,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 218,
+   "name": "static_hud_element",
+   "size": 104,
+   "type": "struct static_hud_element_definition",
+   "type_size": 104,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     2
+    ],
+    [
+     12,
+     2,
+     2
+    ],
+    [
+     16,
+     4,
+     13
+    ],
+    [
+     68,
+     2,
+     2
+    ],
+    [
+     72,
+     4,
+     3
+    ],
+    [
+     84,
+     2,
+     2
+    ],
+    [
+     88,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 219,
+   "name": "multitexture_overlay",
+   "size": 480,
+   "type": "struct multitexture_overlay_hud_element_definition",
+   "type_size": 480,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     8
+    ],
+    [
+     40,
+     2,
+     6
+    ],
+    [
+     52,
+     4,
+     24
+    ],
+    [
+     148,
+     2,
+     4
+    ],
+    [
+     156,
+     4,
+     81
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 220,
+   "name": "multitexture_overlay_effector",
+   "size": 220,
+   "type": "struct multitexture_overlay_hud_element_effector_definition",
+   "type_size": 220,
+   "swaps": [
+    [
+     0,
+     4,
+     16
+    ],
+    [
+     64,
+     2,
+     4
+    ],
+    [
+     72,
+     4,
+     26
+    ],
+    [
+     176,
+     2,
+     2
+    ],
+    [
+     180,
+     4,
+     10
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 221,
+   "name": "grenade_count_panel",
+   "size": 192,
+   "type": "struct grenade_count_panel_definition",
+   "type_size": 192,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     2
+    ],
+    [
+     12,
+     2,
+     2
+    ],
+    [
+     16,
+     4,
+     13
+    ],
+    [
+     68,
+     2,
+     2
+    ],
+    [
+     72,
+     4,
+     3
+    ],
+    [
+     84,
+     2,
+     2
+    ],
+    [
+     88,
+     4,
+     4
+    ],
+    [
+     104,
+     2,
+     2
+    ],
+    [
+     108,
+     4,
+     2
+    ],
+    [
+     116,
+     2,
+     2
+    ],
+    [
+     120,
+     4,
+     9
+    ],
+    [
+     156,
+     2,
+     2
+    ],
+    [
+     160,
+     4,
+     3
+    ],
+    [
+     176,
+     4,
+     3
+    ],
+    [
+     188,
+     2,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 222,
+   "name": "weapon_hud_overlay",
+   "size": 28,
+   "type": "struct weapon_hud_overlay_definition",
+   "type_size": 28,
+   "swaps": [
+    [
+     0,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 223,
+   "name": "weapon_hud_overlay_item",
+   "size": 136,
+   "type": "struct weapon_hud_overlay_item",
+   "type_size": 136,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     2
+    ],
+    [
+     12,
+     2,
+     2
+    ],
+    [
+     16,
+     4,
+     9
+    ],
+    [
+     52,
+     2,
+     2
+    ],
+    [
+     56,
+     4,
+     3
+    ],
+    [
+     68,
+     2,
+     4
+    ],
+    [
+     76,
+     4,
+     15
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 224,
+   "name": "unit_hud_interface",
+   "size": 1388,
+   "type": "struct unit_hud_interface_definition",
+   "type_size": 1388,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     8
+    ],
+    [
+     36,
+     2,
+     2
+    ],
+    [
+     40,
+     4,
+     2
+    ],
+    [
+     48,
+     2,
+     2
+    ],
+    [
+     52,
+     4,
+     13
+    ],
+    [
+     104,
+     2,
+     2
+    ],
+    [
+     108,
+     4,
+     3
+    ],
+    [
+     120,
+     2,
+     2
+    ],
+    [
+     124,
+     4,
+     4
+    ],
+    [
+     140,
+     2,
+     2
+    ],
+    [
+     144,
+     4,
+     2
+    ],
+    [
+     152,
+     2,
+     2
+    ],
+    [
+     156,
+     4,
+     13
+    ],
+    [
+     208,
+     2,
+     2
+    ],
+    [
+     212,
+     4,
+     3
+    ],
+    [
+     224,
+     2,
+     2
+    ],
+    [
+     228,
+     4,
+     4
+    ],
+    [
+     244,
+     2,
+     2
+    ],
+    [
+     248,
+     4,
+     2
+    ],
+    [
+     256,
+     2,
+     2
+    ],
+    [
+     260,
+     4,
+     13
+    ],
+    [
+     314,
+     2,
+     1
+    ],
+    [
+     318,
+     2,
+     1
+    ],
+    [
+     320,
+     4,
+     15
+    ],
+    [
+     380,
+     2,
+     2
+    ],
+    [
+     384,
+     4,
+     2
+    ],
+    [
+     392,
+     2,
+     2
+    ],
+    [
+     396,
+     4,
+     13
+    ],
+    [
+     448,
+     2,
+     2
+    ],
+    [
+     452,
+     4,
+     3
+    ],
+    [
+     464,
+     2,
+     2
+    ],
+    [
+     468,
+     4,
+     4
+    ],
+    [
+     484,
+     2,
+     2
+    ],
+    [
+     488,
+     4,
+     2
+    ],
+    [
+     496,
+     2,
+     2
+    ],
+    [
+     500,
+     4,
+     13
+    ],
+    [
+     554,
+     2,
+     1
+    ],
+    [
+     558,
+     2,
+     1
+    ],
+    [
+     560,
+     4,
+     15
+    ],
+    [
+     620,
+     2,
+     2
+    ],
+    [
+     624,
+     4,
+     2
+    ],
+    [
+     632,
+     2,
+     2
+    ],
+    [
+     636,
+     4,
+     13
+    ],
+    [
+     688,
+     2,
+     2
+    ],
+    [
+     692,
+     4,
+     3
+    ],
+    [
+     704,
+     2,
+     2
+    ],
+    [
+     708,
+     4,
+     4
+    ],
+    [
+     724,
+     2,
+     2
+    ],
+    [
+     728,
+     4,
+     2
+    ],
+    [
+     736,
+     2,
+     2
+    ],
+    [
+     740,
+     4,
+     13
+    ],
+    [
+     792,
+     2,
+     2
+    ],
+    [
+     796,
+     4,
+     3
+    ],
+    [
+     808,
+     2,
+     2
+    ],
+    [
+     812,
+     4,
+     12
+    ],
+    [
+     860,
+     2,
+     2
+    ],
+    [
+     864,
+     4,
+     2
+    ],
+    [
+     872,
+     2,
+     2
+    ],
+    [
+     876,
+     4,
+     5
+    ],
+    [
+     896,
+     2,
+     2
+    ],
+    [
+     900,
+     4,
+     122
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 225,
+   "name": "metered_panel",
+   "size": 240,
+   "type": "struct metered_panel_definition",
+   "type_size": 240,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     2
+    ],
+    [
+     12,
+     2,
+     2
+    ],
+    [
+     16,
+     4,
+     13
+    ],
+    [
+     68,
+     2,
+     2
+    ],
+    [
+     72,
+     4,
+     3
+    ],
+    [
+     84,
+     2,
+     2
+    ],
+    [
+     88,
+     4,
+     4
+    ],
+    [
+     104,
+     2,
+     2
+    ],
+    [
+     108,
+     4,
+     2
+    ],
+    [
+     116,
+     2,
+     2
+    ],
+    [
+     120,
+     4,
+     13
+    ],
+    [
+     174,
+     2,
+     1
+    ],
+    [
+     178,
+     2,
+     1
+    ],
+    [
+     180,
+     4,
+     15
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 226,
+   "name": "optional_meter_hud_element",
+   "size": 104,
+   "type": "struct optional_meter_hud_element",
+   "type_size": 104,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     2
+    ],
+    [
+     12,
+     2,
+     2
+    ],
+    [
+     16,
+     4,
+     13
+    ],
+    [
+     70,
+     2,
+     1
+    ],
+    [
+     74,
+     2,
+     1
+    ],
+    [
+     76,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 227,
+   "name": "meter_hud_element",
+   "size": 104,
+   "type": "struct meter_hud_element_definition",
+   "type_size": 104,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     2
+    ],
+    [
+     12,
+     2,
+     2
+    ],
+    [
+     16,
+     4,
+     13
+    ],
+    [
+     70,
+     2,
+     1
+    ],
+    [
+     74,
+     2,
+     1
+    ],
+    [
+     76,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 228,
+   "name": "motion_sensor_panel",
+   "size": 240,
+   "type": "struct motion_sensor_panel_definition",
+   "type_size": 240,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     2
+    ],
+    [
+     12,
+     2,
+     2
+    ],
+    [
+     16,
+     4,
+     13
+    ],
+    [
+     68,
+     2,
+     2
+    ],
+    [
+     72,
+     4,
+     3
+    ],
+    [
+     84,
+     2,
+     2
+    ],
+    [
+     88,
+     4,
+     4
+    ],
+    [
+     104,
+     2,
+     2
+    ],
+    [
+     108,
+     4,
+     2
+    ],
+    [
+     116,
+     2,
+     2
+    ],
+    [
+     120,
+     4,
+     13
+    ],
+    [
+     172,
+     2,
+     2
+    ],
+    [
+     176,
+     4,
+     3
+    ],
+    [
+     188,
+     2,
+     2
+    ],
+    [
+     192,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 229,
+   "name": "auxilary_overlay",
+   "size": 132,
+   "type": "struct auxilary_overlay_definition",
+   "type_size": 132,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     2
+    ],
+    [
+     12,
+     2,
+     2
+    ],
+    [
+     16,
+     4,
+     13
+    ],
+    [
+     68,
+     2,
+     2
+    ],
+    [
+     72,
+     4,
+     3
+    ],
+    [
+     84,
+     2,
+     2
+    ],
+    [
+     88,
+     4,
+     4
+    ],
+    [
+     104,
+     2,
+     2
+    ],
+    [
+     108,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 230,
+   "name": "hud_sound",
+   "size": 56,
+   "type": "struct hud_sound_definition",
+   "type_size": 56,
+   "swaps": [
+    [
+     0,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 231,
+   "name": "auxilary_meter",
+   "size": 324,
+   "type": "struct auxilary_meter_definition",
+   "type_size": 324,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     4
+    ],
+    [
+     20,
+     2,
+     2
+    ],
+    [
+     24,
+     4,
+     2
+    ],
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     13
+    ],
+    [
+     88,
+     2,
+     2
+    ],
+    [
+     92,
+     4,
+     3
+    ],
+    [
+     104,
+     2,
+     2
+    ],
+    [
+     108,
+     4,
+     4
+    ],
+    [
+     124,
+     2,
+     2
+    ],
+    [
+     128,
+     4,
+     2
+    ],
+    [
+     136,
+     2,
+     2
+    ],
+    [
+     140,
+     4,
+     13
+    ],
+    [
+     194,
+     2,
+     1
+    ],
+    [
+     198,
+     2,
+     1
+    ],
+    [
+     200,
+     4,
+     31
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 232,
+   "name": "weapon_hud_interface",
+   "size": 380,
+   "type": "struct weapon_hud_interface_definition",
+   "type_size": 380,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ],
+    [
+     16,
+     2,
+     6
+    ],
+    [
+     28,
+     4,
+     8
+    ],
+    [
+     60,
+     2,
+     2
+    ],
+    [
+     64,
+     4,
+     63
+    ],
+    [
+     316,
+     2,
+     4
+    ],
+    [
+     324,
+     4,
+     1
+    ],
+    [
+     330,
+     2,
+     1
+    ],
+    [
+     332,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 233,
+   "name": "weapon_hud_static_element",
+   "size": 180,
+   "type": "struct weapon_hud_static_element",
+   "type_size": 180,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     7
+    ],
+    [
+     36,
+     2,
+     2
+    ],
+    [
+     40,
+     4,
+     2
+    ],
+    [
+     48,
+     2,
+     2
+    ],
+    [
+     52,
+     4,
+     13
+    ],
+    [
+     104,
+     2,
+     2
+    ],
+    [
+     108,
+     4,
+     3
+    ],
+    [
+     120,
+     2,
+     2
+    ],
+    [
+     124,
+     4,
+     14
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 234,
+   "name": "weapon_hud_element_header",
+   "size": 36,
+   "type": "struct weapon_hud_element_header",
+   "type_size": 36,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 235,
+   "name": "weapon_hud_meter_element",
+   "size": 180,
+   "type": "struct weapon_hud_meter_element",
+   "type_size": 180,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     7
+    ],
+    [
+     36,
+     2,
+     2
+    ],
+    [
+     40,
+     4,
+     2
+    ],
+    [
+     48,
+     2,
+     2
+    ],
+    [
+     52,
+     4,
+     13
+    ],
+    [
+     106,
+     2,
+     1
+    ],
+    [
+     110,
+     2,
+     1
+    ],
+    [
+     112,
+     4,
+     17
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 236,
+   "name": "weapon_hud_number_element",
+   "size": 160,
+   "type": "struct weapon_hud_number_element",
+   "type_size": 160,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     7
+    ],
+    [
+     36,
+     2,
+     2
+    ],
+    [
+     40,
+     4,
+     2
+    ],
+    [
+     48,
+     2,
+     2
+    ],
+    [
+     52,
+     4,
+     9
+    ],
+    [
+     88,
+     2,
+     2
+    ],
+    [
+     92,
+     4,
+     3
+    ],
+    [
+     108,
+     4,
+     3
+    ],
+    [
+     120,
+     2,
+     2
+    ],
+    [
+     124,
+     4,
+     9
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 237,
+   "name": "weapon_hud_crosshairs_element",
+   "size": 104,
+   "type": "struct weapon_hud_crosshairs_element",
+   "type_size": 104,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     24
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 238,
+   "name": "weapon_hud_crosshair_item",
+   "size": 108,
+   "type": "struct weapon_hud_crosshair_item",
+   "type_size": 108,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     2
+    ],
+    [
+     12,
+     2,
+     2
+    ],
+    [
+     16,
+     4,
+     9
+    ],
+    [
+     52,
+     2,
+     2
+    ],
+    [
+     56,
+     4,
+     3
+    ],
+    [
+     68,
+     2,
+     2
+    ],
+    [
+     72,
+     4,
+     9
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 239,
+   "name": "weapon_hud_overlays_element",
+   "size": 104,
+   "type": "struct weapon_hud_overlays_element",
+   "type_size": 104,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     24
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 240,
+   "name": "hud_screen_effect",
+   "size": 184,
+   "type": "struct hud_screen_effect_definition",
+   "type_size": 184,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     2
+    ],
+    [
+     8,
+     4,
+     14
+    ],
+    [
+     64,
+     2,
+     2
+    ],
+    [
+     68,
+     4,
+     10
+    ],
+    [
+     108,
+     2,
+     2
+    ],
+    [
+     112,
+     4,
+     7
+    ],
+    [
+     140,
+     2,
+     2
+    ],
+    [
+     144,
+     4,
+     10
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 241,
+   "name": "hud_number",
+   "size": 100,
+   "type": "struct hud_number_definition",
+   "type_size": 100,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ],
+    [
+     22,
+     2,
+     1
+    ],
+    [
+     24,
+     4,
+     19
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 242,
+   "name": "hud_globals",
+   "size": 1104,
+   "type": "struct hud_globals_definition",
+   "type_size": 1104,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     8
+    ],
+    [
+     36,
+     2,
+     2
+    ],
+    [
+     40,
+     4,
+     2
+    ],
+    [
+     48,
+     2,
+     2
+    ],
+    [
+     52,
+     4,
+     43
+    ],
+    [
+     224,
+     2,
+     2
+    ],
+    [
+     228,
+     4,
+     11
+    ],
+    [
+     272,
+     2,
+     2
+    ],
+    [
+     276,
+     4,
+     114
+    ],
+    [
+     732,
+     2,
+     4
+    ],
+    [
+     740,
+     4,
+     11
+    ],
+    [
+     784,
+     2,
+     4
+    ],
+    [
+     792,
+     4,
+     12
+    ],
+    [
+     840,
+     2,
+     2
+    ],
+    [
+     844,
+     4,
+     9
+    ],
+    [
+     880,
+     2,
+     2
+    ],
+    [
+     884,
+     4,
+     7
+    ],
+    [
+     912,
+     2,
+     2
+    ],
+    [
+     916,
+     4,
+     17
+    ],
+    [
+     984,
+     2,
+     4
+    ],
+    [
+     992,
+     4,
+     28
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 243,
+   "name": "icon_hud_element",
+   "size": 16,
+   "type": "struct icon_hud_element_definition",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     1
+    ],
+    [
+     14,
+     2,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 244,
+   "name": "hud_waypoint_arrow",
+   "size": 104,
+   "type": "struct hud_waypoint_arrow",
+   "type_size": 104,
+   "swaps": [
+    [
+     32,
+     4,
+     5
+    ],
+    [
+     52,
+     2,
+     4
+    ],
+    [
+     60,
+     4,
+     11
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 245,
+   "name": "hud_message_text",
+   "size": 128,
+   "type": "struct hud_message_text_definition",
+   "type_size": 128,
+   "swaps": [
+    [
+     0,
+     4,
+     32
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 246,
+   "name": "hud_state_message_element",
+   "size": 2,
+   "type": "struct hud_state_message_element",
+   "type_size": 2,
+   "swaps": [],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 247,
+   "name": "hud_state_message",
+   "size": 64,
+   "type": "struct hud_state_message_definition",
+   "type_size": 64,
+   "swaps": [
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     40,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 248,
+   "name": "light_volume",
+   "size": 332,
+   "type": "struct light_volume_definition",
+   "type_size": 332,
+   "swaps": [
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     8
+    ],
+    [
+     68,
+     2,
+     2
+    ],
+    [
+     72,
+     4,
+     9
+    ],
+    [
+     108,
+     2,
+     2
+    ],
+    [
+     112,
+     4,
+     18
+    ],
+    [
+     184,
+     2,
+     2
+    ],
+    [
+     188,
+     4,
+     36
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 249,
+   "name": "light_volume_frame",
+   "size": 176,
+   "type": "struct light_volume_frame",
+   "type_size": 176,
+   "swaps": [
+    [
+     0,
+     4,
+     44
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 250,
+   "name": "font",
+   "size": 156,
+   "type": "struct font_header",
+   "type_size": 156,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     4
+    ],
+    [
+     12,
+     4,
+     36
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 251,
+   "name": "font_character_table",
+   "size": 12,
+   "type": "struct font_character_table",
+   "type_size": 12,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 252,
+   "name": "font_character_index",
+   "size": 2,
+   "type": "struct font_character_index",
+   "type_size": 2,
+   "swaps": [
+    [
+     0,
+     2,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 253,
+   "name": "font_character",
+   "size": 20,
+   "type": "struct font_character",
+   "type_size": 20,
+   "swaps": [
+    [
+     0,
+     2,
+     8
+    ],
+    [
+     16,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 254,
+   "name": "string_list",
+   "size": 12,
+   "type": "struct string_list",
+   "type_size": 12,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 255,
+   "name": "string_list_entry",
+   "size": 20,
+   "type": "struct string_list_entry",
+   "type_size": 20,
+   "swaps": [
+    [
+     0,
+     4,
+     5
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 256,
+   "name": "unicode_string_list",
+   "size": 12,
+   "type": "struct string_list",
+   "type_size": 12,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 257,
+   "name": "unicode_string_list_entry",
+   "size": 20,
+   "type": "struct string_list_entry",
+   "type_size": 20,
+   "swaps": [
+    [
+     0,
+     4,
+     5
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 258,
+   "name": "ui_widget",
+   "size": 1004,
+   "type": "struct ui_widget_definition",
+   "type_size": 1004,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     36,
+     2,
+     4
+    ],
+    [
+     44,
+     4,
+     16
+    ],
+    [
+     236,
+     4,
+     12
+    ],
+    [
+     284,
+     2,
+     2
+    ],
+    [
+     302,
+     2,
+     3
+    ],
+    [
+     336,
+     4,
+     9
+    ],
+    [
+     372,
+     2,
+     8
+    ],
+    [
+     420,
+     4,
+     4
+    ],
+    [
+     724,
+     4,
+     3
+    ],
+    [
+     992,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 259,
+   "name": "ui_widget_game_data_input",
+   "size": 36,
+   "type": "struct ui_widget_game_data_input_reference",
+   "type_size": 36,
+   "swaps": [
+    [
+     0,
+     2,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 260,
+   "name": "ui_widget_event_handler",
+   "size": 72,
+   "type": "struct ui_widget_event_handler_reference",
+   "type_size": 72,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     2
+    ],
+    [
+     8,
+     4,
+     8
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 261,
+   "name": "ui_widget_search_and_replace",
+   "size": 34,
+   "type": "struct ui_widget_search_and_replace_reference",
+   "type_size": 34,
+   "swaps": [
+    [
+     32,
+     2,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 262,
+   "name": "ui_widget_conditional",
+   "size": 80,
+   "type": "struct ui_widget_conditional_reference",
+   "type_size": 80,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ],
+    [
+     48,
+     4,
+     1
+    ],
+    [
+     52,
+     2,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 263,
+   "name": "ui_widget_child",
+   "size": 80,
+   "type": "struct ui_widget_child_reference",
+   "type_size": 80,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ],
+    [
+     48,
+     4,
+     1
+    ],
+    [
+     52,
+     2,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 264,
+   "name": "ui_widget_collection",
+   "size": 12,
+   "type": "struct ui_widget_collection",
+   "type_size": 12,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 265,
+   "name": "ui_widget_collection_widget",
+   "size": 16,
+   "type": "struct ui_widget_collection_widget",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 266,
+   "name": "virtual_keyboard",
+   "size": 60,
+   "type": "struct virtual_keyboard_definition",
+   "type_size": 60,
+   "swaps": [
+    [
+     0,
+     4,
+     15
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 267,
+   "name": "virtual_keyboard_key",
+   "size": 80,
+   "type": "struct virtual_keyboard_key",
+   "type_size": 80,
+   "swaps": [
+    [
+     0,
+     2,
+     8
+    ],
+    [
+     16,
+     4,
+     16
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 268,
+   "name": "camera_track",
+   "size": 48,
+   "type": "struct camera_track_definition",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 269,
+   "name": "camera_track_control_point",
+   "size": 60,
+   "type": "struct camera_track_control_point",
+   "type_size": 60,
+   "swaps": [
+    [
+     0,
+     4,
+     15
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 270,
+   "name": "game_globals",
+   "size": 428,
+   "type": "struct game_globals",
+   "type_size": 428,
+   "swaps": [
+    [
+     0,
+     4,
+     107
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 271,
+   "name": "tag_reference_sound",
+   "size": 16,
+   "type": "struct tag_reference_element",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 272,
+   "name": "tag_reference_camera_track",
+   "size": 16,
+   "type": "struct tag_reference_element",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 273,
+   "name": "game_globals_player_control",
+   "size": 128,
+   "type": "struct game_globals_player_control",
+   "type_size": 128,
+   "swaps": [
+    [
+     0,
+     4,
+     27
+    ],
+    [
+     108,
+     2,
+     2
+    ],
+    [
+     112,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 274,
+   "name": "look_function_value",
+   "size": 4,
+   "type": "real",
+   "type_size": 4,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 275,
+   "name": "game_globals_difficulty_information",
+   "size": 644,
+   "type": "struct game_globals_difficulty_information",
+   "type_size": 644,
+   "swaps": [
+    [
+     0,
+     4,
+     161
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 276,
+   "name": "game_globals_grenade",
+   "size": 68,
+   "type": "struct game_globals_grenade",
+   "type_size": 68,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     16
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 277,
+   "name": "game_globals_rasterizer_data",
+   "size": 428,
+   "type": "struct game_globals_rasterizer_data",
+   "type_size": 428,
+   "swaps": [
+    [
+     0,
+     4,
+     92
+    ],
+    [
+     368,
+     2,
+     2
+    ],
+    [
+     372,
+     4,
+     14
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 278,
+   "name": "game_globals_interface_tag_references",
+   "size": 304,
+   "type": "struct game_globals_interface_tag_references",
+   "type_size": 304,
+   "swaps": [
+    [
+     0,
+     4,
+     76
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 279,
+   "name": "tag_reference_item",
+   "size": 16,
+   "type": "struct tag_reference_element",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 280,
+   "name": "tag_reference_object",
+   "size": 16,
+   "type": "struct tag_reference_element",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 281,
+   "name": "game_globals_multiplayer_information",
+   "size": 160,
+   "type": "struct game_globals_multiplayer_information",
+   "type_size": 160,
+   "swaps": [
+    [
+     0,
+     4,
+     26
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 282,
+   "name": "game_globals_vehicle",
+   "size": 16,
+   "type": "struct game_globals_vehicle",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 283,
+   "name": "game_globals_player_information",
+   "size": 244,
+   "type": "struct game_globals_player_information",
+   "type_size": 244,
+   "swaps": [
+    [
+     0,
+     4,
+     61
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 284,
+   "name": "game_globals_first_person_interface",
+   "size": 192,
+   "type": "struct game_globals_first_person_interface",
+   "type_size": 192,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ],
+    [
+     48,
+     2,
+     2
+    ],
+    [
+     52,
+     4,
+     4
+    ],
+    [
+     68,
+     2,
+     2
+    ],
+    [
+     72,
+     4,
+     30
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 285,
+   "name": "game_globals_falling_damage",
+   "size": 152,
+   "type": "struct game_globals_falling_damage",
+   "type_size": 152,
+   "swaps": [
+    [
+     0,
+     4,
+     38
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 286,
+   "name": "material",
+   "size": 884,
+   "type": "struct material_definition",
+   "type_size": 884,
+   "swaps": [
+    [
+     0,
+     4,
+     221
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 287,
+   "name": "breakable_surface_particle_effect",
+   "size": 128,
+   "type": "struct breakable_surface_particle_effect",
+   "type_size": 128,
+   "swaps": [
+    [
+     0,
+     4,
+     32
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 288,
+   "name": "multiplayer_scenario_descriptions",
+   "size": 12,
+   "type": "struct multiplayer_scenario_description",
+   "type_size": 12,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 289,
+   "name": "multiplayer_scenario_description",
+   "size": 68,
+   "type": "struct multiplayer_scenario_description_entry",
+   "type_size": 68,
+   "swaps": [
+    [
+     0,
+     4,
+     8
+    ],
+    [
+     64,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 290,
+   "name": "scenario",
+   "size": 1456,
+   "type": "struct scenario",
+   "type_size": 1456,
+   "swaps": [
+    [
+     0,
+     4,
+     15
+    ],
+    [
+     60,
+     2,
+     2
+    ],
+    [
+     64,
+     4,
+     348
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 291,
+   "name": "sky_reference",
+   "size": 16,
+   "type": "struct scenario_tag_reference",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 292,
+   "name": "predicted_resource",
+   "size": 8,
+   "type": "struct predicted_resource",
+   "type_size": 8,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 293,
+   "name": "object_name",
+   "size": 36,
+   "type": "struct scenario_object_name",
+   "type_size": 36,
+   "swaps": [
+    [
+     32,
+     2,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 294,
+   "name": "scenery",
+   "size": 72,
+   "type": "struct scenery_placement",
+   "type_size": 72,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     6
+    ],
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     5
+    ],
+    [
+     64,
+     4,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 295,
+   "name": "scenery_palette",
+   "size": 48,
+   "type": "struct scenario_object_palette_entry",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 296,
+   "name": "biped",
+   "size": 120,
+   "type": "struct unit_placement",
+   "type_size": 120,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     6
+    ],
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     5
+    ],
+    [
+     64,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 297,
+   "name": "biped_palette",
+   "size": 48,
+   "type": "struct scenario_object_palette_entry",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 298,
+   "name": "vehicle",
+   "size": 120,
+   "type": "struct unit_placement",
+   "type_size": 120,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     6
+    ],
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     5
+    ],
+    [
+     64,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 299,
+   "name": "vehicle_palette",
+   "size": 48,
+   "type": "struct scenario_object_palette_entry",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 300,
+   "name": "equipment",
+   "size": 40,
+   "type": "struct equipment_placement",
+   "type_size": 40,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     6
+    ],
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 301,
+   "name": "equipment_palette",
+   "size": 48,
+   "type": "struct scenario_object_palette_entry",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 302,
+   "name": "weapon",
+   "size": 92,
+   "type": "struct scenario_weapon_datum",
+   "type_size": 92,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     6
+    ],
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     5
+    ],
+    [
+     64,
+     4,
+     2
+    ],
+    [
+     72,
+     2,
+     4
+    ],
+    [
+     80,
+     4,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 303,
+   "name": "weapon_palette",
+   "size": 48,
+   "type": "struct scenario_object_palette_entry",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 304,
+   "name": "device_group",
+   "size": 52,
+   "type": "struct scenario_device_group",
+   "type_size": 52,
+   "swaps": [
+    [
+     32,
+     4,
+     5
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 305,
+   "name": "machine",
+   "size": 64,
+   "type": "struct machine_placement",
+   "type_size": 64,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     6
+    ],
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     1
+    ],
+    [
+     40,
+     2,
+     2
+    ],
+    [
+     44,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 306,
+   "name": "machine_palette",
+   "size": 48,
+   "type": "struct scenario_object_palette_entry",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 307,
+   "name": "control",
+   "size": 64,
+   "type": "struct control_placement",
+   "type_size": 64,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     6
+    ],
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     1
+    ],
+    [
+     40,
+     2,
+     2
+    ],
+    [
+     44,
+     4,
+     1
+    ],
+    [
+     48,
+     2,
+     3
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 308,
+   "name": "control_palette",
+   "size": 48,
+   "type": "struct scenario_object_palette_entry",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 309,
+   "name": "light_fixture",
+   "size": 88,
+   "type": "struct light_fixture_placement",
+   "type_size": 88,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     6
+    ],
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     1
+    ],
+    [
+     40,
+     2,
+     2
+    ],
+    [
+     44,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 310,
+   "name": "light_fixture_palette",
+   "size": 48,
+   "type": "struct scenario_object_palette_entry",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 311,
+   "name": "sound_scenery",
+   "size": 40,
+   "type": "struct sound_scenery_placement",
+   "type_size": 40,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     6
+    ],
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 312,
+   "name": "sound_scenery_palette",
+   "size": 48,
+   "type": "struct scenario_object_palette_entry",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 313,
+   "name": "starting_profile",
+   "size": 104,
+   "type": "struct scenario_starting_profile",
+   "type_size": 104,
+   "swaps": [
+    [
+     32,
+     4,
+     6
+    ],
+    [
+     56,
+     2,
+     2
+    ],
+    [
+     60,
+     4,
+     4
+    ],
+    [
+     76,
+     2,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 314,
+   "name": "player_starting_location",
+   "size": 52,
+   "type": "struct player_starting_location",
+   "type_size": 52,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ],
+    [
+     16,
+     2,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 315,
+   "name": "trigger_volume",
+   "size": 96,
+   "type": "struct scenario_trigger_volume",
+   "type_size": 96,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     48,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 316,
+   "name": "recorded_animation",
+   "size": 64,
+   "type": "struct recorded_animation_definition",
+   "type_size": 64,
+   "swaps": [
+    [
+     36,
+     2,
+     2
+    ],
+    [
+     40,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 317,
+   "name": "netgame_flag",
+   "size": 148,
+   "type": "struct scenario_netgame_flag",
+   "type_size": 148,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ],
+    [
+     16,
+     2,
+     2
+    ],
+    [
+     20,
+     4,
+     32
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 318,
+   "name": "netgame_equipment",
+   "size": 144,
+   "type": "struct scenario_netgame_equipment",
+   "type_size": 144,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     6
+    ],
+    [
+     16,
+     4,
+     32
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 319,
+   "name": "starting_equipment",
+   "size": 204,
+   "type": "struct scenario_starting_equipment",
+   "type_size": 204,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     4,
+     2,
+     4
+    ],
+    [
+     12,
+     4,
+     48
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 320,
+   "name": "bsp_switch_trigger_volume",
+   "size": 8,
+   "type": "struct scenario_bsp_switch_trigger_volume",
+   "type_size": 8,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 321,
+   "name": "decal_palette",
+   "size": 16,
+   "type": "struct scenario_decal_palette_entry",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 322,
+   "name": "detail_object_collection_palette",
+   "size": 48,
+   "type": "struct scenario_detail_object_collection_palette_entry",
+   "type_size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 323,
+   "name": "actor_palette",
+   "size": 16,
+   "type": "struct scenario_tag_reference",
+   "type_size": 16,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 324,
+   "name": "encounter",
+   "size": 176,
+   "type": "struct encounter_definition",
+   "type_size": 176,
+   "swaps": [
+    [
+     32,
+     4,
+     1
+    ],
+    [
+     36,
+     2,
+     4
+    ],
+    [
+     44,
+     4,
+     20
+    ],
+    [
+     124,
+     2,
+     2
+    ],
+    [
+     128,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 325,
+   "name": "squad",
+   "size": 232,
+   "type": "struct squad_definition",
+   "type_size": 232,
+   "swaps": [
+    [
+     32,
+     2,
+     4
+    ],
+    [
+     40,
+     4,
+     1
+    ],
+    [
+     44,
+     2,
+     2
+    ],
+    [
+     48,
+     4,
+     7
+    ],
+    [
+     76,
+     2,
+     2
+    ],
+    [
+     80,
+     4,
+     11
+    ],
+    [
+     124,
+     2,
+     8
+    ],
+    [
+     140,
+     4,
+     23
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 326,
+   "name": "move_position",
+   "size": 80,
+   "type": "struct move_position_definition",
+   "type_size": 80,
+   "swaps": [
+    [
+     0,
+     4,
+     7
+    ],
+    [
+     28,
+     2,
+     1
+    ],
+    [
+     32,
+     4,
+     2
+    ],
+    [
+     40,
+     2,
+     2
+    ],
+    [
+     44,
+     4,
+     9
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 327,
+   "name": "actor_starting_location",
+   "size": 28,
+   "type": "struct actor_starting_location",
+   "type_size": 28,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ],
+    [
+     16,
+     2,
+     1
+    ],
+    [
+     20,
+     2,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 328,
+   "name": "platoon",
+   "size": 172,
+   "type": "struct platoon_definition",
+   "type_size": 172,
+   "swaps": [
+    [
+     32,
+     4,
+     4
+    ],
+    [
+     48,
+     2,
+     2
+    ],
+    [
+     52,
+     4,
+     2
+    ],
+    [
+     60,
+     2,
+     2
+    ],
+    [
+     64,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 329,
+   "name": "platoon_rule",
+   "size": 8,
+   "type": "struct platoon_rule",
+   "type_size": 8,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 330,
+   "name": "firing_position",
+   "size": 24,
+   "type": "struct firing_position_definition",
+   "type_size": 24,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ],
+    [
+     12,
+     2,
+     2
+    ],
+    [
+     20,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 331,
+   "name": "encounter_player_starting_location",
+   "size": 52,
+   "type": "struct encounter_player_starting_location",
+   "type_size": 52,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ],
+    [
+     16,
+     2,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 332,
+   "name": "ai_command_list",
+   "size": 96,
+   "type": "struct ai_command_list_definition",
+   "type_size": 96,
+   "swaps": [
+    [
+     32,
+     4,
+     3
+    ],
+    [
+     44,
+     2,
+     2
+    ],
+    [
+     48,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 333,
+   "name": "ai_command",
+   "size": 32,
+   "type": "struct ai_command_definition",
+   "type_size": 32,
+   "swaps": [
+    [
+     0,
+     2,
+     2
+    ],
+    [
+     4,
+     4,
+     2
+    ],
+    [
+     12,
+     2,
+     8
+    ],
+    [
+     28,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 334,
+   "name": "ai_command_point",
+   "size": 20,
+   "type": "struct ai_command_point_definition",
+   "type_size": 20,
+   "swaps": [
+    [
+     0,
+     4,
+     5
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 335,
+   "name": "ai_animation_reference",
+   "size": 60,
+   "type": "struct ai_animation_reference_definition",
+   "type_size": 60,
+   "swaps": [
+    [
+     32,
+     4,
+     7
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 336,
+   "name": "ai_script_reference",
+   "size": 40,
+   "type": "struct ai_script_reference_definition",
+   "type_size": 40,
+   "swaps": [
+    [
+     32,
+     4,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 337,
+   "name": "ai_recording_reference",
+   "size": 40,
+   "type": "struct ai_recording_reference_definition",
+   "type_size": 40,
+   "swaps": [
+    [
+     32,
+     4,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 338,
+   "name": "conversation",
+   "size": 116,
+   "type": "struct ai_conversation",
+   "type_size": 116,
+   "swaps": [
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     2
+    ],
+    [
+     80,
+     4,
+     9
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 339,
+   "name": "conversation_participant",
+   "size": 84,
+   "type": "struct scenario_conversation_participant",
+   "type_size": 84,
+   "swaps": [
+    [
+     0,
+     2,
+     6
+    ],
+    [
+     24,
+     2,
+     6
+    ],
+    [
+     68,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 340,
+   "name": "conversation_line",
+   "size": 124,
+   "type": "struct scenario_conversation_line",
+   "type_size": 124,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     2
+    ],
+    [
+     28,
+     4,
+     24
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 341,
+   "name": "hs_script",
+   "size": 92,
+   "type": "struct hs_script",
+   "type_size": 92,
+   "swaps": [
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 342,
+   "name": "hs_global",
+   "size": 92,
+   "type": "struct hs_global",
+   "type_size": 92,
+   "swaps": [
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     4,
+     2
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 343,
+   "name": "hs_reference",
+   "size": 40,
+   "type": "struct hs_reference",
+   "type_size": 40,
+   "swaps": [
+    [
+     24,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 344,
+   "name": "hs_source_file",
+   "size": 52,
+   "type": "struct hs_source_file",
+   "type_size": 52,
+   "swaps": [
+    [
+     32,
+     4,
+     5
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 345,
+   "name": "cutscene_flag",
+   "size": 92,
+   "type": "struct scenario_cutscene_flag",
+   "type_size": 92,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     36,
+     4,
+     5
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 346,
+   "name": "cutscene_camera_point",
+   "size": 104,
+   "type": "struct scenario_cutscene_camera_point",
+   "type_size": 104,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     36,
+     4,
+     17
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 347,
+   "name": "cutscene_title",
+   "size": 96,
+   "type": "struct scenario_cutscene_title",
+   "type_size": 96,
+   "swaps": [
+    [
+     0,
+     4,
+     1
+    ],
+    [
+     36,
+     4,
+     1
+    ],
+    [
+     40,
+     2,
+     8
+    ],
+    [
+     56,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  },
+  {
+   "index": 348,
+   "name": "structure_bsp_reference",
+   "size": 32,
+   "type": "struct scenario_structure_bsp_reference",
+   "type_size": 32,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ],
+    [
+     16,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": []
+  }
+ ],
+ "types": {
+  "struct data_array": {
+   "size": 56,
+   "swaps": [
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     40,
+     4,
+     1
+    ],
+    [
+     44,
+     2,
+     4
+    ],
+    [
+     52,
+     4,
+     1
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": [],
+   "members": {
+    "name[0]": [
+     0,
+     1
+    ],
+    "name[1]": [
+     1,
+     1
+    ],
+    "name[2]": [
+     2,
+     1
+    ],
+    "name[3]": [
+     3,
+     1
+    ],
+    "name[4]": [
+     4,
+     1
+    ],
+    "name[5]": [
+     5,
+     1
+    ],
+    "name[6]": [
+     6,
+     1
+    ],
+    "name[7]": [
+     7,
+     1
+    ],
+    "name[8]": [
+     8,
+     1
+    ],
+    "name[9]": [
+     9,
+     1
+    ],
+    "name[10]": [
+     10,
+     1
+    ],
+    "name[11]": [
+     11,
+     1
+    ],
+    "name[12]": [
+     12,
+     1
+    ],
+    "name[13]": [
+     13,
+     1
+    ],
+    "name[14]": [
+     14,
+     1
+    ],
+    "name[15]": [
+     15,
+     1
+    ],
+    "name[16]": [
+     16,
+     1
+    ],
+    "name[17]": [
+     17,
+     1
+    ],
+    "name[18]": [
+     18,
+     1
+    ],
+    "name[19]": [
+     19,
+     1
+    ],
+    "name[20]": [
+     20,
+     1
+    ],
+    "name[21]": [
+     21,
+     1
+    ],
+    "name[22]": [
+     22,
+     1
+    ],
+    "name[23]": [
+     23,
+     1
+    ],
+    "name[24]": [
+     24,
+     1
+    ],
+    "name[25]": [
+     25,
+     1
+    ],
+    "name[26]": [
+     26,
+     1
+    ],
+    "name[27]": [
+     27,
+     1
+    ],
+    "name[28]": [
+     28,
+     1
+    ],
+    "name[29]": [
+     29,
+     1
+    ],
+    "name[30]": [
+     30,
+     1
+    ],
+    "name[31]": [
+     31,
+     1
+    ],
+    "maximum_count": [
+     32,
+     2
+    ],
+    "size": [
+     34,
+     2
+    ],
+    "valid": [
+     36,
+     1
+    ],
+    "identifier_zero_invalid": [
+     37,
+     1
+    ],
+    "signature": [
+     40,
+     4
+    ],
+    "first_free_absolute_index": [
+     44,
+     2
+    ],
+    "count": [
+     46,
+     2
+    ],
+    "actual_count": [
+     48,
+     2
+    ],
+    "next_identifier": [
+     50,
+     2
+    ],
+    "data": [
+     52,
+     4
+    ]
+   }
+  },
+  "struct hs_syntax_node": {
+   "size": 20,
+   "swaps": [
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     8,
+     4,
+     2
+    ]
+   ],
+   "conflicts": [
+    {
+     "offset": 16,
+     "path": ".value.",
+     "members": [
+      [
+       [
+        0,
+        4
+       ]
+      ],
+      [
+       [
+        0,
+        1
+       ]
+      ],
+      [
+       [
+        0,
+        4
+       ]
+      ],
+      [
+       [
+        0,
+        2
+       ]
+      ]
+     ]
+    }
+   ],
+   "bitfields": [],
+   "members": {
+    "datum_header": [
+     0,
+     2
+    ],
+    ".index": [
+     2,
+     2
+    ],
+    "type": [
+     4,
+     2
+    ],
+    "flags": [
+     6,
+     2
+    ],
+    "next_node_index": [
+     8,
+     4
+    ],
+    ".string_offset": [
+     12,
+     4
+    ]
+   }
+  },
+  "struct animation": {
+   "size": 180,
+   "swaps": [
+    [
+     32,
+     2,
+     4
+    ],
+    [
+     40,
+     4,
+     1
+    ],
+    [
+     44,
+     2,
+     2
+    ],
+    [
+     48,
+     4,
+     1
+    ],
+    [
+     52,
+     2,
+     6
+    ],
+    [
+     66,
+     2,
+     1
+    ],
+    [
+     68,
+     4,
+     28
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": [],
+   "members": {
+    "name[0]": [
+     0,
+     1
+    ],
+    "name[1]": [
+     1,
+     1
+    ],
+    "name[2]": [
+     2,
+     1
+    ],
+    "name[3]": [
+     3,
+     1
+    ],
+    "name[4]": [
+     4,
+     1
+    ],
+    "name[5]": [
+     5,
+     1
+    ],
+    "name[6]": [
+     6,
+     1
+    ],
+    "name[7]": [
+     7,
+     1
+    ],
+    "name[8]": [
+     8,
+     1
+    ],
+    "name[9]": [
+     9,
+     1
+    ],
+    "name[10]": [
+     10,
+     1
+    ],
+    "name[11]": [
+     11,
+     1
+    ],
+    "name[12]": [
+     12,
+     1
+    ],
+    "name[13]": [
+     13,
+     1
+    ],
+    "name[14]": [
+     14,
+     1
+    ],
+    "name[15]": [
+     15,
+     1
+    ],
+    "name[16]": [
+     16,
+     1
+    ],
+    "name[17]": [
+     17,
+     1
+    ],
+    "name[18]": [
+     18,
+     1
+    ],
+    "name[19]": [
+     19,
+     1
+    ],
+    "name[20]": [
+     20,
+     1
+    ],
+    "name[21]": [
+     21,
+     1
+    ],
+    "name[22]": [
+     22,
+     1
+    ],
+    "name[23]": [
+     23,
+     1
+    ],
+    "name[24]": [
+     24,
+     1
+    ],
+    "name[25]": [
+     25,
+     1
+    ],
+    "name[26]": [
+     26,
+     1
+    ],
+    "name[27]": [
+     27,
+     1
+    ],
+    "name[28]": [
+     28,
+     1
+    ],
+    "name[29]": [
+     29,
+     1
+    ],
+    "name[30]": [
+     30,
+     1
+    ],
+    "name[31]": [
+     31,
+     1
+    ],
+    "type": [
+     32,
+     2
+    ],
+    "frame_count": [
+     34,
+     2
+    ],
+    "frame_size": [
+     36,
+     2
+    ],
+    "frame_info_type": [
+     38,
+     2
+    ],
+    "node_list_checksum": [
+     40,
+     4
+    ],
+    "node_count": [
+     44,
+     2
+    ],
+    "private_loop_frame_index": [
+     46,
+     2
+    ],
+    "weight": [
+     48,
+     4
+    ],
+    "private_key_frame_index": [
+     52,
+     2
+    ],
+    "private_second_key_frame_index": [
+     54,
+     2
+    ],
+    "next_animation_index": [
+     56,
+     2
+    ],
+    "flags": [
+     58,
+     2
+    ],
+    "sound_index": [
+     60,
+     2
+    ],
+    "private_sound_frame_index": [
+     62,
+     2
+    ],
+    "private_left_foot_frame_index": [
+     64,
+     1
+    ],
+    "private_right_foot_frame_index": [
+     65,
+     1
+    ],
+    "runtime_parent_animation_index": [
+     66,
+     2
+    ],
+    "runtime_normalized_weight": [
+     68,
+     4
+    ],
+    "frame_info.size": [
+     72,
+     4
+    ],
+    "frame_info.pad": [
+     76,
+     4
+    ],
+    "frame_info.file_offset": [
+     80,
+     4
+    ],
+    "frame_info.address": [
+     84,
+     4
+    ],
+    "frame_info.definition": [
+     88,
+     4
+    ],
+    "nodes_with_translation_flags[0]": [
+     92,
+     4
+    ],
+    "nodes_with_translation_flags[1]": [
+     96,
+     4
+    ],
+    "unused_translation[0]": [
+     100,
+     4
+    ],
+    "unused_translation[1]": [
+     104,
+     4
+    ],
+    "nodes_with_rotation_flags[0]": [
+     108,
+     4
+    ],
+    "nodes_with_rotation_flags[1]": [
+     112,
+     4
+    ],
+    "unused_rotation[0]": [
+     116,
+     4
+    ],
+    "unused_rotation[1]": [
+     120,
+     4
+    ],
+    "nodes_with_scale_flags[0]": [
+     124,
+     4
+    ],
+    "nodes_with_scale_flags[1]": [
+     128,
+     4
+    ],
+    "unused_scale[0]": [
+     132,
+     4
+    ],
+    "compressed_data_offset": [
+     136,
+     4
+    ],
+    "default_data.size": [
+     140,
+     4
+    ],
+    "default_data.pad": [
+     144,
+     4
+    ],
+    "default_data.file_offset": [
+     148,
+     4
+    ],
+    "default_data.address": [
+     152,
+     4
+    ],
+    "default_data.definition": [
+     156,
+     4
+    ],
+    "data.size": [
+     160,
+     4
+    ],
+    "data.pad": [
+     164,
+     4
+    ],
+    "data.file_offset": [
+     168,
+     4
+    ],
+    "data.address": [
+     172,
+     4
+    ],
+    "data.definition": [
+     176,
+     4
+    ]
+   }
+  },
+  "struct compressed_animation_header": {
+   "size": 48,
+   "swaps": [
+    [
+     0,
+     4,
+     12
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": [],
+   "members": {
+    "rotation_keyframe_frame_indices_offset": [
+     0,
+     4
+    ],
+    "default_rotations_offset": [
+     4,
+     4
+    ],
+    "rotation_keyframes_offset": [
+     8,
+     4
+    ],
+    "translation_node_headers_offset": [
+     12,
+     4
+    ],
+    "translation_keyframe_frame_indices_offset": [
+     16,
+     4
+    ],
+    "default_translations_offset": [
+     20,
+     4
+    ],
+    "translation_keyframes_offset": [
+     24,
+     4
+    ],
+    "scale_node_headers_offset": [
+     28,
+     4
+    ],
+    "scale_keyframe_frame_indices_offset": [
+     32,
+     4
+    ],
+    "default_scales_offset": [
+     36,
+     4
+    ],
+    "scale_keyframes_offset": [
+     40,
+     4
+    ],
+    "rotation_node_headers[0]": [
+     44,
+     4
+    ]
+   }
+  },
+  "struct structure_material": {
+   "size": 256,
+   "swaps": [
+    [
+     0,
+     4,
+     4
+    ],
+    [
+     16,
+     2,
+     2
+    ],
+    [
+     20,
+     4,
+     8
+    ],
+    [
+     52,
+     2,
+     2
+    ],
+    [
+     56,
+     4,
+     12
+    ],
+    [
+     104,
+     2,
+     2
+    ],
+    [
+     108,
+     4,
+     16
+    ],
+    [
+     172,
+     2,
+     4
+    ],
+    [
+     180,
+     4,
+     4
+    ],
+    [
+     196,
+     2,
+     2
+    ],
+    [
+     200,
+     4,
+     14
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": [],
+   "members": {
+    "shader.group_tag": [
+     0,
+     4
+    ],
+    "shader.name": [
+     4,
+     4
+    ],
+    "shader.name_length": [
+     8,
+     4
+    ],
+    "shader.index": [
+     12,
+     4
+    ],
+    "permutation_index": [
+     16,
+     2
+    ],
+    "flags": [
+     18,
+     2
+    ],
+    "first_surface_index": [
+     20,
+     4
+    ],
+    "surface_count": [
+     24,
+     4
+    ],
+    "centroid.n[0]": [
+     28,
+     4
+    ],
+    "centroid.n[1]": [
+     32,
+     4
+    ],
+    "centroid.n[2]": [
+     36,
+     4
+    ],
+    "lighting.ambient_color.n[0]": [
+     40,
+     4
+    ],
+    "lighting.ambient_color.n[1]": [
+     44,
+     4
+    ],
+    "lighting.ambient_color.n[2]": [
+     48,
+     4
+    ],
+    "lighting.distant_light_count": [
+     52,
+     2
+    ],
+    "lighting.pad": [
+     54,
+     2
+    ],
+    "lighting.distant_lights[0].color.n[0]": [
+     56,
+     4
+    ],
+    "lighting.distant_lights[0].color.n[1]": [
+     60,
+     4
+    ],
+    "lighting.distant_lights[0].color.n[2]": [
+     64,
+     4
+    ],
+    "lighting.distant_lights[0].direction.n[0]": [
+     68,
+     4
+    ],
+    "lighting.distant_lights[0].direction.n[1]": [
+     72,
+     4
+    ],
+    "lighting.distant_lights[0].direction.n[2]": [
+     76,
+     4
+    ],
+    "lighting.distant_lights[1].color.n[0]": [
+     80,
+     4
+    ],
+    "lighting.distant_lights[1].color.n[1]": [
+     84,
+     4
+    ],
+    "lighting.distant_lights[1].color.n[2]": [
+     88,
+     4
+    ],
+    "lighting.distant_lights[1].direction.n[0]": [
+     92,
+     4
+    ],
+    "lighting.distant_lights[1].direction.n[1]": [
+     96,
+     4
+    ],
+    "lighting.distant_lights[1].direction.n[2]": [
+     100,
+     4
+    ],
+    "lighting.point_light_count": [
+     104,
+     2
+    ],
+    "lighting.pad1": [
+     106,
+     2
+    ],
+    "lighting.point_light_indices[0]": [
+     108,
+     4
+    ],
+    "lighting.point_light_indices[1]": [
+     112,
+     4
+    ],
+    "lighting.reflection_tint_color.n[0]": [
+     116,
+     4
+    ],
+    "lighting.reflection_tint_color.n[1]": [
+     120,
+     4
+    ],
+    "lighting.reflection_tint_color.n[2]": [
+     124,
+     4
+    ],
+    "lighting.reflection_tint_color.n[3]": [
+     128,
+     4
+    ],
+    "lighting.shadow_vector.n[0]": [
+     132,
+     4
+    ],
+    "lighting.shadow_vector.n[1]": [
+     136,
+     4
+    ],
+    "lighting.shadow_vector.n[2]": [
+     140,
+     4
+    ],
+    "lighting.shadow_color.n[0]": [
+     144,
+     4
+    ],
+    "lighting.shadow_color.n[1]": [
+     148,
+     4
+    ],
+    "lighting.shadow_color.n[2]": [
+     152,
+     4
+    ],
+    "plane.n.n[0]": [
+     156,
+     4
+    ],
+    "plane.n.n[1]": [
+     160,
+     4
+    ],
+    "plane.n.n[2]": [
+     164,
+     4
+    ],
+    "plane.d": [
+     168,
+     4
+    ],
+    "breakable_surface_index": [
+     172,
+     2
+    ],
+    "copious_unused_space": [
+     174,
+     2
+    ],
+    "vertices.type": [
+     176,
+     2
+    ],
+    "vertices.pad": [
+     178,
+     2
+    ],
+    "vertices.count": [
+     180,
+     4
+    ],
+    "vertices.offset": [
+     184,
+     4
+    ],
+    "vertices.base_address": [
+     188,
+     4
+    ],
+    "vertices.hardware_format": [
+     192,
+     4
+    ],
+    "lightmap_vertices.type": [
+     196,
+     2
+    ],
+    "lightmap_vertices.pad": [
+     198,
+     2
+    ],
+    "lightmap_vertices.count": [
+     200,
+     4
+    ],
+    "lightmap_vertices.offset": [
+     204,
+     4
+    ],
+    "lightmap_vertices.base_address": [
+     208,
+     4
+    ],
+    "lightmap_vertices.hardware_format": [
+     212,
+     4
+    ],
+    "uncompressed_vertex_data.size": [
+     216,
+     4
+    ],
+    "uncompressed_vertex_data.pad": [
+     220,
+     4
+    ],
+    "uncompressed_vertex_data.file_offset": [
+     224,
+     4
+    ],
+    "uncompressed_vertex_data.address": [
+     228,
+     4
+    ],
+    "uncompressed_vertex_data.definition": [
+     232,
+     4
+    ],
+    "compressed_vertex_data.size": [
+     236,
+     4
+    ],
+    "compressed_vertex_data.pad": [
+     240,
+     4
+    ],
+    "compressed_vertex_data.file_offset": [
+     244,
+     4
+    ],
+    "compressed_vertex_data.address": [
+     248,
+     4
+    ],
+    "compressed_vertex_data.definition": [
+     252,
+     4
+    ]
+   }
+  },
+  "struct scenario_structure_bsp_reference": {
+   "size": 32,
+   "swaps": [
+    [
+     0,
+     4,
+     3
+    ],
+    [
+     16,
+     4,
+     4
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": [],
+   "members": {
+    "file_offset": [
+     0,
+     4
+    ],
+    "file_size": [
+     4,
+     4
+    ],
+    "base_address": [
+     8,
+     4
+    ],
+    "unusedC[0]": [
+     12,
+     1
+    ],
+    "unusedC[1]": [
+     13,
+     1
+    ],
+    "unusedC[2]": [
+     14,
+     1
+    ],
+    "unusedC[3]": [
+     15,
+     1
+    ],
+    "structure_bsp.group_tag": [
+     16,
+     4
+    ],
+    "structure_bsp.name": [
+     20,
+     4
+    ],
+    "structure_bsp.name_length": [
+     24,
+     4
+    ],
+    "structure_bsp.index": [
+     28,
+     4
+    ]
+   }
+  }
+ }
+}

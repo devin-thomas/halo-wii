@@ -82,6 +82,22 @@ int cache_graph_walk(const struct cache_graph_input *, void *workspace, size_t w
  * written. The report is the encoded walk's (with the residual audit). */
 int cache_graph_relocate(const struct cache_graph_input *, unsigned char *tags, void *workspace,
                          size_t workspace_bytes, struct cache_graph_report *, struct cache_graph_result *);
+/* What a walk visits, for a converter that needs every structure's place (HWI-015B: byte order).
+ * Every callback may be NULL. element: each tag root, block element and the loaded BSP's root, with its
+ * schema definition (inline structures are part of their element). data: each tag data field's bytes in
+ * the slot (not a file data field's), with its schema field and where that field (its tag_data) is. pointer: each pointer field the relocation
+ * rewrites, with its target's slot offset, or CACHE_GRAPH_NULLED for one it nulls. */
+#define CACHE_GRAPH_NULLED ((size_t)-1)
+struct cache_graph_visitor {
+    void *context;
+    void (*element)(void *context, size_t offset, int32_t definition);
+    void (*data)(void *context, size_t offset, size_t size, uint32_t field, size_t field_offset);
+    void (*pointer)(void *context, size_t offset, size_t target);
+};
+/* Walk the encoded tags (input->native must be 0) as cache_graph_relocate does, without writing
+ * anything; visits after a walk that succeeds, in slot order for pointers. */
+int cache_graph_visit(const struct cache_graph_input *, void *workspace, size_t workspace_bytes,
+                      struct cache_graph_report *, struct cache_graph_result *, const struct cache_graph_visitor *);
 /* The canonical report as text lines (identical on every host/target for the same input). Returns
  * the length written (truncated to capacity - 1), or 0 on argument error. */
 size_t cache_graph_describe(const struct cache_graph_report *, char *text, size_t capacity);
