@@ -1848,12 +1848,6 @@ void object_reconnect_to_map(
 		objects at level start, reading a stack slot reused meanwhile) */
 		struct location bounding_sphere_location;
 
-		/* port: scenario_location_from_point sets the leaf and the cluster
-		only; the location's bonus word (nothing reads it) would carry
-		this stack slot's old bytes into the object, which differ between
-		builds and machines (HWI-015B, found comparing the Wii's game state
-		with the host's) */
-		bounding_sphere_location.bonus = 0;
 		if (!location)
 		{
 			scenario_location_from_point(&bounding_sphere_location, &object->object.bounding_sphere_center);

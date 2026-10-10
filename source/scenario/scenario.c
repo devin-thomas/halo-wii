@@ -849,6 +849,12 @@ void scenario_location_from_point(
 	}
 
 	location->cluster_index = (short)cluster_index;
+	/* port: and its bonus word, which nothing reads (only items mark it,
+	scenario_location_award_bonus): left as it was, a location made in a
+	caller's stack slot (an object's, a particle's) took that slot's old
+	bytes into the game state, which differ between builds and machines
+	(HWI-015B, found comparing the Wii's game state with the host's) */
+	location->bonus = 0;
 
 	return;
 }

@@ -897,7 +897,12 @@ void particle_new(
 	particle->definition_index = data->definition_index;
 	particle->local_player_index = (byte)data->local_player_index;
 	particle->object_index = data->object_index;
-	particle->node_index = data->node_index;
+	/* port: a node only for a particle attached to an object, the only one
+	that reads it; the effect leaves an unattached particle's unset, which
+	took a stack slot's old bytes into the game state, different between
+	builds and machines (HWI-015B, found comparing the Wii's game state with
+	the host's) */
+	particle->node_index = data->object_index != NONE ? data->node_index : NONE;
 	particle->state = _particle_state_next_sequence_initial;
 	particle->last_rendered_frame_index = render.frame_index;
 
