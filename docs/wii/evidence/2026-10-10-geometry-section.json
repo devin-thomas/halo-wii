@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "ticket": "HWI-008A",
+  "date": "2026-10-10",
+  "scope": "one_selected_compressed_environment_material_section_numeric_identity",
+  "inputs": {
+    "tag_input_sha256": "8501f4ad215a630d14220140e27f8a9c30a5ed18fe459ac07c686e827a0ab7bc",
+    "bsp_input_sha256": "7f7b4e77ce3667eb0db7bd05e3352330cff47ced9cf3ff7b56a0dc4fc7433e5b",
+    "tag_input_bytes": 16995988,
+    "bsp_input_bytes": 1288192,
+    "bsp_ordinal": 12,
+    "source": "existing private derivation from the owned, strictly validated campaign map; no new extraction"
+  },
+  "rule": "largest_environment_shader_compressed_material_by_surface_count_in_lightmap_0",
+  "selected_matches_rule": true,
+  "selected": {
+    "material_index": 3,
+    "lightmap": 0,
+    "local_material": 3,
+    "first_surface": 2340,
+    "surface_count": 2990,
+    "environment_vertices": 5863,
+    "compressed_data_bytes": 187616
+  },
+  "shader_group": "senv",
+  "validation": {
+    "degenerate_triangles": 0,
+    "negative_zero_position_words": 0,
+    "positions_finite": true,
+    "referenced_vertices": 5863,
+    "subnormal_position_words": 0,
+    "triangle_indices_in_bounds": true,
+    "unreferenced_vertices": 0
+  },
+  "consumed_bytes": {
+    "native_indices_u16": 17940,
+    "native_positions_f32": 70356,
+    "source_index_bytes": 17940,
+    "source_position_records": 187616
+  },
+  "hashes": {
+    "indices_sha256": "31470aec1f68713efc323b2eb14fd029176a47d884f6ab0a4e30250c9e228cea",
+    "positions_sha256": "e5c09190c67470f541dd792b3ebe27d9f0d4e72ca4520cc973521da5129aa922",
+    "section_sha256": "79cb1e25375dcac92544a0269012b03707ec1c98ecfedbf69757855d59627565"
+  },
+  "determinism": "Two independent selections produced byte-identical manifests.",
+  "tool": {
+    "script": "tools/wii/select_geometry_section.py",
+    "authored_tests": "test_select_geometry_section.py: 7 tests pass; test_inspect_material_graph.py passes"
+  },
+  "private_only": [
+    "map and BSP names",
+    "extents",
+    "indices",
+    "positions",
+    "raw bytes",
+    "paths"
+  ],
+  "streaming_plan": "Guest reads the existing private BSP and tag sidecars from the emulated SD (the route proven by the 2026-10-07 material-stream run) and walks surfaces with cache_material_get_surface_positions; no converted asset file is produced.",
+  "does_not_prove": [
+    "Guest residency or memory (HWI-007A)",
+    "Rendering (HWI-016A)",
+    "Full asset conversion, textures, audio, saves (HWI-008)",
+    "Physical Wii"
+  ]
+}

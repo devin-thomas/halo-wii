@@ -294,3 +294,8 @@ Existing material fixtures now execute on PPC in stock Dolphin with results
 identical to host (133 cases / 91,506 checks). The new non-finite-rejecting
 position getter passes 149 cases / 93,378 checks on host and PPC from clean
 source 9176d8d1. Real geometry rendering and physical Wii remain untested.
+
+The [selected geometry section](evidence/2026-10-10-geometry-section.md) is one
+real environment material: 2,990 triangles and 5,863 vertices, all indices in
+bounds and all positions finite, 88,296 native bytes. Repeated selection is
+byte-identical. It has not been rendered yet.
