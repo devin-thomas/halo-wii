@@ -1,4 +1,4 @@
-/* Host build of the content loader checks (HWI-008C): the same loaders and
+/* Host build of the content loader checks (HWI-008C, HWI-008E): the same loaders and
  * case runner as the Wii self-test, without GX. Used by
  * tools/wii/test_content_loaders.py on authored fixtures and to pre-check a
  * private sample before a Dolphin run.
@@ -32,11 +32,12 @@ int main(int argc, char **argv)
     unsigned passed = 0;
     for (int i = 0; i < count; ++i) {
         struct content_outcome o;
-        content_run_case(&cases[i], scratch, scratch_bytes, NULL, host_clock, &o);
-        printf("CASE id=%s kind=%s expect=%s got=%s file_sha=%d decoded_match=%d units=%u decoded=%s result=%s\n",
+        content_run_case(&cases[i], scratch, scratch_bytes, NULL, host_clock, NULL, &o);
+        printf("CASE id=%s kind=%s expect=%s got=%s file_sha=%d decoded_match=%d units=%u items=%u "
+               "decoded_bytes=%u decoded=%s result=%s\n",
                cases[i].id, content_kind_name(cases[i].kind), content_error_name(cases[i].expect),
-               content_error_name(o.error), o.file_ok, o.decoded_match, (unsigned)o.units, o.decoded,
-               o.pass ? "pass" : "fail");
+               content_error_name(o.error), o.file_ok, o.decoded_match, (unsigned)o.units, (unsigned)o.items,
+               (unsigned)o.decoded_bytes, o.decoded, o.pass ? "pass" : "fail");
         passed += o.pass ? 1u : 0u;
     }
     free(scratch);
