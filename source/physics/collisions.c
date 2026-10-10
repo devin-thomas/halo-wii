@@ -495,6 +495,13 @@ boolean collision_test_vector(
 	collision->start_location.cluster_index = NONE;
 	collision->location.leaf_index = NONE;
 	collision->location.cluster_index = NONE;
+	/* port: and the locations' bonus words, which nothing here sets: a
+	result in a caller's stack slot (point_physics_update's) carried that
+	slot's old bytes into a particle's location in the game state, which
+	differ with whatever ran on the stack before (HWI-016B, found when the
+	Wii's frames were drawn; as scenario_location_from_point, HWI-015B) */
+	collision->start_location.bonus = 0;
+	collision->location.bonus = 0;
 	collision->t = 1.0f;
 
 	if (test_environment)
@@ -1148,6 +1155,13 @@ boolean collision_test_pill_new(
 	collision->start_location.cluster_index = NONE;
 	collision->location.leaf_index = NONE;
 	collision->location.cluster_index = NONE;
+	/* port: and the locations' bonus words, which nothing here sets: a
+	result in a caller's stack slot (point_physics_update's) carried that
+	slot's old bytes into a particle's location in the game state, which
+	differ with whatever ran on the stack before (HWI-016B, found when the
+	Wii's frames were drawn; as scenario_location_from_point, HWI-015B) */
+	collision->start_location.bonus = 0;
+	collision->location.bonus = 0;
 	collision->t = 1.0f;
 
 	if (collision_bsp_test_pill_new(

@@ -43,6 +43,27 @@ game_initialize; FALSE when the records are left out but ai_debug_initialize
 did not run as upstream's */
 int wii_engine_report_diagnostic_storage(void);
 
+/* HWI-016B: the Wii rasterizer (port/wii/render), registered by the Wii
+driver; the i686 host reference registers none, so it runs as before. With
+none registered the rasterizer is reported unsupported, as in HWI-015B.
+- rasterizer_initialize: in shell_initialize's place for it; its result is
+  shell_initialize's;
+- rasterizer_dispose: in shell_dispose's place for it;
+- new_map / old_map: after the engine's rasterizer_initialize_for_new_map,
+  before its rasterizer_dispose_from_old_map (game.c, per map);
+- frame: after each of the engine's own game_frame (game_time_update's),
+  with its time; not while the fixed-step scenario runs. */
+struct wii_engine_render_hooks
+{
+	int (*rasterizer_initialize)(void);
+	void (*rasterizer_dispose)(void);
+	void (*new_map)(void);
+	void (*old_map)(void);
+	void (*frame)(float dt);
+};
+
+void wii_engine_set_render_hooks(const struct wii_engine_render_hooks *hooks);
+
 /* the halt report (wii_engine_main.c): the engine stops here */
 void wii_driver_halt(const char *error_text) __attribute__((noreturn));
 

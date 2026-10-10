@@ -57,6 +57,23 @@ python -B tools/wii/compare_map_runs.py --wii <Wii engine.log> --host <host engi
 `test_map_stage.py` covers the layouts, the plan, the data rules and the file
 format with synthetic data and the committed tables only.
 
+## Environment render staging (HWI-016B)
+
+`render_stage.py` copies, from one content pipeline generation, the files
+the Wii rasterizer (`port/wii/render`) reads for a map: each structure BSP's
+HWL1 geometry, its lightmap pages and its environment shaders' base maps
+(HWT1), chosen from your own map's tags as the engine chooses them, each
+checked against the generation's manifest. Its output is private: never
+commit it. `--stage-args` prints the `run_dolphin.py --stage` arguments.
+
+```powershell
+python -B tools/wii/render_stage.py --generation <generation dir> --map <your .map> --name <map> --out <new private dir> --stage-args
+```
+
+On the card: `sd:/halo-wii-engine/data/render/<map>/lightmaps/<bsp tag>.hwl`
+and `.../textures/<bitmap tag>-<bitmap>.hwt`. `test_render_stage.py` covers
+the selection with authored fixtures.
+
 ## Offline Windows shutdown symbols
 
 Read the executable's PE CodeView identity without loading it:
