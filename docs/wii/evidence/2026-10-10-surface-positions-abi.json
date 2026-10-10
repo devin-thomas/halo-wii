@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "ticket": "HWI-006A",
+  "date": "2026-10-10",
+  "scope": "consumed_render_data_boundary_positions_and_triangle_indices_authored_fixtures",
+  "consumed_boundary": {
+    "triangle_indices": "Material-local surface ordinal, bounded by the material range; three unsigned LE16 corner indices, each below the material's compressed environment count before any payload read.",
+    "positions": "Per corner, three LE32 binary32 bit patterns from the 32-byte compressed environment record, returned as native uint32 words (36 bytes, corner-major x,y,z).",
+    "non_finite": "Exponent 0xFF (infinity, quiet or signalling NaN) rejects with CACHE_MATERIAL_VALUE at offset corner*3+axis before publication.",
+    "subnormal_and_zero_sign": "Preserved bit-exact; consumers store words with integer stores into GX F32 arrays (no CPU float conversion).",
+    "alignment": "Source reads are bytewise; fixtures cover two placements x eight byte offsets.",
+    "not_supported": [
+      "normals/binormals/tangents (packed decoder exists; not consumed)",
+      "texture coordinates",
+      "lightmap vertex records",
+      "topology beyond the selected triangle",
+      "original Xbox/MSVC execution equivalence",
+      "GP behaviour for subnormal positions"
+    ]
+  },
+  "baseline_ppc_execution": {
+    "purpose": "First PPC execution of the existing material fixtures (previously host plus PPC compile only).",
+    "source": {
+      "build_id": "933ff7c55fb63969",
+      "source_commit": "c1f703afbf1eb4ac2e232e98a1c6082c756848aa",
+      "source_dirty": false,
+      "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+      "state": "compile_pass",
+      "scope": "authored_partial_material_graph_fixture_no_private_input"
+    },
+    "host_same_commit": {
+      "build_id": "8222e0277fa20170",
+      "source_commit": "c1f703afbf1eb4ac2e232e98a1c6082c756848aa",
+      "source_dirty": false,
+      "compiler": "gcc.exe (Rev3, Built by MSYS2 project) 16.2.0",
+      "state": "execution_pass",
+      "scope": "authored_partial_material_graph_fixture_no_private_input"
+    },
+    "host_summary": "CACHE_MATERIAL cases=133 checks=91506 failures=0",
+    "dolphin": {
+      "dol_sha256": "878de909d47777d575f1d6dd9561be8d3ab8bd9e7fbd87cc95da4cd8373687fc",
+      "host_exit_hex": "0x0",
+      "forced_stop": false,
+      "elapsed_seconds": 4.849,
+      "begin": "BEGIN MATERIAL_SYNTHETIC build=933ff7c55fb63969",
+      "end": "END MATERIAL_SYNTHETIC build=933ff7c55fb63969 result=0",
+      "summaries": [
+        "CACHE_ADDRESS SUMMARY cases=1916 checks=8437 failures=0 aborted=0 scope=synthetic_index_name_root_address_only source_mutation=none nested_tag_BSP_body_conversion=not_performed",
+        "CACHE_MATERIAL SUMMARY cases=133 checks=91506 failures=0 aborted=0 material=128 root=36 lightmap=20 control=80 view=56 lifetime=parent_first geometry=not_qualified"
+      ],
+      "guest_report_sha256": "4e5faa9062392e37fe5d357a3e59ae2d3a56b9485f0773e7ce502c751754f1b7"
+    }
+  },
+  "final": {
+    "source_commit": "9176d8d158fd",
+    "host": {
+      "build_id": "e402f319d9a92663",
+      "source_commit": "9176d8d158fdb59e30cfc03a09fba835473dd7bd",
+      "source_dirty": false,
+      "compiler": "gcc.exe (Rev3, Built by MSYS2 project) 16.2.0",
+      "state": "execution_pass",
+      "scope": "authored_partial_material_graph_fixture_no_private_input"
+    },
+    "ppc": {
+      "build_id": "ae64243c9aa855e9",
+      "source_commit": "9176d8d158fdb59e30cfc03a09fba835473dd7bd",
+      "source_dirty": false,
+      "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+      "state": "compile_pass",
+      "scope": "authored_partial_material_graph_fixture_no_private_input"
+    },
+    "ppc_artifacts": {
+      "cache_address.dol": "53630ec7306463deb7c4e05c0a952416ac3ac7f2358e266313c4b42eb885ee44",
+      "cache_address.elf": "776fb15ed9f7032240a476a0bfc26ce69d51e8d429c0be184f42821b461009e1"
+    },
+    "host_summary": "CACHE_MATERIAL cases=149 checks=93378 failures=0; CACHE_ADDRESS cases=1916 checks=8437 failures=0",
+    "dolphin": {
+      "dol_sha256": "53630ec7306463deb7c4e05c0a952416ac3ac7f2358e266313c4b42eb885ee44",
+      "host_exit_hex": "0x0",
+      "forced_stop": false,
+      "elapsed_seconds": 5.407,
+      "begin": "BEGIN MATERIAL_SYNTHETIC build=ae64243c9aa855e9",
+      "end": "END MATERIAL_SYNTHETIC build=ae64243c9aa855e9 result=0",
+      "summaries": [
+        "CACHE_ADDRESS SUMMARY cases=1916 checks=8437 failures=0 aborted=0 scope=synthetic_index_name_root_address_only source_mutation=none nested_tag_BSP_body_conversion=not_performed",
+        "CACHE_MATERIAL SUMMARY cases=149 checks=93378 failures=0 aborted=0 material=128 root=36 lightmap=20 control=80 view=56 lifetime=parent_first geometry=not_qualified"
+      ],
+      "guest_report_sha256": "386bb4dad84a52d278b962b19c2d1b17648fce115c61a57e085c138edaee86e0"
+    }
+  },
+  "new_cases": {
+    "count": 16,
+    "checks_added": 1872,
+    "mutation_check": "With the non-finite rejection disabled, positions_nonfinite_or_bad_index_rejects_at_corner_axis_atomic failed; source restored before commit."
+  },
+  "reported_difference": "control=88 on host vs 80 on PPC is the reported material control structure size (pointer width), not a check result.",
+  "emulator": {
+    "profile": "new isolated Wii-mode profile per run; stock clock/memory; no cheats/overclock/RAM override; D3D 1x",
+    "arguments": [
+      "Dolphin.exe",
+      "--user",
+      "<isolated profile>",
+      "--batch",
+      "--video_backend",
+      "D3D",
+      "--exec",
+      "cache_address.dol"
+    ]
+  },
+  "does_not_prove": [
+    "Rendering of real Halo geometry (HWI-016A)",
+    "Owned-data selection (HWI-008A)",
+    "Residency/memory (HWI-007A)",
+    "Physical Wii",
+    "Broader HWI-006 ABI obligations"
+  ]
+}

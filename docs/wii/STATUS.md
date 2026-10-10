@@ -287,3 +287,10 @@ pass nine EFB readback checks (orientation, depth, culling, with discriminating
 controls), authored GC input, read-back launch counting, owned FIFO/XFB/vertex
 accounting and zero loop heap growth; both exit the host 0x0. Physical Wii,
 textures/materials and any Halo geometry remain untested.
+
+The [surface position boundary](evidence/2026-10-10-surface-positions-abi.md)
+qualifies the indices and positions the first geometry diagnostic consumes.
+Existing material fixtures now execute on PPC in stock Dolphin with results
+identical to host (133 cases / 91,506 checks). The new non-finite-rejecting
+position getter passes 149 cases / 93,378 checks on host and PPC from clean
+source 9176d8d1. Real geometry rendering and physical Wii remain untested.
