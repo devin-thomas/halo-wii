@@ -356,6 +356,73 @@ unsigned long real_map_digest_bytes(
 	return digest_finish(&state);
 }
 
+/* (HWI-016C) the bytes of one datum as one group: a script thread's stack
+(hs_runtime.c hs_stack_allocate) packs its frames and their values at 2-byte
+offsets, so its words straddle any fixed 8-byte grouping and land in other
+groups in the other byte order; each thread is compared by the multiset of
+its live bytes (weaker, as the tag slot's: it misses bytes only moved inside
+a thread). Live: the thread's fields and its stack up to its top frame's
+end. Above it lie popped frames' bytes, which nothing reads, partly written
+over by later frames at other offsets: what is left of a scalar written over
+in part is a different part of it in each byte order. */
+struct real_map_hs_stack_frame
+{
+	struct real_map_hs_stack_frame *previous;
+	long expression_index;
+	void *result;
+	short size;
+	byte data[2];
+};
+
+struct real_map_hs_thread
+{
+	short identifier;
+	byte type;
+	byte flags;
+	long script_index;
+	long sleep_until;
+	long previous_sleep_until;
+	struct real_map_hs_stack_frame *stack;
+	long result;
+	byte stack_data[0x200];
+};
+
+typedef char verify_real_map_hs_thread_size[sizeof(struct real_map_hs_thread) == 0x218 ? 1 : -1];
+
+static unsigned long hs_thread_live_bytes(
+	byte const *datum)
+{
+	struct real_map_hs_thread const *thread = (struct real_map_hs_thread const *)datum;
+	unsigned long top = (unsigned long)((byte const *)thread->stack - thread->stack_data);
+	unsigned long end;
+
+	if (!thread->identifier || top > sizeof(thread->stack_data) - 14)
+		return sizeof(*thread);
+	end = top + 14 + (unsigned long)MAX(thread->stack->size, 0);
+
+	return (unsigned long)(thread->stack_data - datum) + MIN(end, sizeof(thread->stack_data));
+}
+
+static void digest_add_as_one_group(
+	struct digest_state *state,
+	byte const *data,
+	unsigned long size,
+	unsigned long group)
+{
+	unsigned long offset;
+
+	if (state->group_low || state->group_high)
+		digest_group_end(state);
+	state->group = group;
+	for (offset = 0; offset < size; offset++)
+	{
+		state->group_low += digest_tables[0][data[offset]];
+		state->group_high += digest_tables[1][data[offset]];
+	}
+
+	return;
+}
+
 static unsigned long allocation_digest(
 	struct real_map_allocation const *allocation)
 {
@@ -369,6 +436,20 @@ static unsigned long allocation_digest(
 		struct data_array const *data = (struct data_array const *)allocation->address;
 		unsigned long live = sizeof(struct data_array) + (unsigned long)MAX(data->count, 0) * data->size;
 
+		if (!csstrcmp(allocation->name, "hs thread"))
+		{
+			long index;
+
+			digest_add(&state, allocation->address, sizeof(struct data_array));
+			for (index = 0; index < data->count && sizeof(struct data_array) + (unsigned long)(index + 1) * data->size <= allocation->size; index++)
+			{
+				byte const *datum = (byte const *)data->data + index * data->size;
+
+				digest_add_as_one_group(&state, datum, data->size == sizeof(struct real_map_hs_thread) ?
+					hs_thread_live_bytes(datum) : (unsigned long)data->size, 0x80000000UL | (unsigned long)index);
+			}
+			break;
+		}
 		digest_add(&state, allocation->address, MIN(live, allocation->size));
 		break;
 	}

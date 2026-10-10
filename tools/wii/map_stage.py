@@ -455,9 +455,10 @@ HS_SHORT_CELL_TYPES = frozenset([7, *range(10, 17), *range(18, 23), *range(32, 3
 def rule_syntax_data(plan, slot, layouts, offset, size, element):
     """scenario hs_syntax_data: a struct data_array, then its struct hs_syntax_node elements. A node's
     last word is a union. A constant's value (a primitive node that is not a global's name) is a cell
-    of its type (HS_TYPE_BOOLEAN, HS_SHORT_CELL_TYPES): a boolean's byte (the other three bytes left as
-    they are), a short cell's first two bytes as a short (the other two as they are: January wrote some
-    as a long, some as the short alone), otherwise a long (a real's float too). Any other node's last word
+    of its constant type (the node's index, which hs_evaluate casts from: an object's constant is its
+    object name's) (HS_TYPE_BOOLEAN, HS_SHORT_CELL_TYPES): a boolean's byte (the other three bytes left
+    as they are), a short cell's first two bytes as a short (the other two as they are: January wrote
+    some as a long, some as the short alone), otherwise a long (a real's float too). Any other node's last word
     is a long: a node index, or a global's index (read as a long cast). Constants of types from string on
     are parsed again from their source as the map loads (hs_compile_postprocess), and written natively."""
     header = layouts["types"]["struct data_array"]
@@ -472,17 +473,17 @@ def rule_syntax_data(plan, slot, layouts, offset, size, element):
     if element_size != node["size"] or header["size"] + maximum * element_size > size:
         raise StageError("script data's array is not of script nodes")
     flags_at = member(layouts, "struct hs_syntax_node", "flags")
-    type_at = member(layouts, "struct hs_syntax_node", "type")
+    constant_type_at = member(layouts, "struct hs_syntax_node", ".index")
     value_at = 16
     for index in range(maximum):
         at = offset + header["size"] + index * element_size
         for run_offset, width, count in node["swaps"]:
             plan.add(at + run_offset, width, count, "data_script")
-        node_type, flags = s16(slot, at + type_at), u16(slot, at + flags_at)
+        constant_type, flags = s16(slot, at + constant_type_at), u16(slot, at + flags_at)
         constant = flags & 1 and not flags & 4    # primitive, not a global's name
-        if constant and node_type == HS_TYPE_BOOLEAN:
+        if constant and constant_type == HS_TYPE_BOOLEAN:
             plan.bytes_(at + value_at, 4, "data_script")
-        elif constant and node_type in HS_SHORT_CELL_TYPES:
+        elif constant and constant_type in HS_SHORT_CELL_TYPES:
             plan.add(at + value_at, 2, 1, "data_script")
             plan.bytes_(at + value_at + 2, 2, "data_script")
         else:

@@ -175,7 +175,8 @@ class DataRuleTest(unittest.TestCase):
         self.assertEqual(plan.owner[1024:1024 + 152].count(1), 152)
 
     def script_nodes(self, nodes):
-        """a data array of script nodes, (type, flags, 4 value bytes) each; returns (slot, value offsets)"""
+        """a data array of script nodes, (type, flags, 4 value bytes[, constant type]) each; returns (slot,
+        value offsets)"""
         header = self.layouts["types"]["struct data_array"]
         node = self.layouts["types"]["struct hs_syntax_node"]
         size = header["size"] + len(nodes) * node["size"]
@@ -183,9 +184,11 @@ class DataRuleTest(unittest.TestCase):
         struct.pack_into("<h", slot, self.member("struct data_array", "maximum_count"), len(nodes))
         struct.pack_into("<h", slot, self.member("struct data_array", "size"), node["size"])
         values = []
-        for index, (node_type, flags, value) in enumerate(nodes):
+        for index, (node_type, flags, value, *constant) in enumerate(nodes):
             at = header["size"] + index * node["size"]
             struct.pack_into("<h", slot, at + self.member("struct hs_syntax_node", "type"), node_type)
+            struct.pack_into("<h", slot, at + self.member("struct hs_syntax_node", ".index"),
+                             constant[0] if constant else node_type)
             struct.pack_into("<H", slot, at + self.member("struct hs_syntax_node", "flags"), flags)
             slot[at + 16:at + 20] = value
             values.append(at + 16)
@@ -216,6 +219,15 @@ class DataRuleTest(unittest.TestCase):
         self.assertEqual(bytes(big[volume:volume + 4]), b"\x00\x03\x00\x00")
         self.assertEqual(bytes(big[boolean:boolean + 4]), b"\x01\xff\xff\xff")
         self.assertEqual(bytes(big[long_:long_ + 4]), b"\x12\x34\x56\x78")
+
+    def test_a_constant_is_a_cell_of_its_constant_type(self):
+        # an object (37) whose constant is an object name (43): the name's short cell, which the map's
+        # load writes again in place (hs_parse_object); a short (7) constant typed as a real (6): a short
+        slot, values = self.script_nodes([(37, 9, b"\x30\x00\xff\xff", 43), (6, 9, b"\x02\x00\x00\x00", 7)])
+        plan = map_stage.Plan(len(slot))
+        map_stage.rule_syntax_data(plan, slot, self.layouts, 0, len(slot), 0)
+        runs = {offset: width for offset, width, _ in plan.runs}
+        self.assertEqual((runs[values[0]], runs[values[1]]), (2, 2))
 
     def test_a_global_reference_is_a_long_whatever_its_type(self):
         # flags 13: primitive and a global's name, whose index the runtime reads as a long cast
