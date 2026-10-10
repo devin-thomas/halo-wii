@@ -16,6 +16,12 @@ Run these tests from `tools/wii`. They use authored fixtures from
 `content_fixtures.py` only. Usage, output formats, profile fidelity and
 failure behaviour are in [the content pipeline guide](../../docs/wii/CONTENT-PIPELINE.md).
 
+The Wii loaders (`port/wii/content`) are checked by `content_loader_cases.py`,
+which stages a sample with host digests and malformed variants for the
+self-test DOL, and `content_decoded.py`, the host reference of the decoded
+forms of the sectioned containers. `test_content_loaders.py` builds the same
+C loaders with the host compiler and runs them on authored fixtures.
+
 ## Real map staging and the engine's tick (HWI-015B)
 
 `map_stage.py` prepares one of your own Xbox maps for the Wii engine build's

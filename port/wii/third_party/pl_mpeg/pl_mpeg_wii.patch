@@ -1,0 +1,69 @@
+diff --git a/pl_mpeg.h b/pl_mpeg_wii.h
+index b42f53f8..ce61df3a 100644
+--- a/pl_mpeg.h
++++ b/pl_mpeg_wii.h
+@@ -2,6 +2,14 @@
+ PL_MPEG - MPEG1 Video decoder, MP2 Audio decoder, MPEG-PS demuxer
+ SPDX-License-Identifier: MIT
+ 
++Modified for the Halo Wii port (HWI-008D) from upstream commit
++c871f2be022ece7ef4f64230b4fb8e1fb9eb6023 (pl_mpeg.h SHA-256
++3a8cb30c83c2a1147719c30fe0c8b93da2987aa43140077c575b39aaa75fc2c9). The changes,
++also kept as pl_mpeg_wii.patch, only make three paths cheaper and keep the
++decoded output bit-identical: plm_buffer_read() takes up to 25 bits from one
++32-bit window, plm_buffer_read_vlc() reads its bits inline, and full-pel
++motion compensation copies whole rows with memcpy().
++
+ Dominic Szablewski - https://phoboslab.org
+ 
+ 
+@@ -1677,6 +1685,16 @@ int plm_buffer_read(plm_buffer_t *self, int count) {
+ 		return 0;
+ 	}
+ 
++	// HWI-008D: up to 25 bits from one big-endian 32-bit window
++	size_t byte_index = self->bit_index >> 3;
++	if (count > 0 && count <= 25 && byte_index + 4 <= self->length) {
++		const uint8_t *p = self->bytes + byte_index;
++		uint32_t window = ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) | ((uint32_t)p[2] << 8) | p[3];
++		int shift = (int)(self->bit_index & 7);
++		self->bit_index += count;
++		return (int)((window << shift) >> (32 - count));
++	}
++
+ 	int value = 0;
+ 	while (count) {
+ 		int current_byte = self->bytes[self->bit_index >> 3];
+@@ -1769,7 +1787,16 @@ int plm_buffer_peek_non_zero(plm_buffer_t *self, int bit_count) {
+ int16_t plm_buffer_read_vlc(plm_buffer_t *self, const plm_vlc_t *table) {
+ 	plm_vlc_t state = {0, 0};
+ 	do {
+-		state = table[state.index + plm_buffer_read(self, 1)];
++		// HWI-008D: read a buffered bit inline; fall back to refill at the end
++		int bit;
++		if (self->bit_index < (self->length << 3)) {
++			bit = (self->bytes[self->bit_index >> 3] >> (7 - (self->bit_index & 7))) & 1;
++			self->bit_index++;
++		}
++		else {
++			bit = plm_buffer_read(self, 1);
++		}
++		state = table[state.index + bit];
+ 	} while (state.index > 0);
+ 	return state.value;
+ }
+@@ -3361,6 +3388,14 @@ void plm_video_process_macroblock(
+ 		return; // corrupt video
+ 	}
+ 
++	// HWI-008D: full-pel prediction is a plain row copy
++	if (!interpolate && !odd_h && !odd_v) {
++		for (int y = 0; y < block_size; y++) {
++			memcpy(d + di + y * dw, s + si + y * dw, block_size);
++		}
++		return;
++	}
++
+ 	#define PLM_MB_CASE(INTERPOLATE, ODD_H, ODD_V, OP) \
+ 		case ((INTERPOLATE << 2) | (ODD_H << 1) | (ODD_V)): \
+ 			PLM_BLOCK_SET(d, di, dw, si, dw, block_size, OP); \

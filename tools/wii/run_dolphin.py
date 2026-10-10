@@ -857,11 +857,14 @@ GXS_LOG, GXS_RUNS, GXS_MAGIC = "halo-wii-gx/scene.log", "halo-wii-gx/runs.txt", 
 GXS_CALIBRATION = 9
 GEO_LOG, GEO_RUNS, GEO_MAGIC = "halo-wii-geometry/view.log", "halo-wii-geometry/runs.txt", "halo-wii-geometry-v1"
 GEO_CYCLES = 4
+CNT_LOG, CNT_RUNS, CNT_MAGIC = "halo-wii-content/loaders.log", "halo-wii-content/runs.txt", "halo-wii-content-v1"
+CNT_CYCLES = 2
 
 # Counter-based scenarios: (run counter, guest log, counter magic).
 COUNTER_SCENARIOS = {"gx_materials": (GXM_RUNS, GXM_LOG, "halo-wii-gxm-v1"),
                      "gx_scene": (GXS_RUNS, GXS_LOG, GXS_MAGIC),
-                     "geometry_view": (GEO_RUNS, GEO_LOG, GEO_MAGIC)}
+                     "geometry_view": (GEO_RUNS, GEO_LOG, GEO_MAGIC),
+                     "content_loaders": (CNT_RUNS, CNT_LOG, CNT_MAGIC)}
 
 
 def run_counter(data, magic):
@@ -1038,6 +1041,63 @@ def check_geometry_view(build_id, run_number, initial_count, previous_log, files
     return guest, persistence
 
 
+def check_content_loaders(build_id, run_number, initial_count, previous_log, files, expect_exit="pad_start"):
+    """Evaluate one cold launch of the content loader self-test (HWI-008C, HWI-008E) from its SD log.
+
+    Requires an accepted case list, every case passing in each load/check/release
+    cycle (valid files decode to the host digests and read back from GX exactly,
+    malformed files reject with the stated reason), identical cycles, no heap
+    growth and a passing END.
+    """
+    expected_count = initial_count + run_number
+    guest, persistence, lines = counter_and_report(files, CNT_RUNS, CNT_LOG, CNT_MAGIC, expected_count, previous_log)
+    if lines is None:
+        return guest, persistence
+    found = check_begin_end("content_loaders", lines, build_id, expected_count, guest, persistence)
+    if found is None:
+        return guest, persistence
+    _, end = found
+    obs = guest["observations"]
+    listed = [fields(line) for line in lines if line.startswith("CASES ")]
+    obs["cases"] = listed[-1] if listed else None
+    if len(listed) != 1 or listed[0].get("ok") != "1" or listed[0].get("count") in (None, "0"):
+        guest["failures"].append("case_list_not_accepted")
+        return guest, persistence
+    count = listed[0]["count"]
+    cases = [fields(line) for line in lines if line.startswith("CASE ")]
+    failed = sorted({c.get("id") for c in cases if c.get("result") != "pass"})
+    obs["failed_cases"] = failed
+    if failed:
+        guest["failures"].append("cases_failed")
+    cycles = [fields(line) for line in lines if line.startswith("CYCLE ")]
+    keep = ("n", "passed", "failed", "rejected_as_expected", "textures", "animations", "sounds", "models",
+            "lightmaps", "collisions", "model_animations", "fonts", "strings", "gx_images", "mip_levels", "draws",
+            "peeks", "mismatches", "max_err", "controls_detected", "crc", "heap_growth")
+    obs["cycles"] = [{k: c.get(k) for k in keep} for c in cycles]
+    if len(cycles) != CNT_CYCLES or len(cases) != CNT_CYCLES * int(count):
+        guest["failures"].append(f"expected_{CNT_CYCLES}_cycles_of_{count}_cases")
+    elif any(c.get("passed") != count or c.get("failed") != "0" or c.get("mismatches") != "0" for c in cycles):
+        guest["failures"].append("cycle_not_all_passed")
+    elif len({c.get("crc") for c in cycles}) != 1:
+        guest["failures"].append("cycle_results_differ")
+    if any(c.get("controls_detected", "0/0").split("/")[0] in ("", "0") for c in cycles):
+        guest["failures"].append("texture_control_not_detected")
+    last_fields(lines, ("SUMMARY ",), obs)
+    obs["timing"] = [fields(line) for line in lines if line.startswith("TIMING ")]
+    obs["memory"] = [fields(line) for line in lines if line.startswith("MEMORY ")]
+    summary = obs.get("summary", {})
+    if summary.get("stable") != "1" or summary.get("all_passed") != "1" or summary.get("heap_growth_max") != "0":
+        guest["failures"].append("summary_not_stable_passed_or_heap_grew")
+    obs["end"] = end
+    if end.get("result") != "pass":
+        guest["failures"].append("guest_reported_fail")
+    if end.get("exit") != expect_exit:
+        guest["failures"].append(f"exit_not_{expect_exit}")
+    if end.get("storage") != "1":
+        persistence["failures"].append("guest_storage_not_ready")
+    return guest, persistence
+
+
 # ---------------------------------------------------------------------------
 # Batch execution
 # ---------------------------------------------------------------------------
@@ -1132,7 +1192,8 @@ def parse_args(argv):
                              "(in WSL on Windows, native on macOS)")
     parser.add_argument("--wsl-distro", default="Debian", help="WSL distribution with mtools (Windows only)")
     parser.add_argument("--read-back", action="append", default=[], help="SD path to read after each launch")
-    parser.add_argument("--scenario", choices=("none", "probe", "gx_materials", "gx_scene", "geometry_view"),
+    parser.add_argument("--scenario", choices=("none", "probe", "gx_materials", "gx_scene", "geometry_view",
+                                               "content_loaders"),
                         default="none")
     parser.add_argument("--probe-exit", default="pad_start", help="expected guest END exit reason")
     parser.add_argument("--tolerated-host-exit", action="append", default=[],
@@ -1349,7 +1410,7 @@ def main(argv=None):
                 previous_log = log.decode("ascii", "replace").replace("\r\n", "\n")
         elif args.scenario in COUNTER_SCENARIOS:
             checker = {"gx_materials": check_gx_materials, "gx_scene": check_gx_scene,
-                       "geometry_view": check_geometry_view}[args.scenario]
+                       "geometry_view": check_geometry_view, "content_loaders": check_content_loaders}[args.scenario]
             guest, persistence = checker(build_id, number, initial_count, previous_log, read, args.probe_exit)
             log = read.get(COUNTER_SCENARIOS[args.scenario][1])
             if log is not None:

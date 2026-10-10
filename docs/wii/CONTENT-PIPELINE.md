@@ -1,4 +1,4 @@
-# Host content pipeline (HWI-008 baseline)
+# Host content pipeline (HWI-008)
 
 This pipeline turns your own Halo data into Wii-ready, versioned derived
 files on your computer. It runs on the host with Python 3.11 or later and
@@ -6,11 +6,24 @@ needs no Wii, Dolphin or devkitPro. It never changes the source files and
 refuses to write inside the checkout. The source, the outputs and the private
 reports stay outside Git and are never published.
 
-What it covers today: an inventory of every map, tag group, bitmap, sound,
-recorded animation, font and string tag, and every movie file; GX conversion
-of every bitmap; explicit conversion of recorded animations; and sound
-permutations in a Wii container. Models, collision, shaders, scripts, fonts,
-movies and the runtime loaders are not converted yet (see
+What it covers today:
+
+- an inventory of every map, tag group, bitmap, sound, recorded animation,
+  font and string tag, and every movie file;
+- GX conversion of every bitmap, explicit conversion of recorded animations
+  and sound permutations in a Wii container (HWI-008B);
+- model render geometry, structure-BSP lightmap geometry, collision BSPs,
+  model animation frame data, fonts and unicode text, each in a big-endian
+  sectioned container (HWI-008C);
+- a census of shaders, whose parameters the engine reads in place;
+- Wii runtime loaders for all nine containers (textures, recorded
+  animations, sounds, models, lightmap geometry, collision, model
+  animations, fonts and text), proven in Dolphin
+  ([Wii loaders](#wii-runtime-loaders));
+- the game's five movies, transcoded to MPEG-1 video and MP2 audio for the
+  vendored pl_mpeg decoder (HWI-008D, [movies](#movies)).
+
+Scripts and the remaining tag fields are not converted yet (see
 [open items](#open-items)).
 
 ## Inputs
@@ -41,13 +54,20 @@ python -B tools/wii/content_inventory.py --staging <staging-dir> `
 # 2. Convert and publish a generation (all maps and categories by default)
 python -B tools/wii/content_convert.py --staging <staging-dir> `
   --output-root <private-dir>/content --record <private-dir>/run-1.json
-#    optional: --maps <map> <map>   --categories textures animations sounds
+#    optional: --maps <map> <map>
+#              --categories textures animations sounds models lightmaps collision
+#                           model_animations fonts strings shaders
 #              --verify-per-kind N (items re-decoded per format/type/map; default 2)
 
 # 3. Movie decode probe with your own FFmpeg build (host only)
 python -B tools/wii/probe_movies.py --image <image.iso> --image-inventory <xiso-inventory.json> `
   --ffmpeg-bin <dir-with-ffmpeg-and-ffprobe> --output <private-dir>/movie-probe.json `
   --transcode-sample <private-dir>/movie-transcode
+
+# 4. Movies: transcode the five game movies and publish them under their own root
+python -B tools/wii/movie_convert.py --image <image.iso> --image-inventory <xiso-inventory.json> `
+  --ffmpeg-bin <dir-with-ffmpeg-and-ffprobe> --output-root <private-dir>/movies --record <private-dir>/movies-1.json
+#    optional: --profile wii-mpeg1-q8-mp2-v1 (default) | wii-mpeg1-q6-mp2-v1 | wii-mpeg1-q4-mp2-v1
 
 # Tests (authored fixtures only; no game data)
 python -B -m unittest discover -s tools/wii -p "test_*.py"
@@ -73,6 +93,12 @@ settings and the source re-hash results. It is never overwritten.
 <output-root>/generations/<generation>/textures/<map>/<tag>-<bitmap>.hwt
 <output-root>/generations/<generation>/animations/<map>/<index>.hra
 <output-root>/generations/<generation>/sounds/<map>/<tag>-<range>-<perm>.hws
+<output-root>/generations/<generation>/models/<map>/<tag>.hwm
+<output-root>/generations/<generation>/lightmaps/<map>/<bsp tag>.hwl
+<output-root>/generations/<generation>/collision/<map>/<tag>.hwc
+<output-root>/generations/<generation>/model_animations/<map>/<tag>.hma
+<output-root>/generations/<generation>/fonts/<map>/<tag>.hwf
+<output-root>/generations/<generation>/strings/<map>/<tag>.hus
 ```
 
 The generation id is the first 16 hex digits of the manifest's SHA-256. The
@@ -86,7 +112,8 @@ paths. It records:
 - per source map: stored and inflated hashes, sizes, build and category;
 - per output: path, size, SHA-256, kind, source identity (map, tag ordinal,
   index, format and dimensions, source byte hash) and, for textures, the GX
-  format, image count and whether the dimensions fit GX.
+  format, image count and whether the dimensions fit GX;
+- `in_place`: per map, the shader tags counted and checked by group.
 
 The same input and profile always give byte-identical manifest and output
 files, so the generation id is the same.
@@ -165,6 +192,126 @@ per channel holding 64 samples, with a little-endian header word that the
 runtime decoder must read explicitly. Uncompressed PCM16 is byte-swapped to
 big-endian.
 
+**Sectioned containers (HWI-008C).** HWM1, HWL1, HWC1, HMA1, HWF1 and
+HUS1 share one layout (`tools/wii/be_records.py`):
+
+| Part | Contents |
+|---|---|
+| Header, 32 bytes | magic, version 1, header size 32, section count, flags 0, total file bytes, 16 zero bytes |
+| Section table | per section, in ascending id order: id, record bytes, record count, offset, bytes |
+| Sections | each at the next 32-byte boundary, zero-padded; the file ends on a 32-byte boundary |
+
+Every record is decoded from the Xbox bytes with an explicit little-endian
+field format and re-encoded big-endian with the same format; floats keep
+their IEEE-754 bits. Each conversion rebuilds the exact source bytes from
+its output or fails. A reader rejects a missing or reordered section, a
+wrong record size, count, offset or length, and non-zero padding.
+
+| Container | One per | Sections (record bytes) |
+|---|---|---|
+| HWM1 | model tag | parts (56), Xbox compressed model vertices (32: position, packed normal/binormal/tangent, s16 texcoords, node indices, weight), u16 strip or list indices |
+| HWL1 | scenario structure BSP | BSP (16), lightmaps (12), materials (188, with their render lighting), compressed environment vertices (32), lightmap vertices (8), surfaces (6, indices local to the material) |
+| HWC1 | collision model tag, and each structure BSP | BSP ranges (68), then the eight collision arrays: 3D nodes (12), planes (16), leaves (8), 2D references (8), 2D nodes (20), surfaces (12), edges (24), vertices (16) |
+| HMA1 | animation graph tag | animations (80), frame info f32 (4), defaults, frames and compressed blocks (bytes, per-field big-endian) |
+| HWF1 | font tag | font (24), character tables (8), character indices (2), characters (20), glyph pixels (1, verbatim) |
+| HUS1 | unicode string list or HUD message text tag | strings (8), UTF-16 code units (2) |
+
+The field lists are in the module docstrings (`content_geometry.py`,
+`content_animation.py`, `content_text.py`). Vertices stay in their Xbox
+compressed forms in the containers; the Wii loaders expand them (see
+[Wii loaders](#wii-runtime-loaders)). Compressed model animations keep every
+array at its original offset, and the arrays must cover the block exactly.
+
+**Read in place (no conversion).** Shader parameters are typed tag fields
+(enums, flags, colours, floats, references, blocks). No shader group has a
+tag-data or file-offset field in the upstream validator schema, and the
+Xbox pixel programs live in the executable, not the maps. The engine reads
+them from the relocated tag cache (ADR-015), which still needs its scalar
+fields byte-ordered for the PowerPC (see open items). The converter checks
+every shader root lies in tag data and records the counts. 8-bit string
+lists (`str#`) are bytes and need no byte-order change.
+
+## Wii runtime loaders
+
+`port/wii/content` holds C loaders for all nine containers and a self-test
+DOL (`ninja wii_content_loaders`; [README](../../port/wii/content/README.md)).
+They validate every header field, count, length and reserved byte, load
+files from SD into owned 32-byte-aligned memory and decode explicitly:
+texels by the GX rules, recorded animations back to their Xbox stream,
+Xbox ADPCM to PCM16 (HWI-008C). The six sectioned containers (HWI-008E)
+are validated section by section and record by record, including every
+index the engine follows, and decoded into one owned arena each:
+
+| Container | Decoded form |
+|---|---|
+| HWM1 | parts; GX indexed vertices (56 bytes: F32 position, F32 normal, binormal and tangent expanded from 11:11:10 by the engine's formula, s16 texcoord, node bytes and weight as stored); u16 strip or list indices |
+| HWL1 | BSP, lightmaps, materials; environment vertices (56 bytes: F32 position, expanded NBT, F32 texcoord); lightmap vertices (16 bytes: expanded incident radiosity, s16 texcoord); u16 surfaces |
+| HWC1 | the engine's eight collision record arrays, every index checked against its BSP |
+| HMA1 | the Xbox frame info, defaults, frames and compressed blocks in native order; compressed blocks stay compressed and decode at playback |
+| HWF1 | records, character tables and indices; 8-bit glyph coverage verbatim |
+| HUS1 | native UTF-16 code units per string |
+
+Each loader exposes a canonical digest of its decoded form (every field
+little-endian) that `tools/wii/content_decoded.py` computes on the host;
+for model animations, unicode string lists and fonts the decoded data also
+rebuilds the converter's source hash. The renderer decisions (F32 normals,
+s16 texcoords through the texture matrix, 16-bit indices, skinning left to
+the renderer, decode compressed animations at playback, glyphs into a GX
+cache texture) are recorded in the
+[loader README](../../port/wii/content/README.md#decoded-forms-and-digests).
+
+`tools/wii/content_loader_cases.py` stages a deterministic sample with host
+digests, malformed variants and wrong-format controls, and
+`run_dolphin.py --scenario content_loaders` checks a run; `--sweep` lists
+every output of the six kinds for the host build. Evidence:
+[HWI-008C](evidence/2026-10-10-content-loaders.md) for the first three
+loaders, [HWI-008E](evidence/2026-10-10-content-loaders-2.md) for the six
+sectioned containers.
+
+## Movies
+
+`movie_convert.py` (HWI-008D) reads the five game movies from the image at
+the byte ranges the image inventory lists, through FFmpeg's subfile protocol,
+so nothing is extracted. It transcodes each with your own FFmpeg build and
+publishes one generation with the same staging, validation, rename and
+`CURRENT` steps as above. Give it its own output root, because a root has one
+`CURRENT` generation.
+
+```text
+<movie-root>/generations/<generation>/movies/game-movie-<n>.mpg   n = 1..5, by disc path
+```
+
+| Profile | Video | Audio | Five movies |
+|---|---|---|---|
+| `wii-mpeg1-q8-mp2-v1` (default) | MPEG-1, 640×480, `-q:v 8`, 30000/1001 fps | MP2 192 kbit/s, source rate and channels | 96,053,248 bytes |
+| `wii-mpeg1-q6-mp2-v1` | as above, `-q:v 6` | as above | 121,927,680 bytes |
+| `wii-mpeg1-q4-mp2-v1` | as above, `-q:v 4` | as above | 177,260,544 bytes |
+
+The container is an MPEG-1 program stream, which the Wii decodes with the
+vendored pl_mpeg ([third-party notes](../../port/wii/third_party/README.md)).
+The default is the setting whose heaviest measured passage still decodes near
+real time in Dolphin. The [decoder evidence](evidence/2026-10-10-movie-audio-decoders.md)
+has the reasons. Re-run with another profile once hardware measurements
+show the headroom.
+
+- **Checks before publication.** FFmpeg must exit 0 with no messages at its
+  `error` level. ffprobe must count exactly the frames in the Bink header,
+  one MPEG-1 video stream at the source size, and one MP2 stream at the
+  source rate and channel count. Every output must start with an MPEG pack
+  header. Any failure fails the run and nothing is published.
+- **Determinism.** FFmpeg runs single-threaded with bit-exact flags and no
+  metadata. The manifest records the FFmpeg and ffprobe SHA-256 and version
+  line, the profile and its hash, this module's hash, the image and image
+  inventory hashes, each source's byte-range hash, header facts and output
+  hash, with no timestamps or host paths. The same image, FFmpeg binary and
+  profile give the same generation.
+- **Exclusions.** The disc's demo-launcher files (its executable, videos,
+  WMA and WAV audio, images and fonts) are out of scope (ADR-019). The
+  manifest lists them as excluded, by kind and ordinal; they are never
+  transcoded or copied.
+- Exit status as for `content_convert.py` (0, 1, 3, 4). The image is
+  re-hashed after the run and must be unchanged.
+
 ## Profile `gx-baseline-v1`
 
 | Halo format | GX format | Fidelity |
@@ -198,11 +345,18 @@ decoded.
 
 ## Open items
 
-- **Content not converted yet:** models and geometry beyond the HWI-008A
-  section, collision, model animations, shaders, scripts, BSP lightmaps,
-  font glyphs and unicode strings (UTF-16LE that must be decoded
-  explicitly), and movies.
-- **Runtime:** no runtime loader exists for HWT1, HRA1 or HWS1.
+- **Tag fields in place:** shaders, model nodes and regions, BSP clusters,
+  scenario and object tags are read in place, but their scalar fields are
+  still Xbox little-endian. The upstream validator schema types only blocks,
+  references, data, enums and indices, so a complete byte-order pass needs
+  full field definitions (HWI-015B loads tags; HWI-008 owns the content).
+- **Content not converted yet:** scripts. The demo launcher's files are
+  out of scope (ADR-019) and are listed as excluded, never converted.
+- **Runtime:** every container has a Wii loader, proven in Dolphin. The
+  engine's consumers (HWI-015B, HWI-016, HWI-032) do not read the decoded
+  forms yet: skinning, the texcoord texture matrices, compressed-animation
+  playback (alignment-safe reads of arrays at 2-byte offsets) and the glyph
+  cache are theirs.
 - **Residency and storage budgets:** HWI-007 owns these. DXT3/DXT5 to RGBA8
   quadruples those textures; a CMPR colour plane plus an I4/I8 alpha plane
   is a possible smaller profile.
@@ -212,7 +366,10 @@ decoded.
   (`source/cache/xbox_texture_cache.c`) adds the bitmap group's pixel-data
   file offset to each bitmap's offset. On the retail maps that sum makes
   spans overlap, while each bitmap's own offset tiles the pixel region
-  without overlap. The converter uses the bitmap's own offset. A Wii texture
-  loader must not copy that addition.
-- **Movies and audio:** decoder choices are open. The plan and measurements
-  are in the [evidence](evidence/2026-10-10-content-pipeline.md).
+  without overlap. The converter uses the bitmap's own offset, and so does
+  the Wii texture loader, which reads only the converted file.
+- **Movies and audio:** decoders are chosen and measured in Dolphin
+  ([evidence](evidence/2026-10-10-movie-audio-decoders.md)): MPEG-1/MP2
+  through pl_mpeg for movies, and the game's Xbox ADPCM kept as stored and
+  decoded on the CPU. Still open: the engine's movie player, and every
+  hardware timing (HWI-040).

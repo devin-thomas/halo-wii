@@ -617,6 +617,78 @@ class GeometryViewScenarioTests(unittest.TestCase):
             self.assertIn("START", [b for step in script["steps"] for b in step.get("buttons", [])], name)
 
 
+def content_log(run, cycles=2, count=3, failed_case=None, crc2=None, heap=0, exit_reason="pad_start", result="pass",
+                cases_ok=1, mismatches=0, controls="2/3"):
+    """An authored content-loader guest report for launch `run` (0-based)."""
+    lines = [f"BEGIN target=content_loaders build={BUILD} previous_runs={run} storage=1",
+             f"CASES ok={cases_ok} count={count} efb=640x480 crop=32 cycles=2"]
+    for n in range(1, cycles + 1):
+        for i in range(count):
+            verdict = "fail" if failed_case == (n, i) else "pass"
+            lines.append(f"CASE cycle={n} id=t{i:02d} kind=texture expect=ok got=ok bytes=96 file_sha=1 "
+                         f"decoded_match=1 units=1 gx_images=1 mip_levels=0 draws=2 peeks=32 mismatches=0 "
+                         f"interpolated=0 max_err=0,0,0,0 readback_crc=12345678 load_us=10 decode_us=5 "
+                         f"result={verdict}")
+        failed = 1 if failed_case and failed_case[0] == n else 0
+        crc = crc2 if (crc2 and n == 2) else "0badcafe"
+        lines.append(f"CYCLE n={n} passed={count - failed} failed={failed} rejected_as_expected=0 textures={count}/{count} "
+                     f"animations=0/0 sounds=0/0 gx_images={count} mip_levels=0 draws=6 peeks=96 "
+                     f"mismatches={mismatches} max_err=0,0,0,0 controls_detected={controls} crc={crc} heap_growth={heap}")
+        lines.append(f"TIMING cycle={n} kind=texture valid_bytes=288 load_us=30 decode_us=15 scope=x")
+    lines.append(f"SUMMARY cycles=2 cases={count} stable=1 all_passed=1 heap_growth_max={heap}")
+    lines.append(f"END target=content_loaders build={BUILD} exit={exit_reason} storage=1 cases={count} stable=1 "
+                 f"heap_growth={heap} result={result}")
+    return "\n".join(lines) + "\n"
+
+
+class ContentLoadersScenarioTests(unittest.TestCase):
+    @staticmethod
+    def files(counter, log):
+        return {rd.CNT_RUNS: counter, rd.CNT_LOG: log.encode()}
+
+    def test_two_cold_launches_pass(self):
+        first = content_log(0)
+        guest, persistence = rd.check_content_loaders(BUILD, 1, 0, "", self.files(b"halo-wii-content-v1 1\n", first))
+        self.assertEqual((guest["failures"], persistence["failures"]), ([], []))
+        self.assertEqual(guest["observations"]["cycles"][1]["crc"], "0badcafe")
+        guest, persistence = rd.check_content_loaders(
+            BUILD, 2, 0, first, self.files(b"halo-wii-content-v1 2\n", first + content_log(1)))
+        self.assertEqual((guest["failures"], persistence["failures"]), ([], []))
+
+    def test_guest_failures_are_reported_in_the_guest_category(self):
+        cases = [
+            (dict(failed_case=(2, 1)), "cases_failed"),
+            (dict(cycles=1), "expected_2_cycles_of_3_cases"),
+            (dict(crc2="00000000"), "cycle_results_differ"),
+            (dict(mismatches=1), "cycle_not_all_passed"),
+            (dict(heap=32), "summary_not_stable_passed_or_heap_grew"),
+            (dict(exit_reason="auto_exit"), "exit_not_pad_start"),
+            (dict(result="fail"), "guest_reported_fail"),
+            (dict(cases_ok=0), "case_list_not_accepted"),
+            (dict(controls="0/3"), "texture_control_not_detected"),
+        ]
+        for options, failure in cases:
+            guest, persistence = rd.check_content_loaders(BUILD, 1, 0, "", self.files(
+                b"halo-wii-content-v1 1\n", content_log(0, **options)))
+            self.assertIn(failure, guest["failures"], failure)
+            self.assertEqual(persistence["failures"], [], failure)
+
+    def test_counter_that_did_not_advance_is_a_persistence_failure(self):
+        guest, persistence = rd.check_content_loaders(BUILD, 1, 0, "", self.files(b"halo-wii-content-v1 7\n",
+                                                                                  content_log(0)))
+        self.assertIn("run_counter_did_not_advance_across_cold_process", persistence["failures"])
+
+    def test_scenario_requires_build_info_and_efb_access_and_script_holds_start(self):
+        base = ["--dolphin", "Dolphin.exe", "--dol", "content_loaders.dol", "--out", "o", "--scenario",
+                "content_loaders"]
+        with self.assertRaises(SystemExit):
+            rd.parse_args(base + ["--build-info", "b.json"])
+        self.assertEqual(rd.parse_args(base + ["--build-info", "b.json", "--efb-access"]).scenario, "content_loaders")
+        script = json.loads((Path(__file__).parent / "inputs" / "content-loaders.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(rd.pad_entries(script)) // 8, 200120)
+        self.assertEqual(script["steps"][-1]["buttons"], ["START"])
+
+
 class MacHostTests(unittest.TestCase):
     START = "2026-10-10T12:00:00+00:00"
 

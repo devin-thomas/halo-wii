@@ -14,6 +14,16 @@ BUILD = Path("build/wii")
 SOURCES = [Path("port/wii/probe/main.c"), Path("port/wii/abi/boundary.c"), Path("port/wii/abi/fixture.c")]
 GX_SCENE_SOURCES = [Path("port/wii/gx_scene/main.c")]
 GX_MATERIALS_SOURCES = [Path("port/wii/gx_materials/main.c")]
+# HWI-008C/HWI-008E content loader self-test: the HWT1/HRA1/HWS1 and HWM1/HWL1/HWC1/HMA1/HWF1/HUS1
+# runtime loaders and their DOL.
+CONTENT_LOADER_SOURCES = [Path("port/wii/content") / name for name in (
+    "main.c", "content_check.c", "content_common.c", "content_sections.c", "hwt_texture.c", "hra_animation.c",
+    "hws_sound.c", "hwm_model.c", "hwl_lightmap.c", "hwc_collision.c", "hma_graph.c", "hwf_font.c",
+    "hus_strings.c")]
+CONTENT_LOADER_HEADERS = [Path("port/wii/content") / name for name in (
+    "content_check.h", "content_common.h", "content_sections.h", "hwt_texture.h", "hra_animation.h",
+    "hws_sound.h", "hwm_model.h", "hwl_lightmap.h", "hwc_collision.h", "hma_graph.h", "hwf_font.h",
+    "hus_strings.h")]
 GEOMETRY_VIEW_SOURCES = [Path("port/wii/geometry_view/main.c"),
                          *(Path("tools/wii") / name for name in (
                              "cache_arena_plan.c", "cache_stream_io.c", "cache_address_owned.c",
@@ -26,6 +36,12 @@ MEMORY_STRATEGY_SOURCES = [Path("port/wii/memory_strategy/main.c"),
                                "cache_address_probe.c", "cache_bsp_probe.c", "cache_schema_graph.c",
                                "cache_schema_tables.c", "game_state_image.c", "game_state_census_table.c"))]
 MEMORY_STRATEGY_ENGINE_SOURCES = [Path("source/memory/data.c"), Path("source/memory/memory_pool.c")]
+# HWI-008D movie and audio decoder benchmark: authored units plus the pinned
+# vendored decoders (port/wii/third_party, compiled inside media_decoders.c).
+MEDIA_BENCH_SOURCES = [Path("port/wii/media_bench") / name for name in ("main.c", "media_core.c", "media_decoders.c")]
+MEDIA_BENCH_HEADERS = [Path("port/wii/media_bench/media_core.h"), Path("port/wii/third_party/pl_mpeg/pl_mpeg.h"),
+                       Path("port/wii/third_party/pl_mpeg/pl_mpeg_wii.h"),
+                       Path("port/wii/third_party/stb/stb_image.h")]
 MEMORY_STRATEGY_HEADERS = [*(Path("tools/wii") / name for name in (
                                "cache_schema_graph.h", "cache_schema_tables.h", "game_state_image.h")),
                            *sorted(Path("port/wii/memory_strategy/engine_shim").glob("*.h")),
@@ -41,14 +57,17 @@ CFLAGS = ["-std=c11", "-O2", "-g", "-Wall", "-Wextra", "-Werror", "-ffp-contract
 # CFLAGS, and link only objects that pass engine_wide_references(). The
 # current targets are authored diagnostics, not engine units, and keep CFLAGS.
 ENGINE_CFLAGS = [*CFLAGS, *ENGINE_SEMANTIC_FLAGS]
-LIBRARIES = ("libfat.a", "libwiiuse.a", "libbte.a", "libogc.a")
+LIBRARIES = ("libfat.a", "libwiiuse.a", "libbte.a", "libogc.a", "libasnd.a")
+# Archives linked as inputs (before -logc) by the targets that use them.
+TARGET_ARCHIVES = {"wii_media_bench": ("libasnd.a",)}
 
 
 def source_inputs():
     return [Path("tools/wii_build.py"), Path("tools/wii/build.py"),
             Path("tools/wii/check_toolchain.py"), *SOURCES, *GX_SCENE_SOURCES, *GX_MATERIALS_SOURCES,
-            *GEOMETRY_VIEW_SOURCES, *MEMORY_STRATEGY_SOURCES, *MEMORY_STRATEGY_ENGINE_SOURCES,
-            *MEMORY_STRATEGY_HEADERS,
+            *GEOMETRY_VIEW_SOURCES, *CONTENT_LOADER_SOURCES, *CONTENT_LOADER_HEADERS,
+            *MEMORY_STRATEGY_SOURCES, *MEMORY_STRATEGY_ENGINE_SOURCES,
+            *MEMORY_STRATEGY_HEADERS, *MEDIA_BENCH_SOURCES, *MEDIA_BENCH_HEADERS,
             *sorted(Path("port/wii/abi").glob("*.h")),
             *(Path("tools/wii") / name for name in (
                 "cache_arena_plan.h", "cache_stream_io.h", "cache_address_owned.h",
@@ -155,9 +174,13 @@ def generate_wii_build(n, sln):
                 BUILD / "gx_materials", BUILD / "gx_materials-build-info.json"),
                ("wii_geometry_view", "geometry_view", "owned_geometry_diagnostic_no_embedded_assets",
                 GEOMETRY_VIEW_SOURCES, BUILD / "geometry_view", BUILD / "geometry_view-build-info.json"),
+               ("wii_content_loaders", "content_loaders", "owned_content_loader_diagnostic_no_embedded_assets",
+                CONTENT_LOADER_SOURCES, BUILD / "content_loaders", BUILD / "content_loaders-build-info.json"),
                ("wii_memory_strategy", "memory_strategy", "memory_strategy_diagnostic_no_embedded_assets",
                 [*MEMORY_STRATEGY_SOURCES, *MEMORY_STRATEGY_ENGINE_SOURCES], BUILD / "memory_strategy",
-                BUILD / "memory_strategy-build-info.json"))
+                BUILD / "memory_strategy-build-info.json"),
+               ("wii_media_bench", "media_bench", "media_decoder_benchmark_no_embedded_assets", MEDIA_BENCH_SOURCES,
+                BUILD / "media_bench", BUILD / "media_bench-build-info.json"))
     for target, stem, scope, sources, object_dir, manifest in targets:
         objects = []
         for source in sources:
@@ -172,7 +195,8 @@ def generate_wii_build(n, sln):
                 n.build(obj, "wii_cc", source, implicit=implicit)
             objects.append(obj)
         elf, dol, link_map = BUILD / f"{stem}.elf", BUILD / f"{stem}.dol", BUILD / f"{stem}.map"
-        n.build(elf, "wii_link", objects, implicit=[BUILD / "local-config.json", *libraries],
+        archives = [root / "libogc/lib/wii" / name for name in TARGET_ARCHIVES.get(target, ())]
+        n.build(elf, "wii_link", [*objects, *archives], implicit=[BUILD / "local-config.json", *libraries],
                 implicit_outputs=link_map)
         n.build(dol, "wii_dol", elf, implicit=BUILD / "local-config.json")
         n.build(manifest, "wii_manifest", implicit=[elf, dol, link_map, BUILD / "local-config.json"],
