@@ -273,10 +273,14 @@ def _block(space, field, count, stride):
 
 
 def _collision_bsp(space, bsp, defects):
-    """One small authored collision BSP whose indices are consistent."""
-    arrays = {0: ("<3i", [(-1, 1, 0), (0, -2, -3)]), 12: ("<4f", [(0, 0, 1, 2.5), (1, 0, 0, -1)]),
-              24: ("<Hhi", [(1, 2, 0), (0, 0, -1)]), 36: ("<2i", [(0, 0), (1, -1)]),
-              48: ("<3f2i", [(0.5, 0.5, 1.0, -1, -2)]),
+    """One small authored collision BSP whose indices are consistent: 3D node
+    children are nodes, NONE or leaves (sign bit), 2D references and 2D node
+    children name 2D nodes or surfaces (sign bit), and a 2D reference plane
+    may carry the flip bit, as the engine reads them."""
+    leaf, surface = -0x80000000, -0x80000000
+    arrays = {0: ("<3i", [(0, 1, -1), (1, leaf, leaf + 1)]), 12: ("<4f", [(0, 0, 1, 2.5), (1, 0, 0, -1)]),
+              24: ("<Hhi", [(1, 2, 0), (0, 0, -1)]), 36: ("<2i", [(0, 0), (-0x80000000 + 1, surface)]),
+              48: ("<3f2i", [(0.5, 0.5, 1.0, surface, surface + 1)]),
               60: ("<2iBbh", [(0, 0, 3, -1, 2), (1, 2, 0, 0, -1)]),
               72: ("<6i", [(0, 1, 1, 2, 0, -1), (1, 2, 2, 0, 1, 0), (2, 3, 0, 1, -1, 1)]),
               84: ("<3fi", [(0, 0, 0, 0), (1, 0, 0, 1), (1, 1, 0, 2), (0, 1, 0, 2)])}

@@ -14,11 +14,16 @@ BUILD = Path("build/wii")
 SOURCES = [Path("port/wii/probe/main.c"), Path("port/wii/abi/boundary.c"), Path("port/wii/abi/fixture.c")]
 GX_SCENE_SOURCES = [Path("port/wii/gx_scene/main.c")]
 GX_MATERIALS_SOURCES = [Path("port/wii/gx_materials/main.c")]
-# HWI-008C content loader self-test: the HWT1/HRA1/HWS1 runtime loaders and their DOL.
+# HWI-008C/HWI-008E content loader self-test: the HWT1/HRA1/HWS1 and HWM1/HWL1/HWC1/HMA1/HWF1/HUS1
+# runtime loaders and their DOL.
 CONTENT_LOADER_SOURCES = [Path("port/wii/content") / name for name in (
-    "main.c", "content_check.c", "content_common.c", "hwt_texture.c", "hra_animation.c", "hws_sound.c")]
+    "main.c", "content_check.c", "content_common.c", "content_sections.c", "hwt_texture.c", "hra_animation.c",
+    "hws_sound.c", "hwm_model.c", "hwl_lightmap.c", "hwc_collision.c", "hma_graph.c", "hwf_font.c",
+    "hus_strings.c")]
 CONTENT_LOADER_HEADERS = [Path("port/wii/content") / name for name in (
-    "content_check.h", "content_common.h", "hwt_texture.h", "hra_animation.h", "hws_sound.h")]
+    "content_check.h", "content_common.h", "content_sections.h", "hwt_texture.h", "hra_animation.h",
+    "hws_sound.h", "hwm_model.h", "hwl_lightmap.h", "hwc_collision.h", "hma_graph.h", "hwf_font.h",
+    "hus_strings.h")]
 GEOMETRY_VIEW_SOURCES = [Path("port/wii/geometry_view/main.c"),
                          *(Path("tools/wii") / name for name in (
                              "cache_arena_plan.c", "cache_stream_io.c", "cache_address_owned.c",
