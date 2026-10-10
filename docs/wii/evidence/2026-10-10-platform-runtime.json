@@ -1,0 +1,1271 @@
+{
+  "schema_version": 1,
+  "ticket": "HWI-015",
+  "scope": "Halo engine linked against Wii platform services; engine start-up and a controlled fixed-step scenario in stock Dolphin; no map, no rendering",
+  "sources": {
+    "engine_build_commit": "cdec0591",
+    "evidence_build_commit": "cefa2090a62cb03aae11e167519fc9d99230a000",
+    "source_dirty": false,
+    "base": "b570b933"
+  },
+  "build": {
+    "build_id": "90e59e3b0113357e",
+    "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+    "binutils": "GNU ld (GNU Binutils) 2.46.0.20260210",
+    "engine_flags": [
+      "-fsigned-char",
+      "-fshort-wchar",
+      "-fno-strict-aliasing",
+      "-fwrapv",
+      "-fno-delete-null-pointer-checks",
+      "-fno-builtin-wcslen",
+      "-fno-builtin-wcsnlen",
+      "-fno-builtin-wcschr",
+      "-fno-builtin-wcsrchr",
+      "-fno-builtin-wcscmp",
+      "-fno-builtin-wcsncmp",
+      "-fno-builtin-wcscpy",
+      "-fno-builtin-wcsncpy",
+      "-fno-builtin-wcscat",
+      "-fno-builtin-wcsncat",
+      "-fno-builtin-wmemchr",
+      "-fno-builtin-wmemcmp",
+      "-fno-builtin-wmemcpy",
+      "-fno-builtin-wmemmove",
+      "-fno-builtin-wmemset",
+      "-std=gnu89",
+      "-w",
+      "-fcommon",
+      "-fms-extensions",
+      "-D__STRICT_ANSI__",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-fno-asynchronous-unwind-tables",
+      "-fno-unwind-tables",
+      "-include",
+      "port/wii/engine/include/halo_wii_prefix.h",
+      "-include",
+      "build/wii/engine/halo_wii_semantics.h",
+      "-Iport/linux/include",
+      "-iquote",
+      "port/linux/game",
+      "-DDEBUG",
+      "-Dxbox",
+      "-Isource",
+      "-Isource/main",
+      "-Isource/cseries",
+      "-Isource/sound",
+      "-Isource/bink",
+      "-Isource/saved films",
+      "-Isource/saved games",
+      "-Isource/cache",
+      "-Isource/units",
+      "-Isource/text",
+      "-Isource/tag_files",
+      "-Isource/structures",
+      "-Isource/shell",
+      "-Isource/shaders",
+      "-Isource/scenario",
+      "-Isource/render",
+      "-Isource/rasterizer",
+      "-Isource/physics",
+      "-Isource/objects",
+      "-Isource/objects/widgets",
+      "-Isource/networking",
+      "-Isource/models",
+      "-Isource/memory",
+      "-Isource/memory/zlib",
+      "-Isource/math",
+      "-Isource/tool",
+      "-Isource/items",
+      "-Isource/interface",
+      "-Isource/input",
+      "-Isource/hs",
+      "-Isource/game",
+      "-Isource/effects",
+      "-Isource/editor",
+      "-Isource/dialogs",
+      "-Isource/devices",
+      "-Isource/cutscene",
+      "-Isource/camera",
+      "-Isource/bungie_net",
+      "-Isource/bitmaps",
+      "-Isource/ai",
+      "-idirafter",
+      "port/include/xdk"
+    ],
+    "artifacts": {
+      "engine.elf": {
+        "sha256": "7cd304191442ba7a4c2934e7bfeb06d76a5bcbe36b09f59c448e0bb567486e5a",
+        "bytes": 37383328
+      },
+      "engine.dol": {
+        "sha256": "317a15b3ab7c8dd265bbd9500fae2cb904cf3d952efd0d8a6f9a597a201e3f9d",
+        "bytes": 4101856
+      },
+      "engine.map": {
+        "sha256": "fa6aaa7ffa14a2d59bba3b9031500f51084bd08cc574a9cb19690f3b32f98f8b",
+        "bytes": 8949066
+      }
+    },
+    "libogc_sha256": "fb0c956ee3b5d08fede5240472205102ebe1fde94197d36705cf2b44f3eeb906",
+    "toolchain_sha256": "d0ca79f317d44426f5563ff60121b344cb3a1148e5ec7a901ad5739b73ba6441",
+    "units": {
+      "engine_upstream": 499,
+      "engine_authored": 2,
+      "platform_reused_linux": 6,
+      "platform_wii": 11,
+      "third_party": 38
+    },
+    "gates": [
+      "no newlib wide-character references in engine objects (ADR-018)",
+      "no thread-local storage in any object"
+    ],
+    "probe_artifacts": {
+      "probe.elf": {
+        "sha256": "e96fe9b2422cbba07123462d9e1682c4f811e0cca2ea780bfddb5217ce18d287",
+        "bytes": 2284764
+      },
+      "probe.dol": {
+        "sha256": "72b3928f9f6cfc45742723d67f7eb3063b9604b3c3b294382d64bef67ba4b1af",
+        "bytes": 455392
+      },
+      "probe.map": {
+        "sha256": "bb8582ad5837ffcd4f31a610195f06d7c3265dd28213e4edf09f1a70f5f82e46",
+        "bytes": 655962
+      }
+    }
+  },
+  "mem1_image": {
+    "output_sections": {
+      ".init": {
+        "address": "0x80003f00",
+        "bytes": 164
+      },
+      ".text": {
+        "address": "0x80003fb0",
+        "bytes": 3212464
+      },
+      ".rodata": {
+        "address": "0x80314460",
+        "bytes": 651764
+      },
+      ".sdata2": {
+        "address": "0x803b3654",
+        "bytes": 10
+      },
+      ".eh_frame_hdr": {
+        "address": "0x803b3660",
+        "bytes": 6676
+      },
+      ".eh_frame": {
+        "address": "0x803b5074",
+        "bytes": 43400
+      },
+      ".ctors": {
+        "address": "0x803bf9fc",
+        "bytes": 12
+      },
+      ".dtors": {
+        "address": "0x803bfa08",
+        "bytes": 8
+      },
+      ".data": {
+        "address": "0x803bfa20",
+        "bytes": 186312
+      },
+      ".sdata": {
+        "address": "0x803ed200",
+        "bytes": 704
+      },
+      ".sbss": {
+        "address": "0x803ed4c0",
+        "bytes": 1808
+      },
+      ".bss": {
+        "address": "0x803edbd0",
+        "bytes": 18872272
+      }
+    },
+    "image_start": "0x80003f00",
+    "image_end": "0x815ed3a0",
+    "image_bytes": 22975648,
+    "mem1_after_image": 2174048,
+    "bytes_by_kind": {
+      "bss": 18872810,
+      "code": 3212604,
+      "data": 186806,
+      "rodata": 701584
+    },
+    "bytes_by_owner": {
+      "engine": {
+        "code": 2744808,
+        "rodata": 601654,
+        "data": 174009,
+        "bss": 18566671
+      },
+      "engine_authored": {
+        "code": 3540,
+        "bss": 9
+      },
+      "linux_platform_reused": {
+        "code": 28552,
+        "rodata": 3319,
+        "data": 4,
+        "bss": 48143
+      },
+      "sdk_libraries": {
+        "code": 345744,
+        "rodata": 75109,
+        "data": 12773,
+        "bss": 181659
+      },
+      "third_party": {
+        "code": 53752,
+        "rodata": 21263,
+        "data": 12
+      },
+      "wii_platform": {
+        "code": 36208,
+        "rodata": 239,
+        "data": 8,
+        "bss": 76328
+      }
+    },
+    "named_groups": {
+      "ai_debug": {
+        "code": 50620,
+        "rodata": 1432,
+        "data": 12,
+        "bss": 547730
+      },
+      "custom_edition_map_support": {
+        "code": 42576,
+        "rodata": 3550,
+        "data": 702,
+        "bss": 6623572
+      },
+      "netcode": {
+        "code": 255196,
+        "rodata": 2306,
+        "data": 2408,
+        "bss": 5096171
+      },
+      "profiling": {
+        "code": 28292,
+        "rodata": 454,
+        "data": 34079,
+        "bss": 1138742
+      },
+      "tag_validator": {
+        "code": 9796,
+        "rodata": 25,
+        "data": 2,
+        "bss": 3014772
+      }
+    }
+  },
+  "mem1_largest_allocations": [
+    {
+      "name": "custom_edition_maps_globals",
+      "object": "port/linux/game/custom_edition_maps.o",
+      "kind": "bss",
+      "bytes": 6557772,
+      "group": "custom_edition_map_support"
+    },
+    {
+      "name": "tag_validate_claims",
+      "object": "port/linux/game/tag_validate.o",
+      "kind": "bss",
+      "bytes": 3014656,
+      "group": "tag_validator"
+    },
+    {
+      "name": "profile_globals",
+      "object": "source/cseries/profile.o",
+      "kind": "bss",
+      "bytes": 1129808,
+      "group": "profiling"
+    },
+    {
+      "name": "render",
+      "object": "source/render/render.o",
+      "kind": "bss",
+      "bytes": 643732,
+      "group": ""
+    },
+    {
+      "name": "ai_debug",
+      "object": "source/ai/ai_debug.o",
+      "kind": "bss",
+      "bytes": 547652,
+      "group": "ai_debug"
+    },
+    {
+      "name": "update_client_globals",
+      "object": "source/game/player_queues_new.o",
+      "kind": "bss",
+      "bytes": 525460,
+      "group": "netcode"
+    },
+    {
+      "name": "inventories.2",
+      "object": "port/linux/game/network_objects.o",
+      "kind": "bss",
+      "bytes": 524288,
+      "group": "netcode"
+    },
+    {
+      "name": "late_joiner_players",
+      "object": "source/networking/network_server_manager.o",
+      "kind": "bss",
+      "bytes": 524288,
+      "group": "netcode"
+    },
+    {
+      "name": "damage_trails",
+      "object": "port/linux/game/network_damage.o",
+      "kind": "bss",
+      "bytes": 393216,
+      "group": "netcode"
+    },
+    {
+      "name": "states.4",
+      "object": "port/linux/game/network_objects.o",
+      "kind": "bss",
+      "bytes": 360624,
+      "group": "netcode"
+    },
+    {
+      "name": "widget_walk",
+      "object": "port/linux/game/tag_schema_effects.o",
+      "kind": "bss",
+      "bytes": 262544,
+      "group": ""
+    },
+    {
+      "name": "local_lens_flare_occlusion_test_results2",
+      "object": "source/rasterizer/rasterizer_lights.o",
+      "kind": "bss",
+      "bytes": 262176,
+      "group": ""
+    },
+    {
+      "name": "client_damage_animations",
+      "object": "port/linux/game/network_objects.o",
+      "kind": "bss",
+      "bytes": 262144,
+      "group": "netcode"
+    },
+    {
+      "name": "host_sent_transforms",
+      "object": "port/linux/game/network_coop.o",
+      "kind": "bss",
+      "bytes": 262144,
+      "group": "netcode"
+    },
+    {
+      "name": "damage_history",
+      "object": "port/linux/game/network_damage.o",
+      "kind": "bss",
+      "bytes": 196736,
+      "group": "netcode"
+    },
+    {
+      "name": "lights_port",
+      "object": "source/objects/object_lights.o",
+      "kind": "bss",
+      "bytes": 167948,
+      "group": ""
+    },
+    {
+      "name": "damage_explosions",
+      "object": "port/linux/game/network_damage.o",
+      "kind": "bss",
+      "bytes": 164864,
+      "group": "netcode"
+    },
+    {
+      "name": "host_sent_looks",
+      "object": "port/linux/game/network_coop.o",
+      "kind": "bss",
+      "bytes": 163840,
+      "group": "netcode"
+    },
+    {
+      "name": "objects_host_inventories",
+      "object": "port/linux/game/network_objects.o",
+      "kind": "bss",
+      "bytes": 163840,
+      "group": "netcode"
+    },
+    {
+      "name": "distributed_batches",
+      "object": "port/linux/game/network_distributed.o",
+      "kind": "bss",
+      "bytes": 155058,
+      "group": "netcode"
+    },
+    {
+      "name": "local_lens_flare_occlusion_test_results",
+      "object": "source/rasterizer/rasterizer_lights.o",
+      "kind": "bss",
+      "bytes": 139264,
+      "group": ""
+    },
+    {
+      "name": "update_server_globals",
+      "object": "source/game/player_queues_new.o",
+      "kind": "bss",
+      "bytes": 131340,
+      "group": "netcode"
+    },
+    {
+      "name": "host_sent_devices",
+      "object": "port/linux/game/network_coop.o",
+      "kind": "bss",
+      "bytes": 131072,
+      "group": "netcode"
+    },
+    {
+      "name": "s_mainStack",
+      "object": "/opt/devkitpro/libogc/lib/wii/libogc.a(default_stacks.o)",
+      "kind": "bss",
+      "bytes": 131072,
+      "group": ""
+    },
+    {
+      "name": "client_actors",
+      "object": "port/linux/game/network_actors.o",
+      "kind": "bss",
+      "bytes": 114048,
+      "group": "netcode"
+    }
+  ],
+  "mem1_subsystems": {
+    "port/linux/game": {
+      "code": 355568,
+      "rodata": 75506,
+      "data": 3158,
+      "bss": 13847068
+    },
+    "source/ai": {
+      "code": 475928,
+      "rodata": 428926,
+      "data": 5020,
+      "bss": 563092
+    },
+    "source/cseries": {
+      "code": 29768,
+      "rodata": 388,
+      "data": 161,
+      "bss": 1146473
+    },
+    "source/game": {
+      "code": 175248,
+      "rodata": 11680,
+      "data": 7219,
+      "bss": 688462
+    },
+    "source/rasterizer": {
+      "code": 233360,
+      "rodata": 39088,
+      "data": 1505,
+      "bss": 480259
+    },
+    "source/render": {
+      "code": 53884,
+      "rodata": 80,
+      "data": 4589,
+      "bss": 678020
+    },
+    "source/networking": {
+      "code": 88468,
+      "rodata": 760,
+      "data": 2362,
+      "bss": 588380
+    },
+    "sdk_libraries": {
+      "code": 345744,
+      "rodata": 75109,
+      "data": 12773,
+      "bss": 181659
+    },
+    "source/interface": {
+      "code": 234852,
+      "rodata": 5639,
+      "data": 69755,
+      "bss": 7517
+    },
+    "source/objects": {
+      "code": 122072,
+      "rodata": 336,
+      "data": 5895,
+      "bss": 175307
+    },
+    "source/hs": {
+      "code": 99876,
+      "rodata": 15131,
+      "data": 20289,
+      "bss": 78953
+    },
+    "source/units": {
+      "code": 159296,
+      "rodata": 2028,
+      "data": 6331,
+      "bss": 44837
+    },
+    "source/physics": {
+      "code": 91952,
+      "rodata": 360,
+      "data": 177,
+      "bss": 40956
+    },
+    "source/cache": {
+      "code": 38304,
+      "rodata": 220,
+      "data": 4,
+      "bss": 83629
+    },
+    "port/wii/engine": {
+      "code": 37832,
+      "rodata": 239,
+      "data": 8,
+      "bss": 76337
+    }
+  },
+  "layout": {
+    "game_state": {
+      "rows": 75,
+      "differences": [],
+      "ppc_fixed": {
+        "sizeof(struct data_array)": 56,
+        "sizeof(struct memory_pool)": 56,
+        "lruv_allocation_size(0)": 124,
+        "GAME_STATE_CPU_SIZE": 20709376,
+        "GAME_STATE_GPU_SIZE": 262144
+      },
+      "i686_bytes": 17804952,
+      "ppc_bytes": 17804952
+    },
+    "dwarf": {
+      "unit_types_in_both": 10103,
+      "distinct_types_in_both": 1472,
+      "ppc_only": 9093,
+      "i686_only": 43,
+      "classes": {
+        "identical": 10099,
+        "c_library": 4
+      },
+      "differences": [
+        {
+          "unit": "port/linux/game/network_distributed.c",
+          "type": "struct tm",
+          "class": "c_library",
+          "ppc": [
+            [
+              36,
+              9
+            ]
+          ],
+          "i686": [
+            [
+              44,
+              11
+            ]
+          ]
+        },
+        {
+          "unit": "source/bitmaps/libtiff/tif_compat.c",
+          "type": "struct _stat",
+          "class": "c_library",
+          "ppc": [
+            [
+              48,
+              11
+            ]
+          ],
+          "i686": [
+            [
+              36,
+              11
+            ]
+          ]
+        },
+        {
+          "unit": "source/cseries/errors.c",
+          "type": "struct tm",
+          "class": "c_library",
+          "ppc": [
+            [
+              36,
+              9
+            ]
+          ],
+          "i686": [
+            [
+              44,
+              11
+            ]
+          ]
+        },
+        {
+          "unit": "source/text/unicode.c",
+          "type": "struct tm",
+          "class": "c_library",
+          "ppc": [
+            [
+              36,
+              9
+            ]
+          ],
+          "i686": [
+            [
+              44,
+              11
+            ]
+          ]
+        }
+      ]
+    },
+    "i686_compiler": "Debian clang version 19.1.7 (3+b1)"
+  },
+  "host_reference": {
+    "compiler": "Debian clang version 19.1.7 (3+b1)",
+    "exit_code": 0,
+    "lines": [
+      "BEGIN host pointer_bits=32 game_state_used=3212",
+      "CADENCE cycle=0 cadence=60hz ticks=300 frames=600 frames_without_ticks=300 most_ticks_in_a_frame=1 digest=c1ad6ae6 chain=58ce9719 at1=ef3efead at30=1370c5e7 at150=fb1f5683 at300=c1ad6ae6 seed=56096e69 bodies=33 spawned=72 deleted=43 same=1",
+      "CADENCE cycle=0 cadence=30hz ticks=300 frames=300 frames_without_ticks=0 most_ticks_in_a_frame=1 digest=c1ad6ae6 chain=58ce9719 at1=ef3efead at30=1370c5e7 at150=fb1f5683 at300=c1ad6ae6 seed=56096e69 bodies=33 spawned=72 deleted=43 same=1",
+      "CADENCE cycle=0 cadence=20hz ticks=300 frames=201 frames_without_ticks=0 most_ticks_in_a_frame=2 digest=c1ad6ae6 chain=58ce9719 at1=ef3efead at30=1370c5e7 at150=fb1f5683 at300=c1ad6ae6 seed=56096e69 bodies=33 spawned=72 deleted=43 same=1",
+      "CADENCE cycle=0 cadence=144hz ticks=300 frames=1441 frames_without_ticks=1141 most_ticks_in_a_frame=1 digest=c1ad6ae6 chain=58ce9719 at1=ef3efead at30=1370c5e7 at150=fb1f5683 at300=c1ad6ae6 seed=56096e69 bodies=33 spawned=72 deleted=43 same=1",
+      "CADENCE cycle=0 cadence=irregular ticks=300 frames=224 frames_without_ticks=28 most_ticks_in_a_frame=7 digest=c1ad6ae6 chain=58ce9719 at1=ef3efead at30=1370c5e7 at150=fb1f5683 at300=c1ad6ae6 seed=56096e69 bodies=33 spawned=72 deleted=43 same=1",
+      "CADENCE cycle=0 cadence=60hz_for_vsync ticks=300 frames=600 frames_without_ticks=300 most_ticks_in_a_frame=1 digest=c1ad6ae6 chain=58ce9719 at1=ef3efead at30=1370c5e7 at150=fb1f5683 at300=c1ad6ae6 seed=56096e69 bodies=33 spawned=72 deleted=43 same=1",
+      "END host failures=0 result=pass"
+    ],
+    "sources_sha256": {
+      "port/wii/engine/fixed_step_scenario.c": "726aee5e50adc86a611ea89f95a4149c5a28c3e166f1d5931296bb39ba592530",
+      "source/game/game_time.c": "9ccd6cbaf0cc5985fcc2791fcacea0a891b026a91ffa254be13a109d4bef16a5",
+      "source/memory/data.c": "51fead0a9aa662e3103c3f148952a7286fd97b2508809a7cafd654c982dbe170",
+      "source/memory/crc.c": "c94d75076a4c62d22212ccab354c41fd32db488ff9121a63b4918e8a2afc4e4b",
+      "source/math/random_math.c": "7476d53567125be9548472c7427ee8310f6ab35d442e3cd4c2d37100f158ba4a",
+      "source/math/real_math.c": "7d8f5aaf7fe93415d1989f155cdf6efc333ede8d9a0e04f04a7e71eeb92757e3",
+      "tools/wii/engine_scenario_host.c": "0ec8b9e54d6b1867c04ffdadead8256b2b13735f2e11ab03970671ad8f37d392"
+    }
+  },
+  "dolphin": {
+    "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+    "launch_shape": [
+      "Dolphin.exe",
+      "--user",
+      "<new isolated profile>",
+      "--batch",
+      "--video_backend",
+      "D3D",
+      "--exec",
+      "engine.dol"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "os_window_utc": [
+      "2026-10-10T16:26:54+00:00",
+      "2026-10-10T16:28:16+00:00"
+    ]
+  },
+  "engine_launches": {
+    "hosts": [
+      {
+        "number": 1,
+        "cold_process": true,
+        "exit_code": "0x00000000",
+        "forced_stop": false,
+        "elapsed_seconds": 35.285,
+        "outcome": "exit_zero",
+        "dolphin_processes_after": 0,
+        "persistence": "passed",
+        "runner_guest": "not_evaluated",
+        "read_back": {
+          "halo-wii-engine/engine.log": {
+            "bytes": 9184,
+            "sha256": "b018c111e351fbcb3eda0a046022ae44afc57cd4ed9ac2621988ef763f977cf1"
+          },
+          "halo-wii-engine/runs.txt": {
+            "bytes": 21,
+            "sha256": "70b7300188438c2247a97efc32df453e6eaca9499a8e2db6884d3060d160d124"
+          },
+          "halo-wii-engine/result.txt": {
+            "bytes": 54,
+            "sha256": "00a9956eb170aefd0bd9994680da30da9a94b287719eb7bc2e3f0add4a475649"
+          },
+          "halo-wii-engine/data/debug.txt": {
+            "bytes": 909,
+            "sha256": "497dcfbddee93f1659811f6d600833099a195fe90cc029b73844d454c15b9993"
+          }
+        }
+      },
+      {
+        "number": 2,
+        "cold_process": true,
+        "exit_code": "0x00000000",
+        "forced_stop": false,
+        "elapsed_seconds": 34.674,
+        "outcome": "exit_zero",
+        "dolphin_processes_after": 0,
+        "persistence": "passed",
+        "runner_guest": "not_evaluated",
+        "read_back": {
+          "halo-wii-engine/engine.log": {
+            "bytes": 18349,
+            "sha256": "341a248c660292301eb3cc29c1dbdc9d4e25895d6064ae4577fbce8023032ed4"
+          },
+          "halo-wii-engine/runs.txt": {
+            "bytes": 21,
+            "sha256": "56b5af2508608876ad7a781ac1cfc70901e8042afb815a60e953b25bd8311b99"
+          },
+          "halo-wii-engine/result.txt": {
+            "bytes": 54,
+            "sha256": "00a9956eb170aefd0bd9994680da30da9a94b287719eb7bc2e3f0add4a475649"
+          },
+          "halo-wii-engine/data/debug.txt": {
+            "bytes": 1818,
+            "sha256": "b7ec085597a627c9d35eb589b48adf5341a7647b9c3b3fe82772c1e08233e26e"
+          }
+        }
+      }
+    ],
+    "guest": [
+      {
+        "begin": {
+          "target": "engine",
+          "build": "90e59e3b0113357e",
+          "previous_runs": "0",
+          "ios": "58.6176"
+        },
+        "fpscr": {
+          "entry": "00000004",
+          "engine": "00000000",
+          "ieee": "1"
+        },
+        "map": [
+          "MAP image bss=0x803edbd0..0x815ed3a0 sbss=0x803ed4c0 arena1_link=0x815ed3a0..0x81800000 arena2_link=0x90002000..0x933e0000",
+          "MAP entry arena1=0x815fd3a0..0x81800000 bytes=2108512 arena2=0x90002000..0x933e0000 bytes=54386688 heap_in_use=0 main_sp=0x814ae458 main_stack=131072",
+          "MAP gx fifo=0x8161e540 xfb0=0x8165e560 xfb1=0x816f4580 xfb_bytes_each=614400 arena1_after_gx=0x817b8000..0x81800000 bytes=294912 heap_in_use=1795392",
+          "MAP after_engine_start arena1_lo=0x817fc000 arena2_lo=0x900c6000"
+        ],
+        "persist": {
+          "previous_result": "0",
+          "digest": "00000000",
+          "chain": "00000000"
+        },
+        "arena_open": {
+          "offset": "0",
+          "low": "0x90002000",
+          "high_before": "0x933db7e0",
+          "high_during": "0x904db000",
+          "required": "51380224",
+          "spare": "2985984",
+          "state": "0x904db000+20971520",
+          "tags": "0x918db000+23068672",
+          "sound": "0x92edb000+4194304",
+          "general": "0x932db000+1048576"
+        },
+        "checks": [
+          "time pass frequency=1000000 sleep50_us=50001 tick_ms=50",
+          "thread pass id=2 exit=42 thread_fpscr=00000000 before=00000000 after=00000000 created=1 cleared=1",
+          "event_auto_reset pass timeout as expected",
+          "mutex pass release=1 again=0 error=288",
+          "files pass write=1 read=1 seek_read=1 size=8192 deleted=1 (case-insensitive Xbox path z:\\ -> sd:/halo-wii-engine/saves/z)",
+          "contiguous_memory pass block=0x933cb000 general_in_use=65536 fixed_address_request=0x0 (rejected: ADR-015)",
+          "contiguous_memory_free pass general_in_use=0 peak=65536",
+          "debug_output pass log writes ok"
+        ],
+        "stages": [
+          "STAGE shell_initialize begin",
+          "STAGE game_initialize begin",
+          "STAGE game_initialize result=1 game_state_used=17986420 heap_in_use=246149024 (before 1863136) unsupported=7",
+          "STAGE engine_report error_buffer_has_warning=1 (d:\\debug.txt is read back by the host)",
+          "STAGE shell_initialize result=0 (0 expected: rasterizer unsupported)"
+        ],
+        "cadence_runs": 18,
+        "cadences_identical": true,
+        "cadence_cycle0": [
+          {
+            "cadence": "60hz",
+            "ticks": "300",
+            "frames": "600",
+            "frames_without_ticks": "300",
+            "most_ticks_in_a_frame": "1",
+            "digest": "c1ad6ae6",
+            "chain": "58ce9719",
+            "at1": "ef3efead",
+            "at30": "1370c5e7",
+            "at150": "fb1f5683",
+            "at300": "c1ad6ae6",
+            "seed": "56096e69",
+            "bodies": "33",
+            "spawned": "72",
+            "deleted": "43"
+          },
+          {
+            "cadence": "30hz",
+            "ticks": "300",
+            "frames": "300",
+            "frames_without_ticks": "0",
+            "most_ticks_in_a_frame": "1",
+            "digest": "c1ad6ae6",
+            "chain": "58ce9719",
+            "at1": "ef3efead",
+            "at30": "1370c5e7",
+            "at150": "fb1f5683",
+            "at300": "c1ad6ae6",
+            "seed": "56096e69",
+            "bodies": "33",
+            "spawned": "72",
+            "deleted": "43"
+          },
+          {
+            "cadence": "20hz",
+            "ticks": "300",
+            "frames": "201",
+            "frames_without_ticks": "0",
+            "most_ticks_in_a_frame": "2",
+            "digest": "c1ad6ae6",
+            "chain": "58ce9719",
+            "at1": "ef3efead",
+            "at30": "1370c5e7",
+            "at150": "fb1f5683",
+            "at300": "c1ad6ae6",
+            "seed": "56096e69",
+            "bodies": "33",
+            "spawned": "72",
+            "deleted": "43"
+          },
+          {
+            "cadence": "144hz",
+            "ticks": "300",
+            "frames": "1441",
+            "frames_without_ticks": "1141",
+            "most_ticks_in_a_frame": "1",
+            "digest": "c1ad6ae6",
+            "chain": "58ce9719",
+            "at1": "ef3efead",
+            "at30": "1370c5e7",
+            "at150": "fb1f5683",
+            "at300": "c1ad6ae6",
+            "seed": "56096e69",
+            "bodies": "33",
+            "spawned": "72",
+            "deleted": "43"
+          },
+          {
+            "cadence": "irregular",
+            "ticks": "300",
+            "frames": "224",
+            "frames_without_ticks": "28",
+            "most_ticks_in_a_frame": "7",
+            "digest": "c1ad6ae6",
+            "chain": "58ce9719",
+            "at1": "ef3efead",
+            "at30": "1370c5e7",
+            "at150": "fb1f5683",
+            "at300": "c1ad6ae6",
+            "seed": "56096e69",
+            "bodies": "33",
+            "spawned": "72",
+            "deleted": "43"
+          },
+          {
+            "cadence": "vsync_measured",
+            "ticks": "300",
+            "frames": "600",
+            "frames_without_ticks": "300",
+            "most_ticks_in_a_frame": "1",
+            "digest": "c1ad6ae6",
+            "chain": "58ce9719",
+            "at1": "ef3efead",
+            "at30": "1370c5e7",
+            "at150": "fb1f5683",
+            "at300": "c1ad6ae6",
+            "seed": "56096e69",
+            "bodies": "33",
+            "spawned": "72",
+            "deleted": "43"
+          }
+        ],
+        "cycles": [
+          {
+            "heap_in_use": "246149024",
+            "arena1_lo": "0x817fc000",
+            "arena2_lo": "0x900c6000",
+            "general_in_use": "0",
+            "unsupported_names": "8",
+            "unsupported_calls": "5174"
+          },
+          {
+            "heap_in_use": "246149024",
+            "arena1_lo": "0x817fc000",
+            "arena2_lo": "0x900c6000",
+            "general_in_use": "0",
+            "unsupported_names": "8",
+            "unsupported_calls": "10341"
+          },
+          {
+            "heap_in_use": "246149024",
+            "arena1_lo": "0x817fc000",
+            "arena2_lo": "0x900c6000",
+            "general_in_use": "0",
+            "unsupported_names": "8",
+            "unsupported_calls": "15508"
+          }
+        ],
+        "cycles_summary": {
+          "heap_flat": "1",
+          "digest": "c1ad6ae6",
+          "chain": "58ce9719"
+        },
+        "arena_close": {
+          "restored": "1",
+          "high_after": "0x933db7e0",
+          "high_before": "0x933db7e0",
+          "low_before": "0x90002000",
+          "low_after": "0x900cf000",
+          "general_peak": "65536",
+          "failed_allocations": "0",
+          "heap_in_use": "245800104"
+        },
+        "stack": {
+          "entry_sp": "0x814ae458",
+          "painted": "114688",
+          "peak_below_entry": "71864",
+          "window_exhausted": "0"
+        },
+        "unsupported": [
+          "cache:tag_files_open (Xbox hard-disk cache files on z:)",
+          "render:rasterizer_initialize (no Direct3D 8 device; halts the engine)",
+          "render:rasterizer_decals_initialize",
+          "diagnostics:ai_debug_initialize (AI debug records: 30,359,424 bytes)",
+          "network:XNetGetEthernetLinkStatus",
+          "network:XNetStartup",
+          "bink:RADSetMemory",
+          "render:halo_interpolation_enabled",
+          "render:rasterizer_decals_dispose"
+        ],
+        "partial": [
+          "PARTIAL memory VirtualProtect: protection is recorded, not enforced (no MMU mapping)"
+        ],
+        "end": {
+          "target": "engine",
+          "build": "90e59e3b0113357e",
+          "cycles": "3",
+          "cadences": "6",
+          "failures": "0",
+          "elapsed_ms": "30556",
+          "result": "pass"
+        },
+        "halt": "HALT stage=halt_check expected=1",
+        "exit": "EXIT via halt elapsed_ms=30562",
+        "failures": []
+      },
+      {
+        "begin": {
+          "target": "engine",
+          "build": "90e59e3b0113357e",
+          "previous_runs": "1",
+          "ios": "58.6176"
+        },
+        "fpscr": {
+          "entry": "00000004",
+          "engine": "00000000",
+          "ieee": "1"
+        },
+        "map": [
+          "MAP image bss=0x803edbd0..0x815ed3a0 sbss=0x803ed4c0 arena1_link=0x815ed3a0..0x81800000 arena2_link=0x90002000..0x933e0000",
+          "MAP entry arena1=0x815fd3a0..0x81800000 bytes=2108512 arena2=0x90002000..0x933e0000 bytes=54386688 heap_in_use=0 main_sp=0x814ae458 main_stack=131072",
+          "MAP gx fifo=0x8161e540 xfb0=0x8165e560 xfb1=0x816f4580 xfb_bytes_each=614400 arena1_after_gx=0x817b8000..0x81800000 bytes=294912 heap_in_use=1795392",
+          "MAP after_engine_start arena1_lo=0x817fc000 arena2_lo=0x900c6000"
+        ],
+        "persist": {
+          "previous_result": "1",
+          "digest": "c1ad6ae6",
+          "chain": "58ce9719"
+        },
+        "arena_open": {
+          "offset": "4096",
+          "low": "0x90002000",
+          "high_before": "0x933db7e0",
+          "high_during": "0x904da000",
+          "required": "51380224",
+          "spare": "2981888",
+          "state": "0x904da000+20971520",
+          "tags": "0x918da000+23068672",
+          "sound": "0x92eda000+4194304",
+          "general": "0x932da000+1048576"
+        },
+        "checks": [
+          "time pass frequency=1000000 sleep50_us=50001 tick_ms=50",
+          "thread pass id=2 exit=42 thread_fpscr=00000000 before=00000000 after=00000000 created=1 cleared=1",
+          "event_auto_reset pass timeout as expected",
+          "mutex pass release=1 again=0 error=288",
+          "files pass write=1 read=1 seek_read=1 size=8192 deleted=1 (case-insensitive Xbox path z:\\ -> sd:/halo-wii-engine/saves/z)",
+          "contiguous_memory pass block=0x933ca000 general_in_use=65536 fixed_address_request=0x0 (rejected: ADR-015)",
+          "contiguous_memory_free pass general_in_use=0 peak=65536",
+          "debug_output pass log writes ok"
+        ],
+        "stages": [
+          "STAGE shell_initialize begin",
+          "STAGE game_initialize begin",
+          "STAGE game_initialize result=1 game_state_used=17986420 heap_in_use=246149064 (before 1863168) unsupported=7",
+          "STAGE engine_report error_buffer_has_warning=1 (d:\\debug.txt is read back by the host)",
+          "STAGE shell_initialize result=0 (0 expected: rasterizer unsupported)"
+        ],
+        "cadence_runs": 18,
+        "cadences_identical": true,
+        "cadence_cycle0": [
+          {
+            "cadence": "60hz",
+            "ticks": "300",
+            "frames": "600",
+            "frames_without_ticks": "300",
+            "most_ticks_in_a_frame": "1",
+            "digest": "c1ad6ae6",
+            "chain": "58ce9719",
+            "at1": "ef3efead",
+            "at30": "1370c5e7",
+            "at150": "fb1f5683",
+            "at300": "c1ad6ae6",
+            "seed": "56096e69",
+            "bodies": "33",
+            "spawned": "72",
+            "deleted": "43"
+          },
+          {
+            "cadence": "30hz",
+            "ticks": "300",
+            "frames": "300",
+            "frames_without_ticks": "0",
+            "most_ticks_in_a_frame": "1",
+            "digest": "c1ad6ae6",
+            "chain": "58ce9719",
+            "at1": "ef3efead",
+            "at30": "1370c5e7",
+            "at150": "fb1f5683",
+            "at300": "c1ad6ae6",
+            "seed": "56096e69",
+            "bodies": "33",
+            "spawned": "72",
+            "deleted": "43"
+          },
+          {
+            "cadence": "20hz",
+            "ticks": "300",
+            "frames": "201",
+            "frames_without_ticks": "0",
+            "most_ticks_in_a_frame": "2",
+            "digest": "c1ad6ae6",
+            "chain": "58ce9719",
+            "at1": "ef3efead",
+            "at30": "1370c5e7",
+            "at150": "fb1f5683",
+            "at300": "c1ad6ae6",
+            "seed": "56096e69",
+            "bodies": "33",
+            "spawned": "72",
+            "deleted": "43"
+          },
+          {
+            "cadence": "144hz",
+            "ticks": "300",
+            "frames": "1441",
+            "frames_without_ticks": "1141",
+            "most_ticks_in_a_frame": "1",
+            "digest": "c1ad6ae6",
+            "chain": "58ce9719",
+            "at1": "ef3efead",
+            "at30": "1370c5e7",
+            "at150": "fb1f5683",
+            "at300": "c1ad6ae6",
+            "seed": "56096e69",
+            "bodies": "33",
+            "spawned": "72",
+            "deleted": "43"
+          },
+          {
+            "cadence": "irregular",
+            "ticks": "300",
+            "frames": "224",
+            "frames_without_ticks": "28",
+            "most_ticks_in_a_frame": "7",
+            "digest": "c1ad6ae6",
+            "chain": "58ce9719",
+            "at1": "ef3efead",
+            "at30": "1370c5e7",
+            "at150": "fb1f5683",
+            "at300": "c1ad6ae6",
+            "seed": "56096e69",
+            "bodies": "33",
+            "spawned": "72",
+            "deleted": "43"
+          },
+          {
+            "cadence": "vsync_measured",
+            "ticks": "300",
+            "frames": "600",
+            "frames_without_ticks": "300",
+            "most_ticks_in_a_frame": "1",
+            "digest": "c1ad6ae6",
+            "chain": "58ce9719",
+            "at1": "ef3efead",
+            "at30": "1370c5e7",
+            "at150": "fb1f5683",
+            "at300": "c1ad6ae6",
+            "seed": "56096e69",
+            "bodies": "33",
+            "spawned": "72",
+            "deleted": "43"
+          }
+        ],
+        "cycles": [
+          {
+            "heap_in_use": "246149064",
+            "arena1_lo": "0x817fc000",
+            "arena2_lo": "0x900c6000",
+            "general_in_use": "0",
+            "unsupported_names": "8",
+            "unsupported_calls": "5174"
+          },
+          {
+            "heap_in_use": "246149064",
+            "arena1_lo": "0x817fc000",
+            "arena2_lo": "0x900c6000",
+            "general_in_use": "0",
+            "unsupported_names": "8",
+            "unsupported_calls": "10341"
+          },
+          {
+            "heap_in_use": "246149064",
+            "arena1_lo": "0x817fc000",
+            "arena2_lo": "0x900c6000",
+            "general_in_use": "0",
+            "unsupported_names": "8",
+            "unsupported_calls": "15508"
+          }
+        ],
+        "cycles_summary": {
+          "heap_flat": "1",
+          "digest": "c1ad6ae6",
+          "chain": "58ce9719"
+        },
+        "arena_close": {
+          "restored": "1",
+          "high_after": "0x933db7e0",
+          "high_before": "0x933db7e0",
+          "low_before": "0x90002000",
+          "low_after": "0x900cf000",
+          "general_peak": "65536",
+          "failed_allocations": "0",
+          "heap_in_use": "245800136"
+        },
+        "stack": {
+          "entry_sp": "0x814ae458",
+          "painted": "114688",
+          "peak_below_entry": "71864",
+          "window_exhausted": "0"
+        },
+        "unsupported": [
+          "cache:tag_files_open (Xbox hard-disk cache files on z:)",
+          "render:rasterizer_initialize (no Direct3D 8 device; halts the engine)",
+          "render:rasterizer_decals_initialize",
+          "diagnostics:ai_debug_initialize (AI debug records: 30,359,424 bytes)",
+          "network:XNetGetEthernetLinkStatus",
+          "network:XNetStartup",
+          "bink:RADSetMemory",
+          "render:halo_interpolation_enabled",
+          "render:rasterizer_decals_dispose"
+        ],
+        "partial": [
+          "PARTIAL memory VirtualProtect: protection is recorded, not enforced (no MMU mapping)"
+        ],
+        "end": {
+          "target": "engine",
+          "build": "90e59e3b0113357e",
+          "cycles": "3",
+          "cadences": "6",
+          "failures": "0",
+          "elapsed_ms": "30524",
+          "result": "pass"
+        },
+        "halt": "HALT stage=halt_check expected=1",
+        "exit": "EXIT via halt elapsed_ms=30528",
+        "failures": []
+      }
+    ]
+  },
+  "full_game_mode": {
+    "hosts": [
+      {
+        "number": 1,
+        "cold_process": true,
+        "exit_code": "0x00000001",
+        "forced_stop": true,
+        "elapsed_seconds": 240.126,
+        "outcome": "forced_stop_timeout",
+        "dolphin_processes_after": 0,
+        "persistence": "failed",
+        "runner_guest": "failed",
+        "read_back": {
+          "halo-wii-engine/engine.log": {
+            "bytes": 418,
+            "sha256": "55b22c841f3f73130585dd1bea9cf3b3964b824d52fa8ee947e6533b02146928"
+          },
+          "halo-wii-engine/runs.txt": null,
+          "halo-wii-engine/result.txt": null,
+          "halo-wii-engine/data/debug.txt": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "halo-wii-engine/full_game.txt": {
+            "bytes": 15,
+            "sha256": "3ddc6deea3c715119f106f5e6febe9363ee7736ec2d5b6a94b8f5da8fc64c5f1"
+          }
+        }
+      }
+    ],
+    "log": [
+      "BEGIN target=engine mode=full_game build=90e59e3b0113357e",
+      "platform: settings: wrote the defaults to sd:/halo-wii-engine/config.toml",
+      "CONFIG paths.data=sd:/halo-wii-engine/data (1) paths.saves=sd:/halo-wii-engine/saves (1)",
+      "UNSUPPORTED xbdm DmWalkLoadedModules",
+      "UNSUPPORTED d3d8 Direct3DCreate8",
+      "platform: data root: sd:/halo-wii-engine/data (the game's log: debug.txt there)",
+      "platform: save root: sd:/halo-wii-engine/saves"
+    ],
+    "earlier_attempt_with_unset_save_root": "halted after 5 s: setup for new cache file failed (engine log cut at one 512-byte sector before the log was synced)"
+  },
+  "probe": {
+    "hosts": [
+      {
+        "number": 1,
+        "cold_process": true,
+        "exit_code": "0x00000000",
+        "forced_stop": false,
+        "elapsed_seconds": 6.592,
+        "outcome": "exit_zero",
+        "dolphin_processes_after": 0,
+        "persistence": "passed",
+        "runner_guest": "passed",
+        "read_back": {
+          "halo-wii-probe/sentinel.txt": {
+            "bytes": 20,
+            "sha256": "b8be899fb8dd8c529e33f339be87f61d1306782abddc67c4a83f24a6f0230ee9"
+          },
+          "halo-wii-probe/probe.log": {
+            "bytes": 497,
+            "sha256": "ab1c418dd3bb03577d0147843ae28cee28b605d6935c00d7844460b4a8211cdf"
+          }
+        }
+      }
+    ],
+    "guest": "passed",
+    "end": "END build=90e59e3b0113357e frames=146 ticks=72 connected=1 activity=1 exit=pad_start storage=1 abi=0"
+  },
+  "physical_wii": "untested"
+}
