@@ -71,6 +71,8 @@ def main() -> int:
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--source", type=Path)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--stem", default="probe", help="artifact stem for the manifest step")
+    parser.add_argument("--scope", default="asset_free_probe", help="manifest scope label")
     parser.add_argument("objects", nargs="*")
     args = parser.parse_args()
     try:
@@ -102,12 +104,13 @@ def main() -> int:
         else:
             build = args.output.parent
             record = dict(config["public"])
-            record["elf"] = verify_elf(build / "probe.elf")
-            verify_dol(build / "probe.dol")
+            record["scope"] = args.scope
+            record["elf"] = verify_elf(build / f"{args.stem}.elf")
+            verify_dol(build / f"{args.stem}.dol")
             record["artifacts"] = {
                 name: {"sha256": hashlib.sha256((build / name).read_bytes()).hexdigest(),
                        "bytes": (build / name).stat().st_size}
-                for name in ("probe.elf", "probe.dol", "probe.map")
+                for name in (f"{args.stem}.elf", f"{args.stem}.dol", f"{args.stem}.map")
             }
             text = json.dumps(record, indent=2) + "\n"
             temporary = args.output.with_suffix(".json.tmp")

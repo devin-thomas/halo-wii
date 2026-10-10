@@ -10,6 +10,7 @@ from .wii.check_toolchain import inspect_toolchain, toolchain_inputs
 
 BUILD = Path("build/wii")
 SOURCES = [Path("port/wii/probe/main.c"), Path("port/wii/abi/boundary.c"), Path("port/wii/abi/fixture.c")]
+GX_SCENE_SOURCES = [Path("port/wii/gx_scene/main.c")]
 MACHINE_FLAGS = ["-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float"]
 CFLAGS = ["-std=c11", "-O2", "-g", "-Wall", "-Wextra", "-Werror", "-ffp-contract=off", *MACHINE_FLAGS]
 LIBRARIES = ("libfat.a", "libwiiuse.a", "libbte.a", "libogc.a")
@@ -17,7 +18,8 @@ LIBRARIES = ("libfat.a", "libwiiuse.a", "libbte.a", "libogc.a")
 
 def source_inputs():
     return [Path("tools/wii_build.py"), Path("tools/wii/build.py"),
-            Path("tools/wii/check_toolchain.py"), *SOURCES, *sorted(Path("port/wii/abi").glob("*.h"))]
+            Path("tools/wii/check_toolchain.py"), *SOURCES, *GX_SCENE_SOURCES,
+            *sorted(Path("port/wii/abi").glob("*.h"))]
 
 
 def wii_configure_inputs(devkitpro=None):
@@ -95,19 +97,26 @@ def generate_wii_build(n, sln):
     config = "--config build/wii/local-config.json"
     n.rule("wii_cc", f'{runner} compile {config} --source "$in" --output "$out"',
            description="PPC CC $in", depfile="$out.d", deps="gcc")
-    n.rule("wii_link", f"{runner} link {config} --output build/wii/probe.elf $in", description="PPC LINK probe.elf")
-    n.rule("wii_dol", f'{runner} convert {config} --source "$in" --output "$out"', description="ELF2DOL probe.dol")
-    n.rule("wii_manifest", f'{runner} manifest {config} --output "$out"', description="MANIFEST Wii probe", restat=True)
-    objects = []
-    for source in SOURCES:
-        obj = BUILD / (source.stem + ".o")
-        n.build(obj, "wii_cc", source, implicit=[BUILD / "local-config.json", BUILD / "build_id.h"])
-        objects.append(obj)
-    n.build(BUILD / "probe.elf", "wii_link", objects,
-            implicit=[BUILD / "local-config.json", *libraries],
-            implicit_outputs=BUILD / "probe.map")
-    n.build(BUILD / "probe.dol", "wii_dol", BUILD / "probe.elf", implicit=BUILD / "local-config.json")
-    n.build(BUILD / "build-info.json", "wii_manifest",
-            implicit=[BUILD / "probe.elf", BUILD / "probe.dol", BUILD / "probe.map", BUILD / "local-config.json"])
-    n.build("wii_probe", "phony", [BUILD / "probe.dol", BUILD / "build-info.json"])
+    n.rule("wii_link", f'{runner} link {config} --output "$out" $in', description="PPC LINK $out")
+    n.rule("wii_dol", f'{runner} convert {config} --source "$in" --output "$out"', description="ELF2DOL $out")
+    n.rule("wii_manifest", f'{runner} manifest {config} --stem $stem --scope $scope --output "$out"',
+           description="MANIFEST Wii $stem", restat=True)
+    # The probe keeps its original object/artifact paths; the GX scene builds
+    # its objects in a subdirectory because both entry points are main.c.
+    targets = (("wii_probe", "probe", "asset_free_probe", SOURCES, BUILD, BUILD / "build-info.json"),
+               ("wii_gx_scene", "gx_scene", "asset_free_gx_scene", GX_SCENE_SOURCES, BUILD / "gx_scene",
+                BUILD / "gx_scene-build-info.json"))
+    for target, stem, scope, sources, object_dir, manifest in targets:
+        objects = []
+        for source in sources:
+            obj = object_dir / (source.stem + ".o")
+            n.build(obj, "wii_cc", source, implicit=[BUILD / "local-config.json", BUILD / "build_id.h"])
+            objects.append(obj)
+        elf, dol, link_map = BUILD / f"{stem}.elf", BUILD / f"{stem}.dol", BUILD / f"{stem}.map"
+        n.build(elf, "wii_link", objects, implicit=[BUILD / "local-config.json", *libraries],
+                implicit_outputs=link_map)
+        n.build(dol, "wii_dol", elf, implicit=BUILD / "local-config.json")
+        n.build(manifest, "wii_manifest", implicit=[elf, dol, link_map, BUILD / "local-config.json"],
+                variables={"stem": stem, "scope": scope})
+        n.build(target, "phony", [dol, manifest])
     n.newline()
