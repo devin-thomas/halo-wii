@@ -314,3 +314,9 @@ section: all 2,990 triangles are clockwise-front, matching the engine and GX,
 and 1,528/1,528 shared edges are consistent. The diagnostic now renders with
 back-face culling; in-guest EFB checks show GX_CULL_BACK keeps only lit
 surfaces and GX_CULL_FRONT none. Two cold launches pass all prior checks.
+
+The [Dolphin evidence loop](evidence/2026-10-10-dolphin-evidence-loop.md) is
+now a reusable public runner (`tools/wii/run_dolphin.py`, 27 unit tests). It
+records guest, persistence, host lifecycle and OS observations separately. The
+current probe passes two cold launches (sentinel 0→1→2, START exit, ABI clean,
+host 0x0), and an invalid sentinel is preserved untouched.
