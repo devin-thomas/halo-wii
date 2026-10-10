@@ -1,0 +1,1461 @@
+{
+  "schema_version": 1,
+  "ticket": "HWI-014",
+  "date": "2026-10-10",
+  "scope": "asset-free GX materials, texture, alpha, mipmap, TEV and resource diagnostics in stock Wii-mode Dolphin; no game data; not a Halo renderer, material system or hardware result",
+  "build": {
+    "source_commit": "55bb5cba59ecbd1b25a9cd039db68cee83351cf3",
+    "source_dirty": false,
+    "build_id": "5d43e98b79f17ffe",
+    "scope": "asset_free_gx_materials",
+    "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+    "binutils": "GNU ld (GNU Binutils) 2.46.0.20260210",
+    "compile_flags": [
+      "-std=c11",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-ffp-contract=off",
+      "-DGEKKO",
+      "-mrvl",
+      "-mcpu=750",
+      "-meabi",
+      "-mhard-float"
+    ],
+    "auto_exit_frames": 1800,
+    "artifacts": {
+      "gx_materials.elf": {
+        "sha256": "96cf258f75c6c56ade835655a437948c7a209965191d788a17f1560d88ef498a",
+        "bytes": 2484044
+      },
+      "gx_materials.dol": {
+        "sha256": "e6924da49022f37130ff403ac7bc32552ebac9d26b65ed6a44c21ad6ddf08841",
+        "bytes": 512224
+      },
+      "gx_materials.map": {
+        "sha256": "f22788a495ee9aef1c6e43f668188a324b863eaa80abad62a54c0bbbba54f208",
+        "bytes": 690566
+      }
+    },
+    "commands": [
+      "python configure.py --wii --wii-devkitpro <devkitPro root> --wii-probe-frames 1800",
+      "ninja wii_probe wii_gx_scene wii_gx_materials wii_geometry_view"
+    ]
+  },
+  "artifact_inspection": {
+    "commands": [
+      "python -B tools/wii/package_artifacts.py stage --build build/wii --output <local dist>",
+      "python -B tools/wii/package_artifacts.py inspect <local dist> --require-clean --forbid-text <owner names>"
+    ],
+    "staged_files": 17,
+    "result": "PASS",
+    "problems": 0,
+    "findings": 0,
+    "label": "build-only"
+  },
+  "runner": {
+    "tool": "tools/wii/run_dolphin.py",
+    "scenario": "gx_materials",
+    "command": "python -B tools/wii/run_dolphin.py --dolphin <stock Dolphin.exe> --dolphin-sha256 1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac --dol build/wii/gx_materials.dol --build-info build/wii/gx_materials-build-info.json --out <new local dir> --runs 2 --timeout 150 --efb-access --dump-frames --input-script tools/wii/inputs/gx-materials.json --scenario gx_materials --tolerated-host-exit 0xc0000409",
+    "host_lock": "exclusive host-wide Dolphin lock acquired before and released after every batch",
+    "identity": {
+      "dol": "gx_materials.dol",
+      "dol_sha256": "e6924da49022f37130ff403ac7bc32552ebac9d26b65ed6a44c21ad6ddf08841",
+      "dol_bytes": 512224,
+      "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+      "dolphin_executable": "Dolphin.exe",
+      "build_id": "5d43e98b79f17ffe",
+      "source_commit": "55bb5cba59ecbd1b25a9cd039db68cee83351cf3",
+      "source_dirty": false,
+      "scope": "asset_free_gx_materials",
+      "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+      "auto_exit_frames": 1800
+    },
+    "profile": {
+      "new": true,
+      "isolated": true,
+      "stock_limits": {
+        "Core.EnableCheats": "False",
+        "Core.OverclockEnable": "False",
+        "Core.Overclock": "1.0",
+        "Core.VIOverclockEnable": "False",
+        "Core.RAMOverrideEnable": "False",
+        "Core.EmulationSpeed": "1.0"
+      },
+      "backend": "D3D",
+      "efb_access": true,
+      "dump_frames": true,
+      "config_sha256": {
+        "Dolphin.ini": "e44bc2a65036800a5a44f9f426b513af43a60d6ce8f958262effbb3e7a308e26",
+        "GFX.ini": "71527b9d52d70259faf3bd8c521f63dc193ffb5dd63695c61b2abd0c99e624de",
+        "WiimoteNew.ini": "3f8ccc51b4bd3aaa20311b502c479acd112b6b9efb336c96ad822ee680368949"
+      },
+      "controllers": "GC port 1 standard controller; Wii remotes disabled"
+    },
+    "input": {
+      "kind": "authored DTM, standard GC pad port 1; virtual input",
+      "script": "gx-materials.json",
+      "script_sha256": "a3d421ff38fa213e389cc20e68bd1f5aafd4cb2e7be65af1081aece5e12c6215",
+      "steps": [
+        [
+          "neutral_during_self_test",
+          900
+        ],
+        [
+          "a_press_spin",
+          12
+        ],
+        [
+          "neutral",
+          180
+        ],
+        [
+          "b_press_overlay",
+          12
+        ],
+        [
+          "neutral",
+          240
+        ],
+        [
+          "start_press",
+          12
+        ],
+        [
+          "neutral_tail",
+          1200
+        ]
+      ],
+      "movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+      "game_id": "ID-gx_",
+      "polls": 2556
+    },
+    "launch_shape": [
+      "Dolphin.exe",
+      "--user",
+      "<new isolated profile>",
+      "--batch",
+      "--video_backend",
+      "D3D",
+      "--exec",
+      "gx_materials.dol",
+      "--movie",
+      "input.dtm"
+    ],
+    "timeout_seconds": 150.0,
+    "tolerated_host_exits": [
+      "0xc0000409"
+    ]
+  },
+  "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+      "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested"
+  },
+  "tool_exit": 0,
+  "runs": [
+    {
+      "number": 1,
+      "cold_process": true,
+      "guest": {
+        "result": "passed",
+        "failures": [],
+        "check_lines": 196,
+        "checks_passed": 196,
+        "cycle_crcs": [
+          "53843a35",
+          "53843a35",
+          "53843a35",
+          "53843a35"
+        ],
+        "negatives": {
+          "detected": 17,
+          "expected": 17,
+          "rejections_logged": 13
+        },
+        "summary": {
+          "checks_passed": 196,
+          "total": 196,
+          "per_cycle": 49,
+          "cycles": 4,
+          "crc_stable": 1,
+          "heap_growth_max": 0,
+          "heap_peak": 1669944,
+          "negatives": "17/17",
+          "guard_failures": 0,
+          "leaks": 0,
+          "libogc_size_disagreements": 1,
+          "unexpected_failures": 0
+        },
+        "inputs": [
+          {
+            "frame": 445,
+            "spin": 1
+          },
+          {
+            "frame": 541,
+            "resource_overlay": 1
+          }
+        ],
+        "end": {
+          "target": "gx_materials",
+          "build": "5d43e98b79f17ffe",
+          "frames": 667,
+          "connected": 1,
+          "activity": 1,
+          "toggles": 2,
+          "exit": "pad_start",
+          "storage": 1,
+          "checks": "196/196",
+          "negatives": "17/17",
+          "unexpected": 0,
+          "heap_growth": 0,
+          "crc_stable": 1,
+          "result": "pass"
+        }
+      },
+      "persistence": {
+        "result": "passed",
+        "failures": [],
+        "expected_run_counter": 1,
+        "run_counter_text": "halo-wii-gxm-v1 1\n",
+        "prior_log_preserved": true
+      },
+      "host": {
+        "exit_code_hex": "0x00000000",
+        "exit_code_signed": 0,
+        "forced_stop": false,
+        "elapsed_seconds": 14.714,
+        "outcome": "exit_zero",
+        "dolphin_processes_after": 0
+      },
+      "frame_dump": {
+        "count": 667,
+        "first_sha256": "5a854ae63d07b63fc89a4697039598e62fa4f8ec024510ec3dec75b5ab5b548a",
+        "last_sha256": "8608f2fd817e8df05cb41fcb6c6638e2f58c6156c419ba316050c1a0828c015b"
+      },
+      "sd_read_back": {
+        "halo-wii-gxm/runs.txt": {
+          "bytes": 18,
+          "sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787"
+        },
+        "halo-wii-gxm/materials.log": {
+          "bytes": 37450,
+          "sha256": "cc3094633ddcdbbf4be9cbe83a73613f4fe0684020f2f212e3e6711a0cc8972e"
+        }
+      }
+    },
+    {
+      "number": 2,
+      "cold_process": true,
+      "guest": {
+        "result": "passed",
+        "failures": [],
+        "check_lines": 196,
+        "checks_passed": 196,
+        "cycle_crcs": [
+          "53843a35",
+          "53843a35",
+          "53843a35",
+          "53843a35"
+        ],
+        "negatives": {
+          "detected": 17,
+          "expected": 17,
+          "rejections_logged": 13
+        },
+        "summary": {
+          "checks_passed": 196,
+          "total": 196,
+          "per_cycle": 49,
+          "cycles": 4,
+          "crc_stable": 1,
+          "heap_growth_max": 0,
+          "heap_peak": 1669944,
+          "negatives": "17/17",
+          "guard_failures": 0,
+          "leaks": 0,
+          "libogc_size_disagreements": 1,
+          "unexpected_failures": 0
+        },
+        "inputs": [
+          {
+            "frame": 445,
+            "spin": 1
+          },
+          {
+            "frame": 541,
+            "resource_overlay": 1
+          }
+        ],
+        "end": {
+          "target": "gx_materials",
+          "build": "5d43e98b79f17ffe",
+          "frames": 667,
+          "connected": 1,
+          "activity": 1,
+          "toggles": 2,
+          "exit": "pad_start",
+          "storage": 1,
+          "checks": "196/196",
+          "negatives": "17/17",
+          "unexpected": 0,
+          "heap_growth": 0,
+          "crc_stable": 1,
+          "result": "pass"
+        }
+      },
+      "persistence": {
+        "result": "passed",
+        "failures": [],
+        "expected_run_counter": 2,
+        "run_counter_text": "halo-wii-gxm-v1 2\n",
+        "prior_log_preserved": true
+      },
+      "host": {
+        "exit_code_hex": "0x00000000",
+        "exit_code_signed": 0,
+        "forced_stop": false,
+        "elapsed_seconds": 15.19,
+        "outcome": "exit_zero",
+        "dolphin_processes_after": 0
+      },
+      "frame_dump": {
+        "count": 667,
+        "first_sha256": "5a854ae63d07b63fc89a4697039598e62fa4f8ec024510ec3dec75b5ab5b548a",
+        "last_sha256": "8608f2fd817e8df05cb41fcb6c6638e2f58c6156c419ba316050c1a0828c015b"
+      },
+      "sd_read_back": {
+        "halo-wii-gxm/runs.txt": {
+          "bytes": 18,
+          "sha256": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d"
+        },
+        "halo-wii-gxm/materials.log": {
+          "bytes": 74900,
+          "sha256": "4c078faef6ca8f4e826e03d660da29c4325df02026fdb3d1074abf91cd23e78c"
+        }
+      }
+    }
+  ],
+  "os_stability": {
+    "observation": "no_instability_events_observed",
+    "instability_events": [],
+    "system_events_matched": [],
+    "dolphin_application_events": [],
+    "last_boot_utc": "2026-10-08T13:53:48.5000000Z",
+    "limits": "Event-log query over the batch window only; absence of events is not a guarantee of stability.",
+    "window_utc": [
+      "2026-10-10T12:55:37+00:00",
+      "2026-10-10T12:56:18+00:00"
+    ]
+  },
+  "checks_cycle1_run2": [
+    {
+      "cycle": 1,
+      "name": "depth_near_then_far",
+      "kind": "positive",
+      "probes": 1,
+      "matched": 1,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "depth_far_then_near",
+      "kind": "positive",
+      "probes": 1,
+      "matched": 1,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_depth_off",
+      "kind": "control_value",
+      "probes": 1,
+      "matched": 1,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "depth_z_order",
+      "kind": "positive",
+      "probes": 1,
+      "matched": 1,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "cull_back",
+      "kind": "positive",
+      "probes": 2,
+      "matched": 2,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "cull_front",
+      "kind": "positive",
+      "probes": 2,
+      "matched": 2,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_cull_none",
+      "kind": "control_value",
+      "probes": 2,
+      "matched": 2,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_cull_all",
+      "kind": "control_value",
+      "probes": 2,
+      "matched": 2,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "perspective_intersection",
+      "kind": "positive",
+      "probes": 2,
+      "matched": 2,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_perspective_depth_off",
+      "kind": "control_value",
+      "probes": 2,
+      "matched": 2,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tex_i8",
+      "kind": "positive",
+      "probes": 128,
+      "matched": 128,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tex_i8_alpha",
+      "kind": "positive",
+      "probes": 128,
+      "matched": 128,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tex_ia8",
+      "kind": "positive",
+      "probes": 64,
+      "matched": 64,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tex_ia8_alpha",
+      "kind": "positive",
+      "probes": 64,
+      "matched": 64,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tex_rgb565",
+      "kind": "positive",
+      "probes": 64,
+      "matched": 64,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tex_rgb5a3",
+      "kind": "positive",
+      "probes": 64,
+      "matched": 64,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tex_rgb5a3_alpha",
+      "kind": "positive",
+      "probes": 64,
+      "matched": 64,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tex_rgba8",
+      "kind": "positive",
+      "probes": 64,
+      "matched": 64,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tex_rgba8_alpha",
+      "kind": "positive",
+      "probes": 64,
+      "matched": 64,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tex_cmpr_from_dxt1",
+      "kind": "positive",
+      "probes": 240,
+      "matched": 240,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tex_cmpr_alpha",
+      "kind": "positive",
+      "probes": 256,
+      "matched": 256,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tex_ci8_tlut_rgb565",
+      "kind": "positive",
+      "probes": 64,
+      "matched": 64,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_i8_untiled_order",
+      "kind": "control_must_differ",
+      "probes": 128,
+      "matched": 32,
+      "max_err": 239,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_rgb565_untiled_order",
+      "kind": "control_must_differ",
+      "probes": 64,
+      "matched": 16,
+      "max_err": 235,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_rgba8_untiled_order",
+      "kind": "control_must_differ",
+      "probes": 64,
+      "matched": 0,
+      "max_err": 249,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_cmpr_unconverted_dxt1",
+      "kind": "control_must_differ",
+      "probes": 240,
+      "matched": 0,
+      "max_err": 231,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_cmpr_dxt1_block_order",
+      "kind": "control_must_differ",
+      "probes": 240,
+      "matched": 120,
+      "max_err": 219,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "wrap_repeat",
+      "kind": "positive",
+      "probes": 16,
+      "matched": 16,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "wrap_clamp",
+      "kind": "positive",
+      "probes": 16,
+      "matched": 16,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "wrap_mirror",
+      "kind": "positive",
+      "probes": 16,
+      "matched": 16,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "blend_src_alpha_128",
+      "kind": "positive",
+      "probes": 2,
+      "matched": 2,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "blend_src_alpha_64",
+      "kind": "positive",
+      "probes": 2,
+      "matched": 2,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_blend_off",
+      "kind": "control_value",
+      "probes": 2,
+      "matched": 2,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "alpha_test_greater_128",
+      "kind": "positive",
+      "probes": 2,
+      "matched": 2,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_alpha_test_always",
+      "kind": "control_value",
+      "probes": 2,
+      "matched": 2,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tex_rgb5a3_blend",
+      "kind": "positive",
+      "probes": 64,
+      "matched": 64,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tex_cmpr_cutout_alpha_test",
+      "kind": "positive",
+      "probes": 256,
+      "matched": 256,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_cmpr_cutout_test_off",
+      "kind": "control_must_differ",
+      "probes": 16,
+      "matched": 0,
+      "max_err": 170,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "mip_level_by_size",
+      "kind": "positive",
+      "probes": 5,
+      "matched": 5,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "mip_lod_bias_plus2",
+      "kind": "positive",
+      "probes": 1,
+      "matched": 1,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "mip_max_lod_1",
+      "kind": "positive",
+      "probes": 1,
+      "matched": 1,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "mip_min_lod_2",
+      "kind": "positive",
+      "probes": 1,
+      "matched": 1,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_mip_disabled",
+      "kind": "control_value",
+      "probes": 1,
+      "matched": 1,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tev_modulate_texture_vertex",
+      "kind": "positive",
+      "probes": 64,
+      "matched": 64,
+      "max_err": 1,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_tev_replace",
+      "kind": "control_value",
+      "probes": 64,
+      "matched": 64,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "tev_two_stage_add_konst",
+      "kind": "positive",
+      "probes": 64,
+      "matched": 64,
+      "max_err": 2,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "control_tev_second_stage_disabled",
+      "kind": "control_value",
+      "probes": 64,
+      "matched": 64,
+      "max_err": 1,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "dynamic_texture_before",
+      "kind": "positive",
+      "probes": 2,
+      "matched": 2,
+      "max_err": 0,
+      "result": "pass"
+    },
+    {
+      "cycle": 1,
+      "name": "dynamic_texture_after_flush_invalidate",
+      "kind": "positive",
+      "probes": 2,
+      "matched": 2,
+      "max_err": 0,
+      "result": "pass"
+    }
+  ],
+  "negative_cases_run2": [
+    {
+      "case": "misaligned_base",
+      "detected": 1
+    },
+    {
+      "case": "unaligned_length",
+      "detected": 1
+    },
+    {
+      "case": "overlaps_owned_texture",
+      "detected": 1
+    },
+    {
+      "case": "overlaps_gx_fifo",
+      "detected": 1
+    },
+    {
+      "case": "outside_mem1_mem2",
+      "detected": 1
+    },
+    {
+      "case": "range_wraps",
+      "detected": 1
+    },
+    {
+      "case": "zero_length",
+      "detected": 1
+    },
+    {
+      "case": "null_base",
+      "detected": 1
+    },
+    {
+      "case": "texture_from_unowned_memory",
+      "detected": 1
+    },
+    {
+      "case": "read_past_owned_end",
+      "detected": 1
+    },
+    {
+      "case": "double_release",
+      "detected": 1
+    },
+    {
+      "case": "release_unknown_handle",
+      "detected": 1
+    },
+    {
+      "case": "leaked_range_counted",
+      "detected": 1
+    },
+    {
+      "case": "overrun_guard",
+      "detected": 1
+    },
+    {
+      "case": "pool_exhaustion",
+      "detected": 1
+    },
+    {
+      "case": "heap_allocation_failure",
+      "detected": 1
+    },
+    {
+      "case": "registry_full",
+      "detected": 1
+    }
+  ],
+  "rejections_run2": [
+    {
+      "reason": "misaligned",
+      "name": "neg_misaligned",
+      "bytes": 64,
+      "expected": 1
+    },
+    {
+      "reason": "misaligned",
+      "name": "neg_length",
+      "bytes": 40,
+      "expected": 1
+    },
+    {
+      "reason": "overlap",
+      "name": "neg_overlap",
+      "bytes": 32,
+      "expected": 1
+    },
+    {
+      "reason": "overlap",
+      "name": "neg_fifo",
+      "bytes": 32,
+      "expected": 1
+    },
+    {
+      "reason": "outside_mem1_mem2",
+      "name": "neg_region",
+      "bytes": 32,
+      "expected": 1
+    },
+    {
+      "reason": "range_wraps",
+      "name": "neg_wrap",
+      "bytes": 4294967264,
+      "expected": 1
+    },
+    {
+      "reason": "zero_bytes",
+      "name": "neg_zero",
+      "bytes": 0,
+      "expected": 1
+    },
+    {
+      "reason": "null",
+      "name": "neg_null",
+      "bytes": 32,
+      "expected": 1
+    },
+    {
+      "reason": "unowned_gx_read",
+      "name": "neg_unowned_texture",
+      "bytes": 128,
+      "expected": 1
+    },
+    {
+      "reason": "unowned_gx_read",
+      "name": "neg_past_end",
+      "bytes": 160,
+      "expected": 1
+    },
+    {
+      "reason": "bad_release",
+      "name": "release",
+      "bytes": 19,
+      "expected": 1
+    },
+    {
+      "reason": "bad_release",
+      "name": "release",
+      "bytes": 51,
+      "expected": 1
+    },
+    {
+      "reason": "registry_full",
+      "name": "neg_fill",
+      "bytes": 32,
+      "expected": 1
+    }
+  ],
+  "resources_run2": {
+    "owned_ranges": [
+      {
+        "name": "gx_fifo",
+        "bytes": 262144,
+        "align": 32,
+        "region": "MEM1",
+        "cache": "zeroed_then_DCFlushRange_GP_reads"
+      },
+      {
+        "name": "xfb0",
+        "bytes": 614400,
+        "align": 32,
+        "region": "MEM1",
+        "cache": "K1_uncached_CPU_never_writes_GX_copy_target"
+      },
+      {
+        "name": "xfb1",
+        "bytes": 614400,
+        "align": 32,
+        "region": "MEM1",
+        "cache": "K1_uncached_CPU_never_writes_GX_copy_target"
+      },
+      {
+        "name": "tlut_ci8_rgb565",
+        "bytes": 32,
+        "align": 32,
+        "region": "MEM1",
+        "cache": "MEM1_heap_CPU_write_DCFlushRange_then_GX_LoadTlut"
+      },
+      {
+        "name": "tex_i8",
+        "bytes": 128,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      },
+      {
+        "name": "tex_ia8",
+        "bytes": 128,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      },
+      {
+        "name": "tex_rgb565",
+        "bytes": 128,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      },
+      {
+        "name": "tex_rgb5a3",
+        "bytes": 128,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      },
+      {
+        "name": "tex_rgba8",
+        "bytes": 256,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      },
+      {
+        "name": "tex_cmpr",
+        "bytes": 128,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      },
+      {
+        "name": "tex_ci8",
+        "bytes": 128,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      },
+      {
+        "name": "tex_mip_rgb565",
+        "bytes": 2784,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      },
+      {
+        "name": "tex_tev_add_i8",
+        "bytes": 64,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      },
+      {
+        "name": "tex_dynamic_rgb565",
+        "bytes": 128,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      },
+      {
+        "name": "ctl_i8_untiled",
+        "bytes": 128,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      },
+      {
+        "name": "ctl_rgb565_untiled",
+        "bytes": 128,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      },
+      {
+        "name": "ctl_rgba8_untiled",
+        "bytes": 256,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      },
+      {
+        "name": "ctl_cmpr_raw_dxt1",
+        "bytes": 128,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      },
+      {
+        "name": "ctl_cmpr_dxt1_block_order",
+        "bytes": 128,
+        "align": 32,
+        "region": "MEM2",
+        "cache": "MEM2_pool_CPU_write_DCFlushRange_GX_InvalidateTexAll"
+      }
+    ],
+    "texture_sizes": [
+      {
+        "name": "tex_i8",
+        "fmt": 1,
+        "size": "16x8",
+        "levels": 1,
+        "computed": 128,
+        "libogc": 128,
+        "match": 1
+      },
+      {
+        "name": "tex_ia8",
+        "fmt": 3,
+        "size": "8x8",
+        "levels": 1,
+        "computed": 128,
+        "libogc": 128,
+        "match": 1
+      },
+      {
+        "name": "tex_rgb565",
+        "fmt": 4,
+        "size": "8x8",
+        "levels": 1,
+        "computed": 128,
+        "libogc": 128,
+        "match": 1
+      },
+      {
+        "name": "tex_rgb5a3",
+        "fmt": 5,
+        "size": "8x8",
+        "levels": 1,
+        "computed": 128,
+        "libogc": 128,
+        "match": 1
+      },
+      {
+        "name": "tex_rgba8",
+        "fmt": 6,
+        "size": "8x8",
+        "levels": 1,
+        "computed": 256,
+        "libogc": 256,
+        "match": 1
+      },
+      {
+        "name": "tex_cmpr",
+        "fmt": 14,
+        "size": "16x16",
+        "levels": 1,
+        "computed": 128,
+        "libogc": 128,
+        "match": 1
+      },
+      {
+        "name": "tex_ci8",
+        "fmt": 9,
+        "size": "8x8",
+        "levels": 1,
+        "computed": 64,
+        "libogc": 128,
+        "match": 0
+      },
+      {
+        "name": "tex_mip_rgb565",
+        "fmt": 4,
+        "size": "32x32",
+        "levels": 6,
+        "computed": 2784,
+        "libogc": 2784,
+        "match": 1
+      },
+      {
+        "name": "tex_tev_add_i8",
+        "fmt": 1,
+        "size": "8x8",
+        "levels": 1,
+        "computed": 64,
+        "libogc": 64,
+        "match": 1
+      },
+      {
+        "name": "tex_dynamic_rgb565",
+        "fmt": 4,
+        "size": "8x8",
+        "levels": 1,
+        "computed": 128,
+        "libogc": 128,
+        "match": 1
+      },
+      {
+        "name": "ctl_i8_untiled",
+        "fmt": 1,
+        "size": "16x8",
+        "levels": 1,
+        "computed": 128,
+        "libogc": 128,
+        "match": 1
+      },
+      {
+        "name": "ctl_rgb565_untiled",
+        "fmt": 4,
+        "size": "8x8",
+        "levels": 1,
+        "computed": 128,
+        "libogc": 128,
+        "match": 1
+      },
+      {
+        "name": "ctl_rgba8_untiled",
+        "fmt": 6,
+        "size": "8x8",
+        "levels": 1,
+        "computed": 256,
+        "libogc": 256,
+        "match": 1
+      },
+      {
+        "name": "ctl_cmpr_raw_dxt1",
+        "fmt": 14,
+        "size": "16x16",
+        "levels": 1,
+        "computed": 128,
+        "libogc": 128,
+        "match": 1
+      },
+      {
+        "name": "ctl_cmpr_dxt1_block_order",
+        "fmt": 14,
+        "size": "16x16",
+        "levels": 1,
+        "computed": 128,
+        "libogc": 128,
+        "match": 1
+      }
+    ],
+    "cycles": [
+      {
+        "n": 1,
+        "checks_passed": 49,
+        "total": 49,
+        "crc": "53843a35",
+        "heap_before": 1669488,
+        "heap_loaded": 1669944,
+        "heap_after": 1669488,
+        "texture_bytes": 4704,
+        "texture_owned_bytes": 4768,
+        "pool_used": 6912,
+        "pool_peak": 6912,
+        "owned_peak": 19,
+        "leaked_ranges": 0,
+        "upload_us": 454,
+        "checks_us": 2196,
+        "fifo_check_peak": 864,
+        "fifo_cycle_total": 24608
+      },
+      {
+        "n": 2,
+        "checks_passed": 49,
+        "total": 49,
+        "crc": "53843a35",
+        "heap_before": 1669488,
+        "heap_loaded": 1669944,
+        "heap_after": 1669488,
+        "texture_bytes": 4704,
+        "texture_owned_bytes": 4768,
+        "pool_used": 5248,
+        "pool_peak": 6912,
+        "owned_peak": 19,
+        "leaked_ranges": 0,
+        "upload_us": 454,
+        "checks_us": 2194,
+        "fifo_check_peak": 864,
+        "fifo_cycle_total": 24704
+      },
+      {
+        "n": 3,
+        "checks_passed": 49,
+        "total": 49,
+        "crc": "53843a35",
+        "heap_before": 1669488,
+        "heap_loaded": 1669944,
+        "heap_after": 1669488,
+        "texture_bytes": 4704,
+        "texture_owned_bytes": 4768,
+        "pool_used": 5248,
+        "pool_peak": 6912,
+        "owned_peak": 19,
+        "leaked_ranges": 0,
+        "upload_us": 455,
+        "checks_us": 2192,
+        "fifo_check_peak": 864,
+        "fifo_cycle_total": 24768
+      },
+      {
+        "n": 4,
+        "checks_passed": 49,
+        "total": 49,
+        "crc": "53843a35",
+        "heap_before": 1669488,
+        "heap_loaded": 1669944,
+        "heap_after": 1669488,
+        "texture_bytes": 4704,
+        "texture_owned_bytes": 4768,
+        "pool_used": 5248,
+        "pool_peak": 6912,
+        "owned_peak": 19,
+        "leaked_ranges": 0,
+        "upload_us": 454,
+        "checks_us": 2193,
+        "fifo_check_peak": 864,
+        "fifo_cycle_total": 24736
+      }
+    ],
+    "arenas": {
+      "mem1": "0x8013d000..0x81800000",
+      "bytes": 23867392,
+      "mem2": "0x90002000..0x933c6f60",
+      "bytes_2": 54284128
+    },
+    "pool": {
+      "mem2": "0x90002000..0x90012000",
+      "bytes": 65536,
+      "guard": 32
+    },
+    "efb": {
+      "format": "RGB8_Z24",
+      "width": 640,
+      "height": 480,
+      "colour_bytes": 921600,
+      "z_bytes": 921600,
+      "location": "GPU_embedded_not_main_memory",
+      "scale": "0.998"
+    },
+    "xfb": {
+      "count": 2,
+      "bytes_each": 614400,
+      "total": 1228800,
+      "disp_copy_yscale_return": 120
+    },
+    "zpeek": {
+      "cycle": 1,
+      "near": 400000,
+      "far": "bfffff",
+      "clear": "ffffff"
+    },
+    "fifo": {
+      "bytes": 262144,
+      "gallery_per_frame_peak": 47200,
+      "avg": 45914,
+      "check_pass_peak_last_cycle": 864,
+      "scope": "PI_write_pointer_delta_excluding_copy"
+    },
+    "timing": {
+      "frames": 667,
+      "gallery_submit_us_avg": 723,
+      "max": 726,
+      "efb_to_xfb_copy_us_avg": 2,
+      "max_2": 2,
+      "scope": "CPU_submit_plus_DrawDone_in_Dolphin"
+    },
+    "peek": {
+      "count": 10712,
+      "avg_ns": 149,
+      "scope": "CPU_EFB_peek_emulated_timebase_not_hardware_timing"
+    },
+    "stack": {
+      "entry": "0x800f3608",
+      "lowest_sampled": "0x800f35b8",
+      "depth_sampled": 80,
+      "scope": "frame_address_samples_not_peak"
+    },
+    "heap": {
+      "start": 9456,
+      "baseline": 1669488,
+      "peak": 1669944,
+      "display_loaded": 1669944,
+      "loop_end": 1669944,
+      "end": 1669488,
+      "growth": 0,
+      "loop_growth": 0,
+      "max_cycle_growth": 0,
+      "arena2_restored": 1
+    }
+  },
+  "frame_dump_sha256_run2": {
+    "300": "c03e2eded9e8993f9783a81afcfc94c156c872e648ef3751c931e7d02be02403",
+    "500": "0e3d41203cf026131cc97e5d3e202eb9a98cea066ce7a5b4eaf90366d36fe464",
+    "600": "98f1bffe0fdb3264c7fcae17c03513fe98bbf1e966a38d3b0d665bad3a86af34"
+  },
+  "frame_dumps_identical_across_runs": true,
+  "development_runs_retained": [
+    {
+      "run": "dev-1",
+      "source_dirty": true,
+      "build_id": "64cbe146d862e274",
+      "dol_sha256": "3189ce9dae8e249eb6e6b597c58d098f37a9d42bcd4c2c516a64466471099eab",
+      "guest": "failed",
+      "guest_failures": [
+        "summary_size_mismatches_nonzero",
+        "guest_reported_fail"
+      ],
+      "persistence": "passed",
+      "host_exit": "0x00000000",
+      "forced_stop": false,
+      "checks": "196/196",
+      "negatives": "17/17",
+      "libogc_size_disagreements": 1,
+      "cycle_crc": "53843a35",
+      "note": "first launch of the new target; guest failed only on its libogc size cross-check"
+    },
+    {
+      "run": "dev-2",
+      "source_dirty": true,
+      "build_id": "c6d36110f91da01f",
+      "dol_sha256": "78a3c3b2bb711af6127272bca584f37e8148f9eec8148670b4c73081180e2654",
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "host_exit": "0x00000000",
+      "forced_stop": false,
+      "checks": "196/196",
+      "negatives": "17/17",
+      "libogc_size_disagreements": 1,
+      "cycle_crc": "53843a35",
+      "note": "allocation max(layout, libogc); real stage-1-disabled TEV control"
+    },
+    {
+      "run": "dev-3",
+      "source_dirty": true,
+      "build_id": "4d5aabfa46f2f892",
+      "dol_sha256": "d4c8780c0eec86c25f3a9eb6d0068d27c47153332d70cee9b89844c0212eb9d4",
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "host_exit": "0x00000000",
+      "forced_stop": false,
+      "checks": "196/196",
+      "negatives": "17/17",
+      "libogc_size_disagreements": 1,
+      "cycle_crc": "53843a35",
+      "note": "debug-view pose change; trilinear plane not visible"
+    },
+    {
+      "run": "dev-4",
+      "source_dirty": true,
+      "build_id": "d4d43b98ea7cdfe8",
+      "dol_sha256": "6b3b8ba96372bfb29d5b4a5c125bf49cefaa92262706a53702bbdd152967bc4f",
+      "guest": "passed",
+      "guest_failures": [],
+      "persistence": "passed",
+      "host_exit": "0x00000000",
+      "forced_stop": false,
+      "checks": "196/196",
+      "negatives": "17/17",
+      "libogc_size_disagreements": 1,
+      "cycle_crc": "53843a35",
+      "note": "debug view replaced by the viewport/identity-view floor"
+    }
+  ],
+  "unit_tests": {
+    "command": "python -B -m unittest discover -s tools/wii -p \"test_*.py\"",
+    "windows_python_3_14": "268 passed",
+    "msys2_python": "266 passed, 2 pre-existing path-separator failures in test_inspect_cache_residency and test_xiso_inventory (unrelated to this change)"
+  },
+  "not_established": [
+    "physical Wii: CPU data-cache/DMA coherence (Dolphin does not model the data cache by default, so a missing DCFlushRange or GX_InvalidateTexAll cannot fail here), VI output, GP throughput, real controller input",
+    "fractional LOD, trilinear blend weights, edge LOD and anisotropic filtering",
+    "GP FIFO occupancy peak and stack peak",
+    "DXT3/DXT5 (no GX equivalent; needs a separate conversion decision)",
+    "lighting, indirect texturing, fog, EFB-to-texture copies",
+    "Halo shaders, materials, lightmaps or any game content"
+  ]
+}

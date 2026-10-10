@@ -545,8 +545,18 @@ GXM_CYCLES = 4
 
 
 def fields(line):
-    """key=value pairs of one guest log line (values never contain spaces)."""
-    return dict(re.findall(r"(\w+)=(\S+)", line))
+    """key=value pairs of one guest log line (values never contain spaces).
+
+    A repeated key keeps every value: the second becomes key_2, and so on.
+    """
+    result = {}
+    for key, value in re.findall(r"(\w+)=(\S+)", line):
+        name, index = key, 1
+        while name in result:
+            index += 1
+            name = f"{key}_{index}"
+        result[name] = value
+    return result
 
 
 def gxm_runs_count(data):

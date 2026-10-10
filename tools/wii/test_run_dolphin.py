@@ -437,6 +437,10 @@ class GxMaterialsScenarioTests(unittest.TestCase):
                                                                      gxm_log(0).rsplit("END ", 1)[0]))
         self.assertTrue(any(f.startswith("expected_one_BEGIN") for f in guest["failures"]))
 
+    def test_repeated_log_keys_are_kept(self):
+        self.assertEqual(rd.fields("TIMING frames=667 submit_us_avg=723 max=726 copy_us_avg=2 max=2"),
+                         {"frames": "667", "submit_us_avg": "723", "max": "726", "copy_us_avg": "2", "max_2": "2"})
+
     def test_run_counter_parsing_never_resets_an_invalid_counter(self):
         self.assertEqual(rd.gxm_runs_count(None), 0)
         self.assertEqual(rd.gxm_runs_count(b"halo-wii-gxm-v1 5\n"), 5)
