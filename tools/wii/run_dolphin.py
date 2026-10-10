@@ -527,6 +527,18 @@ def check_probe(build_id, run_number, initial_count, previous_log, files, expect
 # Batch execution
 # ---------------------------------------------------------------------------
 
+def staged_file_failures(staged_hashes, read):
+    """Staged inputs must survive every launch byte-for-byte."""
+    failures = []
+    for path, expected in staged_hashes.items():
+        data = read.get(path)
+        if data is None:
+            failures.append(f"staged_file_missing:{path}")
+        elif hashlib.sha256(data).hexdigest() != expected:
+            failures.append(f"staged_file_changed:{path}")
+    return failures
+
+
 def sha256(path):
     digest = hashlib.sha256()
     with open(path, "rb") as stream:
@@ -677,6 +689,8 @@ def main(argv=None):
     read_paths = [sd_relative(p) for p in args.read_back]
     if args.scenario == "probe":
         read_paths = [PROBE_SENTINEL, PROBE_LOG] + [p for p in read_paths if p not in (PROBE_SENTINEL, PROBE_LOG)]
+    staged_hashes = {sd_relative(d): sha256(s) for s, d in args.stage}
+    read_paths += [p for p in staged_hashes if p not in read_paths]
     initial = {"sd_image_present": sd.is_file()}
     previous_log, initial_count = "", 0
     if sd.is_file():
@@ -767,6 +781,7 @@ def main(argv=None):
             guest = {"failures": [], "note": "no scenario checker; read-back only"}
             missing = [p for p, d in read.items() if d is None] if sd.is_file() else read_paths
             persistence = {"failures": [f"missing:{p}" for p in missing]}
+        persistence["failures"] += staged_file_failures(staged_hashes, read)
         if forced:
             guest["failures"].append("forced_stop_before_natural_exit")
         guest["result"] = "failed" if guest["failures"] else ("passed" if args.scenario != "none" else "not_evaluated")

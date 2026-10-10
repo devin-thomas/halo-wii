@@ -1,4 +1,5 @@
 """Pure parts of the Dolphin runner: no emulator, WSL or event log is touched."""
+import hashlib
 import json
 from pathlib import Path
 import struct
@@ -233,6 +234,14 @@ class StagingTests(unittest.TestCase):
         self.assertEqual(rd.parse_stage(r"C:\a=b.bin=sd:/x/y.bin"), (Path(r"C:\a=b.bin"), "sd:/x/y.bin"))
         with self.assertRaises(Exception):
             rd.parse_stage("nothing")
+
+
+    def test_staged_files_must_survive_launches(self):
+        expected = {"a/x.bin": hashlib.sha256(b"x").hexdigest(), "a/y.bin": "0" * 64}
+        self.assertEqual(rd.staged_file_failures(expected, {"a/x.bin": b"x", "a/y.bin": b"y"}),
+                         ["staged_file_changed:a/y.bin"])
+        self.assertEqual(rd.staged_file_failures(expected, {"a/x.bin": None}),
+                         ["staged_file_missing:a/x.bin", "staged_file_missing:a/y.bin"])
 
 
 class HostTests(unittest.TestCase):
