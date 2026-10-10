@@ -210,7 +210,7 @@ class Fat32:
                     continue
                 if entry[11] == 0x0F:
                     chars = entry[1:11] + entry[14:26] + entry[28:32]
-                    long_name.insert(0, chars.decode("utf-16-le").split("\0")[0].replace("￿", ""))
+                    long_name.insert(0, chars.decode("utf-16-le").split("\0")[0].replace("\uffff", ""))
                     continue
                 if entry[11] & 0x08:  # volume label
                     long_name = []
@@ -437,6 +437,22 @@ def probe_sentinel_count(data):
     if not match:
         raise ValueError("existing probe sentinel is not valid; preserved, not reset")
     return int(match.group(1))
+
+
+def check_probe_invalid_sentinel(initial_sentinel, initial_log, files):
+    """Negative control: an invalid existing sentinel must survive byte-for-byte.
+
+    The probe refuses storage in this case, so it writes no SD log; guest
+    completion is not observable on SD and is reported as not evaluated.
+    """
+    guest = {"failures": [], "note": "probe refuses storage on an invalid sentinel; no SD guest report by design"}
+    persistence = {"failures": [], "mode": "invalid_sentinel_preservation_control"}
+    if files.get(PROBE_SENTINEL) != initial_sentinel:
+        persistence["failures"].append("invalid_sentinel_not_preserved")
+    if files.get(PROBE_LOG) != initial_log:
+        persistence["failures"].append("existing_log_changed_while_storage_refused")
+    persistence["invalid_sentinel_preserved"] = not persistence["failures"]
+    return guest, persistence
 
 
 def check_probe(build_id, run_number, initial_count, previous_log, files, expect_exit="pad_start"):
@@ -693,15 +709,20 @@ def main(argv=None):
     read_paths += [p for p in staged_hashes if p not in read_paths]
     initial = {"sd_image_present": sd.is_file()}
     previous_log, initial_count = "", 0
+    invalid_control, initial_sentinel, initial_log = False, None, None
     if sd.is_file():
         fat = Fat32(sd.read_bytes())
         initial["files"] = {p: (None if (d := fat.read(p)) is None else hashlib.sha256(d).hexdigest())
                             for p in read_paths}
         if args.scenario == "probe":
-            initial_count = probe_sentinel_count(fat.read(PROBE_SENTINEL))
-            existing = fat.read(PROBE_LOG)
-            previous_log = existing.decode("ascii", "replace").replace("\r\n", "\n") if existing else ""
-    initial["probe_sentinel_count"] = initial_count if args.scenario == "probe" else None
+            initial_sentinel, initial_log = fat.read(PROBE_SENTINEL), fat.read(PROBE_LOG)
+            try:
+                initial_count = probe_sentinel_count(initial_sentinel)
+            except ValueError:
+                invalid_control = True
+            previous_log = initial_log.decode("ascii", "replace").replace("\r\n", "\n") if initial_log else ""
+    initial["probe_sentinel_count"] = initial_count if args.scenario == "probe" and not invalid_control else None
+    initial["probe_sentinel_valid"] = not invalid_control if args.scenario == "probe" else None
 
     launch = ["Dolphin.exe", "--user", "<new isolated profile>", "--batch", "--video_backend", args.backend,
               "--exec", dol.name] + (["--movie", "input.dtm"] if movie_path else [])
@@ -772,7 +793,9 @@ def main(argv=None):
             run["sd_image_sha256"] = sha256(sd)
         run["read_back"] = {p: None if d is None else {"bytes": len(d), "sha256": hashlib.sha256(d).hexdigest()}
                             for p, d in read.items()}
-        if args.scenario == "probe":
+        if args.scenario == "probe" and invalid_control:
+            guest, persistence = check_probe_invalid_sentinel(initial_sentinel, initial_log, read)
+        elif args.scenario == "probe":
             guest, persistence = check_probe(build_id, number, initial_count, previous_log, read, args.probe_exit)
             log = read.get(PROBE_LOG)
             if log is not None:
@@ -784,7 +807,8 @@ def main(argv=None):
         persistence["failures"] += staged_file_failures(staged_hashes, read)
         if forced:
             guest["failures"].append("forced_stop_before_natural_exit")
-        guest["result"] = "failed" if guest["failures"] else ("passed" if args.scenario != "none" else "not_evaluated")
+        evaluated = args.scenario != "none" and not invalid_control
+        guest["result"] = "failed" if guest["failures"] else ("passed" if evaluated else "not_evaluated")
         persistence["result"] = "failed" if persistence["failures"] else ("passed" if read_paths else "not_evaluated")
         run["guest"], run["persistence"] = guest, persistence
         record["runs"].append(run)

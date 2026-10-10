@@ -344,6 +344,17 @@ class ProbeScenarioTests(unittest.TestCase):
         self.assertEqual((guest["failures"], persistence["failures"]), ([], []))
 
 
+    def test_invalid_sentinel_control_requires_byte_identical_preservation(self):
+        bad, log = b"halo-wii-probe-v1 x\n", b"BEGIN old\n"
+        guest, persistence = rd.check_probe_invalid_sentinel(bad, log, {rd.PROBE_SENTINEL: bad, rd.PROBE_LOG: log})
+        self.assertEqual((guest["failures"], persistence["failures"]), ([], []))
+        self.assertTrue(persistence["invalid_sentinel_preserved"])
+        _, persistence = rd.check_probe_invalid_sentinel(bad, log, {rd.PROBE_SENTINEL: b"halo-wii-probe-v1 1\n",
+                                                                     rd.PROBE_LOG: log + b"BEGIN new\n"})
+        self.assertEqual(persistence["failures"], ["invalid_sentinel_not_preserved",
+                                                   "existing_log_changed_while_storage_refused"])
+
+
 class OutcomeTests(unittest.TestCase):
     def record(self, guest="passed", persistence="passed", host="exit_zero", os="no_instability_events_observed"):
         run = {"guest": {"result": guest}, "persistence": {"result": persistence}, "host": {"outcome": host}}
