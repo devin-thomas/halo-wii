@@ -12,6 +12,7 @@ from .wii.check_toolchain import inspect_toolchain, toolchain_inputs
 BUILD = Path("build/wii")
 SOURCES = [Path("port/wii/probe/main.c"), Path("port/wii/abi/boundary.c"), Path("port/wii/abi/fixture.c")]
 GX_SCENE_SOURCES = [Path("port/wii/gx_scene/main.c")]
+GX_MATERIALS_SOURCES = [Path("port/wii/gx_materials/main.c")]
 GEOMETRY_VIEW_SOURCES = [Path("port/wii/geometry_view/main.c"),
                          *(Path("tools/wii") / name for name in (
                              "cache_arena_plan.c", "cache_stream_io.c", "cache_address_owned.c",
@@ -23,7 +24,8 @@ LIBRARIES = ("libfat.a", "libwiiuse.a", "libbte.a", "libogc.a")
 
 def source_inputs():
     return [Path("tools/wii_build.py"), Path("tools/wii/build.py"),
-            Path("tools/wii/check_toolchain.py"), *SOURCES, *GX_SCENE_SOURCES, *GEOMETRY_VIEW_SOURCES,
+            Path("tools/wii/check_toolchain.py"), *SOURCES, *GX_SCENE_SOURCES, *GX_MATERIALS_SOURCES,
+            *GEOMETRY_VIEW_SOURCES,
             *sorted(Path("port/wii/abi").glob("*.h")),
             *(Path("tools/wii") / name for name in (
                 "cache_arena_plan.h", "cache_stream_io.h", "cache_address_owned.h",
@@ -112,11 +114,13 @@ def generate_wii_build(n, sln):
     n.rule("wii_dol", f'{runner} convert {config} --source "$in" --output "$out"', description="ELF2DOL $out")
     n.rule("wii_manifest", f'{runner} manifest {config} --stem $stem --scope $scope --output "$out"',
            description="MANIFEST Wii $stem", restat=True)
-    # The probe keeps its original object/artifact paths; the GX scene builds
-    # its objects in a subdirectory because both entry points are main.c.
+    # The probe keeps its original object/artifact paths; the other targets
+    # build their objects in subdirectories because every entry point is main.c.
     targets = (("wii_probe", "probe", "asset_free_probe", SOURCES, BUILD, BUILD / "build-info.json"),
                ("wii_gx_scene", "gx_scene", "asset_free_gx_scene", GX_SCENE_SOURCES, BUILD / "gx_scene",
                 BUILD / "gx_scene-build-info.json"),
+               ("wii_gx_materials", "gx_materials", "asset_free_gx_materials", GX_MATERIALS_SOURCES,
+                BUILD / "gx_materials", BUILD / "gx_materials-build-info.json"),
                ("wii_geometry_view", "geometry_view", "owned_geometry_diagnostic_no_embedded_assets",
                 GEOMETRY_VIEW_SOURCES, BUILD / "geometry_view", BUILD / "geometry_view-build-info.json"))
     for target, stem, scope, sources, object_dir, manifest in targets:

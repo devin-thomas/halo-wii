@@ -103,6 +103,25 @@ class PackageArtifactsTest(unittest.TestCase):
         self.assertIn("extra: only regular files", problems)
         self.assertIn("probe.dol: required allowlisted file is missing", problems)
 
+    def test_allowlist_covers_every_wii_target(self):
+        names = package.allowlist()
+        for stem in ("probe", "gx_scene", "gx_materials", "geometry_view"):
+            for suffix in (".elf", ".dol", ".map"):
+                self.assertIn(stem + suffix, names)
+        self.assertIn("gx_materials-build-info.json", names)
+        self.assertEqual(len(names), 4 * 4 + 1)
+
+    def test_materials_scope_and_missing_artifact_are_checked(self):
+        directory = self.staged()
+        info = directory / "gx_materials-build-info.json"
+        record = json.loads(info.read_text(encoding="utf-8"))
+        record["scope"] = "asset_free_gx_scene"
+        info.write_text(json.dumps(record), encoding="utf-8")
+        (directory / "gx_materials.map").unlink()
+        problems = "\n".join(self.inspect(directory)["problems"])
+        self.assertIn("gx_materials-build-info.json: scope is not asset_free_gx_materials", problems)
+        self.assertIn("gx_materials.map: required allowlisted file is missing", problems)
+
     def test_tampered_artifact_fails_hash_checks(self):
         directory = self.staged()
         (directory / "probe.dol").write_bytes(synthetic_dol(b"tampered"))
