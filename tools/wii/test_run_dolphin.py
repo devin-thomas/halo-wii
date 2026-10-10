@@ -463,6 +463,228 @@ class GxMaterialsScenarioTests(unittest.TestCase):
         self.assertEqual(len(rd.pad_entries(script)) % 8, 0)
 
 
+CAL_NAMES = ("front_depth_cull", "backdrop_visible", "clear_corner", "control_cull_none", "control_depth_off",
+             "pitch_top_visible", "pitch_front_lower", "yaw_left_visible", "depth_order")
+
+
+def gxs_log(previous=0, build=BUILD, failed_cal=None, passed=9, leak="0", result="pass", exit_reason="pad_start",
+            resets=1, range_failures="0"):
+    """An authored gx_scene guest log for one launch (shape of the HWI-014A guest report)."""
+    lines = [f"BEGIN target=gx_scene build={build} previous_runs={previous} storage=1 video=640x480 "
+             "efb_height=480 mode=0 aa=0"]
+    lines += [f"CAL name={name} pixel=1,1 expected=e03030 observed=e03030ff z=faf6b1 "
+              f"pass={0 if name == failed_cal else 1}" for name in CAL_NAMES]
+    lines.append(f"CALIBRATION passed={passed} total=9 scope=EFB_readback_in_stock_Dolphin_not_hardware")
+    lines.append("INPUT frame=295 auto_spin=1")
+    lines.append("TIMING frames=431 render_us_min=69 max=82 avg=74 interval_us_min=16434 max=16702 scope=x")
+    lines.append(f"HEAP end=1669664 after_init=1669664 leak_since_init={leak}")
+    lines.append(f"END target=gx_scene build={build} frames=431 connected=1 activity=1 first_input_frame=95 "
+                 f"toggles=1 resets={resets} exit={exit_reason} storage=1 calibration={passed}/9 "
+                 f"range_failures={range_failures} result={result}")
+    return "\n".join(lines) + "\n"
+
+
+class GxSceneScenarioTests(unittest.TestCase):
+    @staticmethod
+    def files(counter, log):
+        return {rd.GXS_RUNS: counter, rd.GXS_LOG: log.encode()}
+
+    def test_two_cold_launches_pass(self):
+        first = gxs_log(0)
+        guest, persistence = rd.check_gx_scene(BUILD, 1, 0, "", self.files(b"halo-wii-gx-v1 1\n", first))
+        self.assertEqual((guest["failures"], persistence["failures"]), ([], []))
+        self.assertEqual(guest["observations"]["calibration"], "9/9")
+        self.assertEqual(guest["observations"]["timing"]["max_2"], "16702")
+        guest, persistence = rd.check_gx_scene(BUILD, 2, 0, first,
+                                               self.files(b"halo-wii-gx-v1 2\n", first + gxs_log(1)))
+        self.assertEqual((guest["failures"], persistence["failures"]), ([], []))
+        self.assertTrue(persistence["prior_log_preserved"])
+
+    def test_guest_failures_are_reported_in_the_guest_category(self):
+        cases = [
+            (dict(build="ffffffffffffffff"), "build_id_mismatch"),
+            (dict(failed_cal="clear_corner", passed=8), "calibration_failed_or_incomplete"),
+            (dict(failed_cal="clear_corner"), "calibration_check_failed"),
+            (dict(leak="16"), "heap_leak_since_init"),
+            (dict(result="fail"), "guest_reported_fail"),
+            (dict(exit_reason="auto_exit"), "exit_not_pad_start"),
+            (dict(resets=0), "input_not_observed"),
+            (dict(range_failures="1"), "owned_range_failures"),
+        ]
+        for options, failure in cases:
+            guest, persistence = rd.check_gx_scene(BUILD, 1, 0, "", self.files(b"halo-wii-gx-v1 1\n",
+                                                                             gxs_log(0, **options)))
+            self.assertIn(failure, guest["failures"], failure)
+            self.assertEqual(persistence["failures"], [], failure)
+
+    def test_persistence_failures_stay_separate(self):
+        guest, persistence = rd.check_gx_scene(BUILD, 2, 0, "", self.files(b"halo-wii-gx-v1 1\n", gxs_log(0)))
+        self.assertIn("run_counter_did_not_advance_across_cold_process", persistence["failures"])
+        self.assertIn("guest_previous_runs_mismatch", persistence["failures"])
+        self.assertEqual(guest["failures"], [])
+        guest, persistence = rd.check_gx_scene(BUILD, 1, 0, "", {})
+        self.assertIn("guest_log_missing", guest["failures"])
+        self.assertIn("run_counter_missing", persistence["failures"])
+
+
+GEO_CULL = {"none": ("aac744a4", 63), "content_back": ("18b17d9a", 47), "opposite_front": ("b9cf71f5", 52)}
+
+
+def geo_log(previous=0, build=BUILD, cycles=4, index_crc3="bad05748", back_crc2="18b17d9a", mem2_restored=1,
+            fault_clean=1, exit_reason="pad_start", failures=0, manifest_ok=1):
+    """An authored geometry_view guest log for one launch (shape of the HWI-016 guest report)."""
+    lines = [f"BEGIN target=geometry_view build={build} previous_runs={previous} storage=1 video=640x480 "
+             "efb_height=480",
+             f"MANIFEST ok={manifest_ok} material=3 surfaces=2990 vertices=5863 tag_bytes=1 bsp_bytes=1",
+             "MALFORMED manifest_rejections=3/3"]
+    for n in range(cycles):
+        index_crc = index_crc3 if n == 3 else "bad05748"
+        lines.append(f"CYCLE n={n} placement={n % 2} required=1 charge=1 remaining=1 load_us={1699738 + n} "
+                     f"index_crc={index_crc} position_crc=db11989c degenerate=0 normals_along=0 opposed=2990 "
+                     "unclear=0 none_visible=63/768 none_grid_crc=aac744a4")
+        for mode, (crc, visible) in GEO_CULL.items():
+            if mode == "content_back" and n == 2:
+                crc = back_crc2
+            lines.append(f"CULL n={n} mode={mode} shaded_pose0 visible={visible} same_as_none=740 crc={crc} "
+                         f"draw_us={280 + n} classified_pose0 lit=30 unlit=33 unclear=0 visible={visible} "
+                         f"draw_us={2227 + n}")
+    lines.append(f"INTERACTIVE activity=1 stick_seen=1 input_yaw=8.418 input_zoom=46.72 resets=2 exit={exit_reason}")
+    lines.append(f"FAULT kind=bsp_crc_flip reason=crc clean={fault_clean}")
+    lines.append("FAULT kind=tag_length_minus_one reason=trailing clean=1")
+    lines.append(f"MEMORY mem2_bytes=54284128 heap_start=178320 heap_end=1669488 mem2_restored={mem2_restored}")
+    lines.append("GX fifo_bytes=262144 fifo_submitted_peak=77312 render_max_us=305 frames=784 cull=content_back")
+    lines.append(f"END target=geometry_view build={build} cycles={cycles} stale_rejected=4 faults_rejected=2 "
+                 f"failures={failures} result={'pass' if not failures else 'fail'}")
+    return "\n".join(lines) + "\n"
+
+
+class GeometryViewScenarioTests(unittest.TestCase):
+    @staticmethod
+    def files(counter, log):
+        return {rd.GEO_RUNS: counter, rd.GEO_LOG: log.encode()}
+
+    def test_two_cold_launches_pass_and_cull_results_are_recorded_without_timings(self):
+        first = geo_log(0)
+        guest, persistence = rd.check_geometry_view(BUILD, 1, 0, "", self.files(b"halo-wii-geometry-v1 1\n", first))
+        self.assertEqual((guest["failures"], persistence["failures"]), ([], []))
+        cull = guest["observations"]["cull"]
+        self.assertEqual({mode: c["crc"] for mode, c in cull.items()},
+                         {mode: crc for mode, (crc, _) in GEO_CULL.items()})
+        self.assertNotIn("draw_us", json.dumps(cull))
+        self.assertEqual(guest["observations"]["cull_draw_us"]["none"], ["280", "2227"])
+        self.assertEqual(guest["observations"]["cycles"][3]["index_crc"], "bad05748")
+        guest, persistence = rd.check_geometry_view(BUILD, 2, 0, first,
+                                                    self.files(b"halo-wii-geometry-v1 2\n", first + geo_log(1)))
+        self.assertEqual((guest["failures"], persistence["failures"]), ([], []))
+
+    def test_guest_failures_are_reported_in_the_guest_category(self):
+        cases = [
+            (dict(cycles=3), "expected_4_load_cycles_found_3"),
+            (dict(index_crc3="00000000"), "cycle_results_differ"),
+            (dict(back_crc2="00000000"), "cull_results_differ_or_missing"),
+            (dict(mem2_restored=0), "mem2_not_restored"),
+            (dict(fault_clean=0), "fault_case_not_rejected_cleanly"),
+            (dict(exit_reason="auto_exit"), "exit_not_pad_start"),
+            (dict(failures=1), "guest_reported_fail"),
+            (dict(manifest_ok=0), "manifest_not_accepted"),
+        ]
+        for options, failure in cases:
+            guest, persistence = rd.check_geometry_view(BUILD, 1, 0, "", self.files(b"halo-wii-geometry-v1 1\n",
+                                                                                  geo_log(0, **options)))
+            self.assertIn(failure, guest["failures"], failure)
+            self.assertEqual(persistence["failures"], [], failure)
+
+    def test_run_counter_is_continued_and_never_reset(self):
+        self.assertEqual(rd.run_counter(None, rd.GEO_MAGIC), 0)
+        self.assertEqual(rd.run_counter(b"halo-wii-geometry-v1 3\n", rd.GEO_MAGIC), 3)
+        for bad in (b"halo-wii-geometry-v1 x\n", b"halo-wii-gx-v1 3\n"):
+            with self.assertRaises(ValueError):
+                rd.run_counter(bad, rd.GEO_MAGIC)
+
+    def test_new_scenarios_require_build_info_and_efb_access(self):
+        for scenario in ("gx_scene", "geometry_view"):
+            base = ["--dolphin", "Dolphin.app", "--dol", "x.dol", "--out", "o", "--scenario", scenario]
+            with self.assertRaises(SystemExit):
+                rd.parse_args(base + ["--build-info", "b.json"])
+            with self.assertRaises(SystemExit):
+                rd.parse_args(base + ["--efb-access"])
+            self.assertIsNone(rd.parse_args(base + ["--build-info", "b.json", "--efb-access"]).backend)
+
+    def test_shipped_scripts_end_with_start(self):
+        for name, polls in (("gx-scene.json", 1278), ("geometry-view.json", 36000)):
+            script = json.loads((Path(__file__).parent / "inputs" / name).read_text(encoding="utf-8"))
+            self.assertEqual(len(rd.pad_entries(script)) // 8, polls, name)
+            self.assertIn("START", [b for step in script["steps"] for b in step.get("buttons", [])], name)
+
+
+class MacHostTests(unittest.TestCase):
+    START = "2026-10-10T12:00:00+00:00"
+
+    def test_host_platform_and_dolphin_bundle(self):
+        self.assertEqual(rd.host_platform("win32"), "windows")
+        self.assertEqual(rd.host_platform("darwin"), "macos")
+        self.assertEqual(rd.host_platform("linux"), "unsupported")
+        self.assertEqual(rd.resolve_dolphin(Path("/A/Dolphin.app")).as_posix(), "/A/Dolphin.app/Contents/MacOS/Dolphin")
+        self.assertEqual(rd.resolve_dolphin(Path("D/Dolphin.exe")), Path("D/Dolphin.exe"))
+        self.assertEqual(rd.DEFAULT_BACKEND, {"windows": "D3D", "macos": "Vulkan"})
+
+    def test_repeat_multiplies_the_pad_body(self):
+        script = {"steps": [{"label": "a", "polls": 2, "buttons": ["A"]}]}
+        self.assertEqual(rd.pad_entries(dict(script, repeat=3)), rd.pad_entries(script) * 3)
+        for bad in (0, -1, "2", True):
+            with self.assertRaises(ValueError):
+                rd.pad_entries(dict(script, repeat=bad))
+
+    def test_native_staging_uses_host_paths_without_wsl(self):
+        commands = rd.staging_commands("/p/sd.raw", [("/in/a b.bin", "sd:/game/a.bin")], set(), str)
+        self.assertEqual(commands, [["mmd", "-i", "/p/sd.raw", "::/game"],
+                                    ["mcopy", "-n", "-i", "/p/sd.raw", "/in/a b.bin", "::/game/a.bin"]])
+        self.assertEqual(rd.staging_argv(commands[0], "macos"), commands[0])
+        self.assertEqual(rd.staging_argv(commands[0], "windows", "Debian")[:4], ["wsl", "-d", "Debian", "--"])
+
+    def test_pgrep_and_signal_exit(self):
+        self.assertEqual(rd.parse_pgrep("123\n456\n"), 2)
+        self.assertEqual(rd.parse_pgrep(""), 0)
+        self.assertEqual(rd.exit_fields(-9, posix=True)["terminated_by_signal"], 9)
+        self.assertNotIn("terminated_by_signal", rd.exit_fields(-1073740791))
+        self.assertEqual(rd.host_outcome(-9, False, set()), "nonzero_exit")
+
+    def test_boottime(self):
+        self.assertEqual(rd.parse_boottime("{ sec = 1791592405, usec = 404105 } Fri Oct  9 19:33:25 2026"),
+                         "2026-10-10T00:33:25+00:00")
+        self.assertIsNone(rd.parse_boottime(""))
+
+    def test_no_macos_events(self):
+        result = rd.classify_macos([("ChatGPT_2026-10-10_host.diag", "t")], [{"count": 0, "finished": 1}],
+                                   "2026-10-09T00:33:25+00:00", self.START)
+        self.assertEqual(result["observation"], "no_instability_events_observed")
+        self.assertEqual(result["dolphin_application_events"], [])
+
+    def test_macos_instability_and_dolphin_faults_are_separate_and_path_free(self):
+        log = [{"processImagePath": "/kernel", "eventMessage": "panic(cpu 1 caller 0x1): watchdog", "timestamp": "t"},
+               {"processImagePath": "/kernel", "eventMessage": "AGX: GPU restart (count 1)", "timestamp": "t"},
+               {"processImagePath": "/kernel", "eventMessage": "harmless match", "timestamp": "t"},
+               {"processImagePath": "/Users/someone/Applications/Dolphin.app/Contents/MacOS/Dolphin",
+                "eventMessage": "fault in /Users/someone/x", "timestamp": "t"}]
+        result = rd.classify_macos([("Kernel-2026-10-10-host.panic", "t"), ("Dolphin-2026-10-10-1.ips", "t")], log,
+                                   "2026-10-10T12:00:05+00:00", self.START)
+        meanings = [e["meaning"] for e in result["instability_events"]]
+        self.assertEqual(meanings, ["kernel_panic_report", "kernel_panic_gpu_restart_or_watchdog_message",
+                                    "kernel_panic_gpu_restart_or_watchdog_message", "boot_after_window_start"])
+        self.assertEqual(len(result["kernel_log_matched"]), 3)
+        self.assertEqual([e["kind"] for e in result["dolphin_application_events"]],
+                         ["dolphin_crash_report", "dolphin_fault_or_crash_log_message"])
+        text = json.dumps(result)
+        self.assertNotIn("someone", text)
+        self.assertNotIn("host.panic", text)
+
+    def test_dolphin_crash_alone_is_not_instability_and_failed_log_is_unmeasured(self):
+        result = rd.classify_macos([("Dolphin-2026-10-10-1.ips", "t")], [], None, self.START)
+        self.assertEqual(result["observation"], "no_instability_events_observed")
+        self.assertEqual(result["dolphin_application_event_count"], 1)
+        self.assertEqual(rd.classify_macos([], [], None, self.START, log_ok=False)["observation"], "unmeasured")
+
+
 class OutcomeTests(unittest.TestCase):
     def record(self, guest="passed", persistence="passed", host="exit_zero", os="no_instability_events_observed"):
         run = {"guest": {"result": guest}, "persistence": {"result": persistence}, "host": {"outcome": host}}
