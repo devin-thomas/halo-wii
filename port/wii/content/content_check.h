@@ -4,7 +4,9 @@
  * A case names one converted file, the result its loader must give and, for
  * a valid file, the SHA-256 of its decoded contents as the host tool
  * (tools/wii/content_loader_cases.py) computed them:
- *   texture          RGBA8 of every texel of every image (face, level, slice; rows)
+ *   texture          RGBA8 of every texel of every image (face, level, slice; rows);
+ *                    a version 2 (split alpha) texture's alpha from its plane,
+ *                    255 when the plane is omitted
  *   animation        the rebuilt Xbox event stream
  *   sound            the decoded samples as big-endian PCM16, interleaved
  *   model, lightmap, collision, model_animation, font, strings

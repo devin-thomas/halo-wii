@@ -37,6 +37,11 @@ BITMAPS = [("dxt1", 16, 16, 1, "2d", 2, False), ("a8r8g8b8", 8, 8, 1, "2d", 3, F
            ("a4r4g4b4", 4, 4, 1, "2d", 0, False), ("a8", 8, 8, 1, "2d", 1, False),
            ("x8r8g8b8", 4, 4, 4, "3d", 2, False), ("dxt5", 8, 8, 1, "2d", 1, False),
            ("r5g6b5", 12, 6, 1, "2d", 0, True)]
+# HWI-008F: DXT3/DXT5 in gx-splitalpha-v1 (an I4 plane, an I8 plane, DXT5 in I4,
+# an omitted plane, a volume and an oversize texture), besides the formats above
+SPLIT_BITMAPS = BITMAPS + [("dxt3", 16, 16, 1, "2d", 2, False, "edges"), ("dxt5", 16, 16, 1, "2d", 2, False, "edges"),
+                           ("dxt5", 8, 8, 1, "2d", 1, False, "steps17"), ("dxt3", 8, 8, 1, "cube", 1, False, "opaque"),
+                           ("dxt5", 8, 8, 4, "3d", 1, False), ("dxt3", 2048, 4, 1, "2d", 0, False)]
 V1_TICKS = 22
 DECODED = ("model", "lightmap", "collision", "model_animation", "font", "strings")
 
@@ -51,6 +56,9 @@ def compiler():
 
 @unittest.skipUnless(compiler(), "no host C compiler")
 class HostLoaderTests(unittest.TestCase):
+    PROFILE = "gx-baseline-v1"
+    BITMAPS = BITMAPS
+
     @classmethod
     def setUpClass(cls):
         cls.temp = tempfile.TemporaryDirectory()
@@ -66,11 +74,11 @@ class HostLoaderTests(unittest.TestCase):
         sounds = [(0, 0, 1, fx.adpcm_payload(3, 1, 5)), (0, 0, 1, fx.adpcm_payload(70, 1, 9))]
         stereo = [(1, 1, 1, fx.adpcm_payload(2, 2, 6)), (1, 1, 1, fx.adpcm_payload(5, 2, 7))]
         staging = fx.write_staging(root / "staging", {
-            "alpha": fx.build_map("alpha", bitmaps=BITMAPS, animation_streams=streams, sounds=sounds,
+            "alpha": fx.build_map("alpha", bitmaps=cls.BITMAPS, animation_streams=streams, sounds=sounds,
                                   categories=set()),
             "beta": fx.build_map("beta", category=1, sounds=stereo, categories=set())})
         cls.out = root / "content"
-        cc.run(staging, None, list(cc.CATEGORIES), "gx-baseline-v1", cls.out)
+        cc.run(staging, None, list(cc.CATEGORIES), cls.PROFILE, cls.out)
         cls.cases = root / "cases"
         cls.summary = lc.build(cls.out, cls.cases)
 
@@ -197,6 +205,44 @@ class HostLoaderTests(unittest.TestCase):
         self.assertIn(-1, nodes)                                  # NONE child
         self.assertTrue(any(v < -1 for v in nodes[1::3] + nodes[2::3]))   # leaf children
 
+
+
+class SplitAlphaHostLoaderTests(HostLoaderTests):
+    """Every host loader test again on a gx-splitalpha-v1 generation, plus the
+    version 2 container's own cases (HWI-008F)."""
+    PROFILE = "gx-splitalpha-v1"
+    BITMAPS = SPLIT_BITMAPS
+
+    def test_split_samples_and_alpha_variants(self):
+        public = json.loads((self.cases / "cases-public.json").read_text(encoding="utf-8"))
+        alphas = {c.get("alpha") for c in public["cases"] if c["kind"] == "texture" and c["expect"] == "ok"}
+        self.assertTrue({"plane-I4", "plane-I8", "omitted-none"} <= alphas, alphas)
+        variants = {c["variant"]: c["expect"] for c in public["cases"] if c.get("variant")}
+        for name, error in (("alpha_section_version", "version"), ("alpha_kind_unknown", "enum"),
+                            ("alpha_format_unknown", "enum"), ("alpha_reserved_nonzero", "reserved"),
+                            ("alpha_offset_off", "length"), ("alpha_bytes_off", "length"),
+                            ("alpha_plane_truncated", "length"), ("alpha_plane_missing", "length"),
+                            ("alpha_tail_reserved_nonzero", "reserved"), ("version_1_with_alpha_section", "enum"),
+                            ("colour_block_three_colour", "value"), ("colour_block_uniform_with_indices", "value"),
+                            ("version_2_without_split_source", "enum"), ("bad_version", "version")):
+            self.assertEqual(variants.get(name), error, name)
+
+    def test_a_changed_alpha_plane_texel_fails_its_case(self):
+        for row in self.rows():
+            parts = row.split()
+            if parts[2] != "texture" or parts[3] != "ok":
+                continue
+            data = bytearray(Path(parts[4]).read_bytes())
+            header = lc.gt.unpack_hwt(bytes(data))[0]
+            if header["alpha"] is None or header["alpha"]["kind"] != "plane":
+                continue
+            data[header["alpha"]["offset"]] ^= 0x10   # texel (0, 0) of the plane's first image
+            result = self.single(row, data, "changed-alpha")
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("got=ok", result.stdout)
+            self.assertIn("decoded_match=0", result.stdout)
+            return
+        self.fail("no split-alpha texture with a plane was sampled")
 
 if __name__ == "__main__":
     unittest.main()

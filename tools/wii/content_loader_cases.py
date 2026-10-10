@@ -1,4 +1,4 @@
-"""Stage converted content for the Wii loader self-test (HWI-008C, HWI-008E).
+"""Stage converted content for the Wii loader self-test (HWI-008C, HWI-008E, HWI-008F).
 
 Picks a deterministic sample of a published content generation (every
 texture format and type, sound codec class and recorded-animation version;
@@ -18,7 +18,8 @@ writes:
   <out>/cases-public.json               formats, sizes and expectations only
 
 Decoded digests:
-  texture    RGBA8 of every texel of every image (face, level, slice; rows), GX decode rules
+  texture    RGBA8 of every texel of every image (face, level, slice; rows), GX decode rules;
+             a split-alpha (HWT1 version 2) texture's alpha from its plane, 255 when omitted
   animation  the rebuilt Xbox event stream (equals the manifest's source stream hash)
   sound      decoded samples as big-endian PCM16, interleaved
   model, lightmap, collision, model_animation, font, strings
@@ -78,10 +79,10 @@ def sha(data):
 
 
 # ---- decoded digests --------------------------------------------------------
-def hwt_images(header):
+def hwt_images(header, gx=None, first=gt.HWT_HEADER_BYTES):
     """(face, level, slice, width, height, offset, bytes) in container order."""
-    images, offset = [], gt.HWT_HEADER_BYTES
-    gx = header["gx_format"]
+    images, offset = [], first
+    gx = header["gx_format"] if gx is None else gx
     for face in range(header["faces"]):
         for level in range(header["levels"]):
             w, h = max(header["width"] >> level, 1), max(header["height"] >> level, 1)
@@ -94,13 +95,22 @@ def hwt_images(header):
 
 def texture_digest(blob):
     header, _ = gt.unpack_hwt(blob)
+    alpha = header["alpha"]
+    planes = [None] * header["images"]
+    if alpha is not None and alpha["kind"] == "plane":
+        planes = hwt_images(header, alpha["gx_format"], alpha["offset"])
     digest = hashlib.sha256()
-    for _, _, _, w, h, offset, size in hwt_images(header):
+    for (_, _, _, w, h, offset, size), plane in zip(hwt_images(header), planes):
         image = bytes(blob[offset:offset + size])
+        alpha_image = bytes(blob[plane[5]:plane[5] + plane[6]]) if plane else None
         row = bytearray()
         for y in range(h):
             for x in range(w):
-                row += bytes(gt.gx_decode_texel(header["gx_format"], image, w, x, y))
+                rgba = gt.gx_decode_texel(header["gx_format"], image, w, x, y)
+                if alpha is not None:
+                    rgba = rgba[:3] + ((gt.gx_decode_texel(alpha["gx_format"], alpha_image, w, x, y)[3],)
+                                       if plane else (255,))
+                row += bytes(rgba)
             digest.update(row)
             row.clear()
     return digest.hexdigest()
@@ -157,7 +167,9 @@ def select(outputs, generation_dir):
     textures = {}
     for e in outputs:
         if e["kind"] == "texture":
-            textures.setdefault((e["source"]["format"], e["source"]["type"]), []).append(e)
+            alpha = e["gx"].get("alpha")
+            split = "" if alpha is None else "%s-%s" % (alpha["kind"], alpha["format"])
+            textures.setdefault((e["source"]["format"], e["source"]["type"], split), []).append(e)
 
     def texture_budget(e):
         s = e["source"]
@@ -254,8 +266,10 @@ def texture_variants(blob):
         fn(m)
         out.append((name, bytes(m), error))
     edit("bad_magic", "magic", lambda m: m.__setitem__(slice(0, 4), b"HWX1"))
-    edit("bad_version", "version", lambda m: put16(m, 4, 2))
+    edit("bad_version", "version", lambda m: put16(m, 4, 3))
+    edit("version_2_without_split_source", "enum", lambda m: put16(m, 4, 2))
     edit("gx_format_unknown", "enum", lambda m: put16(m, 6, 7))
+    edit("gx_format_i4_colour", "enum", lambda m: put16(m, 6, gt.GX_I4))
     wrong = gt.GX_RGBA8 if header["gx_format"] != gt.GX_RGBA8 else gt.GX_I8
     edit("gx_format_against_profile", "enum", lambda m: put16(m, 6, wrong))
     edit("width_zero", "dimensions", lambda m: put16(m, 8, 0))
@@ -265,6 +279,49 @@ def texture_variants(blob):
     edit("data_bytes_extra", "length", lambda m: put32(m, 28, len(b) - 64 + 32))
     edit("reserved_nonzero", "reserved", lambda m: m.__setitem__(40, 1))
     edit("type_unknown", "enum", lambda m: put16(m, 22, 7))
+    return out
+
+
+def split_texture_variants(blob):
+    """(name, bytes, expected error) for one valid version 2 texture with an
+    alpha plane (HWI-008F): the alpha section and the colour-block rule."""
+    b = bytes(blob)
+    header, colour = gt.unpack_hwt(b)
+    alpha = header["alpha"]
+    end = gt.HWT_HEADER_BYTES + len(colour)
+    out = [("alpha_plane_truncated", b[:-32], "length"), ("alpha_plane_trailing", b + bytes(32), "length"),
+           ("alpha_plane_missing", b[:end], "length")]
+
+    def edit(name, error, fn, base=b):
+        m = bytearray(base)
+        fn(m)
+        out.append((name, bytes(m), error))
+    edit("alpha_section_version", "version", lambda m: put16(m, 32, 2))
+    edit("alpha_kind_unknown", "enum", lambda m: put16(m, 34, 3))
+    edit("alpha_format_unknown", "enum", lambda m: put16(m, 36, gt.GX_IA8))
+    if header["source_format"] == "dxt3":
+        edit("alpha_dxt3_not_i4", "enum", lambda m: put16(m, 36, gt.GX_I8))
+    edit("alpha_reserved_nonzero", "reserved", lambda m: put16(m, 38, 1))
+    edit("alpha_offset_off", "length", lambda m: put32(m, 40, end + 32))
+    edit("alpha_bytes_off", "length", lambda m: put32(m, 44, alpha["bytes"] + 32), base=b + bytes(32))
+    edit("alpha_tail_reserved_nonzero", "reserved", lambda m: m.__setitem__(50, 1))
+    edit("omitted_with_plane", "length" if alpha["gx_format"] == gt.GX_I4 else "enum",
+         lambda m: put16(m, 34, gt.HWT_ALPHA_OMITTED))
+    edit("version_1_with_alpha_section", "enum", lambda m: put16(m, 4, 1))
+    # a colour block in the three-colour form (c0 < c1): it could select
+    # CMPR's transparent entry, which split-alpha colour never does
+    for at in range(gt.HWT_HEADER_BYTES, end, 8):
+        c0, c1 = struct.unpack_from(">HH", b, at)
+        if c0 > c1:
+            edit("colour_block_three_colour", "value",
+                 lambda m, at=at, c0=c0, c1=c1: struct.pack_into(">HH", m, at, c1, c0))
+            break
+    for at in range(gt.HWT_HEADER_BYTES, end, 8):
+        c0, c1 = struct.unpack_from(">HH", b, at)
+        if c0 > c1:
+            edit("colour_block_uniform_with_indices", "value",
+                 lambda m, at=at, c0=c0: struct.pack_into(">HHI", m, at, c0, c0, 0x55555555))
+            break
     return out
 
 
@@ -580,9 +637,15 @@ def build(root, out, prefix="sd:/" + SD_DIR + "/"):
                           gx_loadable=entry["gx"]["loadable_dimensions"])
             header, _ = gt.unpack_hwt(blob)
             detail["texels"] = texels(header)
+            if header["alpha"] is not None:
+                detail["alpha"] = "%s-%s" % (entry["gx"]["alpha"]["kind"], entry["gx"]["alpha"]["format"])
             if header["type"] == "2d" and header["levels"] > 1 and "texture" not in first_valid \
-                    and entry["gx"]["loadable_dimensions"]:
+                    and entry["gx"]["loadable_dimensions"] and header["alpha"] is None:
                 first_valid["texture"] = blob
+            if header["type"] == "2d" and header["levels"] > 1 and "texture_split" not in first_valid \
+                    and entry["gx"]["loadable_dimensions"] and header["alpha"] is not None \
+                    and header["alpha"]["kind"] == "plane":
+                first_valid["texture_split"] = blob
         elif kind not in first_valid and (kind != "animation" or entry["source"]["version"] == 4):
             first_valid[kind] = blob
         public.append(dict(detail, id=case_id, kind=kind, bytes=len(blob), expect="ok"))
@@ -597,7 +660,10 @@ def build(root, out, prefix="sd:/" + SD_DIR + "/"):
             continue   # the generation holds no outputs of this kind
         if first_valid.get(kind) is None:
             raise CaseError("no valid %s to derive malformed variants from" % kind)
-        for index, (variant, data, error) in enumerate(VARIANTS[kind](first_valid[kind])):
+        variants = VARIANTS[kind](first_valid[kind])
+        if kind == "texture" and first_valid.get("texture_split") is not None:
+            variants += split_texture_variants(first_valid["texture_split"])
+        for index, (variant, data, error) in enumerate(variants):
             case_id = "m%s%02d" % (PREFIX[kind], index)
             name = "%s.%s" % (case_id, EXTENSIONS[kind])
             (files_dir / name).write_bytes(data)

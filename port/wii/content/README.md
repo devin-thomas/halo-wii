@@ -6,7 +6,7 @@ no game data: the SD card supplies the files.
 
 | Unit | Container | What it does |
 |---|---|---|
-| `hwt_texture.c` | HWT1 texture | Validates the header (magic, version, GX format against the `gx-baseline-v1` source mapping, dimensions, faces, levels, image count, reserved bytes, exact data length) and yields every image (face, level, slice) with its offset. `hwt_decode_texel` decodes one texel by the GX rules, CMPR's 5/8 + 3/8 blend included. |
+| `hwt_texture.c` | HWT1 texture | Validates the header (magic, version, GX format against the profile's source mapping, dimensions, faces, levels, image count, reserved bytes, exact data length) and yields every image (face, level, slice) with its offset. Version 1 is `gx-baseline-v1`. Version 2 (`gx-splitalpha-v1`, HWI-008F) is DXT3/DXT5 as CMPR colour with an alpha section: the plane (I4, or I8 for DXT5) at its offset with one image per colour image (`hwt_alpha_image_at`), or none when the alpha is 255 everywhere; every CMPR block must be in the four-colour form. `hwt_decode_texel` decodes one texel by the GX rules, CMPR's 5/8 + 3/8 blend included; `hwt_decode_rgba` combines a version 2 texture's colour and plane. |
 | `hra_animation.c` | HRA1 recorded animation | Validates the header, the unit-control table of its version, every event (type, delta kind, delta, payload widths, unused words zero, one end event, last) and the delta sum. `hra_encode_xbox` rebuilds the Xbox stream; `hra_verify_source` checks it against the recorded source tag. |
 | `hws_sound.c` | HWS1 sound | Validates codec, rate, channels, reserved bytes, frames and payload length. `hws_decode_adpcm` decodes Xbox ADPCM blocks to PCM16, reading each block header explicitly little-endian. |
 | `hwm_model.c` | HWM1 model geometry | Parts (vertex type, strip type, counts, geometry/part order, contiguous ranges, every index below its part's vertex count). Decodes to GX indexed arrays: `hwm_vertex` (56 bytes) with F32 position, F32 normal/binormal/tangent expanded from 11:11:10 by the engine's formula, s16 texcoord, node bytes and weight as stored; u16 indices. |
@@ -83,7 +83,10 @@ the font with the most glyphs, the longest string list, a HUD text). It
 writes the host digests of their decoded contents and derives malformed
 variants: truncations, bad magics, versions, enums, counts, lengths,
 reserved bytes, events, deltas, value widths and a changed source tag for
-the HWI-008C formats; header, section-table and padding defects plus
+the HWI-008C formats (for a split-alpha texture also the alpha section's
+version, kind, format, offset, size, reserved bytes, a missing or short
+plane and colour blocks outside the four-colour form); header,
+section-table and padding defects plus
 per-format range, count and enum defects for each HWI-008E format; and
 three wrong-format controls (a file given to another format's loader).
 
@@ -95,7 +98,9 @@ The DOL reads `sd:/halo-wii-content/cases.txt` and runs every case twice:
   through one mipmapped texture object with its LOD pinned, and reads every
   texel of a 32 x 32 crop back from the EFB (colour, then alpha through
   `GX_CC_TEXA`), which must equal the CPU decode exactly (CMPR interpolated
-  texels may differ by 8);
+  texels may differ by 8); a split-alpha texture is drawn as TEV combines
+  it, the CMPR colour in stage 0 and its plane's alpha in stage 1, and the
+  combined alpha (`GX_CC_APREV`) must equal the plane's exactly;
 - decoded kinds: the file is released before the digest, the heap is
   measured with the file and decoded form held (`heap_peak`) and with the
   decoded form alone (`heap_resident`);
