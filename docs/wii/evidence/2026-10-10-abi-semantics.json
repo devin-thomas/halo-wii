@@ -1,0 +1,1614 @@
+{
+  "schema_version": 1,
+  "ticket": "HWI-006",
+  "date": "2026-10-10",
+  "scope": "calls_varargs_bitfields_char_atomics_intrinsics_fp_environment_math_library_and_engine_math_host_vs_ppc",
+  "source_commit": "76ca89e1f9356844aaea9df449e9c49f09ed352b",
+  "fixture": {
+    "generator": "tools/wii/run_abi_semantics.py",
+    "comparer": "tools/wii/compare_abi_semantics.py",
+    "harness": "port/wii/abi/semantics/",
+    "extracted_actual_engine_pieces": {
+      "source/cseries/cseries.h": [
+        {
+          "kind": "line",
+          "selector": "typedef unsigned char byte;",
+          "sha256": "5b95506716bea7a3d83cfdf0ad622386d9febf37a0d4b638588ce8db81be98c7"
+        },
+        {
+          "kind": "line",
+          "selector": "typedef unsigned short word;",
+          "sha256": "536c1ee20c5a2c2f5fba13cba040c26a0dd9abf68f7232677ed1e8be3415fbbc"
+        },
+        {
+          "kind": "line",
+          "selector": "typedef float real;",
+          "sha256": "3905c74b03ea7503448479ede8ab32230ddb95cb019306d7b4a546d0f095ac8c"
+        },
+        {
+          "kind": "line",
+          "selector": "typedef byte boolean;",
+          "sha256": "d1a65593a6aea4c5ee092fe4040d971c8d598a0de1769037ee0a5d353206967e"
+        },
+        {
+          "kind": "enum",
+          "selector": "\n\tTICKS_PER_SECOND = 30,",
+          "sha256": "69cb471a4c455b763642dce460f2ae2c17ff23f2160d160b50c78970fbfd9dca"
+        },
+        {
+          "kind": "enum",
+          "selector": "\n\t_x = 0,",
+          "sha256": "083a281541a2171f3bde9f7ea5c3725209e4d2a94d615d1e35fbe2d6c8e09c6d"
+        },
+        {
+          "kind": "define",
+          "selector": "NONE",
+          "sha256": "b97afbd969447dbb7980a47842c399ecfe80812779bbc97d57791bbb505e1056"
+        },
+        {
+          "kind": "define",
+          "selector": "MIN",
+          "sha256": "53a06f74d476479a48e66e97657df0e5d4d08ecacb85a7607de602e9f3edc16e"
+        },
+        {
+          "kind": "define",
+          "selector": "MAX",
+          "sha256": "a8ab4608b840f1a239768d01c0e5dab4ee214340f83b689cef0f6c86f3296d9b"
+        },
+        {
+          "kind": "define",
+          "selector": "FLOOR",
+          "sha256": "6a9dca42cb2bbd54029675d20ae6b7b20bbdc454c51871eed0344bddc1f8be23"
+        },
+        {
+          "kind": "define",
+          "selector": "CEILING",
+          "sha256": "09a2b49e90b79c7c2c727513094916556ecd632255c7c8c99d56e37e3a49ab00"
+        },
+        {
+          "kind": "define",
+          "selector": "PIN",
+          "sha256": "93bbf4738bef0a808f5594c94a5d0e9f9027e1d7655dadf76d149d491d6b3460"
+        },
+        {
+          "kind": "define",
+          "selector": "FLAG",
+          "sha256": "4dee1a881f142d36719955b91536b215ec82d8137b7357f8e9be564d127ca0c5"
+        },
+        {
+          "kind": "define",
+          "selector": "TEST_FLAG",
+          "sha256": "2b59095ba9578c4c484b0a6e86885d0bfafdf564557a13018dc52da9051d6041"
+        },
+        {
+          "kind": "function",
+          "selector": "fast_ftol",
+          "sha256": "287aab9dababd4386a2f1cf2504278abc3f1b23508e16c636183573ab1941b34"
+        }
+      ],
+      "source/bungie_net/common/message_header.h": [
+        {
+          "kind": "include",
+          "selector": "bungie_net/common/message_header.h",
+          "sha256": "e073c472cf9988fe6b11d9d7472c981fca589cf5f353ea5c7d7cd81d81db44ad"
+        }
+      ],
+      "source/bungie_net/common/message_encryption.h": [
+        {
+          "kind": "include",
+          "selector": "bungie_net/common/message_encryption.h",
+          "sha256": "d1c87f779fd14ff4fffae65c912d7827729ec9a184c6b7bc499ef0ed87613344"
+        }
+      ],
+      "source/bungie_net/common/message_encryption.c": [
+        {
+          "kind": "enum",
+          "selector": "\n\tMESSAGE_ENCRYPTED_FLAG = FLAG(0),",
+          "sha256": "0b5907dbd3a4ac61945d301c1c1d3caaf5cf4cceea5f7fbe2a2343d4ec0eae09"
+        },
+        {
+          "kind": "aggregate",
+          "selector": "union message_header_value",
+          "sha256": "6b07519702968cc59953daf404904c96fbbde1a321258bea93efbd49cbe9c058"
+        },
+        {
+          "kind": "function",
+          "selector": "reversible_crypt",
+          "sha256": "2a82705fdf102d87f610a0dedb47ee205b7def2f9dd475f33c524877e5321bd7"
+        },
+        {
+          "kind": "function",
+          "selector": "tea_encipher",
+          "sha256": "b27d2a758cd8f045e571c7bcc56078a7f28e1b65feafe16634f1a57b3056003f"
+        },
+        {
+          "kind": "function",
+          "selector": "tea_decipher",
+          "sha256": "7010b83ba3a90d2e69a013a769ffa8297f1307afb026707dbf55fdefae3d1b89"
+        },
+        {
+          "kind": "function",
+          "selector": "message_encrypt",
+          "sha256": "3c7551b1fb6b85b771348f1cdba16a12d9e95b08ceefaaebc7feee43862a5c53"
+        },
+        {
+          "kind": "function",
+          "selector": "message_decrypt",
+          "sha256": "7a59a368d9cffc1bf078031edf292294d5a59255f39c43deb9a1397a58ff59b4"
+        }
+      ],
+      "source/cutscene/recorded_animation_playback.c": [
+        {
+          "kind": "enum",
+          "selector": "\n\t_time_delta_zero,",
+          "sha256": "fcbc6b7115628eb787b160e0174b8472c2a90bf001610776143827f963e09e02"
+        },
+        {
+          "kind": "aggregate",
+          "selector": "struct animation_event_header",
+          "sha256": "569664161a53c266ce0cf4647cdb4e746b65762aac319c13d9ee24317d535414"
+        },
+        {
+          "kind": "aggregate",
+          "selector": "struct vector_char_difference_data",
+          "sha256": "bfdf6739738726fe0cc4707667cfb8bc0002716215f4683fa591dc26220cad1f"
+        }
+      ],
+      "source/game/players.h": [
+        {
+          "kind": "enum",
+          "selector": "\n\t_local_player_triggered_switch_none = NONE,",
+          "sha256": "548f939e699979d344d5bcb7b2b08b47a4a188c71dcade073990f91c45ac9cbd"
+        },
+        {
+          "kind": "anonymous_union",
+          "selector": "union\n\t{\n\t\tbyte bsp_switch_state;",
+          "sha256": "88ea1eff7f71c9e5904d7d0d5a9829bd06b39df3a57519be11d8e6a4e22eacb3"
+        }
+      ],
+      "source/interface/hud_nav_points.c": [
+        {
+          "kind": "aggregate",
+          "selector": "struct hud_nav_point_datum",
+          "sha256": "e494443902040861a8cd3ef1063b2bf03237a6c141c47b269a5133bebe2bcc6d"
+        }
+      ],
+      "source/math/real_math.h": [
+        {
+          "kind": "include",
+          "selector": "math/real_math.h",
+          "sha256": "ec43d13e5d76a498b33deaf41090358b2d7ce20bfb7a7a76ceeda8fbf49b85ad"
+        }
+      ],
+      "source/math/random_math.c": [
+        {
+          "kind": "enum",
+          "selector": "\n\tRANDOM_A= 1664525L,",
+          "sha256": "6108b38cc3829ea85564f1ed708b7fb2617d5011911693cf4f4858d9616c0e47"
+        },
+        {
+          "kind": "function",
+          "selector": "seed_random",
+          "sha256": "32ab961ac627097023b7f66578c5b8e5dab607e40e3eea6666773261bf353d47"
+        },
+        {
+          "kind": "function",
+          "selector": "seed_random_range",
+          "sha256": "4bc2a4d550bbf8de400a4fed90f2d0f57573742c10e5309c3a124e09c32d7a39"
+        },
+        {
+          "kind": "function",
+          "selector": "real_seed_random",
+          "sha256": "83beb5560e9913518baf5259f0d5770f948dab5c7a7e9537f99322100d748162"
+        },
+        {
+          "kind": "function",
+          "selector": "real_seed_random_range",
+          "sha256": "c73e70ea04dd99b46a0f0f17e9899a6af45385de6742b04dbf3cc3320512afdf"
+        }
+      ],
+      "source/math/matrix_math.c": [
+        {
+          "kind": "line",
+          "selector": "static short data_0030790c[7] = { 1, 2, 0, 0, 1, 2, 0 };",
+          "sha256": "c50471d89ac62b2848afad1fdab3d94b688c8b400c1915471bdc87ef7fcebe6f"
+        },
+        {
+          "kind": "define",
+          "selector": "matrix4x3_next",
+          "sha256": "f9ee6b2b09e6f2881dc52641b658ae70bf11726fdd75a362d8490aa55f272b5d"
+        },
+        {
+          "kind": "function",
+          "selector": "matrix4x3_rotation_from_quaternion",
+          "sha256": "6b3155d01dd78d63933955730c2dd828151d192ed8aef53204028f249fc215ff"
+        },
+        {
+          "kind": "function",
+          "selector": "matrix4x3_rotation_to_quaternion",
+          "sha256": "a2286f1809d2286b3becb638a6039c36432baf2b929c1d393c21383aac5df99d"
+        },
+        {
+          "kind": "function",
+          "selector": "matrix4x3_inverse",
+          "sha256": "37200774d9b1e09598bab3ff5e77798ae4c7692ac1fcc0f6c0be8f33a3a1a1dc"
+        },
+        {
+          "kind": "function",
+          "selector": "matrix4x3_transform_point",
+          "sha256": "d50f8a6c839d953635a773492abc9802176b3bfdc635fd84e85e1c9761c3324f"
+        },
+        {
+          "kind": "function",
+          "selector": "matrix4x3_transform_vector",
+          "sha256": "96807f01f969960ded8915d2fe336c70ebe43cc026721aada7c59921fdebacf4"
+        },
+        {
+          "kind": "function",
+          "selector": "matrix4x3_multiply",
+          "sha256": "5ffa27d6029e39db3ee02409325b490de9450ad24c9d738fa63b0d42a1e68951"
+        }
+      ],
+      "source/bungie_net/common/message_header.c": [
+        {
+          "kind": "function",
+          "selector": "build_message_header",
+          "sha256": "93d819e8b27bf8621fb28a1933742554ee5fbb46b87080e2b11a52424d4ef649"
+        },
+        {
+          "kind": "function",
+          "selector": "byte_swap_message_header",
+          "sha256": "128058af180a54678ab6d37d04aa2e63319432b0339e25513246200373dfda33"
+        }
+      ],
+      "port/linux/src/xbox_kernel.c": [
+        {
+          "kind": "function",
+          "selector": "halo_linux_InterlockedIncrement",
+          "sha256": "ac87efb218d7c9ccf7b2b8c920089d220ae7e9883a1ea48fc5d8baa5c80ddf7d"
+        },
+        {
+          "kind": "function",
+          "selector": "halo_linux_InterlockedDecrement",
+          "sha256": "a12ac4858c9ba6069c652a5478efb276c3bf9984657c1edb97277476c2dcd869"
+        },
+        {
+          "kind": "function",
+          "selector": "halo_linux_InterlockedExchange",
+          "sha256": "8aa87f47a4d00c413121369847356e626656b46259f3fddf42132b4fa9eaf4bf"
+        },
+        {
+          "kind": "function",
+          "selector": "halo_linux_InterlockedExchangeAdd",
+          "sha256": "94f9eed85e618b9b8feaf64ea3aa15302eabe1728b5ea22e4e0b3f953cb2a24f"
+        },
+        {
+          "kind": "function",
+          "selector": "halo_linux_InterlockedCompareExchange",
+          "sha256": "737bae3eee7ad0c152287740f6b1f6d2e126ffc71045bf1ec8a4e0ab53dd6558"
+        }
+      ],
+      "source/math/real_math.c": [
+        {
+          "kind": "function",
+          "selector": "perpendicular3d",
+          "sha256": "99a3c9e4cd00511e93990a13fb41cf53dd63a53c8e71d4e390e5f0a00ecbce2e"
+        },
+        {
+          "kind": "function",
+          "selector": "rotate_vector_about_axis",
+          "sha256": "f1b7e7a570275efc42baf6c8dee006959f1201c8d1500e85977ff28f8b78124a"
+        },
+        {
+          "kind": "function",
+          "selector": "quaternions_multiply",
+          "sha256": "e217217afaaf7c63f0d46afdeed245d574e71e4628ab2c40200a3e88f8b86162"
+        },
+        {
+          "kind": "function",
+          "selector": "quaternions_interpolate",
+          "sha256": "37fdc39905067bf61d7ae7340b5e712973e390969786bb8bd25f7a41b487f572"
+        },
+        {
+          "kind": "function",
+          "selector": "quaternion_transform_point",
+          "sha256": "83ef8bd4460eeb784bff72dc5431ebf25d3fb94014cf095fe41e4636e53c6dc9"
+        },
+        {
+          "kind": "function",
+          "selector": "quaternion_normalize",
+          "sha256": "bb60d7c84c825a0615ba51fde510cc995a7f2920c4418d0ad2a5307a20f27d1d"
+        },
+        {
+          "kind": "function",
+          "selector": "angle_between_vectors3d",
+          "sha256": "5390a80a9f9778a2d469d3b0a6fbd1642c793150e4f09b3510af65b15f96a894"
+        }
+      ]
+    },
+    "extraction_rule": "Declarations and bodies are copied verbatim from the listed files into generated units; only service macros (assertion counters, __inline linkage, Win32 LONG/WINAPI spellings, newlib log2 #undef) are authored in engine_shim.h. Generated units are byte-identical for both targets.",
+    "flags": {
+      "strict": [
+        "-std=c11",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-ffp-contract=off",
+        "-DGEKKO",
+        "-mrvl",
+        "-mcpu=750",
+        "-meabi",
+        "-mhard-float"
+      ],
+      "engine": [
+        "-std=c11",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-ffp-contract=off",
+        "-fno-strict-aliasing",
+        "-fwrapv",
+        "-fno-delete-null-pointer-checks",
+        "-Wno-type-limits",
+        "-Wno-unused-parameter",
+        "-DGEKKO",
+        "-mrvl",
+        "-mcpu=750",
+        "-meabi",
+        "-mhard-float"
+      ],
+      "candidate_signed_char": [
+        "-std=c11",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-ffp-contract=off",
+        "-fno-strict-aliasing",
+        "-fwrapv",
+        "-fno-delete-null-pointer-checks",
+        "-fsigned-char",
+        "-DGEKKO",
+        "-mrvl",
+        "-mcpu=750",
+        "-meabi",
+        "-mhard-float"
+      ],
+      "musl": [
+        "-std=gnu11",
+        "-O2",
+        "-ffp-contract=off",
+        "-fno-strict-aliasing",
+        "-fwrapv",
+        "-w",
+        "-I",
+        "port/third_party/musl-math/include",
+        "-include",
+        "port/third_party/musl-math/include/libm.h",
+        "-DGEKKO",
+        "-mrvl",
+        "-mcpu=750",
+        "-meabi",
+        "-mhard-float"
+      ]
+    },
+    "per_unit_exceptions": {
+      "abi_engine.c (generated)": [
+        "-Wno-type-limits: unsigned-word >= 0 assertions in message_header.c/message_encryption.c",
+        "-Wno-unused-parameter"
+      ],
+      "musl units": [
+        "-w, as every native port builds the unchanged musl sources"
+      ]
+    },
+    "passes": [
+      "pass 1: runtime-provided floating-point environment",
+      "pass 2 (prefix ieee_subnormals.): PPC FPSCR[NI] cleared / x86 FTZ+DAZ cleared; all contract checks are recorded as candidate"
+    ]
+  },
+  "host": {
+    "build_id": "15a77af5b249e739",
+    "source_commit": "76ca89e1f9356844aaea9df449e9c49f09ed352b",
+    "source_dirty": false,
+    "compiler": "gcc.exe (Rev3, Built by MSYS2 project) 16.2.0",
+    "compiler_sha256": "75e87953e9d04e8a5d81225397292e9f8ae599a0ed85f70ed175767577aaa9f6",
+    "target": "x86_64-w64-mingw32",
+    "state": "execution_complete",
+    "generated_sha256": {
+      "abi_engine_types.h": "874814907786560716185c519b4703c46a70466a008d294d2658c60434f8275a",
+      "abi_engine.c": "c83f113da543fb3e09bb3e3b911c378a2e5f3ef89068799bf9927e9dce98f8dc"
+    },
+    "artifacts_sha256": {
+      "abi_semantics.exe": "4b4d90eb5d455ddb80d65eced8ff24bf188f2b7ebfbd201bea86996bdc83e6e9"
+    },
+    "inputs_count": 68,
+    "host_exit_code": 0,
+    "report_sha256": "35c1f7a2bacef3ca95dce7dedd3a243d550e014322bfa7f8f08a037d100d957c",
+    "summary": [
+      "ABI_SEMANTICS SUMMARY checks=397 failures=0 contract_failures=0 engine_assumption_failures=0 candidate_failures=0 observations=25 math=132"
+    ]
+  },
+  "ppc": {
+    "build_id": "4d814d554d228d4b",
+    "source_commit": "76ca89e1f9356844aaea9df449e9c49f09ed352b",
+    "source_dirty": false,
+    "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+    "compiler_sha256": "692e3f84b35b7622f90d9fa2eae47c21cab88d3d95f857fc2381c4593765e814",
+    "target": "powerpc-eabi",
+    "state": "compile_pass",
+    "generated_sha256": {
+      "abi_engine_types.h": "874814907786560716185c519b4703c46a70466a008d294d2658c60434f8275a",
+      "abi_engine.c": "c83f113da543fb3e09bb3e3b911c378a2e5f3ef89068799bf9927e9dce98f8dc"
+    },
+    "artifacts_sha256": {
+      "abi_semantics.dol": "3c3554ab52efc46762eadbe24984de9d027513d2c9ccc833f697498cc16f7054",
+      "abi_semantics.elf": "5d6fe2b7ee4f8602819ed26b6001a1dcee0771a26d03bcd189759056d3d4db30",
+      "abi_semantics.map": "c9332f6c2b61c656ddfd551e26a182a0f60bd70701cfe61fae0b482507a285de"
+    },
+    "inputs_count": 68,
+    "sdk_identity": {
+      "toolchain_tree_sha256": "d0ca79f317d44426f5563ff60121b344cb3a1148e5ec7a901ad5739b73ba6441"
+    }
+  },
+  "dolphin_runs": [
+    {
+      "dol_sha256": "3c3554ab52efc46762eadbe24984de9d027513d2c9ccc833f697498cc16f7054",
+      "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+      "arguments_shape": [
+        "Dolphin.exe",
+        "--user",
+        "<new isolated profile>",
+        "--batch",
+        "--video_backend",
+        "D3D",
+        "--exec",
+        "abi_semantics.dol"
+      ],
+      "sd_report": "halo-wii-memory/abi-semantics.log",
+      "timeout_seconds": 300,
+      "host_exit_hex": "0x0",
+      "forced_stop": false,
+      "elapsed_seconds": 5.312,
+      "guest_report_sha256": "edb2a404f3a78a3c502590eb3834f295d4399a44482deb6c8c48015b7203a98e",
+      "begin": "BEGIN ABI_SEMANTICS build=4d814d554d228d4b",
+      "end": "END ABI_SEMANTICS build=4d814d554d228d4b result=1",
+      "summaries": [
+        "ABI_SEMANTICS SUMMARY checks=397 failures=41 contract_failures=8 engine_assumption_failures=33 candidate_failures=0 observations=25 math=132"
+      ]
+    },
+    {
+      "dol_sha256": "3c3554ab52efc46762eadbe24984de9d027513d2c9ccc833f697498cc16f7054",
+      "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+      "arguments_shape": [
+        "Dolphin.exe",
+        "--user",
+        "<new isolated profile>",
+        "--batch",
+        "--video_backend",
+        "D3D",
+        "--exec",
+        "abi_semantics.dol"
+      ],
+      "sd_report": "halo-wii-memory/abi-semantics.log",
+      "timeout_seconds": 300,
+      "host_exit_hex": "0x0",
+      "forced_stop": false,
+      "elapsed_seconds": 4.813,
+      "guest_report_sha256": "edb2a404f3a78a3c502590eb3834f295d4399a44482deb6c8c48015b7203a98e",
+      "begin": "BEGIN ABI_SEMANTICS build=4d814d554d228d4b",
+      "end": "END ABI_SEMANTICS build=4d814d554d228d4b result=1",
+      "summaries": [
+        "ABI_SEMANTICS SUMMARY checks=397 failures=41 contract_failures=8 engine_assumption_failures=33 candidate_failures=0 observations=25 math=132"
+      ]
+    }
+  ],
+  "dolphin_runs_identical_report": true,
+  "development_runs_preserved": [
+    {
+      "dol_sha256": "c4d271630a01dcca87bf4f0300a1f6fe83eed8eaaafe1fd162637d1ae8bf6df6",
+      "host_exit_hex": "0x0",
+      "forced_stop": false,
+      "elapsed_seconds": 4.922,
+      "report_missing": true,
+      "begin": null,
+      "end": null,
+      "summaries": [],
+      "note": "Harness argument error: the SD path was rewritten by the shell (MSYS path conversion), so the report was not read back (report_missing). Guest ran 4.9 s, host exit 0x0. Non-informative; rerun with a relative SD path."
+    },
+    {
+      "dol_sha256": "c4d271630a01dcca87bf4f0300a1f6fe83eed8eaaafe1fd162637d1ae8bf6df6",
+      "host_exit_hex": "0x0",
+      "forced_stop": false,
+      "elapsed_seconds": 4.594,
+      "report_missing": null,
+      "begin": "BEGIN ABI_SEMANTICS build=a82fc88799f7110b",
+      "end": "END ABI_SEMANTICS build=a82fc88799f7110b result=1",
+      "summaries": [
+        "ABI_SEMANTICS SUMMARY checks=244 failures=41 contract_failures=8 engine_assumption_failures=33 candidate_failures=0 observations=12 math=66"
+      ],
+      "note": "First readable PPC report (pre-FPSCR pass): 244 checks, 41 failures (8 contract, 33 engine_assumption)."
+    },
+    {
+      "dol_sha256": "4b315eb347bcafe83e0e4e8a71d9361f87e81c522c4188053c061d688d5998cd",
+      "host_exit_hex": "0x0",
+      "forced_stop": false,
+      "elapsed_seconds": 5.32,
+      "report_missing": null,
+      "begin": "BEGIN ABI_SEMANTICS build=625ec599d43cbcbc",
+      "end": "END ABI_SEMANTICS build=625ec599d43cbcbc result=1",
+      "summaries": [
+        "ABI_SEMANTICS SUMMARY checks=393 failures=41 contract_failures=8 engine_assumption_failures=33 candidate_failures=0 observations=25 math=132"
+      ],
+      "note": "Added FPSCR observation and IEEE-subnormal candidate pass: FPSCR at start 0x4 (NI set)."
+    },
+    {
+      "dol_sha256": "266b16c8049e2f6b439e5e8998c8e3e2dd3047bf173c520f19f088d6f19d7064",
+      "host_exit_hex": "0x0",
+      "forced_stop": false,
+      "elapsed_seconds": 4.809,
+      "report_missing": null,
+      "begin": "BEGIN ABI_SEMANTICS build=43478deebbd65ed7",
+      "end": "END ABI_SEMANTICS build=43478deebbd65ed7 result=1",
+      "summaries": [
+        "ABI_SEMANTICS SUMMARY checks=397 failures=41 contract_failures=8 engine_assumption_failures=33 candidate_failures=0 observations=25 math=132"
+      ],
+      "note": "Added MATH classification counts and subnormal-input checks; input digests still included widened sNaN bits (fixed before the final commit)."
+    }
+  ],
+  "comparison": {
+    "compared_ids": 554,
+    "identical": 483,
+    "difference_counts": {
+      "CHECK": 41,
+      "OBS": 5,
+      "MATH": 20
+    },
+    "target_specific_excluded": [
+      "ieee_subnormals.target.pointer_bytes",
+      "ieee_subnormals.varargs.mixed.06",
+      "target.fp_control_at_start",
+      "target.pointer_bytes",
+      "varargs.mixed.06"
+    ],
+    "differences": [
+      {
+        "id": "baseline.bitfield.animation_header.0d.event_type",
+        "kind": "CHECK",
+        "host": "0x3",
+        "ppc": "0xd",
+        "class": "engine_assumption",
+        "reference": "0x3",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.bitfield.animation_header.0d.time_delta",
+        "kind": "CHECK",
+        "host": "0x1",
+        "ppc": "0x0",
+        "class": "engine_assumption",
+        "reference": "0x1",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.bitfield.animation_header.encode_2_5",
+        "kind": "CHECK",
+        "host": "0x16",
+        "ppc": "0x85",
+        "class": "engine_assumption",
+        "reference": "0x16",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.bitfield.animation_header.fe.event_type",
+        "kind": "CHECK",
+        "host": "0x3f",
+        "ppc": "0x3e",
+        "class": "engine_assumption",
+        "reference": "0x3f",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.bitfield.animation_header.fe.time_delta",
+        "kind": "CHECK",
+        "host": "0x2",
+        "ppc": "0x3",
+        "class": "engine_assumption",
+        "reference": "0x2",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.bitfield.hud_nav_point.unit_bytes",
+        "kind": "CHECK",
+        "host": "5d00",
+        "ppc": "d500",
+        "class": "engine_assumption",
+        "reference": "5d00",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.bitfield.message_header.native_build.flags",
+        "kind": "CHECK",
+        "host": "0x2",
+        "ppc": "0x0",
+        "class": "engine_assumption",
+        "reference": "0x2",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.bitfield.message_header.native_build.size",
+        "kind": "CHECK",
+        "host": "0x20",
+        "ppc": "0x20e",
+        "class": "engine_assumption",
+        "reference": "0x20",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.bitfield.message_header.native_build.type",
+        "kind": "CHECK",
+        "host": "0x3",
+        "ppc": "0x0",
+        "class": "engine_assumption",
+        "reference": "0x3",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.bitfield.message_header.wire_le.size",
+        "kind": "CHECK",
+        "host": "0x123",
+        "ppc": "0x412",
+        "class": "engine_assumption",
+        "reference": "0x123",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.bitfield.message_header.wire_le.type",
+        "kind": "CHECK",
+        "host": "0x1",
+        "ppc": "0x3",
+        "class": "engine_assumption",
+        "reference": "0x1",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.bitfield.players_switch.state_byte",
+        "kind": "CHECK",
+        "host": "0xc2",
+        "ppc": "0x2c",
+        "class": "engine_assumption",
+        "reference": "0xc2",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.bitfield.players_switch.ticks_from_byte",
+        "kind": "CHECK",
+        "host": "12",
+        "ppc": "15",
+        "class": "engine_assumption",
+        "reference": "12",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.char.bitfield.triggered_switch_none_value",
+        "kind": "CHECK",
+        "host": "-1",
+        "ppc": "15",
+        "class": "engine_assumption",
+        "reference": "-1",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.char.bitfield.triggered_switch_pending_after_none",
+        "kind": "CHECK",
+        "host": "0",
+        "ppc": "1",
+        "class": "engine_assumption",
+        "reference": "0",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.char.plain_min",
+        "kind": "CHECK",
+        "host": "-128",
+        "ppc": "0",
+        "class": "engine_assumption",
+        "reference": "-128",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.char.vector_char_difference.delta_yaw",
+        "kind": "CHECK",
+        "host": "-10",
+        "ppc": "246",
+        "class": "engine_assumption",
+        "reference": "-10",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.integer.wchar_bytes",
+        "kind": "CHECK",
+        "host": "0x2",
+        "ppc": "0x4",
+        "class": "engine_assumption",
+        "reference": "0x2",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.message_crypt.encrypt.bytes_changed_beyond_message",
+        "kind": "CHECK",
+        "host": "0x0",
+        "ppc": "0x138",
+        "class": "engine_assumption",
+        "reference": "0x0",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "baseline.message_crypt.encrypt.first_20_bytes_native",
+        "kind": "OBS",
+        "host": "4d01c76ce3edc91e2f6d31c83143b2e60933a2a5",
+        "ppc": "014d3ef02e71b81fb3dbc3292f39d373a0db197e"
+      },
+      {
+        "id": "baseline.message_crypt.roundtrip_identical",
+        "kind": "CHECK",
+        "host": "0x1",
+        "ppc": "0x0",
+        "class": "engine_assumption",
+        "reference": "0x1",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "convert.double_to_float.min_subnormal",
+        "kind": "CHECK",
+        "host": "0x1",
+        "ppc": "0x0",
+        "class": "contract",
+        "reference": "0x1",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "convert.double_to_float.three_quarter_subnormal",
+        "kind": "CHECK",
+        "host": "0x1",
+        "ppc": "0x0",
+        "class": "contract",
+        "reference": "0x1",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "double.subnormal.half_min_normal",
+        "kind": "CHECK",
+        "host": "0x8000000000000",
+        "ppc": "0x0",
+        "class": "contract",
+        "reference": "0x8000000000000",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "float.signaling_nan_widened_bits",
+        "kind": "OBS",
+        "host": "0x7ff82468a0000000",
+        "ppc": "0x7ff02468a0000000"
+      },
+      {
+        "id": "float.subnormal.double_smallest",
+        "kind": "CHECK",
+        "host": "0x2",
+        "ppc": "0x0",
+        "class": "contract",
+        "reference": "0x2",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "float.subnormal.half_min_normal",
+        "kind": "CHECK",
+        "host": "0x400000",
+        "ppc": "0x0",
+        "class": "contract",
+        "reference": "0x400000",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "float.subnormal.half_three_tie_even",
+        "kind": "CHECK",
+        "host": "0x2",
+        "ppc": "0x0",
+        "class": "contract",
+        "reference": "0x2",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "fp.flush_bits_at_start",
+        "kind": "OBS",
+        "host": "0x0",
+        "ppc": "0x4"
+      },
+      {
+        "id": "fp.flush_bits_restored",
+        "kind": "OBS",
+        "host": "0x0",
+        "ppc": "0x4"
+      },
+      {
+        "id": "ieee_subnormals.float.signaling_nan_widened_bits",
+        "kind": "OBS",
+        "host": "0x7ff82468a0000000",
+        "ppc": "0x7ff02468a0000000"
+      },
+      {
+        "id": "ieee_subnormals.musl.atan.f64",
+        "kind": "MATH",
+        "host": "df958358ebae9364",
+        "ppc": "39a957d477cf533c",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          14
+        ],
+        "subnormal_inputs": {
+          "host": 2,
+          "ppc": 2
+        },
+        "subnormal_results": {
+          "host": 1,
+          "ppc": 1
+        },
+        "zero_results": {
+          "host": 2,
+          "ppc": 2
+        },
+        "nan_results": {
+          "host": 2,
+          "ppc": 2
+        }
+      },
+      {
+        "id": "musl.asin.f64",
+        "kind": "MATH",
+        "host": "553d18848869e418",
+        "ppc": "065eaeb77b24dad5",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0
+        ],
+        "subnormal_inputs": {
+          "host": 1,
+          "ppc": 1
+        },
+        "subnormal_results": {
+          "host": 1,
+          "ppc": 0
+        },
+        "zero_results": {
+          "host": 2,
+          "ppc": 3
+        },
+        "nan_results": {
+          "host": 285,
+          "ppc": 285
+        }
+      },
+      {
+        "id": "musl.asin.nan_canonical",
+        "kind": "MATH",
+        "host": "0560dd97b37aa492",
+        "ppc": "e1b21859c961f5e2",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0
+        ],
+        "subnormal_inputs": {
+          "host": 1,
+          "ppc": 1
+        },
+        "subnormal_results": {
+          "host": 2,
+          "ppc": 0
+        },
+        "zero_results": {
+          "host": 6,
+          "ppc": 8
+        },
+        "nan_results": {
+          "host": 570,
+          "ppc": 570
+        }
+      },
+      {
+        "id": "musl.asin.narrowed_f32",
+        "kind": "MATH",
+        "host": "11f71c3ef43ceb3e",
+        "ppc": "8cb4be2b3d15ed67",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0
+        ],
+        "subnormal_inputs": {
+          "host": 1,
+          "ppc": 1
+        },
+        "subnormal_results": {
+          "host": 1,
+          "ppc": 0
+        },
+        "zero_results": {
+          "host": 4,
+          "ppc": 5
+        },
+        "nan_results": {
+          "host": 285,
+          "ppc": 285
+        }
+      },
+      {
+        "id": "musl.atan.f64",
+        "kind": "MATH",
+        "host": "df958358ebae9364",
+        "ppc": "39a957d477cf533c",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          14
+        ],
+        "subnormal_inputs": {
+          "host": 2,
+          "ppc": 2
+        },
+        "subnormal_results": {
+          "host": 1,
+          "ppc": 1
+        },
+        "zero_results": {
+          "host": 2,
+          "ppc": 2
+        },
+        "nan_results": {
+          "host": 2,
+          "ppc": 2
+        }
+      },
+      {
+        "id": "musl.atan.nan_canonical",
+        "kind": "MATH",
+        "host": "4170644b4ad82973",
+        "ppc": "90547eb2bec435f6",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0,
+          14
+        ],
+        "subnormal_inputs": {
+          "host": 2,
+          "ppc": 2
+        },
+        "subnormal_results": {
+          "host": 3,
+          "ppc": 1
+        },
+        "zero_results": {
+          "host": 6,
+          "ppc": 8
+        },
+        "nan_results": {
+          "host": 4,
+          "ppc": 4
+        }
+      },
+      {
+        "id": "musl.atan.narrowed_f32",
+        "kind": "MATH",
+        "host": "3a8f0f812c89c54c",
+        "ppc": "73e23423472a5f9d",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0,
+          14
+        ],
+        "subnormal_inputs": {
+          "host": 2,
+          "ppc": 2
+        },
+        "subnormal_results": {
+          "host": 2,
+          "ppc": 0
+        },
+        "zero_results": {
+          "host": 4,
+          "ppc": 6
+        },
+        "nan_results": {
+          "host": 2,
+          "ppc": 2
+        }
+      },
+      {
+        "id": "musl.atan2.f64",
+        "kind": "MATH",
+        "host": "cbcc186f8088bdeb",
+        "ppc": "afb53dbabee05296",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0,
+          1,
+          3,
+          4
+        ],
+        "subnormal_inputs": {
+          "host": 50,
+          "ppc": 50
+        },
+        "subnormal_results": {
+          "host": 23,
+          "ppc": 1
+        },
+        "zero_results": {
+          "host": 63,
+          "ppc": 85
+        },
+        "nan_results": {
+          "host": 51,
+          "ppc": 51
+        }
+      },
+      {
+        "id": "musl.atan2.nan_canonical",
+        "kind": "MATH",
+        "host": "31edeca70fbfe4fb",
+        "ppc": "31228a335e73fab3",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0,
+          1,
+          3,
+          4,
+          12,
+          13,
+          14,
+          15
+        ],
+        "subnormal_inputs": {
+          "host": 50,
+          "ppc": 50
+        },
+        "subnormal_results": {
+          "host": 49,
+          "ppc": 1
+        },
+        "zero_results": {
+          "host": 185,
+          "ppc": 233
+        },
+        "nan_results": {
+          "host": 102,
+          "ppc": 102
+        }
+      },
+      {
+        "id": "musl.atan2.narrowed_f32",
+        "kind": "MATH",
+        "host": "87a17b853ce712a3",
+        "ppc": "bb91d043a1b4eafa",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0,
+          1,
+          3,
+          4,
+          12,
+          13,
+          14,
+          15
+        ],
+        "subnormal_inputs": {
+          "host": 50,
+          "ppc": 50
+        },
+        "subnormal_results": {
+          "host": 26,
+          "ppc": 0
+        },
+        "zero_results": {
+          "host": 122,
+          "ppc": 148
+        },
+        "nan_results": {
+          "host": 51,
+          "ppc": 51
+        }
+      },
+      {
+        "id": "musl.exp.f64",
+        "kind": "MATH",
+        "host": "c799f2f0fd47e89f",
+        "ppc": "6ec9c36fc11fd6de",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0
+        ],
+        "subnormal_inputs": {
+          "host": 3,
+          "ppc": 3
+        },
+        "subnormal_results": {
+          "host": 1,
+          "ppc": 0
+        },
+        "zero_results": {
+          "host": 123,
+          "ppc": 124
+        },
+        "nan_results": {
+          "host": 4,
+          "ppc": 4
+        }
+      },
+      {
+        "id": "musl.exp.nan_canonical",
+        "kind": "MATH",
+        "host": "6bd8bd8fd45ab562",
+        "ppc": "66231fdf8e9a3ca0",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "subnormal_inputs": {
+          "host": 3,
+          "ppc": 3
+        },
+        "subnormal_results": {
+          "host": 79,
+          "ppc": 0
+        },
+        "zero_results": {
+          "host": 271,
+          "ppc": 350
+        },
+        "nan_results": {
+          "host": 8,
+          "ppc": 8
+        }
+      },
+      {
+        "id": "musl.exp.narrowed_f32",
+        "kind": "MATH",
+        "host": "3b8c5dd4c1cf2ea5",
+        "ppc": "59fc2da58e03aa42",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "subnormal_inputs": {
+          "host": 3,
+          "ppc": 3
+        },
+        "subnormal_results": {
+          "host": 78,
+          "ppc": 0
+        },
+        "zero_results": {
+          "host": 148,
+          "ppc": 226
+        },
+        "nan_results": {
+          "host": 4,
+          "ppc": 4
+        }
+      },
+      {
+        "id": "musl.pow.f64",
+        "kind": "MATH",
+        "host": "8edadc70298de0c0",
+        "ppc": "566359a641b3e0fd",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0,
+          2
+        ],
+        "subnormal_inputs": {
+          "host": 53,
+          "ppc": 53
+        },
+        "subnormal_results": {
+          "host": 4,
+          "ppc": 0
+        },
+        "zero_results": {
+          "host": 200,
+          "ppc": 204
+        },
+        "nan_results": {
+          "host": 275,
+          "ppc": 275
+        }
+      },
+      {
+        "id": "musl.pow.nan_canonical",
+        "kind": "MATH",
+        "host": "aad000ed52165a4f",
+        "ppc": "707c8725810a4c8f",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0,
+          2,
+          3,
+          4
+        ],
+        "subnormal_inputs": {
+          "host": 53,
+          "ppc": 53
+        },
+        "subnormal_results": {
+          "host": 8,
+          "ppc": 0
+        },
+        "zero_results": {
+          "host": 416,
+          "ppc": 424
+        },
+        "nan_results": {
+          "host": 550,
+          "ppc": 550
+        }
+      },
+      {
+        "id": "musl.pow.narrowed_f32",
+        "kind": "MATH",
+        "host": "e78a48567cc9aebf",
+        "ppc": "907cc4d33ac961d6",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          3,
+          4
+        ],
+        "subnormal_inputs": {
+          "host": 53,
+          "ppc": 53
+        },
+        "subnormal_results": {
+          "host": 4,
+          "ppc": 0
+        },
+        "zero_results": {
+          "host": 216,
+          "ppc": 220
+        },
+        "nan_results": {
+          "host": 275,
+          "ppc": 275
+        }
+      },
+      {
+        "id": "musl.sin.nan_canonical",
+        "kind": "MATH",
+        "host": "953623c9d1eb0d0d",
+        "ppc": "98ffc82a8d256917",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0,
+          11,
+          12
+        ],
+        "subnormal_inputs": {
+          "host": 4,
+          "ppc": 4
+        },
+        "subnormal_results": {
+          "host": 5,
+          "ppc": 1
+        },
+        "zero_results": {
+          "host": 6,
+          "ppc": 10
+        },
+        "nan_results": {
+          "host": 14,
+          "ppc": 14
+        }
+      },
+      {
+        "id": "musl.sin.narrowed_f32",
+        "kind": "MATH",
+        "host": "41d66f40e34a2b00",
+        "ppc": "12eea48e1e766ee2",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0,
+          11,
+          12
+        ],
+        "subnormal_inputs": {
+          "host": 4,
+          "ppc": 4
+        },
+        "subnormal_results": {
+          "host": 4,
+          "ppc": 0
+        },
+        "zero_results": {
+          "host": 4,
+          "ppc": 8
+        },
+        "nan_results": {
+          "host": 7,
+          "ppc": 7
+        }
+      },
+      {
+        "id": "musl.tan.nan_canonical",
+        "kind": "MATH",
+        "host": "098e59fb90325515",
+        "ppc": "ca51b8162e5c484e",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0,
+          11,
+          12,
+          13,
+          14
+        ],
+        "subnormal_inputs": {
+          "host": 6,
+          "ppc": 6
+        },
+        "subnormal_results": {
+          "host": 7,
+          "ppc": 1
+        },
+        "zero_results": {
+          "host": 6,
+          "ppc": 12
+        },
+        "nan_results": {
+          "host": 6,
+          "ppc": 6
+        }
+      },
+      {
+        "id": "musl.tan.narrowed_f32",
+        "kind": "MATH",
+        "host": "d63f45741eef860a",
+        "ppc": "ad270d00ed89777d",
+        "inputs_identical": true,
+        "results_identical": false,
+        "differing_blocks": [
+          0,
+          11,
+          12,
+          13,
+          14
+        ],
+        "subnormal_inputs": {
+          "host": 6,
+          "ppc": 6
+        },
+        "subnormal_results": {
+          "host": 6,
+          "ppc": 0
+        },
+        "zero_results": {
+          "host": 4,
+          "ppc": 10
+        },
+        "nan_results": {
+          "host": 3,
+          "ppc": 3
+        }
+      },
+      {
+        "id": "signed_char.bitfield.animation_header.0d.event_type",
+        "kind": "CHECK",
+        "host": "0x3",
+        "ppc": "0xd",
+        "class": "engine_assumption",
+        "reference": "0x3",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "signed_char.bitfield.animation_header.0d.time_delta",
+        "kind": "CHECK",
+        "host": "0x1",
+        "ppc": "0x0",
+        "class": "engine_assumption",
+        "reference": "0x1",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "signed_char.bitfield.animation_header.encode_2_5",
+        "kind": "CHECK",
+        "host": "0x16",
+        "ppc": "0x85",
+        "class": "engine_assumption",
+        "reference": "0x16",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "signed_char.bitfield.animation_header.fe.event_type",
+        "kind": "CHECK",
+        "host": "0x3f",
+        "ppc": "0x3e",
+        "class": "engine_assumption",
+        "reference": "0x3f",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "signed_char.bitfield.animation_header.fe.time_delta",
+        "kind": "CHECK",
+        "host": "0x2",
+        "ppc": "0x3",
+        "class": "engine_assumption",
+        "reference": "0x2",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "signed_char.bitfield.hud_nav_point.unit_bytes",
+        "kind": "CHECK",
+        "host": "5d00",
+        "ppc": "d500",
+        "class": "engine_assumption",
+        "reference": "5d00",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "signed_char.bitfield.message_header.native_build.flags",
+        "kind": "CHECK",
+        "host": "0x2",
+        "ppc": "0x0",
+        "class": "engine_assumption",
+        "reference": "0x2",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "signed_char.bitfield.message_header.native_build.size",
+        "kind": "CHECK",
+        "host": "0x20",
+        "ppc": "0x20e",
+        "class": "engine_assumption",
+        "reference": "0x20",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "signed_char.bitfield.message_header.native_build.type",
+        "kind": "CHECK",
+        "host": "0x3",
+        "ppc": "0x0",
+        "class": "engine_assumption",
+        "reference": "0x3",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "signed_char.bitfield.message_header.wire_le.size",
+        "kind": "CHECK",
+        "host": "0x123",
+        "ppc": "0x412",
+        "class": "engine_assumption",
+        "reference": "0x123",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "signed_char.bitfield.message_header.wire_le.type",
+        "kind": "CHECK",
+        "host": "0x1",
+        "ppc": "0x3",
+        "class": "engine_assumption",
+        "reference": "0x1",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "signed_char.bitfield.players_switch.state_byte",
+        "kind": "CHECK",
+        "host": "0xc2",
+        "ppc": "0x2c",
+        "class": "engine_assumption",
+        "reference": "0xc2",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "signed_char.bitfield.players_switch.ticks_from_byte",
+        "kind": "CHECK",
+        "host": "12",
+        "ppc": "15",
+        "class": "engine_assumption",
+        "reference": "12",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "varargs.render_debug_circle.1.offset_bits",
+        "kind": "CHECK",
+        "host": "0x1",
+        "ppc": "0x0",
+        "class": "contract",
+        "reference": "0x1",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      },
+      {
+        "id": "varargs.render_debug_circle.2.radius_bits",
+        "kind": "CHECK",
+        "host": "0x1",
+        "ppc": "0x0",
+        "class": "contract",
+        "reference": "0x1",
+        "host_result": "pass",
+        "ppc_result": "fail"
+      }
+    ]
+  }
+}
