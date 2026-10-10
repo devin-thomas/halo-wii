@@ -98,6 +98,22 @@ class GateTests(unittest.TestCase):
             self.assertEqual(build.read_list(path), ["a.o", "b.o"])
 
 
+class PackagingTests(unittest.TestCase):
+    def test_engine_source_drive_paths_are_reviewed_in_engine_artifacts_only(self):
+        import package_artifacts
+
+        data = b"\0c:\\halo\\SOURCE\\game\\game.c\0d:\\maps\\\0"
+        findings, reviewed = [], {}
+        package_artifacts.scan_content("engine.dol", data, [], [], findings, reviewed, True)
+        self.assertEqual(findings, [])
+        self.assertEqual(reviewed, {"engine.dol": 2})
+        package_artifacts.scan_content("probe.dol", data, [], [], findings, {}, True)
+        self.assertEqual({finding["category"] for finding in findings}, {"windows-drive-path"})
+        findings = []
+        package_artifacts.scan_content("engine.dol", b"\0C:\\Users\\someone\\x\0", [], [], findings, {}, True)
+        self.assertEqual(len(findings), 1)
+
+
 class TargetTests(unittest.TestCase):
     # tools/wii/engine_build.py works from the checkout's root, as configure.py runs
     def setUp(self):
