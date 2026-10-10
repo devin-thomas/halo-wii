@@ -105,15 +105,8 @@ void media_pack_yuyv_from_420(uint8_t *dst, unsigned dst_stride, const struct me
         const uint8_t *cb = p->cb + (size_t)(row >> 1) * p->c_stride;
         const uint8_t *cr = p->cr + (size_t)(row >> 1) * p->c_stride;
         uint8_t *out = dst + (size_t)row * dst_stride;
-#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-        /* One aligned word store per pixel pair; same bytes as the generic path. */
-        if (((uintptr_t)out & 3u) == 0) {
-            uint32_t *words = (uint32_t *)(void *)out;
-            for (unsigned pair = 0; pair < p->width / 2; ++pair, y += 2)
-                words[pair] = (uint32_t)y[0] << 24 | (uint32_t)cb[pair] << 16 | (uint32_t)y[1] << 8 | cr[pair];
-            continue;
-        }
-#endif
+        /* Byte stores: in Dolphin they measured 3.36 ms per 640x480 frame
+         * against 3.79 ms for assembled word stores (HWI-008D). */
         for (unsigned pair = 0; pair < p->width / 2; ++pair) {
             out[0] = y[0];
             out[1] = cb[pair];
