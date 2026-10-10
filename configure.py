@@ -18,7 +18,7 @@ from tools.wii_build import generate_wii_build, wii_configure_inputs
 
 # arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("--wii", action="store_true", help="generate only the native Wii diagnostics (wii_probe, wii_gx_scene, wii_gx_materials, wii_geometry_view, wii_memory_strategy, wii_engine)")
+parser.add_argument("--wii", action="store_true", help="generate only the native Wii diagnostics (wii_probe, wii_gx_scene, wii_gx_materials, wii_geometry_view, wii_memory_strategy, wii_media_bench, wii_engine)")
 parser.add_argument("--wii-devkitpro", type=Path, help="native root of the official devkitPro installation")
 parser.add_argument("--wii-probe-frames", type=int, default=0, help="diagnostic auto-exit after this many video frames (0: controller exit)")
 parser.add_argument(

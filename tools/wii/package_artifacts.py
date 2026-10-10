@@ -38,6 +38,7 @@ TARGETS = {
     "gx_materials": ("gx_materials-build-info.json", "asset_free_gx_materials"),
     "geometry_view": ("geometry_view-build-info.json", "owned_geometry_diagnostic_no_embedded_assets"),
     "memory_strategy": ("memory_strategy-build-info.json", "memory_strategy_diagnostic_no_embedded_assets"),
+    "media_bench": ("media_bench-build-info.json", "media_decoder_benchmark_no_embedded_assets"),
     "engine": ("engine-build-info.json", "engine_platform_runtime_no_embedded_assets"),
 }
 VERIFIED = ["compile", "link", "elf2dol conversion", "static ELF/DOL structure checks",
@@ -549,7 +550,7 @@ def stage(build: Path, output: Path, packages: dict) -> None:
     for stem, (info, _) in TARGETS.items():
         for name in (f"{stem}.elf", f"{stem}.dol", f"{stem}.map", info):
             if not (build / name).is_file():
-                raise ValueError(f"missing build output {name}; run ninja wii_probe wii_gx_scene wii_gx_materials wii_geometry_view wii_memory_strategy")
+                raise ValueError(f"missing build output {name}; run ninja wii_probe wii_gx_scene wii_gx_materials wii_geometry_view wii_memory_strategy wii_media_bench")
     output.mkdir(parents=True, exist_ok=True)
     for stem, (info, _) in TARGETS.items():
         for name in (f"{stem}.elf", f"{stem}.dol", f"{stem}.map", info):
