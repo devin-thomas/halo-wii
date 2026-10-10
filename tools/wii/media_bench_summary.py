@@ -1,7 +1,8 @@
 """Summarise HWI-008D media benchmark runs into sanitized JSON.
 
-Input is either a tools/wii/run_dolphin.py output directory (runtime.json plus
-run<N>.sd/halo-wii-media/) or, for a physical Wii, a copy of the SD card's
+Input is either a tools/wii/run_dolphin.py output directory (runtime.json,
+run<N>.sd/halo-wii-media/ read-backs, and the profile's SD image, from which
+per-frame record files are read when no read-back holds them) or, for a physical Wii, a copy of the SD card's
 halo-wii-media directory. For every launch it checks the guest log (BEGIN and
 END lines, the run counter, every job's result) and turns each job line into
 numbers. From the per-frame records it adds what the log cannot hold:
@@ -23,6 +24,8 @@ import json
 from pathlib import Path
 import struct
 import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 MEDIA_DIR = "halo-wii-media"
 VIDEO_RECORD = struct.Struct(">IIII")  # crc, decode_us, present_us, decoder heap bytes
@@ -207,9 +210,20 @@ def summarize_launch(begin, jobs, end, read):
             "guest": "passed" if not failures else "failed", "failures": failures}
 
 
+def sd_image_reader(directory):
+    """Read-only access to the profile's emulated SD card after the batch."""
+    image = Path(directory) / "profile" / "Load" / "WiiSD.raw"
+    if not image.is_file():
+        return lambda name: None
+    import run_dolphin  # noqa: E402  (same directory; read-only FAT32 reader)
+    fat = run_dolphin.Fat32(image.read_bytes())
+    return lambda name: fat.read("%s/%s" % (MEDIA_DIR, name))
+
+
 def from_runner(directory):
     """A run_dolphin.py output directory: one launch per run<N>.sd read-back."""
     directory = Path(directory)
+    card = sd_image_reader(directory)
     runtime = json.loads((directory / "runtime.json").read_text(encoding="utf-8"))
     result = {"source": "run_dolphin", "host": runtime.get("host"), "identity": runtime.get("identity"),
               "launches": [], "host_lifecycle": [], "os_stability": runtime.get("os_stability", {}).get("observation"),
@@ -222,7 +236,8 @@ def from_runner(directory):
         if not parsed:
             raise SummaryError("run %d: no launch in the guest log" % run["number"])
         begin, jobs, end = parsed[-1]
-        summary = summarize_launch(begin, jobs, end, lambda name: read_optional(media / name))
+        summary = summarize_launch(begin, jobs, end,
+                                   lambda name, media=media: read_optional(media / name) or card(name))
         summary["launches_in_log"] = len(parsed)
         if previous is not None and begin.get("run") != previous + 1:
             summary["failures"].append("run counter did not advance by one")
