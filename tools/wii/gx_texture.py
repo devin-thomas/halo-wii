@@ -17,6 +17,23 @@ Every GX target in PROFILE_GX_BASELINE is chosen so the sampled RGBA equals
 the reference decode of the source exactly, except where FIDELITY says
 otherwise. A separate GX decoder (gx_decode_texel) reads converted bytes back
 for verification; it shares no layout code with the encoder.
+
+PROFILE_GX_SPLITALPHA (HWI-008F) stores DXT3 and DXT5 as CMPR colour plus a
+separate alpha plane (HWT1 version 2, an explicit alpha section):
+
+- colour: each DXT colour block, always decoded in the four-colour mode, is
+  rewritten so CMPR (which, like DXT1, uses three colours and transparency
+  when c0 <= c1) decodes the same palette: c0 > c1 is kept; c0 < c1 swaps the
+  endpoints and maps the indices 0<->1, 2<->3; c0 == c1 (every palette entry
+  equals c0) sets every index to 0. Only GX's 5/8 + 3/8 interpolation of the
+  two middle colours differs, as for DXT1 (at most |c0 - c1| / 24 + 1, and at
+  most 11, per channel; see interpolation_error_table).
+- alpha: the exact decoded alpha of every texel. DXT3's explicit 4-bit alpha
+  is I4 (GX expands n to 17n, as the reference does). DXT5's interpolated
+  alpha (_dxt5_alphas: integer division rounding down) is I8, or I4 when
+  every decoded value of the texture is a multiple of 17 (then exact too).
+  A texture whose alpha is 255 at every texel of every image has no plane;
+  its header records that.
 """
 from array import array
 from functools import lru_cache
@@ -38,9 +55,10 @@ CUBE_FACE_ALIGNMENT = 128
 PITCH_ALIGNMENT = 64
 
 # ---- GX formats (libogc gx.h numbering) ------------------------------------
-GX_I8, GX_IA8, GX_RGB565, GX_RGB5A3, GX_RGBA8, GX_CMPR = 1, 3, 4, 5, 6, 14
+GX_I4, GX_I8, GX_IA8, GX_RGB565, GX_RGB5A3, GX_RGBA8, GX_CMPR = 0, 1, 3, 4, 5, 6, 14
 GX_NAMES = {GX_I8: "I8", GX_IA8: "IA8", GX_RGB565: "RGB565", GX_RGB5A3: "RGB5A3", GX_RGBA8: "RGBA8", GX_CMPR: "CMPR"}
-GX_TILE = {GX_I8: (8, 4, 32), GX_IA8: (4, 4, 32), GX_RGB565: (4, 4, 32), GX_RGB5A3: (4, 4, 32),
+ALPHA_GX_NAMES = {GX_I4: "I4", GX_I8: "I8"}   # alpha-plane formats (HWT1 version 2)
+GX_TILE = {GX_I4: (8, 8, 32), GX_I8: (8, 4, 32), GX_IA8: (4, 4, 32), GX_RGB565: (4, 4, 32), GX_RGB5A3: (4, 4, 32),
            GX_RGBA8: (4, 4, 64), GX_CMPR: (8, 8, 32)}
 GX_MAX_DIMENSION = 1024
 
@@ -71,6 +89,27 @@ FIDELITY = {
     "dxt5": "exact against the reference decode; 4x the source bytes (no GX equivalent)",
     "p8_bump": "exact expansion through the engine's global vector palette; 4x the source bytes",
 }
+
+SPLIT_ALPHA = ("dxt3", "dxt5")
+PROFILE_GX_SPLITALPHA = dict(
+    PROFILE_GX_BASELINE, name="gx-splitalpha-v1",
+    targets=dict(PROFILE_GX_BASELINE["targets"], dxt3="CMPR", dxt5="CMPR"),
+    alpha_planes={
+        "container": "HWT1 version 2: an alpha section after the colour images, in the same face, level, slice "
+                     "order; other formats stay HWT1 version 1, byte-identical to gx-baseline-v1",
+        "dxt3": "I4: the explicit 4-bit alpha",
+        "dxt5": "I8: the decoded alpha (8-value or 6-value mode, integer division rounding down); I4 when every "
+                "decoded value of the texture is a multiple of 17",
+        "omitted": "no plane when the alpha is 255 at every texel of every image (recorded in the header)",
+        "colour_blocks": "c0 > c1 kept; c0 < c1 endpoints swapped, indices 0<->1 and 2<->3; c0 == c1 all indices 0",
+    })
+FIDELITY_SPLIT = dict(
+    FIDELITY,
+    dxt3=("colour: the DXT four-colour palette through CMPR, at most |c0-c1|/24+1 (at most 11) per channel on the "
+          "two interpolated colours, endpoints exact; alpha exact (I4); a quarter of RGBA8's bytes"),
+    dxt5=("colour: as dxt3; alpha exact (I8, or I4 when every value is a multiple of 17), decoded with integer "
+          "division rounding down; a quarter (I4) or three eighths (I8) of RGBA8's bytes"),
+)
 
 
 class TextureError(ValueError):
@@ -385,6 +424,141 @@ def _cmpr_level(data, level):
     return b"".join(parts)
 
 
+# ---- split alpha (gx-splitalpha-v1) ---------------------------------------------
+BLOCK_KEPT, BLOCK_SWAPPED, BLOCK_UNIFORM = "kept", "swapped", "uniform"
+
+
+def four_colour_block(colour):
+    """One DXT3/DXT5 colour block (8 bytes, little-endian) rewritten so the
+    DXT1/CMPR rules decode the four-colour palette. Returns (bytes, case)."""
+    c0, c1, indices = struct.unpack_from("<HHI", colour, 0)
+    if c0 > c1:
+        return bytes(colour[:8]), BLOCK_KEPT
+    if c0 < c1:
+        return struct.pack("<HHI", c1, c0, indices ^ 0x55555555), BLOCK_SWAPPED
+    return struct.pack("<HHI", c0, c1, 0), BLOCK_UNIFORM
+
+
+def _split_colour_level(data, level, counts):
+    """The DXT1-ordered colour blocks of one DXT3/DXT5 level, each rewritten
+    by four_colour_block, then tiled as CMPR."""
+    raw = bytes(data)
+    blocks = len(raw) // 16
+    colour = bytearray(8 * blocks)
+    for k in range(8):
+        colour[k::8] = raw[8 + k::16]
+    for at in range(0, len(colour), 8):
+        fixed, case = four_colour_block(colour[at:at + 8])
+        colour[at:at + 8] = fixed
+        counts[case] += 1
+    return _cmpr_level(colour, level)
+
+
+_NIBBLE_LO17 = bytes((v & 15) * 17 for v in range(256))
+_NIBBLE_HI17 = bytes((v >> 4) * 17 for v in range(256))
+
+
+@lru_cache(maxsize=None)
+def _dxt5_table_bytes(a0, a1):
+    return bytes(_dxt5_alphas(a0, a1))
+
+
+def _alpha_level(name, data, level):
+    """Decoded alpha of one DXT3/DXT5 level: w x h bytes, row-major (the
+    reference decode: DXT3 n * 17, DXT5 _dxt5_alphas)."""
+    raw = bytes(data)
+    bw, bh = level["stored_w"] // 4, level["stored_h"] // 4
+    stride = level["stored_w"]
+    out = bytearray(stride * level["stored_h"])
+    if name == "dxt3":
+        for r in range(4):
+            b0, b1 = raw[2 * r::16], raw[2 * r + 1::16]
+            x = (b0.translate(_NIBBLE_LO17), b0.translate(_NIBBLE_HI17), b1.translate(_NIBBLE_LO17),
+                 b1.translate(_NIBBLE_HI17))
+            for by in range(bh):
+                row = (by * 4 + r) * stride
+                for k in range(4):
+                    out[row + k:row + stride:4] = x[k][by * bw:(by + 1) * bw]
+    else:
+        for index in range(bw * bh):
+            block = raw[16 * index:16 * index + 8]
+            table = _dxt5_table_bytes(block[0], block[1])
+            bits = int.from_bytes(block[2:8], "little")
+            by, bx = divmod(index, bw)
+            for r in range(4):
+                row = (by * 4 + r) * stride + bx * 4
+                for k in range(4):
+                    out[row + k] = table[(bits >> (3 * (4 * r + k))) & 7]
+    w, h = level["w"], level["h"]
+    if w == stride and h == level["stored_h"]:
+        return bytes(out)
+    return b"".join(bytes(out[y * stride:y * stride + w]) for y in range(h))
+
+
+_DIV17 = bytes(v // 17 for v in range(256))
+_SHIFT4 = bytes((v << 4) & 0xFF for v in range(256))
+
+
+def encode_alpha_plane(alpha, width, height, gx_format):
+    """GX I4 or I8 tiles of a row-major 8-bit alpha image (I4 needs every value
+    a multiple of 17; the nibble n reads back as 17n)."""
+    tw, th, _ = GX_TILE[gx_format]
+    g = _gather(alpha, _gx_order(width, height, tw, th), 1)
+    if gx_format == GX_I8:
+        return g
+    if gx_format != GX_I4:
+        raise TextureError("alpha plane format must be I4 or I8")
+    nibbles = g.translate(_DIV17)
+    return bytes(map(int.__or__, nibbles[0::2].translate(_SHIFT4), nibbles[1::2]))
+
+
+def _convert_split(fields, pixels, layout, profile):
+    """gx-splitalpha-v1 for one DXT3/DXT5 bitmap: CMPR colour images, then the
+    alpha plane (or none when every texel's alpha is 255)."""
+    name = layout["format"]
+    counts = {BLOCK_KEPT: 0, BLOCK_SWAPPED: 0, BLOCK_UNIFORM: 0}
+    images, parts, alphas = [], [], []
+    offset = 0
+    for face in range(layout["faces"]):
+        base = face * layout["face_bytes"]
+        for index, level in enumerate(layout["levels"]):
+            data = memoryview(pixels)[base + level["offset"]:base + level["offset"] + level["bytes"]]
+            slice_bytes = len(data) // level["d"]
+            for z in range(level["d"]):
+                part = data[z * slice_bytes:(z + 1) * slice_bytes]
+                encoded = _split_colour_level(part, level, counts)
+                if len(encoded) != gx_level_bytes(GX_CMPR, level["w"], level["h"]):
+                    raise TextureError("encoded level size mismatch")
+                images.append({"face": face, "level": index, "slice": z, "width": level["w"],
+                               "height": level["h"], "offset": offset, "bytes": len(encoded)})
+                parts.append(encoded)
+                offset += len(encoded)
+                alphas.append(_alpha_level(name, part, level))
+    values = set()
+    for alpha in alphas:
+        values.update(set(alpha))
+    if values == {255}:
+        alpha_format, plane = None, b""
+    else:
+        alpha_format = GX_I4 if name == "dxt3" or all(v % 17 == 0 for v in values) else GX_I8
+        plane = b"".join(encode_alpha_plane(alpha, image["width"], image["height"], alpha_format)
+                         for alpha, image in zip(alphas, images))
+    alpha_images, alpha_offset = [], 0
+    if alpha_format is not None:
+        for image in images:
+            size = gx_level_bytes(alpha_format, image["width"], image["height"])
+            alpha_images.append(dict(image, offset=alpha_offset, bytes=size))
+            alpha_offset += size
+        if alpha_offset != len(plane):
+            raise TextureError("alpha plane size mismatch")
+    colour = b"".join(parts)
+    alpha = {"kind": "omitted" if alpha_format is None else "plane",
+             "gx_format": alpha_format, "gx_format_name": ALPHA_GX_NAMES.get(alpha_format, "none"),
+             "images": alpha_images, "bytes": len(plane), "colour_blocks": counts,
+             "distinct_values": len(values)}
+    return colour + plane, images, alpha
+
+
 def encode_slice(name, gx_format, data, level, z=0, swizzled=True, palette=None):
     """Encode one 2D image (a level, or one depth slice of it) into GX bytes."""
     w, h = level["w"], level["h"]
@@ -457,6 +631,11 @@ def convert(fields, pixels, profile=PROFILE_GX_BASELINE, palette=None):
         raise TextureError("pixel data shorter than the hardware layout")
     name = layout["format"]
     gx_format = gx_target(name, profile)
+    if split_alpha(name, profile):
+        data, images, alpha = _convert_split(fields, pixels, layout, profile)
+        header = _header(fields, layout, gx_format, images)
+        header.update(version=2, alpha=alpha, colour_bytes=len(data) - alpha["bytes"])
+        return header, data, images, layout
     swizzled = not layout["linear"] and name not in COMPRESSED
     images = []
     parts = []
@@ -478,43 +657,106 @@ def convert(fields, pixels, profile=PROFILE_GX_BASELINE, palette=None):
                                "height": level["h"], "offset": offset, "bytes": len(encoded)})
                 parts.append(encoded)
                 offset += len(encoded)
-    header = {"gx_format": gx_format, "gx_format_name": GX_NAMES[gx_format], "source_format": name,
-              "type": layout["type"], "width": fields["width"], "height": fields["height"],
-              "depth": fields["depth"], "faces": layout["faces"], "levels": len(layout["levels"]),
-              "images": len(images), "source_layout_bytes": layout["bytes"],
-              "gx_loadable_dimensions": max(fields["width"], fields["height"]) <= GX_MAX_DIMENSION}
-    return header, b"".join(parts), images, layout
+    data = b"".join(parts)
+    header = _header(fields, layout, gx_format, images)
+    header.update(version=1, alpha=None, colour_bytes=len(data))
+    return header, data, images, layout
+
+
+def split_alpha(name, profile):
+    """Whether this profile stores the format as CMPR colour plus an alpha plane."""
+    return name in SPLIT_ALPHA and "alpha_planes" in profile and profile["targets"].get(name) == "CMPR"
+
+
+def _header(fields, layout, gx_format, images):
+    return {"gx_format": gx_format, "gx_format_name": GX_NAMES[gx_format], "source_format": layout["format"],
+            "type": layout["type"], "width": fields["width"], "height": fields["height"],
+            "depth": fields["depth"], "faces": layout["faces"], "levels": len(layout["levels"]),
+            "images": len(images), "source_layout_bytes": layout["bytes"],
+            "gx_loadable_dimensions": max(fields["width"], fields["height"]) <= GX_MAX_DIMENSION}
 
 
 # ---- HWT1 container ---------------------------------------------------------
 HWT_MAGIC = b"HWT1"
 HWT_HEADER_BYTES = 64
 TYPE_IDS = {"2d": 0, "3d": 1, "cube": 2}
+# version 2 alpha section (header bytes 32..47): section version, kind, GX
+# format, reserved, offset from the file start, bytes
+HWT_ALPHA_VERSION = 1
+HWT_ALPHA_OMITTED, HWT_ALPHA_PLANE = 1, 2
+_HWT_FIXED = ">4sHHHHHHHHHHII"
+_HWT_ALPHA = ">HHHHII"
 
 
 def pack_hwt(header, data):
-    """Big-endian 64-byte header followed by GX images (face, level, slice order)."""
-    fixed = struct.pack(">4sHHHHHHHHHHII", HWT_MAGIC, 1, header["gx_format"], header["width"], header["height"],
+    """Big-endian 64-byte header followed by GX images (face, level, slice order).
+
+    Version 1: every image is in the header's GX format, zero bytes 32..63.
+    Version 2 (split alpha): CMPR colour images (data bytes), then the alpha
+    section bytes 32..47 describe: the plane (I4 or I8 images in the same
+    order, at its offset) or that the alpha is 255 everywhere (no plane)."""
+    version = header.get("version", 1)
+    colour_bytes = header.get("colour_bytes", len(data))
+    fixed = struct.pack(_HWT_FIXED, HWT_MAGIC, version, header["gx_format"], header["width"], header["height"],
                         header["depth"], header["faces"], header["levels"], header["images"],
                         FORMAT_IDS[header["source_format"]], TYPE_IDS[header["type"]],
-                        HWT_HEADER_BYTES, len(data))
+                        HWT_HEADER_BYTES, colour_bytes)
+    if version == 2:
+        alpha = header["alpha"]
+        if alpha["kind"] == "plane":
+            fixed += struct.pack(_HWT_ALPHA, HWT_ALPHA_VERSION, HWT_ALPHA_PLANE, alpha["gx_format"], 0,
+                                 HWT_HEADER_BYTES + colour_bytes, alpha["bytes"])
+        else:
+            fixed += struct.pack(_HWT_ALPHA, HWT_ALPHA_VERSION, HWT_ALPHA_OMITTED, 0, 0, 0, 0)
+        if colour_bytes + alpha["bytes"] != len(data):
+            raise TextureError("HWT colour and alpha sizes disagree with the data")
+    elif version != 1 or colour_bytes != len(data):
+        raise TextureError("HWT version 1 holds one image set")
     return fixed + bytes(HWT_HEADER_BYTES - len(fixed)) + data
 
 
 def unpack_hwt(blob):
+    """Header dict and the colour images (memoryview). Version 2 headers carry
+    'alpha': {kind, gx_format, offset, bytes, data}; version 1 has alpha None."""
     if len(blob) < HWT_HEADER_BYTES:
         raise TextureError("truncated HWT header")
     (magic, version, gx_format, width, height, depth, faces, levels, images, source_format, type_id,
-     data_offset, data_bytes) = struct.unpack_from(">4sHHHHHHHHHHII", blob, 0)
-    if magic != HWT_MAGIC or version != 1 or data_offset != HWT_HEADER_BYTES:
+     data_offset, data_bytes) = struct.unpack_from(_HWT_FIXED, blob, 0)
+    if magic != HWT_MAGIC or version not in (1, 2) or data_offset != HWT_HEADER_BYTES:
         raise TextureError("HWT signature/version")
     if gx_format not in GX_NAMES or source_format not in FORMAT_NAMES or type_id not in TYPE_NAMES:
         raise TextureError("HWT enum outside bounds")
-    if data_bytes != len(blob) - data_offset:
+    header = {"version": version, "gx_format": gx_format, "width": width, "height": height, "depth": depth,
+              "faces": faces, "levels": levels, "images": images, "source_format": FORMAT_NAMES[source_format],
+              "type": TYPE_NAMES[type_id], "alpha": None}
+    alpha_bytes = 0
+    if version == 2:
+        section, kind, alpha_format, reserved, alpha_offset, alpha_bytes = struct.unpack_from(_HWT_ALPHA, blob, 32)
+        if FORMAT_NAMES[source_format] not in SPLIT_ALPHA or gx_format != GX_CMPR or section != HWT_ALPHA_VERSION:
+            raise TextureError("HWT version 2 is CMPR colour of a DXT3/DXT5 bitmap")
+        if kind == HWT_ALPHA_OMITTED:
+            if (alpha_format, reserved, alpha_offset, alpha_bytes) != (0, 0, 0, 0):
+                raise TextureError("HWT omitted alpha section not empty")
+        elif kind == HWT_ALPHA_PLANE:
+            if alpha_format not in ALPHA_GX_NAMES or reserved or alpha_offset != HWT_HEADER_BYTES + data_bytes:
+                raise TextureError("HWT alpha section outside bounds")
+            if FORMAT_NAMES[source_format] == "dxt3" and alpha_format != GX_I4:
+                raise TextureError("HWT DXT3 alpha is I4")
+        else:
+            raise TextureError("HWT alpha section kind")
+        start = HWT_HEADER_BYTES + data_bytes
+        header["alpha"] = {"kind": "plane" if kind == HWT_ALPHA_PLANE else "omitted",
+                           "gx_format": alpha_format if kind == HWT_ALPHA_PLANE else None,
+                           "offset": alpha_offset, "bytes": alpha_bytes,
+                           "data": memoryview(blob)[start:start + alpha_bytes]}
+        tail = bytes(blob[48:HWT_HEADER_BYTES])
+    else:
+        tail = bytes(blob[32:HWT_HEADER_BYTES])
+    if any(tail):
+        raise TextureError("HWT reserved bytes")
+    if data_bytes + alpha_bytes != len(blob) - data_offset:
         raise TextureError("HWT data length mismatch")
-    return {"gx_format": gx_format, "width": width, "height": height, "depth": depth, "faces": faces,
-            "levels": levels, "images": images, "source_format": FORMAT_NAMES[source_format],
-            "type": TYPE_NAMES[type_id]}, memoryview(blob)[data_offset:]
+    return header, memoryview(blob)[data_offset:data_offset + data_bytes]
 
 
 # ---- independent GX decoder (verification only) -------------------------------
@@ -543,6 +785,11 @@ def gx_decode_texel(gx_format, data, width, x, y):
             return tuple((p + q) >> 1 for p, q in zip(a, b)) + (255,)
         return (0, 0, 0, 0)
     within = iy * tw + ix
+    if gx_format == GX_I4:
+        v = data[base + within // 2]
+        v = (v >> 4) if within % 2 == 0 else (v & 15)
+        v |= v << 4
+        return (v, v, v, v)
     if gx_format == GX_I8:
         v = data[base + within]
         return (v, v, v, v)
@@ -562,53 +809,103 @@ def gx_decode_texel(gx_format, data, width, x, y):
     return (((v >> 8) & 15) * 17, ((v >> 4) & 15) * 17, (v & 15) * 17, e3((v >> 12) & 7))
 
 
-def tolerance(name, expected, source_block=None):
-    """Allowed per-channel error between the reference decode and the GX sample."""
+def tolerance(name, expected, source_block=None, split=False):
+    """Allowed per-channel error between the reference decode and the GX sample.
+
+    source_block: the texel's DXT colour block (8 bytes: c0, c1, indices).
+    split: DXT3/DXT5 colour through CMPR (gx-splitalpha-v1); its alpha is exact."""
     if name == "a4r4g4b4":
         return (0, 0, 0, 17)
     if name == "a1r5g5b5" and expected[3] == 0:
         return (9, 9, 9, 0)
-    if name == "dxt1" and source_block is not None:
+    if source_block is not None and (name == "dxt1" or split):
         c0, c1 = struct.unpack_from("<HH", source_block, 0)
-        if c0 > c1:
+        if c0 > c1 or (split and c0 < c1):
             a, b = _rgb565(c0), _rgb565(c1)
             return tuple(abs(p - q) // 24 + 1 for p, q in zip(a, b)) + (0,)
     return (0, 0, 0, 0)
 
 
-def verify(fields, pixels, gx_bytes, images, layout, palette=None, max_texels=None):
+def interpolation_error_table():
+    """Exhaustive check of the colour rule: for every pair of expanded 5-bit
+    and 6-bit endpoint values, the DXT four-colour middle entries
+    ((2p + q) // 3, (p + 2q) // 3) against GX CMPR's ((5p + 3q) >> 3,
+    (3p + 5q) >> 3). Returns {bits: (max error, pairs over |p-q|//24 + 1)}.
+    Swapping the endpoints swaps the two middle entries on both sides, so
+    the remapped c0 < c1 blocks share this bound; c0 == c1 is exact."""
+    result = {}
+    for bits, expand in ((5, _e5), (6, _e6)):
+        values = [expand(v) for v in range(1 << bits)]
+        worst = over = 0
+        for p in values:
+            for q in values:
+                bound = abs(p - q) // 24 + 1
+                for d, g in (((2 * p + q) // 3, (5 * p + 3 * q) >> 3), ((p + 2 * q) // 3, (3 * p + 5 * q) >> 3)):
+                    worst = max(worst, abs(d - g))
+                    over += abs(d - g) > bound
+        result[bits] = (worst, over)
+    return result
+
+
+def verify(fields, pixels, gx_bytes, images, layout, palette=None, max_texels=None, alpha=None):
     """Compare every (or up to max_texels per image) GX texel with the reference decode.
 
-    Returns counts; raises TextureError when a texel exceeds its tolerance.
+    alpha: the converted header's alpha (gx-splitalpha-v1, HWT1 version 2):
+    gx_bytes then holds the CMPR colour images followed by the alpha plane,
+    and each texel's RGBA is the colour image's RGB with the plane's alpha
+    (255 when the plane is omitted). Returns counts; raises TextureError when
+    a texel exceeds its tolerance.
     """
     name = layout["format"]
+    split = alpha is not None
     swizzled = not layout["linear"] and name not in COMPRESSED
-    gx_format = gx_target(name)
+    gx_format = GX_CMPR if split else gx_target(name)
+    colour_bytes = sum(image["bytes"] for image in images)
     checked = exact = 0
     worst = [0, 0, 0, 0]
-    for image in images:
+    alpha_counts = {"alpha_exact": 0, "alpha_checked": 0}
+    for number, image in enumerate(images):
         level = layout["levels"][image["level"]]
         base = image["face"] * layout["face_bytes"] + level["offset"]
         data = memoryview(pixels)[base:base + level["bytes"]]
         slice_bytes = len(data) // level["d"]
         gx = memoryview(gx_bytes)[image["offset"]:image["offset"] + image["bytes"]]
+        plane = None
+        if split and alpha["kind"] == "plane":
+            a_image = alpha["images"][number]
+            plane = memoryview(gx_bytes)[colour_bytes + a_image["offset"]:colour_bytes + a_image["offset"]
+                                         + a_image["bytes"]]
+        src = data[image["slice"] * slice_bytes:(image["slice"] + 1) * slice_bytes] if name in COMPRESSED else None
+        block_bytes = 8 if name == "dxt1" else 16
+        bw = level["stored_w"] // 4
+        decoded = {}
         count = 0
         for y in range(level["h"]):
+            if y % 4 == 0:
+                decoded.clear()
             for x in range(level["w"]):
                 if max_texels is not None and count >= max_texels:
                     break
                 count += 1
                 if name in COMPRESSED:
-                    src = data[image["slice"] * slice_bytes:(image["slice"] + 1) * slice_bytes]
-                    expected = reference_texel(name, src, level, x, y)
-                    bw = level["stored_w"] // 4
                     block_index = (y // 4) * bw + x // 4
-                    block = bytes(src[block_index * 8:block_index * 8 + 8]) if name == "dxt1" else None
+                    block = bytes(src[block_index * block_bytes:(block_index + 1) * block_bytes])
+                    if block_index not in decoded:
+                        decoded[block_index] = decode_dxt_block(name, block)
+                    expected = decoded[block_index][(y % 4) * 4 + x % 4]
+                    colour_block = block if name == "dxt1" else block[8:16]
                 else:
                     expected = reference_texel(name, data, level, x, y, image["slice"], swizzled, palette)
-                    block = None
+                    colour_block = None
                 actual = gx_decode_texel(gx_format, gx, level["w"], x, y)
-                allowed = tolerance(name, expected, block)
+                if split:
+                    if actual[3] != 255:
+                        raise TextureError("split-alpha colour texel decodes as transparent")
+                    a = gx_decode_texel(alpha["gx_format"], plane, level["w"], x, y)[3] if plane is not None else 255
+                    actual = actual[:3] + (a,)
+                    alpha_counts["alpha_checked"] += 1
+                    alpha_counts["alpha_exact"] += a == expected[3]
+                allowed = tolerance(name, expected, colour_block if (name == "dxt1" or split) else None, split)
                 if name == "dxt1" and expected[3] == 0:
                     diffs = [0, 0, 0, abs(actual[3] - expected[3])]
                 else:
@@ -618,7 +915,10 @@ def verify(fields, pixels, gx_bytes, images, layout, palette=None, max_texels=No
                 worst = [max(w, d) for w, d in zip(worst, diffs)]
                 checked += 1
                 exact += not any(diffs)
-    return {"texels_checked": checked, "texels_exact": exact, "max_channel_error": worst}
+    result = {"texels_checked": checked, "texels_exact": exact, "max_channel_error": worst}
+    if split:
+        result.update(alpha_counts)
+    return result
 
 
 # ---- engine palette for P8 bump maps (source/bitmaps/bitmaps.c global_vector_palette)
