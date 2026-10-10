@@ -320,3 +320,19 @@ now a reusable public runner (`tools/wii/run_dolphin.py`, 27 unit tests). It
 records guest, persistence, host lifecycle and OS observations separately. The
 current probe passes two cold launches (sentinel 0→1→2, START exit, ABI clean,
 host 0x0), and an invalid sentinel is preserved untouched.
+
+[ABI semantics](evidence/2026-10-10-abi-semantics.md) now execute on PPC. The
+fixture uses 58 actual engine pieces and runs 397 checks.
+
+Bit-identical on host and PPC:
+- calling conventions, varargs, by-value structs and callbacks;
+- Interlocked contracts, 64-bit integer helpers and rounding;
+- the TEA encryption vector;
+- all 60 engine/gameplay math digests.
+
+Four real target differences are open. Not fixed yet:
+- libogc starts with denormals flushed (FPSCR NI);
+- plain `char` is unsigned;
+- bit-fields are laid out in reverse order, which breaks Xbox animation and
+  message headers;
+- `wchar_t` is 4 bytes.
