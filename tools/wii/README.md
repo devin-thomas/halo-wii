@@ -1,5 +1,21 @@
 # Wii development helper
 
+## Host content pipeline
+
+`content_inventory.py`, `content_convert.py` and `probe_movies.py` inspect
+and convert your own staged Halo maps into versioned, verified Wii content
+outside the checkout. The supporting modules are `halo_cache.py`,
+`gx_texture.py`, `recorded_animation.py`, `media_formats.py` and
+`content_publish.py`.
+
+```powershell
+python -B -m unittest test_gx_texture test_recorded_animation test_content_pipeline
+```
+
+Run these tests from `tools/wii`. They use authored fixtures from
+`content_fixtures.py` only. Usage, output formats, profile fidelity and
+failure behaviour are in [the content pipeline guide](../../docs/wii/CONTENT-PIPELINE.md).
+
 ## Offline Windows shutdown symbols
 
 Read the executable's PE CodeView identity without loading it:

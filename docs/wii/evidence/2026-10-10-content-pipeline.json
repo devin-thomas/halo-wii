@@ -1,0 +1,5464 @@
+{
+ "acceptance": {
+  "campaign_multiplayer_movie_inventories": "met (deterministic private and public inventories)",
+  "interrupted_or_disk_full_preserves_source_and_last_valid": "met on host (NTFS); FAT/SD media behaviour not qualified",
+  "invalid_paths_counts_offsets_reject_no_private_data_in_git": "met for the converted categories; scans of the staged diff found no private data",
+  "repeated_identical_hashes": "met on host for textures, recorded animations, sound containers and the inventory",
+  "ticket_remains_open_because": [
+   "models, collision, model animations, shaders, scripts, BSP/lightmaps, fonts, unicode text and movies are not converted",
+   "no runtime loader or Wii/hardware evidence",
+   "movie/audio decoder decisions open",
+   "HWI-006/HWI-007 dependencies (encoded-address graph coverage, residency) open"
+  ]
+ },
+ "conversion": {
+  "converter": {
+   "modules_sha256": {
+    "content_convert.py": "8592800b22d8e3257d825f78b34ecf665617b558f228d379157553ab8f19c8e2",
+    "content_publish.py": "9ea6985dcbe325efa0d138bdf7261673295692c5b8b63afe62eb05b7efe7f8ba",
+    "gx_texture.py": "024bb56c309489f2aa8d2ab2ad1941f060da6b0139c143cb1f3256b9b2738854",
+    "halo_cache.py": "efa1511c139407aef9854b0a49727f6c34335fc5cadf4577216252a12329640d",
+    "media_formats.py": "5a55134e0cd6a41dff1d33a1e1e070defd8279fdfee2c53b036924c2e2402f89",
+    "recorded_animation.py": "789c2ba26bffd633b589914ef0f5300a5a8057cbfcdf2b5e5d57d4223101737b"
+   },
+   "name": "halo-wii-content-convert",
+   "version": "1.0.0"
+  },
+  "determinism": {
+   "files_compared": 87723,
+   "fresh_root_identical_tree": true,
+   "fresh_root_same_manifest": true,
+   "repeat_same_root_identical_tree": true,
+   "repeat_same_root_reused": true,
+   "tree_digest": "d1ea297e92db3671177db33c3ab066de6fb92319ba9962434f12787c488426db"
+  },
+  "directories": 58,
+  "generation": "01bf08505713bcb9",
+  "largest_output_bytes": {
+   "animation": 28308,
+   "sound": 377096,
+   "texture": 2796288
+  },
+  "manifest_sha256": "01bf08505713bcb901d4cf3e998ceaaccd23def21fec1090f8d54155e1639e80",
+  "max_files_per_directory": 7816,
+  "outputs": 87722,
+  "profile": "gx-baseline-v1",
+  "seconds": {
+   "A1": 1171.343,
+   "A2": 2301.267,
+   "B1": 1562.657
+  },
+  "sources_rehashed_after_each_run": true,
+  "texture_conversions": {
+   "a1r5g5b5->RGB5A3": {
+    "not_gx_loadable_dimensions": 0,
+    "output_bytes": 29345088,
+    "source_bytes": 29334016,
+    "textures": 173
+   },
+   "a4r4g4b4->RGB5A3": {
+    "not_gx_loadable_dimensions": 0,
+    "output_bytes": 263808,
+    "source_bytes": 262144,
+    "textures": 26
+   },
+   "a8->IA8": {
+    "not_gx_loadable_dimensions": 0,
+    "output_bytes": 1224160,
+    "source_bytes": 611968,
+    "textures": 7
+   },
+   "a8r8g8b8->RGBA8": {
+    "not_gx_loadable_dimensions": 0,
+    "output_bytes": 31856320,
+    "source_bytes": 31803648,
+    "textures": 446
+   },
+   "a8y8->IA8": {
+    "not_gx_loadable_dimensions": 0,
+    "output_bytes": 34002304,
+    "source_bytes": 33962112,
+    "textures": 639
+   },
+   "ay8->I8": {
+    "not_gx_loadable_dimensions": 0,
+    "output_bytes": 9231680,
+    "source_bytes": 9129728,
+    "textures": 1293
+   },
+   "dxt1->CMPR": {
+    "not_gx_loadable_dimensions": 6,
+    "output_bytes": 232606432,
+    "source_bytes": 232593152,
+    "textures": 5668
+   },
+   "dxt3->RGBA8": {
+    "not_gx_loadable_dimensions": 0,
+    "output_bytes": 722167616,
+    "source_bytes": 180569344,
+    "textures": 2816
+   },
+   "dxt5->RGBA8": {
+    "not_gx_loadable_dimensions": 0,
+    "output_bytes": 125974784,
+    "source_bytes": 31495808,
+    "textures": 157
+   },
+   "p8_bump->RGBA8": {
+    "not_gx_loadable_dimensions": 0,
+    "output_bytes": 246126592,
+    "source_bytes": 61530880,
+    "textures": 305
+   },
+   "r5g6b5->RGB565": {
+    "not_gx_loadable_dimensions": 0,
+    "output_bytes": 131088192,
+    "source_bytes": 130953728,
+    "textures": 2328
+   },
+   "x8r8g8b8->RGBA8": {
+    "not_gx_loadable_dimensions": 0,
+    "output_bytes": 15364672,
+    "source_bytes": 15202048,
+    "textures": 879
+   },
+   "y8->IA8": {
+    "not_gx_loadable_dimensions": 0,
+    "output_bytes": 8556704,
+    "source_bytes": 4278912,
+    "textures": 78
+   }
+  },
+  "texture_types": {
+   "2d": 14100,
+   "3d": 143,
+   "cube": 572
+  },
+  "totals": {
+   "animation": {
+    "bytes": 1493524,
+    "files": 349
+   },
+   "sound": {
+    "bytes": 1609008228,
+    "files": 72558
+   },
+   "texture": {
+    "bytes": 1587808352,
+    "files": 14815
+   }
+  },
+  "verification": {
+   "sound:xbox_adpcm:1:22050": {
+    "frames_decoded": 193664,
+    "permutations": 48
+   },
+   "sound:xbox_adpcm:2:22050": {
+    "frames_decoded": 196608,
+    "permutations": 48
+   },
+   "sound:xbox_adpcm:2:44100": {
+    "frames_decoded": 196608,
+    "permutations": 48
+   },
+   "texture:a1r5g5b5:2d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 3639552,
+    "texels_exact": 3639552,
+    "textures": 47
+   },
+   "texture:a4r4g4b4:2d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     17
+    ],
+    "texels_checked": 114688,
+    "texels_exact": 100764,
+    "textures": 25
+   },
+   "texture:a8:2d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 611667,
+    "texels_exact": 611667,
+    "textures": 7
+   },
+   "texture:a8r8g8b8:2d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 1372827,
+    "texels_exact": 1372827,
+    "textures": 48
+   },
+   "texture:a8r8g8b8:cube": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 196560,
+    "texels_exact": 196560,
+    "textures": 24
+   },
+   "texture:a8y8:2d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 1235968,
+    "texels_exact": 1235968,
+    "textures": 48
+   },
+   "texture:a8y8:3d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 861327,
+    "texels_exact": 861327,
+    "textures": 23
+   },
+   "texture:ay8:2d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 196608,
+    "texels_exact": 196608,
+    "textures": 48
+   },
+   "texture:ay8:3d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 898776,
+    "texels_exact": 898776,
+    "textures": 24
+   },
+   "texture:dxt1:2d": {
+    "max_channel_error": [
+     11,
+     11,
+     11,
+     0
+    ],
+    "texels_checked": 3703920,
+    "texels_exact": 2487162,
+    "textures": 48
+   },
+   "texture:dxt1:cube": {
+    "max_channel_error": [
+     10,
+     10,
+     11,
+     0
+    ],
+    "texels_checked": 1571328,
+    "texels_exact": 963360,
+    "textures": 48
+   },
+   "texture:dxt3:2d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 5878228,
+    "texels_exact": 5878228,
+    "textures": 48
+   },
+   "texture:dxt5:2d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 3992020,
+    "texels_exact": 3992020,
+    "textures": 48
+   },
+   "texture:p8_bump:2d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 7361870,
+    "texels_exact": 7361870,
+    "textures": 46
+   },
+   "texture:r5g6b5:2d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 2837153,
+    "texels_exact": 2837153,
+    "textures": 46
+   },
+   "texture:r5g6b5:cube": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 1998756,
+    "texels_exact": 1998756,
+    "textures": 46
+   },
+   "texture:x8r8g8b8:2d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 356336,
+    "texels_exact": 356336,
+    "textures": 48
+   },
+   "texture:x8r8g8b8:3d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 3504,
+    "texels_exact": 3504,
+    "textures": 48
+   },
+   "texture:x8r8g8b8:cube": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 952608,
+    "texels_exact": 952608,
+    "textures": 48
+   },
+   "texture:y8:2d": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 1212401,
+    "texels_exact": 1212401,
+    "textures": 47
+   },
+   "texture:y8:cube": {
+    "max_channel_error": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "texels_checked": 3014610,
+    "texels_exact": 3014610,
+    "textures": 23
+   }
+  }
+ },
+ "date": "2026-10-10",
+ "inputs": {
+  "image_sha256": "43ec0813edadd592b7b489a930f108d289db9313ac337611110ffca8be0a7258",
+  "maps": 24,
+  "sources_identical_after_all_runs": true,
+  "staging_manifest_sha256": "acc4e9d1ab2da3d659c0508b67358d9b742bc924bd4754f28c5e0af4ad0061ca"
+ },
+ "inventory": {
+  "private_identical": true,
+  "public_identical": true,
+  "public_sha256": "8d5e05863dec744b20d01a83f9953d3d9ee755fbd3b6d91c92ea96757febed25",
+  "runs": 2,
+  "seconds": [
+   19.737,
+   19.201
+  ],
+  "summary": {
+   "bitmap_gx_bytes_by_format": {
+    "a1r5g5b5": 29334016,
+    "a4r4g4b4": 262144,
+    "a8": 1223712,
+    "a8r8g8b8": 31827776,
+    "a8y8": 33961408,
+    "ay8": 9148928,
+    "dxt1": 232243680,
+    "dxt3": 721987392,
+    "dxt5": 125964736,
+    "p8_bump": 246107072,
+    "r5g6b5": 130939200,
+    "x8r8g8b8": 15308416,
+    "y8": 8551712
+   },
+   "bitmap_source_bytes_by_format": {
+    "a1r5g5b5": 29334016,
+    "a4r4g4b4": 262144,
+    "a8": 611968,
+    "a8r8g8b8": 31803648,
+    "a8y8": 33962112,
+    "ay8": 9129728,
+    "dxt1": 232593152,
+    "dxt3": 180569344,
+    "dxt5": 31495808,
+    "p8_bump": 61530880,
+    "r5g6b5": 130953728,
+    "x8r8g8b8": 15202048,
+    "y8": 4278912
+   },
+   "bitmaps_by_format": {
+    "a1r5g5b5": 173,
+    "a4r4g4b4": 26,
+    "a8": 7,
+    "a8r8g8b8": 446,
+    "a8y8": 639,
+    "ay8": 1293,
+    "dxt1": 5668,
+    "dxt3": 2816,
+    "dxt5": 157,
+    "p8_bump": 305,
+    "r5g6b5": 2328,
+    "x8r8g8b8": 879,
+    "y8": 78
+   },
+   "disc_files": [
+    {
+     "bytes": 851968,
+     "codec": "xbox executable",
+     "container": "xbe",
+     "file": "demo-launcher-executable-1"
+    },
+    {
+     "bytes": 1321,
+     "container": "png",
+     "file": "demo-launcher-media-1",
+     "height": 12,
+     "width": 46
+    },
+    {
+     "bytes": 1407,
+     "container": "png",
+     "file": "demo-launcher-media-2",
+     "height": 12,
+     "width": 46
+    },
+    {
+     "bytes": 6438726,
+     "codec": "wma (by extension; stream header not parsed)",
+     "container": "asf",
+     "file": "demo-launcher-media-3"
+    },
+    {
+     "bytes": 266240,
+     "codec": "xbox packed resource",
+     "container": "xpr0",
+     "file": "demo-launcher-media-4"
+    },
+    {
+     "bytes": 135168,
+     "codec": "xbox packed resource",
+     "container": "xpr0",
+     "file": "demo-launcher-media-5"
+    },
+    {
+     "bits": 16,
+     "bytes": 18048,
+     "channels": 2,
+     "codec": "pcm",
+     "container": "riff-wave",
+     "file": "demo-launcher-media-6",
+     "sample_rate": 22050
+    },
+    {
+     "bits": 16,
+     "bytes": 8808,
+     "channels": 2,
+     "codec": "pcm",
+     "container": "riff-wave",
+     "file": "demo-launcher-media-7",
+     "sample_rate": 22050
+    },
+    {
+     "bytes": 87867,
+     "container": "png",
+     "file": "demo-launcher-media-8",
+     "height": 300,
+     "width": 400
+    },
+    {
+     "bytes": 297643,
+     "container": "png",
+     "file": "demo-launcher-media-9",
+     "height": 480,
+     "width": 640
+    },
+    {
+     "bytes": 289164,
+     "container": "png",
+     "file": "demo-launcher-media-10",
+     "height": 480,
+     "width": 640
+    },
+    {
+     "bytes": 73987,
+     "container": "png",
+     "file": "demo-launcher-media-11",
+     "height": 480,
+     "width": 640
+    },
+    {
+     "bytes": 64,
+     "container": "unknown",
+     "file": "demo-launcher-media-12"
+    },
+    {
+     "bytes": 86636,
+     "container": "png",
+     "file": "demo-launcher-media-13",
+     "height": 190,
+     "width": 260
+    },
+    {
+     "bytes": 23177,
+     "container": "png",
+     "file": "demo-launcher-media-14",
+     "height": 190,
+     "width": 260
+    },
+    {
+     "bytes": 91243,
+     "container": "png",
+     "file": "demo-launcher-media-15",
+     "height": 190,
+     "width": 260
+    },
+    {
+     "bytes": 691,
+     "container": "unknown",
+     "file": "demo-launcher-media-16"
+    },
+    {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "average_bitrate_kbps": 7454.6,
+     "bytes": 506987404,
+     "codec": "bink1-video",
+     "container": "bink",
+     "duration_seconds": 544.077,
+     "file": "demo-launcher-video-1",
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 16306,
+     "height": 486,
+     "largest_frame_bytes": 105408,
+     "revision": "i",
+     "video_flags": 0,
+     "width": 720
+    },
+    {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "average_bitrate_kbps": 8137.6,
+     "bytes": 465769704,
+     "codec": "bink1-video",
+     "container": "bink",
+     "duration_seconds": 457.891,
+     "file": "demo-launcher-video-2",
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 13723,
+     "height": 480,
+     "largest_frame_bytes": 118012,
+     "revision": "i",
+     "video_flags": 0,
+     "width": 640
+    },
+    {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "average_bitrate_kbps": 6797.8,
+     "bytes": 133426176,
+     "codec": "bink1-video",
+     "container": "bink",
+     "duration_seconds": 157.024,
+     "file": "demo-launcher-video-3",
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 4706,
+     "height": 480,
+     "largest_frame_bytes": 139600,
+     "revision": "i",
+     "video_flags": 0,
+     "width": 640
+    },
+    {
+     "bytes": 2535424,
+     "codec": "xbox executable",
+     "container": "xbe",
+     "file": "game-executable-1"
+    },
+    {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "average_bitrate_kbps": 10130.7,
+     "bytes": 191746528,
+     "codec": "bink1-video",
+     "container": "bink",
+     "duration_seconds": 151.418,
+     "file": "game-movie-1",
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 4538,
+     "height": 480,
+     "largest_frame_bytes": 126788,
+     "revision": "i",
+     "video_flags": 0,
+     "width": 640
+    },
+    {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "average_bitrate_kbps": 9929.2,
+     "bytes": 164906308,
+     "codec": "bink1-video",
+     "container": "bink",
+     "duration_seconds": 132.866,
+     "file": "game-movie-2",
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 3982,
+     "height": 480,
+     "largest_frame_bytes": 116528,
+     "revision": "i",
+     "video_flags": 0,
+     "width": 640
+    },
+    {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "average_bitrate_kbps": 9287.8,
+     "bytes": 79102884,
+     "codec": "bink1-video",
+     "container": "bink",
+     "duration_seconds": 68.135,
+     "file": "game-movie-3",
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 2042,
+     "height": 480,
+     "largest_frame_bytes": 95584,
+     "revision": "i",
+     "video_flags": 0,
+     "width": 640
+    },
+    {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "average_bitrate_kbps": 9167.0,
+     "bytes": 200614260,
+     "codec": "bink1-video",
+     "container": "bink",
+     "duration_seconds": 175.075,
+     "file": "game-movie-4",
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 5247,
+     "height": 480,
+     "largest_frame_bytes": 64332,
+     "revision": "i",
+     "video_flags": 0,
+     "width": 640
+    },
+    {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "average_bitrate_kbps": 5347.3,
+     "bytes": 10727656,
+     "codec": "bink1-video",
+     "container": "bink",
+     "duration_seconds": 16.049,
+     "file": "game-movie-5",
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 481,
+     "height": 480,
+     "largest_frame_bytes": 100356,
+     "revision": "i",
+     "video_flags": 0,
+     "width": 640
+    }
+   ],
+   "format": "halo-wii-content-inventory-public",
+   "identity": {
+    "converter_profile": "gx-baseline-v1",
+    "image_files": 50,
+    "image_sha256": "43ec0813edadd592b7b489a930f108d289db9313ac337611110ffca8be0a7258",
+    "image_sha256_matches_after": true,
+    "maps": 24,
+    "sources_unchanged_after": true,
+    "staging_manifest_sha256": "acc4e9d1ab2da3d659c0508b67358d9b742bc924bd4754f28c5e0af4ad0061ca"
+   },
+   "inventory_modules_sha256": {
+    "content_convert.py": "8592800b22d8e3257d825f78b34ecf665617b558f228d379157553ab8f19c8e2",
+    "content_publish.py": "9ea6985dcbe325efa0d138bdf7261673295692c5b8b63afe62eb05b7efe7f8ba",
+    "gx_texture.py": "024bb56c309489f2aa8d2ab2ad1941f060da6b0139c143cb1f3256b9b2738854",
+    "halo_cache.py": "efa1511c139407aef9854b0a49727f6c34335fc5cadf4577216252a12329640d",
+    "media_formats.py": "5a55134e0cd6a41dff1d33a1e1e070defd8279fdfee2c53b036924c2e2402f89",
+    "recorded_animation.py": "789c2ba26bffd633b589914ef0f5300a5a8057cbfcdf2b5e5d57d4223101737b"
+   },
+   "inventory_version": 1,
+   "maps": [
+    {
+     "bitmaps": {
+      "bitmaps": 922,
+      "by_format": {
+       "a1r5g5b5": 8,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 17,
+       "a8y8": 24,
+       "ay8": 48,
+       "dxt1": 297,
+       "dxt3": 137,
+       "dxt5": 10,
+       "p8_bump": 23,
+       "r5g6b5": 313,
+       "x8r8g8b8": 40,
+       "y8": 4
+      },
+      "by_type": {
+       "2d": 884,
+       "3d": 6,
+       "cube": 32
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 299,
+       "size_0_offset_nonzero": 485
+      },
+      "groups": 485,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1026432,
+       "a8y8": 1201888,
+       "ay8": 296576,
+       "dxt1": 13559008,
+       "dxt3": 43491712,
+       "dxt5": 11294272,
+       "p8_bump": 25606208,
+       "r5g6b5": 11712160,
+       "x8r8g8b8": 1097408,
+       "y8": 459232
+      },
+      "observations": {
+       "above_gx_1024": 2,
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1025792,
+       "a8y8": 1201920,
+       "ay8": 296448,
+       "dxt1": 13577728,
+       "dxt3": 10877440,
+       "dxt5": 2823936,
+       "p8_bump": 6401792,
+       "r5g6b5": 11712768,
+       "x8r8g8b8": 1091968,
+       "y8": 229760
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "campaign",
+     "declared_bytes": 274734080,
+     "map": "campaign-01",
+     "recorded_animations": {
+      "canonical_bytes": 166892,
+      "count": 99,
+      "events": 9614,
+      "length_equals_delta_sum_plus_1": 99,
+      "round_trip_exact": 99,
+      "stream_bytes": 44865,
+      "versions": {
+       "v4/ucv4": 99
+      }
+     },
+     "scenario_type": 0,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 89567424,
+       "xbox_adpcm/2ch/22050Hz": 1916712,
+       "xbox_adpcm/2ch/44100Hz": 61165224
+      },
+      "looping_sound_tags": 50,
+      "pcm16_bytes_if_decoded": 542753280,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 6011,
+       "xbox_adpcm/2ch/22050Hz": 29,
+       "xbox_adpcm/2ch/44100Hz": 969
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 7221.4,
+       "xbox_adpcm/2ch/22050Hz": 77.3,
+       "xbox_adpcm/2ch/44100Hz": 1232.9
+      },
+      "tags": 1468
+     },
+     "structure_bsps": 9,
+     "tag_bytes": 14158000,
+     "tag_groups": {
+      "DeLa": 83,
+      "Soul": 1,
+      "actr": 9,
+      "actv": 16,
+      "ant!": 3,
+      "antr": 49,
+      "bipd": 14,
+      "bitm": 485,
+      "coll": 47,
+      "colo": 4,
+      "cont": 6,
+      "deca": 62,
+      "effe": 255,
+      "eqip": 6,
+      "fog ": 1,
+      "font": 4,
+      "foot": 6,
+      "garb": 2,
+      "grhi": 2,
+      "hmt ": 2,
+      "hud#": 1,
+      "hudg": 1,
+      "jpt!": 43,
+      "lens": 39,
+      "ligh": 48,
+      "lsnd": 50,
+      "mach": 19,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 76,
+      "part": 105,
+      "pctl": 13,
+      "phys": 5,
+      "pphy": 30,
+      "proj": 12,
+      "sbsp": 9,
+      "scen": 33,
+      "schi": 27,
+      "scnr": 1,
+      "senv": 45,
+      "sgla": 8,
+      "sky ": 2,
+      "smet": 4,
+      "snd!": 1468,
+      "snde": 2,
+      "soso": 127,
+      "sotr": 39,
+      "spla": 2,
+      "ssce": 7,
+      "str#": 1,
+      "trak": 7,
+      "udlg": 10,
+      "unhi": 9,
+      "ustr": 18,
+      "vehi": 13,
+      "weap": 6,
+      "wphi": 10
+     },
+     "tag_instances": 3357,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 2,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 19056,
+      "unicode_string_list_tags": 18,
+      "unicode_strings": 214
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 651,
+      "by_format": {
+       "a1r5g5b5": 8,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 25,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 290,
+       "dxt3": 113,
+       "dxt5": 5,
+       "p8_bump": 14,
+       "r5g6b5": 68,
+       "x8r8g8b8": 39,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 616,
+       "3d": 6,
+       "cube": 29
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 268,
+       "size_0_offset_nonzero": 445
+      },
+      "groups": 445,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 2733184,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 12107552,
+       "dxt3": 33492608,
+       "dxt5": 3954176,
+       "p8_bump": 11186816,
+       "r5g6b5": 4800384,
+       "x8r8g8b8": 746176,
+       "y8": 284416
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 2730112,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 12127104,
+       "dxt3": 8376192,
+       "dxt5": 988672,
+       "p8_bump": 2796928,
+       "r5g6b5": 4801152,
+       "x8r8g8b8": 741760,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "campaign",
+     "declared_bytes": 213065216,
+     "map": "campaign-02",
+     "recorded_animations": {
+      "canonical_bytes": 269976,
+      "count": 63,
+      "events": 16366,
+      "length_equals_delta_sum_plus_1": 63,
+      "round_trip_exact": 63,
+      "stream_bytes": 64122,
+      "versions": {
+       "v4/ucv3": 49,
+       "v4/ucv4": 14
+      }
+     },
+     "scenario_type": 0,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 93594060,
+       "xbox_adpcm/2ch/22050Hz": 1234728,
+       "xbox_adpcm/2ch/44100Hz": 51249744
+      },
+      "looping_sound_tags": 55,
+      "pcm16_bytes_if_decoded": 519390336,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 6398,
+       "xbox_adpcm/2ch/22050Hz": 25,
+       "xbox_adpcm/2ch/44100Hz": 819
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 7546.0,
+       "xbox_adpcm/2ch/22050Hz": 49.8,
+       "xbox_adpcm/2ch/44100Hz": 1033.0
+      },
+      "tags": 1465
+     },
+     "structure_bsps": 2,
+     "tag_bytes": 15353440,
+     "tag_groups": {
+      "DeLa": 83,
+      "Soul": 1,
+      "actr": 13,
+      "actv": 21,
+      "ant!": 1,
+      "antr": 29,
+      "bipd": 14,
+      "bitm": 445,
+      "coll": 33,
+      "colo": 4,
+      "cont": 8,
+      "ctrl": 1,
+      "deca": 34,
+      "dobc": 2,
+      "effe": 298,
+      "eqip": 7,
+      "fog ": 1,
+      "font": 4,
+      "foot": 6,
+      "garb": 1,
+      "grhi": 2,
+      "hmt ": 2,
+      "hud#": 1,
+      "hudg": 1,
+      "jpt!": 54,
+      "lens": 31,
+      "ligh": 43,
+      "lsnd": 55,
+      "mach": 2,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 56,
+      "part": 102,
+      "pctl": 8,
+      "phys": 6,
+      "pphy": 24,
+      "proj": 13,
+      "sbsp": 2,
+      "scen": 15,
+      "schi": 39,
+      "scnr": 1,
+      "senv": 24,
+      "sgla": 9,
+      "sky ": 2,
+      "smet": 4,
+      "snd!": 1465,
+      "snde": 3,
+      "soso": 126,
+      "sotr": 24,
+      "spla": 2,
+      "ssce": 6,
+      "str#": 1,
+      "swat": 2,
+      "trak": 7,
+      "udlg": 11,
+      "unhi": 6,
+      "ustr": 19,
+      "vehi": 6,
+      "weap": 10,
+      "wind": 2,
+      "wphi": 13
+     },
+     "tag_instances": 3215,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 2,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 19100,
+      "unicode_string_list_tags": 19,
+      "unicode_strings": 215
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 740,
+      "by_format": {
+       "a1r5g5b5": 8,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 24,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 304,
+       "dxt3": 115,
+       "dxt5": 4,
+       "p8_bump": 13,
+       "r5g6b5": 143,
+       "x8r8g8b8": 39,
+       "y8": 4
+      },
+      "by_type": {
+       "2d": 710,
+       "3d": 6,
+       "cube": 24
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 290,
+       "size_0_offset_nonzero": 458
+      },
+      "groups": 458,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1507776,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 11950688,
+       "dxt3": 30070592,
+       "dxt5": 3604672,
+       "p8_bump": 5681344,
+       "r5g6b5": 6788672,
+       "x8r8g8b8": 713216,
+       "y8": 808704
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1506688,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 11968896,
+       "dxt3": 7521152,
+       "dxt5": 901248,
+       "p8_bump": 1420544,
+       "r5g6b5": 6789120,
+       "x8r8g8b8": 708864,
+       "y8": 404480
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "campaign",
+     "declared_bytes": 250138624,
+     "map": "campaign-03",
+     "recorded_animations": {
+      "canonical_bytes": 165368,
+      "count": 34,
+      "events": 10055,
+      "length_equals_delta_sum_plus_1": 34,
+      "round_trip_exact": 34,
+      "stream_bytes": 39276,
+      "versions": {
+       "v4/ucv4": 34
+      }
+     },
+     "scenario_type": 0,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 95352804,
+       "xbox_adpcm/2ch/22050Hz": 1167048,
+       "xbox_adpcm/2ch/44100Hz": 75971520
+      },
+      "looping_sound_tags": 47,
+      "pcm16_bytes_if_decoded": 613302656,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 6595,
+       "xbox_adpcm/2ch/22050Hz": 25,
+       "xbox_adpcm/2ch/44100Hz": 1196
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 7687.8,
+       "xbox_adpcm/2ch/22050Hz": 47.0,
+       "xbox_adpcm/2ch/44100Hz": 1531.3
+      },
+      "tags": 1510
+     },
+     "structure_bsps": 4,
+     "tag_bytes": 15668928,
+     "tag_groups": {
+      "DeLa": 83,
+      "Soul": 1,
+      "actr": 15,
+      "actv": 24,
+      "antr": 34,
+      "bipd": 15,
+      "bitm": 458,
+      "coll": 49,
+      "colo": 4,
+      "cont": 7,
+      "ctrl": 2,
+      "deca": 44,
+      "dobc": 1,
+      "effe": 291,
+      "eqip": 9,
+      "font": 4,
+      "foot": 7,
+      "garb": 1,
+      "glw!": 2,
+      "grhi": 2,
+      "hmt ": 2,
+      "hud#": 1,
+      "hudg": 1,
+      "jpt!": 52,
+      "lens": 23,
+      "lifi": 3,
+      "ligh": 37,
+      "lsnd": 47,
+      "mach": 9,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 75,
+      "part": 103,
+      "pctl": 10,
+      "phys": 4,
+      "pphy": 20,
+      "proj": 12,
+      "sbsp": 4,
+      "scen": 25,
+      "schi": 26,
+      "scnr": 1,
+      "senv": 25,
+      "sgla": 7,
+      "sky ": 2,
+      "smet": 2,
+      "snd!": 1510,
+      "snde": 3,
+      "soso": 135,
+      "sotr": 35,
+      "spla": 2,
+      "ssce": 3,
+      "str#": 1,
+      "trak": 6,
+      "udlg": 12,
+      "unhi": 2,
+      "ustr": 20,
+      "vehi": 4,
+      "weap": 11,
+      "wind": 1,
+      "wphi": 12
+     },
+     "tag_instances": 3311,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 2,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 19408,
+      "unicode_string_list_tags": 20,
+      "unicode_strings": 222
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 663,
+      "by_format": {
+       "a1r5g5b5": 8,
+       "a4r4g4b4": 1,
+       "a8": 2,
+       "a8r8g8b8": 24,
+       "a8y8": 25,
+       "ay8": 48,
+       "dxt1": 310,
+       "dxt3": 117,
+       "dxt5": 5,
+       "p8_bump": 15,
+       "r5g6b5": 65,
+       "x8r8g8b8": 38,
+       "y8": 5
+      },
+      "by_type": {
+       "2d": 627,
+       "3d": 6,
+       "cube": 30
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 287,
+       "size_0_offset_nonzero": 467
+      },
+      "groups": 467,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8": 349632,
+       "a8r8g8b8": 1704384,
+       "a8y8": 1551488,
+       "ay8": 296576,
+       "dxt1": 12254240,
+       "dxt3": 37315136,
+       "dxt5": 5264896,
+       "p8_bump": 12934464,
+       "r5g6b5": 4412512,
+       "x8r8g8b8": 658688,
+       "y8": 371904
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8": 174848,
+       "a8r8g8b8": 1703296,
+       "a8y8": 1551488,
+       "ay8": 296448,
+       "dxt1": 12275840,
+       "dxt3": 9331968,
+       "dxt5": 1316352,
+       "p8_bump": 3233792,
+       "r5g6b5": 4413312,
+       "x8r8g8b8": 654336,
+       "y8": 186112
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "campaign",
+     "declared_bytes": 224887296,
+     "map": "campaign-04",
+     "recorded_animations": {
+      "canonical_bytes": 194584,
+      "count": 34,
+      "events": 11891,
+      "length_equals_delta_sum_plus_1": 34,
+      "round_trip_exact": 34,
+      "stream_bytes": 44392,
+      "versions": {
+       "v4/ucv0": 7,
+       "v4/ucv3": 19,
+       "v4/ucv4": 8
+      }
+     },
+     "scenario_type": 0,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 92509380,
+       "xbox_adpcm/2ch/22050Hz": 1167048,
+       "xbox_adpcm/2ch/44100Hz": 66038688
+      },
+      "looping_sound_tags": 49,
+      "pcm16_bytes_if_decoded": 567875968,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 6554,
+       "xbox_adpcm/2ch/22050Hz": 25,
+       "xbox_adpcm/2ch/44100Hz": 1045
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 7458.6,
+       "xbox_adpcm/2ch/22050Hz": 47.0,
+       "xbox_adpcm/2ch/44100Hz": 1331.1
+      },
+      "tags": 1435
+     },
+     "structure_bsps": 2,
+     "tag_bytes": 15716920,
+     "tag_groups": {
+      "DeLa": 83,
+      "Soul": 1,
+      "actr": 13,
+      "actv": 22,
+      "ant!": 1,
+      "antr": 32,
+      "bipd": 11,
+      "bitm": 467,
+      "coll": 49,
+      "colo": 4,
+      "cont": 8,
+      "ctrl": 3,
+      "deca": 33,
+      "dobc": 1,
+      "effe": 288,
+      "eqip": 11,
+      "fog ": 1,
+      "font": 4,
+      "foot": 7,
+      "garb": 1,
+      "glw!": 2,
+      "grhi": 2,
+      "hmt ": 2,
+      "hud#": 1,
+      "hudg": 1,
+      "jpt!": 59,
+      "lens": 34,
+      "lifi": 7,
+      "ligh": 53,
+      "lsnd": 49,
+      "mach": 10,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 9,
+      "mode": 86,
+      "part": 102,
+      "pctl": 10,
+      "phys": 6,
+      "pphy": 27,
+      "proj": 15,
+      "rain": 1,
+      "sbsp": 2,
+      "scen": 27,
+      "schi": 27,
+      "scnr": 1,
+      "senv": 22,
+      "sgla": 9,
+      "sky ": 1,
+      "smet": 4,
+      "snd!": 1435,
+      "snde": 8,
+      "soso": 142,
+      "sotr": 39,
+      "spla": 2,
+      "ssce": 4,
+      "str#": 1,
+      "swat": 1,
+      "trak": 7,
+      "udlg": 11,
+      "unhi": 7,
+      "ustr": 19,
+      "vehi": 7,
+      "weap": 13,
+      "wind": 3,
+      "wphi": 14
+     },
+     "tag_instances": 3325,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 2,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 19174,
+      "unicode_string_list_tags": 19,
+      "unicode_strings": 216
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 863,
+      "by_format": {
+       "a1r5g5b5": 8,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 25,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 329,
+       "dxt3": 125,
+       "dxt5": 10,
+       "p8_bump": 20,
+       "r5g6b5": 216,
+       "x8r8g8b8": 41,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 829,
+       "3d": 6,
+       "cube": 28
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 331,
+       "size_0_offset_nonzero": 517
+      },
+      "groups": 517,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1529728,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 14206880,
+       "dxt3": 37194048,
+       "dxt5": 6138816,
+       "p8_bump": 15381760,
+       "r5g6b5": 16059872,
+       "x8r8g8b8": 691584,
+       "y8": 284416
+      },
+      "observations": {
+       "above_gx_1024": 1,
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1528576,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 14226944,
+       "dxt3": 9301888,
+       "dxt5": 1535104,
+       "p8_bump": 3845760,
+       "r5g6b5": 16060672,
+       "x8r8g8b8": 687104,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "campaign",
+     "declared_bytes": 279763456,
+     "map": "campaign-05",
+     "recorded_animations": {
+      "canonical_bytes": 105024,
+      "count": 24,
+      "events": 6366,
+      "length_equals_delta_sum_plus_1": 24,
+      "round_trip_exact": 24,
+      "stream_bytes": 24384,
+      "versions": {
+       "v4/ucv4": 24
+      }
+     },
+     "scenario_type": 0,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 94031388,
+       "xbox_adpcm/2ch/22050Hz": 4248720,
+       "xbox_adpcm/2ch/44100Hz": 69563088
+      },
+      "looping_sound_tags": 62,
+      "pcm16_bytes_if_decoded": 596775808,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 6611,
+       "xbox_adpcm/2ch/22050Hz": 79,
+       "xbox_adpcm/2ch/44100Hz": 1112
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 7581.3,
+       "xbox_adpcm/2ch/22050Hz": 171.3,
+       "xbox_adpcm/2ch/44100Hz": 1402.1
+      },
+      "tags": 1503
+     },
+     "structure_bsps": 13,
+     "tag_bytes": 16995988,
+     "tag_groups": {
+      "DeLa": 83,
+      "Soul": 1,
+      "actr": 13,
+      "actv": 31,
+      "ant!": 3,
+      "antr": 40,
+      "bipd": 12,
+      "bitm": 517,
+      "coll": 54,
+      "colo": 4,
+      "cont": 13,
+      "ctrl": 3,
+      "deca": 44,
+      "dobc": 1,
+      "effe": 340,
+      "elec": 2,
+      "eqip": 9,
+      "fog ": 3,
+      "font": 4,
+      "foot": 7,
+      "garb": 1,
+      "glw!": 2,
+      "grhi": 2,
+      "hmt ": 2,
+      "hud#": 1,
+      "hudg": 1,
+      "jpt!": 68,
+      "lens": 41,
+      "lifi": 2,
+      "ligh": 53,
+      "lsnd": 62,
+      "mach": 10,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 10,
+      "mode": 82,
+      "part": 108,
+      "pctl": 13,
+      "phys": 8,
+      "pphy": 30,
+      "proj": 19,
+      "rain": 1,
+      "sbsp": 13,
+      "scen": 26,
+      "schi": 27,
+      "scnr": 1,
+      "senv": 35,
+      "sgla": 12,
+      "sky ": 1,
+      "smet": 4,
+      "snd!": 1503,
+      "snde": 7,
+      "soso": 148,
+      "sotr": 65,
+      "spla": 2,
+      "ssce": 6,
+      "str#": 1,
+      "trak": 10,
+      "udlg": 11,
+      "unhi": 10,
+      "ustr": 19,
+      "vehi": 8,
+      "weap": 16,
+      "wind": 2,
+      "wphi": 17
+     },
+     "tag_instances": 3647,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 2,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 19104,
+      "unicode_string_list_tags": 19,
+      "unicode_strings": 216
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 863,
+      "by_format": {
+       "a1r5g5b5": 8,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 23,
+       "a8y8": 24,
+       "ay8": 48,
+       "dxt1": 326,
+       "dxt3": 116,
+       "dxt5": 6,
+       "p8_bump": 14,
+       "r5g6b5": 253,
+       "x8r8g8b8": 41,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 830,
+       "3d": 6,
+       "cube": 27
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 306,
+       "size_0_offset_nonzero": 476
+      },
+      "groups": 476,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1354752,
+       "a8y8": 1201888,
+       "ay8": 296576,
+       "dxt1": 12432736,
+       "dxt3": 33979328,
+       "dxt5": 5352384,
+       "p8_bump": 13633536,
+       "r5g6b5": 16335936,
+       "x8r8g8b8": 1019456,
+       "y8": 284416
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1353728,
+       "a8y8": 1201920,
+       "ay8": 296448,
+       "dxt1": 12452736,
+       "dxt3": 8497920,
+       "dxt5": 1338240,
+       "p8_bump": 3408512,
+       "r5g6b5": 16336512,
+       "x8r8g8b8": 1014912,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "campaign",
+     "declared_bytes": 252559360,
+     "map": "campaign-06",
+     "recorded_animations": {
+      "canonical_bytes": 426940,
+      "count": 51,
+      "events": 26263,
+      "length_equals_delta_sum_plus_1": 51,
+      "round_trip_exact": 51,
+      "stream_bytes": 97184,
+      "versions": {
+       "v4/ucv4": 51
+      }
+     },
+     "scenario_type": 0,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 89793864,
+       "xbox_adpcm/2ch/22050Hz": 1537488,
+       "xbox_adpcm/2ch/44100Hz": 63730368
+      },
+      "looping_sound_tags": 55,
+      "pcm16_bytes_if_decoded": 551330560,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 6067,
+       "xbox_adpcm/2ch/22050Hz": 31,
+       "xbox_adpcm/2ch/44100Hz": 1018
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 7239.6,
+       "xbox_adpcm/2ch/22050Hz": 62.0,
+       "xbox_adpcm/2ch/44100Hz": 1284.6
+      },
+      "tags": 1346
+     },
+     "structure_bsps": 6,
+     "tag_bytes": 16612248,
+     "tag_groups": {
+      "DeLa": 83,
+      "Soul": 1,
+      "actr": 16,
+      "actv": 37,
+      "antr": 39,
+      "bipd": 18,
+      "bitm": 476,
+      "coll": 52,
+      "colo": 4,
+      "cont": 7,
+      "ctrl": 1,
+      "deca": 53,
+      "dobc": 2,
+      "effe": 300,
+      "elec": 3,
+      "eqip": 10,
+      "fog ": 1,
+      "font": 4,
+      "foot": 7,
+      "garb": 9,
+      "grhi": 2,
+      "hmt ": 2,
+      "hud#": 1,
+      "hudg": 1,
+      "jpt!": 59,
+      "lens": 36,
+      "lifi": 3,
+      "ligh": 68,
+      "lsnd": 55,
+      "mach": 12,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 100,
+      "part": 103,
+      "pctl": 10,
+      "phys": 2,
+      "pphy": 25,
+      "proj": 14,
+      "rain": 1,
+      "sbsp": 6,
+      "scen": 64,
+      "schi": 21,
+      "scnr": 1,
+      "senv": 28,
+      "sgla": 9,
+      "sky ": 1,
+      "smet": 2,
+      "snd!": 1346,
+      "snde": 4,
+      "soso": 140,
+      "sotr": 48,
+      "spla": 3,
+      "ssce": 4,
+      "str#": 1,
+      "swat": 2,
+      "trak": 5,
+      "udlg": 11,
+      "unhi": 2,
+      "ustr": 20,
+      "vehi": 2,
+      "weap": 9,
+      "wind": 1,
+      "wphi": 12
+     },
+     "tag_instances": 3369,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 2,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 19624,
+      "unicode_string_list_tags": 20,
+      "unicode_strings": 227
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 742,
+      "by_format": {
+       "a1r5g5b5": 8,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 24,
+       "a8y8": 24,
+       "ay8": 48,
+       "dxt1": 191,
+       "dxt3": 94,
+       "dxt5": 6,
+       "p8_bump": 15,
+       "r5g6b5": 293,
+       "x8r8g8b8": 36,
+       "y8": 2
+      },
+      "by_type": {
+       "2d": 713,
+       "3d": 6,
+       "cube": 23
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 223,
+       "size_0_offset_nonzero": 334
+      },
+      "groups": 334,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1376704,
+       "a8y8": 1201888,
+       "ay8": 296576,
+       "dxt1": 7182048,
+       "dxt3": 23777472,
+       "dxt5": 5352384,
+       "p8_bump": 11230784,
+       "r5g6b5": 20665568,
+       "x8r8g8b8": 467136,
+       "y8": 273440
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1375616,
+       "a8y8": 1201920,
+       "ay8": 296448,
+       "dxt1": 7194752,
+       "dxt3": 5946496,
+       "dxt5": 1338240,
+       "p8_bump": 2807808,
+       "r5g6b5": 20665984,
+       "x8r8g8b8": 462976,
+       "y8": 136832
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "campaign",
+     "declared_bytes": 142009856,
+     "map": "campaign-07",
+     "recorded_animations": {
+      "canonical_bytes": 5556,
+      "count": 1,
+      "events": 339,
+      "length_equals_delta_sum_plus_1": 1,
+      "round_trip_exact": 1,
+      "stream_bytes": 1263,
+      "versions": {
+       "v4/ucv4": 1
+      }
+     },
+     "scenario_type": 0,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 15989220,
+       "xbox_adpcm/2ch/22050Hz": 655848,
+       "xbox_adpcm/2ch/44100Hz": 41140584
+      },
+      "looping_sound_tags": 35,
+      "pcm16_bytes_if_decoded": 205460096,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 1054,
+       "xbox_adpcm/2ch/22050Hz": 21,
+       "xbox_adpcm/2ch/44100Hz": 652
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 1289.1,
+       "xbox_adpcm/2ch/22050Hz": 26.4,
+       "xbox_adpcm/2ch/44100Hz": 829.2
+      },
+      "tags": 371
+     },
+     "structure_bsps": 4,
+     "tag_bytes": 8953344,
+     "tag_groups": {
+      "DeLa": 83,
+      "Soul": 1,
+      "actr": 7,
+      "actv": 24,
+      "antr": 30,
+      "bipd": 8,
+      "bitm": 334,
+      "coll": 34,
+      "colo": 4,
+      "cont": 7,
+      "ctrl": 2,
+      "deca": 32,
+      "effe": 261,
+      "elec": 5,
+      "eqip": 10,
+      "fog ": 1,
+      "font": 4,
+      "foot": 5,
+      "garb": 7,
+      "grhi": 2,
+      "hmt ": 2,
+      "hud#": 1,
+      "hudg": 1,
+      "jpt!": 59,
+      "lens": 28,
+      "ligh": 34,
+      "lsnd": 35,
+      "mach": 12,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 6,
+      "mode": 63,
+      "part": 97,
+      "pctl": 7,
+      "pphy": 23,
+      "proj": 14,
+      "sbsp": 4,
+      "scen": 10,
+      "schi": 11,
+      "scnr": 1,
+      "senv": 17,
+      "sgla": 4,
+      "sky ": 1,
+      "smet": 5,
+      "snd!": 371,
+      "snde": 3,
+      "soso": 82,
+      "sotr": 49,
+      "spla": 3,
+      "ssce": 4,
+      "str#": 1,
+      "trak": 2,
+      "udlg": 3,
+      "unhi": 2,
+      "ustr": 19,
+      "weap": 9,
+      "wphi": 13
+     },
+     "tag_instances": 1860,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 2,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 19460,
+      "unicode_string_list_tags": 19,
+      "unicode_strings": 220
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 858,
+      "by_format": {
+       "a1r5g5b5": 8,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 25,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 319,
+       "dxt3": 130,
+       "dxt5": 10,
+       "p8_bump": 20,
+       "r5g6b5": 218,
+       "x8r8g8b8": 39,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 823,
+       "3d": 6,
+       "cube": 29
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 338,
+       "size_0_offset_nonzero": 510
+      },
+      "groups": 510,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1529728,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 14424320,
+       "dxt3": 38149248,
+       "dxt5": 6138816,
+       "p8_bump": 15381760,
+       "r5g6b5": 15221600,
+       "x8r8g8b8": 516608,
+       "y8": 284416
+      },
+      "observations": {
+       "above_gx_1024": 1,
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1528576,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 14444800,
+       "dxt3": 9540864,
+       "dxt5": 1535104,
+       "p8_bump": 3845760,
+       "r5g6b5": 15222400,
+       "x8r8g8b8": 512256,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "campaign",
+     "declared_bytes": 255975936,
+     "map": "campaign-08",
+     "recorded_animations": {
+      "canonical_bytes": 22336,
+      "count": 12,
+      "events": 1297,
+      "length_equals_delta_sum_plus_1": 12,
+      "round_trip_exact": 12,
+      "stream_bytes": 5459,
+      "versions": {
+       "v4/ucv4": 12
+      }
+     },
+     "scenario_type": 0,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 52750368,
+       "xbox_adpcm/2ch/22050Hz": 3601152,
+       "xbox_adpcm/2ch/44100Hz": 89012232
+      },
+      "looping_sound_tags": 66,
+      "pcm16_bytes_if_decoded": 516848896,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 3741,
+       "xbox_adpcm/2ch/22050Hz": 72,
+       "xbox_adpcm/2ch/44100Hz": 1408
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 4253.0,
+       "xbox_adpcm/2ch/22050Hz": 145.2,
+       "xbox_adpcm/2ch/44100Hz": 1794.1
+      },
+      "tags": 935
+     },
+     "structure_bsps": 13,
+     "tag_bytes": 16536628,
+     "tag_groups": {
+      "DeLa": 83,
+      "Soul": 1,
+      "actr": 19,
+      "actv": 47,
+      "ant!": 1,
+      "antr": 48,
+      "bipd": 17,
+      "bitm": 510,
+      "coll": 61,
+      "colo": 4,
+      "cont": 13,
+      "ctrl": 4,
+      "deca": 34,
+      "dobc": 1,
+      "effe": 394,
+      "elec": 3,
+      "eqip": 9,
+      "fog ": 2,
+      "font": 4,
+      "foot": 9,
+      "garb": 9,
+      "glw!": 2,
+      "grhi": 2,
+      "hmt ": 2,
+      "hud#": 1,
+      "hudg": 1,
+      "jpt!": 80,
+      "lens": 51,
+      "lifi": 2,
+      "ligh": 65,
+      "lsnd": 66,
+      "mach": 14,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 10,
+      "mode": 102,
+      "part": 108,
+      "pctl": 12,
+      "phys": 6,
+      "pphy": 26,
+      "proj": 22,
+      "rain": 1,
+      "sbsp": 13,
+      "scen": 27,
+      "schi": 23,
+      "scnr": 1,
+      "senv": 35,
+      "sgla": 11,
+      "sky ": 2,
+      "smet": 4,
+      "snd!": 935,
+      "snde": 7,
+      "soso": 134,
+      "sotr": 73,
+      "spla": 4,
+      "ssce": 5,
+      "str#": 1,
+      "trak": 8,
+      "udlg": 8,
+      "unhi": 7,
+      "ustr": 19,
+      "vehi": 6,
+      "weap": 18,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 3208,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 2,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 19124,
+      "unicode_string_list_tags": 19,
+      "unicode_strings": 216
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 807,
+      "by_format": {
+       "a1r5g5b5": 9,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 25,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 295,
+       "dxt3": 135,
+       "dxt5": 4,
+       "p8_bump": 14,
+       "r5g6b5": 197,
+       "x8r8g8b8": 38,
+       "y8": 4
+      },
+      "by_type": {
+       "2d": 774,
+       "3d": 6,
+       "cube": 27
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 345,
+       "size_0_offset_nonzero": 472
+      },
+      "groups": 472,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 1876480,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1529728,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 14068608,
+       "dxt3": 36279680,
+       "dxt5": 3604672,
+       "p8_bump": 6030976,
+       "r5g6b5": 7938848,
+       "x8r8g8b8": 576768,
+       "y8": 808704
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 1876480,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1528576,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 14088192,
+       "dxt3": 9073408,
+       "dxt5": 901248,
+       "p8_bump": 1507968,
+       "r5g6b5": 7939456,
+       "x8r8g8b8": 572416,
+       "y8": 404480
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "campaign",
+     "declared_bytes": 205501952,
+     "map": "campaign-09",
+     "recorded_animations": {
+      "canonical_bytes": 90340,
+      "count": 20,
+      "events": 5482,
+      "length_equals_delta_sum_plus_1": 20,
+      "round_trip_exact": 20,
+      "stream_bytes": 21412,
+      "versions": {
+       "v4/ucv3": 3,
+       "v4/ucv4": 17
+      }
+     },
+     "scenario_type": 0,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 40225788,
+       "xbox_adpcm/2ch/22050Hz": 655848,
+       "xbox_adpcm/2ch/44100Hz": 78123240
+      },
+      "looping_sound_tags": 51,
+      "pcm16_bytes_if_decoded": 423128448,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 3006,
+       "xbox_adpcm/2ch/22050Hz": 21,
+       "xbox_adpcm/2ch/44100Hz": 1234
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 3243.2,
+       "xbox_adpcm/2ch/22050Hz": 26.4,
+       "xbox_adpcm/2ch/44100Hz": 1574.7
+      },
+      "tags": 757
+     },
+     "structure_bsps": 5,
+     "tag_bytes": 14524560,
+     "tag_groups": {
+      "DeLa": 83,
+      "Soul": 1,
+      "actr": 14,
+      "actv": 40,
+      "antr": 34,
+      "bipd": 15,
+      "bitm": 472,
+      "coll": 49,
+      "colo": 4,
+      "cont": 9,
+      "deca": 43,
+      "dobc": 2,
+      "effe": 350,
+      "eqip": 12,
+      "fog ": 1,
+      "font": 4,
+      "foot": 9,
+      "garb": 4,
+      "grhi": 2,
+      "hmt ": 2,
+      "hud#": 1,
+      "hudg": 1,
+      "jpt!": 70,
+      "lens": 30,
+      "lifi": 2,
+      "ligh": 46,
+      "lsnd": 51,
+      "mach": 9,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 9,
+      "mode": 89,
+      "part": 116,
+      "pctl": 10,
+      "phys": 5,
+      "pphy": 30,
+      "proj": 18,
+      "sbsp": 5,
+      "scen": 30,
+      "schi": 19,
+      "scnr": 1,
+      "senv": 24,
+      "sgla": 6,
+      "sky ": 2,
+      "smet": 5,
+      "snd!": 757,
+      "snde": 6,
+      "soso": 131,
+      "sotr": 35,
+      "spla": 2,
+      "ssce": 5,
+      "str#": 1,
+      "swat": 1,
+      "trak": 6,
+      "udlg": 6,
+      "unhi": 4,
+      "ustr": 19,
+      "vehi": 5,
+      "weap": 15,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 2743,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 2,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 19164,
+      "unicode_string_list_tags": 19,
+      "unicode_strings": 217
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 1009,
+      "by_format": {
+       "a1r5g5b5": 8,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 27,
+       "a8y8": 24,
+       "ay8": 48,
+       "dxt1": 318,
+       "dxt3": 139,
+       "dxt5": 17,
+       "p8_bump": 27,
+       "r5g6b5": 351,
+       "x8r8g8b8": 45,
+       "y8": 4
+      },
+      "by_type": {
+       "2d": 967,
+       "3d": 6,
+       "cube": 36
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 342,
+       "size_0_offset_nonzero": 525
+      },
+      "groups": 525,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1748992,
+       "a8y8": 1201888,
+       "ay8": 296576,
+       "dxt1": 15102240,
+       "dxt3": 44353856,
+       "dxt5": 16712064,
+       "p8_bump": 26699072,
+       "r5g6b5": 15264864,
+       "x8r8g8b8": 1601152,
+       "y8": 459232
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 1865728,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1747200,
+       "a8y8": 1201920,
+       "ay8": 296448,
+       "dxt1": 15123072,
+       "dxt3": 11092480,
+       "dxt5": 4178688,
+       "p8_bump": 6675072,
+       "r5g6b5": 15265664,
+       "x8r8g8b8": 1594624,
+       "y8": 229760
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "campaign",
+     "declared_bytes": 274594816,
+     "map": "campaign-10",
+     "recorded_animations": {
+      "canonical_bytes": 46508,
+      "count": 11,
+      "events": 2816,
+      "length_equals_delta_sum_plus_1": 11,
+      "round_trip_exact": 11,
+      "stream_bytes": 10486,
+      "versions": {
+       "v4/ucv4": 11
+      }
+     },
+     "scenario_type": 0,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 40997376,
+       "xbox_adpcm/2ch/22050Hz": 1298376,
+       "xbox_adpcm/2ch/44100Hz": 103447656
+      },
+      "looping_sound_tags": 78,
+      "pcm16_bytes_if_decoded": 518198784,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 2704,
+       "xbox_adpcm/2ch/22050Hz": 25,
+       "xbox_adpcm/2ch/44100Hz": 1634
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 3305.4,
+       "xbox_adpcm/2ch/22050Hz": 52.3,
+       "xbox_adpcm/2ch/44100Hz": 2085.1
+      },
+      "tags": 769
+     },
+     "structure_bsps": 10,
+     "tag_bytes": 15017804,
+     "tag_groups": {
+      "DeLa": 83,
+      "Soul": 1,
+      "actr": 12,
+      "actv": 35,
+      "ant!": 1,
+      "antr": 52,
+      "bipd": 19,
+      "bitm": 525,
+      "coll": 62,
+      "colo": 4,
+      "cont": 9,
+      "ctrl": 1,
+      "deca": 49,
+      "effe": 357,
+      "elec": 1,
+      "eqip": 9,
+      "fog ": 1,
+      "font": 4,
+      "foot": 9,
+      "garb": 11,
+      "grhi": 2,
+      "hmt ": 2,
+      "hud#": 1,
+      "hudg": 1,
+      "jpt!": 70,
+      "lens": 52,
+      "ligh": 60,
+      "lsnd": 78,
+      "mach": 23,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 8,
+      "mode": 98,
+      "part": 108,
+      "pctl": 15,
+      "phys": 5,
+      "pphy": 25,
+      "proj": 16,
+      "sbsp": 10,
+      "scen": 28,
+      "schi": 31,
+      "scnr": 1,
+      "senv": 61,
+      "sgla": 7,
+      "sky ": 5,
+      "smet": 4,
+      "snd!": 769,
+      "snde": 7,
+      "soso": 127,
+      "sotr": 30,
+      "spla": 4,
+      "ssce": 7,
+      "str#": 1,
+      "trak": 8,
+      "udlg": 6,
+      "unhi": 6,
+      "ustr": 20,
+      "vehi": 6,
+      "weap": 14,
+      "wphi": 14
+     },
+     "tag_instances": 2978,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 2,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 19338,
+      "unicode_string_list_tags": 20,
+      "unicode_strings": 219
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 501,
+      "by_format": {
+       "a1r5g5b5": 7,
+       "a4r4g4b4": 1,
+       "a8": 1,
+       "a8r8g8b8": 14,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 213,
+       "dxt3": 113,
+       "dxt5": 5,
+       "p8_bump": 8,
+       "r5g6b5": 17,
+       "x8r8g8b8": 34,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 473,
+       "3d": 6,
+       "cube": 22
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 213,
+       "size_0_offset_nonzero": 357
+      },
+      "groups": 357,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8": 174816,
+       "a8r8g8b8": 1280704,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 8473024,
+       "dxt3": 27492352,
+       "dxt5": 3954176,
+       "p8_bump": 5942912,
+       "r5g6b5": 686624,
+       "x8r8g8b8": 439808,
+       "y8": 284416
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8": 87424,
+       "a8r8g8b8": 1279872,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 8486016,
+       "dxt3": 6876160,
+       "dxt5": 988672,
+       "p8_bump": 1485824,
+       "r5g6b5": 687232,
+       "x8r8g8b8": 435712,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "multiplayer",
+     "declared_bytes": 43565056,
+     "map": "multiplayer-01",
+     "recorded_animations": {
+      "canonical_bytes": 0,
+      "count": 0,
+      "events": 0,
+      "length_equals_delta_sum_plus_1": 0,
+      "round_trip_exact": 0,
+      "stream_bytes": 0,
+      "versions": {}
+     },
+     "scenario_type": 1,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 9083808,
+       "xbox_adpcm/2ch/22050Hz": 2198376,
+       "xbox_adpcm/2ch/44100Hz": 830088
+      },
+      "looping_sound_tags": 15,
+      "pcm16_bytes_if_decoded": 43065856,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 837,
+       "xbox_adpcm/2ch/22050Hz": 61,
+       "xbox_adpcm/2ch/44100Hz": 15
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 732.4,
+       "xbox_adpcm/2ch/22050Hz": 88.6,
+       "xbox_adpcm/2ch/44100Hz": 16.7
+      },
+      "tags": 316
+     },
+     "structure_bsps": 1,
+     "tag_bytes": 7210528,
+     "tag_groups": {
+      "DeLa": 30,
+      "Soul": 1,
+      "actv": 3,
+      "ant!": 3,
+      "antr": 21,
+      "bipd": 2,
+      "bitm": 357,
+      "coll": 28,
+      "colo": 4,
+      "cont": 8,
+      "deca": 39,
+      "effe": 318,
+      "eqip": 14,
+      "flag": 1,
+      "fog ": 1,
+      "font": 4,
+      "foot": 5,
+      "grhi": 2,
+      "hmt ": 1,
+      "hud#": 1,
+      "hudg": 1,
+      "itmc": 12,
+      "jpt!": 66,
+      "lens": 20,
+      "ligh": 29,
+      "lsnd": 15,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 53,
+      "part": 96,
+      "pctl": 7,
+      "phys": 3,
+      "pphy": 30,
+      "proj": 16,
+      "sbsp": 1,
+      "scen": 9,
+      "schi": 19,
+      "scnr": 1,
+      "senv": 15,
+      "sgla": 6,
+      "sky ": 1,
+      "smet": 7,
+      "snd!": 316,
+      "snde": 1,
+      "soso": 98,
+      "sotr": 21,
+      "spla": 1,
+      "ssce": 1,
+      "str#": 1,
+      "swat": 1,
+      "trak": 5,
+      "udlg": 1,
+      "unhi": 5,
+      "ustr": 8,
+      "vehi": 3,
+      "weap": 15,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 1755,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 1,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 10192,
+      "unicode_string_list_tags": 8,
+      "unicode_strings": 181
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 516,
+      "by_format": {
+       "a1r5g5b5": 7,
+       "a4r4g4b4": 1,
+       "a8": 1,
+       "a8r8g8b8": 14,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 228,
+       "dxt3": 112,
+       "dxt5": 5,
+       "p8_bump": 6,
+       "r5g6b5": 19,
+       "x8r8g8b8": 35,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 489,
+       "3d": 6,
+       "cube": 21
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 218,
+       "size_0_offset_nonzero": 368
+      },
+      "groups": 368,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8": 174816,
+       "a8r8g8b8": 1280704,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 9213824,
+       "dxt3": 24959616,
+       "dxt5": 3954176,
+       "p8_bump": 4544512,
+       "r5g6b5": 821024,
+       "x8r8g8b8": 445376,
+       "y8": 284416
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8": 87424,
+       "a8r8g8b8": 1279872,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 9227392,
+       "dxt3": 6242944,
+       "dxt5": 988672,
+       "p8_bump": 1136256,
+       "r5g6b5": 821632,
+       "x8r8g8b8": 441216,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "multiplayer",
+     "declared_bytes": 44328960,
+     "map": "multiplayer-02",
+     "recorded_animations": {
+      "canonical_bytes": 0,
+      "count": 0,
+      "events": 0,
+      "length_equals_delta_sum_plus_1": 0,
+      "round_trip_exact": 0,
+      "stream_bytes": 0,
+      "versions": {}
+     },
+     "scenario_type": 1,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 8863308,
+       "xbox_adpcm/2ch/22050Hz": 2198376,
+       "xbox_adpcm/2ch/44100Hz": 1167696
+      },
+      "looping_sound_tags": 14,
+      "pcm16_bytes_if_decoded": 43482240,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 834,
+       "xbox_adpcm/2ch/22050Hz": 61,
+       "xbox_adpcm/2ch/44100Hz": 21
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 714.6,
+       "xbox_adpcm/2ch/22050Hz": 88.6,
+       "xbox_adpcm/2ch/44100Hz": 23.5
+      },
+      "tags": 315
+     },
+     "structure_bsps": 1,
+     "tag_bytes": 7385184,
+     "tag_groups": {
+      "DeLa": 30,
+      "Soul": 1,
+      "actv": 3,
+      "ant!": 3,
+      "antr": 19,
+      "bipd": 2,
+      "bitm": 368,
+      "coll": 36,
+      "colo": 4,
+      "cont": 8,
+      "deca": 39,
+      "effe": 318,
+      "eqip": 14,
+      "flag": 1,
+      "font": 4,
+      "foot": 5,
+      "grhi": 2,
+      "hmt ": 1,
+      "hud#": 1,
+      "hudg": 1,
+      "itmc": 12,
+      "jpt!": 66,
+      "lens": 22,
+      "ligh": 32,
+      "lsnd": 14,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 63,
+      "part": 96,
+      "pctl": 7,
+      "phys": 3,
+      "pphy": 30,
+      "proj": 16,
+      "sbsp": 1,
+      "scen": 19,
+      "schi": 20,
+      "scnr": 1,
+      "senv": 14,
+      "sgla": 6,
+      "sky ": 1,
+      "smet": 7,
+      "snd!": 315,
+      "snde": 1,
+      "soso": 106,
+      "sotr": 26,
+      "spla": 1,
+      "ssce": 1,
+      "str#": 1,
+      "trak": 5,
+      "udlg": 1,
+      "unhi": 5,
+      "ustr": 8,
+      "vehi": 3,
+      "weap": 15,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 1806,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 1,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 10192,
+      "unicode_string_list_tags": 8,
+      "unicode_strings": 181
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 502,
+      "by_format": {
+       "a1r5g5b5": 7,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 13,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 198,
+       "dxt3": 116,
+       "dxt5": 6,
+       "p8_bump": 8,
+       "r5g6b5": 29,
+       "x8r8g8b8": 35,
+       "y8": 4
+      },
+      "by_type": {
+       "2d": 474,
+       "3d": 6,
+       "cube": 22
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 206,
+       "size_0_offset_nonzero": 346
+      },
+      "groups": 346,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 931072,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 8020672,
+       "dxt3": 20200768,
+       "dxt5": 5352256,
+       "p8_bump": 6030336,
+       "r5g6b5": 1461408,
+       "x8r8g8b8": 571520,
+       "y8": 459232
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 930304,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 8032512,
+       "dxt3": 5053568,
+       "dxt5": 1338240,
+       "p8_bump": 1507712,
+       "r5g6b5": 1462016,
+       "x8r8g8b8": 567040,
+       "y8": 229760
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "multiplayer",
+     "declared_bytes": 45346304,
+     "map": "multiplayer-03",
+     "recorded_animations": {
+      "canonical_bytes": 0,
+      "count": 0,
+      "events": 0,
+      "length_equals_delta_sum_plus_1": 0,
+      "round_trip_exact": 0,
+      "stream_bytes": 0,
+      "versions": {}
+     },
+     "scenario_type": 1,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 8863308,
+       "xbox_adpcm/2ch/22050Hz": 2198376,
+       "xbox_adpcm/2ch/44100Hz": 3540744
+      },
+      "looping_sound_tags": 14,
+      "pcm16_bytes_if_decoded": 51919744,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 834,
+       "xbox_adpcm/2ch/22050Hz": 61,
+       "xbox_adpcm/2ch/44100Hz": 57
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 714.6,
+       "xbox_adpcm/2ch/22050Hz": 88.6,
+       "xbox_adpcm/2ch/44100Hz": 71.4
+      },
+      "tags": 317
+     },
+     "structure_bsps": 1,
+     "tag_bytes": 7234856,
+     "tag_groups": {
+      "DeLa": 30,
+      "Soul": 1,
+      "actv": 3,
+      "ant!": 3,
+      "antr": 18,
+      "bipd": 2,
+      "bitm": 346,
+      "coll": 30,
+      "colo": 4,
+      "cont": 8,
+      "deca": 47,
+      "effe": 318,
+      "eqip": 14,
+      "flag": 1,
+      "fog ": 1,
+      "font": 4,
+      "foot": 5,
+      "grhi": 2,
+      "hmt ": 1,
+      "hud#": 1,
+      "hudg": 1,
+      "itmc": 12,
+      "jpt!": 66,
+      "lens": 21,
+      "ligh": 29,
+      "lsnd": 14,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 51,
+      "part": 96,
+      "pctl": 7,
+      "phys": 3,
+      "pphy": 30,
+      "proj": 16,
+      "sbsp": 1,
+      "scen": 7,
+      "schi": 19,
+      "scnr": 1,
+      "senv": 14,
+      "sgla": 6,
+      "sky ": 1,
+      "smet": 7,
+      "snd!": 317,
+      "snde": 1,
+      "soso": 90,
+      "sotr": 19,
+      "spla": 1,
+      "str#": 1,
+      "trak": 5,
+      "udlg": 1,
+      "unhi": 5,
+      "ustr": 8,
+      "vehi": 3,
+      "weap": 15,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 1735,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 1,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 10192,
+      "unicode_string_list_tags": 8,
+      "unicode_strings": 181
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 495,
+      "by_format": {
+       "a1r5g5b5": 7,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 13,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 193,
+       "dxt3": 108,
+       "dxt5": 6,
+       "p8_bump": 11,
+       "r5g6b5": 32,
+       "x8r8g8b8": 35,
+       "y8": 4
+      },
+      "by_type": {
+       "2d": 467,
+       "3d": 6,
+       "cube": 22
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 207,
+       "size_0_offset_nonzero": 336
+      },
+      "groups": 336,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 931072,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 7719936,
+       "dxt3": 23828032,
+       "dxt5": 4041536,
+       "p8_bump": 9438656,
+       "r5g6b5": 898720,
+       "x8r8g8b8": 527296,
+       "y8": 459232
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 930304,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 7731840,
+       "dxt3": 5959808,
+       "dxt5": 1010560,
+       "p8_bump": 2359808,
+       "r5g6b5": 899328,
+       "x8r8g8b8": 523136,
+       "y8": 229760
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "multiplayer",
+     "declared_bytes": 42367488,
+     "map": "multiplayer-04",
+     "recorded_animations": {
+      "canonical_bytes": 0,
+      "count": 0,
+      "events": 0,
+      "length_equals_delta_sum_plus_1": 0,
+      "round_trip_exact": 0,
+      "stream_bytes": 0,
+      "versions": {}
+     },
+     "scenario_type": 1,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 8863308,
+       "xbox_adpcm/2ch/22050Hz": 2198376,
+       "xbox_adpcm/2ch/44100Hz": 1032696
+      },
+      "looping_sound_tags": 14,
+      "pcm16_bytes_if_decoded": 43002240,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 834,
+       "xbox_adpcm/2ch/22050Hz": 61,
+       "xbox_adpcm/2ch/44100Hz": 16
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 714.6,
+       "xbox_adpcm/2ch/22050Hz": 88.6,
+       "xbox_adpcm/2ch/44100Hz": 20.8
+      },
+      "tags": 316
+     },
+     "structure_bsps": 1,
+     "tag_bytes": 7079316,
+     "tag_groups": {
+      "DeLa": 30,
+      "Soul": 1,
+      "actv": 3,
+      "ant!": 3,
+      "antr": 18,
+      "bipd": 2,
+      "bitm": 336,
+      "coll": 29,
+      "colo": 4,
+      "cont": 8,
+      "deca": 35,
+      "effe": 318,
+      "eqip": 14,
+      "flag": 1,
+      "font": 4,
+      "foot": 5,
+      "grhi": 2,
+      "hmt ": 1,
+      "hud#": 1,
+      "hudg": 1,
+      "itmc": 14,
+      "jpt!": 66,
+      "lens": 21,
+      "lifi": 1,
+      "ligh": 30,
+      "lsnd": 14,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 50,
+      "part": 96,
+      "pctl": 7,
+      "phys": 3,
+      "pphy": 30,
+      "proj": 16,
+      "sbsp": 1,
+      "scen": 5,
+      "schi": 19,
+      "scnr": 1,
+      "senv": 12,
+      "sgla": 7,
+      "sky ": 1,
+      "smet": 7,
+      "snd!": 316,
+      "snde": 1,
+      "soso": 90,
+      "sotr": 25,
+      "spla": 1,
+      "str#": 1,
+      "trak": 5,
+      "udlg": 1,
+      "unhi": 5,
+      "ustr": 8,
+      "vehi": 3,
+      "weap": 15,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 1716,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 1,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 10192,
+      "unicode_string_list_tags": 8,
+      "unicode_strings": 181
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 476,
+      "by_format": {
+       "a1r5g5b5": 7,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 13,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 191,
+       "dxt3": 109,
+       "dxt5": 7,
+       "p8_bump": 12,
+       "r5g6b5": 13,
+       "x8r8g8b8": 35,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 449,
+       "3d": 6,
+       "cube": 21
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 203,
+       "size_0_offset_nonzero": 334
+      },
+      "groups": 334,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 931072,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 7495808,
+       "dxt3": 22692096,
+       "dxt5": 5002752,
+       "p8_bump": 7778560,
+       "r5g6b5": 813216,
+       "x8r8g8b8": 445376,
+       "y8": 284416
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 930304,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 7507328,
+       "dxt3": 5675904,
+       "dxt5": 1250944,
+       "p8_bump": 1944832,
+       "r5g6b5": 813824,
+       "x8r8g8b8": 441216,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "multiplayer",
+     "declared_bytes": 41967104,
+     "map": "multiplayer-05",
+     "recorded_animations": {
+      "canonical_bytes": 0,
+      "count": 0,
+      "events": 0,
+      "length_equals_delta_sum_plus_1": 0,
+      "round_trip_exact": 0,
+      "stream_bytes": 0,
+      "versions": {}
+     },
+     "scenario_type": 1,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 8863308,
+       "xbox_adpcm/2ch/22050Hz": 2198376,
+       "xbox_adpcm/2ch/44100Hz": 1541592
+      },
+      "looping_sound_tags": 14,
+      "pcm16_bytes_if_decoded": 44811648,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 834,
+       "xbox_adpcm/2ch/22050Hz": 61,
+       "xbox_adpcm/2ch/44100Hz": 26
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 714.6,
+       "xbox_adpcm/2ch/22050Hz": 88.6,
+       "xbox_adpcm/2ch/44100Hz": 31.1
+      },
+      "tags": 316
+     },
+     "structure_bsps": 1,
+     "tag_bytes": 7048280,
+     "tag_groups": {
+      "DeLa": 30,
+      "Soul": 1,
+      "actv": 3,
+      "ant!": 3,
+      "antr": 18,
+      "bipd": 2,
+      "bitm": 334,
+      "coll": 26,
+      "colo": 4,
+      "cont": 8,
+      "deca": 35,
+      "effe": 318,
+      "eqip": 14,
+      "flag": 1,
+      "fog ": 1,
+      "font": 4,
+      "foot": 5,
+      "grhi": 2,
+      "hmt ": 1,
+      "hud#": 1,
+      "hudg": 1,
+      "itmc": 13,
+      "jpt!": 66,
+      "lens": 20,
+      "ligh": 29,
+      "lsnd": 14,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 47,
+      "part": 96,
+      "pctl": 7,
+      "phys": 3,
+      "pphy": 30,
+      "proj": 16,
+      "sbsp": 1,
+      "scen": 4,
+      "schi": 18,
+      "scnr": 1,
+      "senv": 18,
+      "sgla": 7,
+      "sky ": 1,
+      "smet": 7,
+      "snd!": 316,
+      "snde": 1,
+      "soso": 89,
+      "sotr": 19,
+      "spla": 1,
+      "str#": 1,
+      "trak": 5,
+      "udlg": 1,
+      "unhi": 5,
+      "ustr": 8,
+      "vehi": 3,
+      "weap": 15,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 1702,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 1,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 10192,
+      "unicode_string_list_tags": 8,
+      "unicode_strings": 181
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 498,
+      "by_format": {
+       "a1r5g5b5": 7,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 13,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 202,
+       "dxt3": 116,
+       "dxt5": 6,
+       "p8_bump": 14,
+       "r5g6b5": 14,
+       "x8r8g8b8": 37,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 471,
+       "3d": 6,
+       "cube": 21
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 216,
+       "size_0_offset_nonzero": 355
+      },
+      "groups": 355,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 931072,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 8029056,
+       "dxt3": 26646016,
+       "dxt5": 4041536,
+       "p8_bump": 8128128,
+       "r5g6b5": 917664,
+       "x8r8g8b8": 554816,
+       "y8": 284416
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 930304,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 8041088,
+       "dxt3": 6664576,
+       "dxt5": 1010560,
+       "p8_bump": 2032256,
+       "r5g6b5": 918272,
+       "x8r8g8b8": 550528,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "multiplayer",
+     "declared_bytes": 47968768,
+     "map": "multiplayer-06",
+     "recorded_animations": {
+      "canonical_bytes": 0,
+      "count": 0,
+      "events": 0,
+      "length_equals_delta_sum_plus_1": 0,
+      "round_trip_exact": 0,
+      "stream_bytes": 0,
+      "versions": {}
+     },
+     "scenario_type": 1,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 9265032,
+       "xbox_adpcm/2ch/22050Hz": 2198376,
+       "xbox_adpcm/2ch/44100Hz": 4603608
+      },
+      "looping_sound_tags": 16,
+      "pcm16_bytes_if_decoded": 57127168,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 851,
+       "xbox_adpcm/2ch/22050Hz": 61,
+       "xbox_adpcm/2ch/44100Hz": 73
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 747.0,
+       "xbox_adpcm/2ch/22050Hz": 88.6,
+       "xbox_adpcm/2ch/44100Hz": 92.8
+      },
+      "tags": 319
+     },
+     "structure_bsps": 1,
+     "tag_bytes": 7240148,
+     "tag_groups": {
+      "DeLa": 30,
+      "Soul": 1,
+      "actv": 3,
+      "ant!": 3,
+      "antr": 18,
+      "bipd": 2,
+      "bitm": 355,
+      "coll": 29,
+      "colo": 4,
+      "cont": 8,
+      "deca": 36,
+      "effe": 320,
+      "eqip": 14,
+      "flag": 1,
+      "fog ": 1,
+      "font": 4,
+      "foot": 5,
+      "grhi": 2,
+      "hmt ": 1,
+      "hud#": 1,
+      "hudg": 1,
+      "itmc": 12,
+      "jpt!": 66,
+      "lens": 23,
+      "lifi": 2,
+      "ligh": 31,
+      "lsnd": 16,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 52,
+      "part": 97,
+      "pctl": 7,
+      "phys": 3,
+      "pphy": 30,
+      "proj": 16,
+      "sbsp": 1,
+      "scen": 6,
+      "schi": 23,
+      "scnr": 1,
+      "senv": 17,
+      "sgla": 6,
+      "sky ": 1,
+      "smet": 7,
+      "snd!": 319,
+      "snde": 1,
+      "soso": 92,
+      "sotr": 21,
+      "spla": 1,
+      "ssce": 1,
+      "str#": 1,
+      "swat": 1,
+      "trak": 5,
+      "udlg": 1,
+      "unhi": 5,
+      "ustr": 8,
+      "vehi": 3,
+      "weap": 15,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 1758,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 1,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 10192,
+      "unicode_string_list_tags": 8,
+      "unicode_strings": 181
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 462,
+      "by_format": {
+       "a1r5g5b5": 7,
+       "a4r4g4b4": 1,
+       "a8": 1,
+       "a8r8g8b8": 14,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 193,
+       "dxt3": 104,
+       "dxt5": 5,
+       "p8_bump": 9,
+       "r5g6b5": 6,
+       "x8r8g8b8": 34,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 436,
+       "3d": 6,
+       "cube": 20
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 202,
+       "size_0_offset_nonzero": 329
+      },
+      "groups": 329,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8": 174816,
+       "a8r8g8b8": 1280704,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 7467136,
+       "dxt3": 25051456,
+       "dxt5": 3954176,
+       "p8_bump": 9787968,
+       "r5g6b5": 1224352,
+       "x8r8g8b8": 439808,
+       "y8": 284416
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8": 87424,
+       "a8r8g8b8": 1279872,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 7478528,
+       "dxt3": 6265472,
+       "dxt5": 988672,
+       "p8_bump": 2447104,
+       "r5g6b5": 1224960,
+       "x8r8g8b8": 435712,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "multiplayer",
+     "declared_bytes": 43700224,
+     "map": "multiplayer-07",
+     "recorded_animations": {
+      "canonical_bytes": 0,
+      "count": 0,
+      "events": 0,
+      "length_equals_delta_sum_plus_1": 0,
+      "round_trip_exact": 0,
+      "stream_bytes": 0,
+      "versions": {}
+     },
+     "scenario_type": 1,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 8820576,
+       "xbox_adpcm/2ch/22050Hz": 2198376,
+       "xbox_adpcm/2ch/44100Hz": 1660608
+      },
+      "looping_sound_tags": 13,
+      "pcm16_bytes_if_decoded": 45082880,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 833,
+       "xbox_adpcm/2ch/22050Hz": 61,
+       "xbox_adpcm/2ch/44100Hz": 28
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 711.2,
+       "xbox_adpcm/2ch/22050Hz": 88.6,
+       "xbox_adpcm/2ch/44100Hz": 33.5
+      },
+      "tags": 314
+     },
+     "structure_bsps": 1,
+     "tag_bytes": 7040008,
+     "tag_groups": {
+      "DeLa": 30,
+      "Soul": 1,
+      "actv": 3,
+      "ant!": 3,
+      "antr": 18,
+      "bipd": 2,
+      "bitm": 329,
+      "coll": 25,
+      "colo": 4,
+      "cont": 8,
+      "deca": 37,
+      "effe": 318,
+      "eqip": 14,
+      "flag": 1,
+      "font": 4,
+      "foot": 5,
+      "grhi": 2,
+      "hmt ": 1,
+      "hud#": 1,
+      "hudg": 1,
+      "itmc": 13,
+      "jpt!": 66,
+      "lens": 20,
+      "ligh": 29,
+      "lsnd": 13,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 46,
+      "part": 96,
+      "pctl": 7,
+      "phys": 3,
+      "pphy": 30,
+      "proj": 16,
+      "sbsp": 1,
+      "scen": 2,
+      "schi": 19,
+      "scnr": 1,
+      "senv": 10,
+      "sgla": 6,
+      "sky ": 1,
+      "smet": 7,
+      "snd!": 314,
+      "snde": 1,
+      "soso": 89,
+      "sotr": 17,
+      "spla": 1,
+      "str#": 1,
+      "trak": 5,
+      "udlg": 1,
+      "unhi": 5,
+      "ustr": 8,
+      "vehi": 3,
+      "weap": 15,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 1681,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 1,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 10192,
+      "unicode_string_list_tags": 8,
+      "unicode_strings": 181
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 469,
+      "by_format": {
+       "a1r5g5b5": 7,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 13,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 196,
+       "dxt3": 107,
+       "dxt5": 5,
+       "p8_bump": 11,
+       "r5g6b5": 5,
+       "x8r8g8b8": 36,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 442,
+       "3d": 6,
+       "cube": 21
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 207,
+       "size_0_offset_nonzero": 337
+      },
+      "groups": 337,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 931072,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 7535424,
+       "dxt3": 24090240,
+       "dxt5": 3954176,
+       "p8_bump": 9176512,
+       "r5g6b5": 700064,
+       "x8r8g8b8": 659008,
+       "y8": 284416
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 930304,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 7546880,
+       "dxt3": 6025344,
+       "dxt5": 988672,
+       "p8_bump": 2294272,
+       "r5g6b5": 700672,
+       "x8r8g8b8": 654464,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "multiplayer",
+     "declared_bytes": 42141696,
+     "map": "multiplayer-08",
+     "recorded_animations": {
+      "canonical_bytes": 0,
+      "count": 0,
+      "events": 0,
+      "length_equals_delta_sum_plus_1": 0,
+      "round_trip_exact": 0,
+      "stream_bytes": 0,
+      "versions": {}
+     },
+     "scenario_type": 1,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 8820576,
+       "xbox_adpcm/2ch/22050Hz": 2198376,
+       "xbox_adpcm/2ch/44100Hz": 1344240
+      },
+      "looping_sound_tags": 13,
+      "pcm16_bytes_if_decoded": 43958016,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 833,
+       "xbox_adpcm/2ch/22050Hz": 61,
+       "xbox_adpcm/2ch/44100Hz": 22
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 711.2,
+       "xbox_adpcm/2ch/22050Hz": 88.6,
+       "xbox_adpcm/2ch/44100Hz": 27.1
+      },
+      "tags": 314
+     },
+     "structure_bsps": 1,
+     "tag_bytes": 7079296,
+     "tag_groups": {
+      "DeLa": 30,
+      "Soul": 1,
+      "actv": 3,
+      "ant!": 3,
+      "antr": 18,
+      "bipd": 2,
+      "bitm": 337,
+      "coll": 26,
+      "colo": 4,
+      "cont": 8,
+      "deca": 41,
+      "effe": 318,
+      "eqip": 14,
+      "flag": 1,
+      "font": 4,
+      "foot": 5,
+      "grhi": 2,
+      "hmt ": 1,
+      "hud#": 1,
+      "hudg": 1,
+      "itmc": 10,
+      "jpt!": 66,
+      "lens": 20,
+      "ligh": 29,
+      "lsnd": 13,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 46,
+      "part": 96,
+      "pctl": 7,
+      "phys": 3,
+      "pphy": 30,
+      "proj": 16,
+      "sbsp": 1,
+      "scen": 2,
+      "schi": 18,
+      "scnr": 1,
+      "senv": 13,
+      "sgla": 6,
+      "sky ": 1,
+      "smet": 7,
+      "snd!": 314,
+      "snde": 1,
+      "soso": 89,
+      "sotr": 20,
+      "spla": 1,
+      "str#": 1,
+      "trak": 5,
+      "udlg": 1,
+      "unhi": 5,
+      "ustr": 8,
+      "vehi": 3,
+      "weap": 15,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 1696,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 1,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 10192,
+      "unicode_string_list_tags": 8,
+      "unicode_strings": 181
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 464,
+      "by_format": {
+       "a1r5g5b5": 7,
+       "a4r4g4b4": 1,
+       "a8": 1,
+       "a8r8g8b8": 14,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 191,
+       "dxt3": 106,
+       "dxt5": 5,
+       "p8_bump": 11,
+       "r5g6b5": 6,
+       "x8r8g8b8": 34,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 438,
+       "3d": 6,
+       "cube": 20
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 201,
+       "size_0_offset_nonzero": 331
+      },
+      "groups": 331,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8": 174816,
+       "a8r8g8b8": 1280704,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 7390464,
+       "dxt3": 24701888,
+       "dxt5": 3954176,
+       "p8_bump": 9438656,
+       "r5g6b5": 831136,
+       "x8r8g8b8": 439808,
+       "y8": 284416
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8": 87424,
+       "a8r8g8b8": 1279872,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 7401728,
+       "dxt3": 6178176,
+       "dxt5": 988672,
+       "p8_bump": 2359808,
+       "r5g6b5": 831744,
+       "x8r8g8b8": 435712,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "multiplayer",
+     "declared_bytes": 43974656,
+     "map": "multiplayer-09",
+     "recorded_animations": {
+      "canonical_bytes": 0,
+      "count": 0,
+      "events": 0,
+      "length_equals_delta_sum_plus_1": 0,
+      "round_trip_exact": 0,
+      "stream_bytes": 0,
+      "versions": {}
+     },
+     "scenario_type": 1,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 8820576,
+       "xbox_adpcm/2ch/22050Hz": 2198376,
+       "xbox_adpcm/2ch/44100Hz": 2290824
+      },
+      "looping_sound_tags": 13,
+      "pcm16_bytes_if_decoded": 47323648,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 833,
+       "xbox_adpcm/2ch/22050Hz": 61,
+       "xbox_adpcm/2ch/44100Hz": 36
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 711.2,
+       "xbox_adpcm/2ch/22050Hz": 88.6,
+       "xbox_adpcm/2ch/44100Hz": 46.2
+      },
+      "tags": 314
+     },
+     "structure_bsps": 1,
+     "tag_bytes": 7034316,
+     "tag_groups": {
+      "DeLa": 30,
+      "Soul": 1,
+      "actv": 3,
+      "ant!": 3,
+      "antr": 18,
+      "bipd": 2,
+      "bitm": 331,
+      "coll": 25,
+      "colo": 4,
+      "cont": 8,
+      "deca": 35,
+      "effe": 318,
+      "eqip": 14,
+      "flag": 1,
+      "font": 4,
+      "foot": 5,
+      "grhi": 2,
+      "hmt ": 1,
+      "hud#": 1,
+      "hudg": 1,
+      "itmc": 12,
+      "jpt!": 66,
+      "lens": 20,
+      "ligh": 29,
+      "lsnd": 13,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 45,
+      "part": 96,
+      "pctl": 7,
+      "phys": 3,
+      "pphy": 30,
+      "proj": 16,
+      "sbsp": 1,
+      "scen": 1,
+      "schi": 19,
+      "scnr": 1,
+      "senv": 11,
+      "sgla": 7,
+      "sky ": 1,
+      "smet": 7,
+      "snd!": 314,
+      "snde": 1,
+      "soso": 89,
+      "sotr": 22,
+      "spla": 1,
+      "str#": 1,
+      "trak": 5,
+      "udlg": 1,
+      "unhi": 5,
+      "ustr": 8,
+      "vehi": 3,
+      "weap": 15,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 1685,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 1,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 10192,
+      "unicode_string_list_tags": 8,
+      "unicode_strings": 181
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 465,
+      "by_format": {
+       "a1r5g5b5": 7,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 13,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 189,
+       "dxt3": 105,
+       "dxt5": 6,
+       "p8_bump": 8,
+       "r5g6b5": 13,
+       "x8r8g8b8": 35,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 438,
+       "3d": 6,
+       "cube": 21
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 205,
+       "size_0_offset_nonzero": 325
+      },
+      "groups": 325,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 931072,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 7160000,
+       "dxt3": 18847104,
+       "dxt5": 4041536,
+       "p8_bump": 6030336,
+       "r5g6b5": 831136,
+       "x8r8g8b8": 571520,
+       "y8": 284416
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 930304,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 7171200,
+       "dxt3": 4714496,
+       "dxt5": 1010560,
+       "p8_bump": 1507712,
+       "r5g6b5": 831744,
+       "x8r8g8b8": 567040,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "multiplayer",
+     "declared_bytes": 40668672,
+     "map": "multiplayer-10",
+     "recorded_animations": {
+      "canonical_bytes": 0,
+      "count": 0,
+      "events": 0,
+      "length_equals_delta_sum_plus_1": 0,
+      "round_trip_exact": 0,
+      "stream_bytes": 0,
+      "versions": {}
+     },
+     "scenario_type": 1,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 8863308,
+       "xbox_adpcm/2ch/22050Hz": 2198376,
+       "xbox_adpcm/2ch/44100Hz": 1019736
+      },
+      "looping_sound_tags": 14,
+      "pcm16_bytes_if_decoded": 42956160,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 834,
+       "xbox_adpcm/2ch/22050Hz": 61,
+       "xbox_adpcm/2ch/44100Hz": 19
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 714.6,
+       "xbox_adpcm/2ch/22050Hz": 88.6,
+       "xbox_adpcm/2ch/44100Hz": 20.6
+      },
+      "tags": 316
+     },
+     "structure_bsps": 1,
+     "tag_bytes": 7033488,
+     "tag_groups": {
+      "DeLa": 30,
+      "Soul": 1,
+      "actv": 3,
+      "ant!": 3,
+      "antr": 18,
+      "bipd": 2,
+      "bitm": 325,
+      "coll": 25,
+      "colo": 4,
+      "cont": 8,
+      "deca": 37,
+      "effe": 318,
+      "eqip": 14,
+      "flag": 1,
+      "font": 4,
+      "foot": 5,
+      "grhi": 2,
+      "hmt ": 1,
+      "hud#": 1,
+      "hudg": 1,
+      "itmc": 10,
+      "jpt!": 66,
+      "lens": 20,
+      "ligh": 29,
+      "lsnd": 14,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 45,
+      "part": 96,
+      "pctl": 7,
+      "phys": 3,
+      "pphy": 30,
+      "proj": 16,
+      "sbsp": 1,
+      "scen": 2,
+      "schi": 17,
+      "scnr": 1,
+      "senv": 15,
+      "sgla": 6,
+      "smet": 7,
+      "snd!": 316,
+      "snde": 1,
+      "soso": 89,
+      "sotr": 14,
+      "spla": 1,
+      "str#": 1,
+      "trak": 5,
+      "udlg": 1,
+      "unhi": 5,
+      "ustr": 8,
+      "vehi": 3,
+      "weap": 15,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 1675,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 1,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 10192,
+      "unicode_string_list_tags": 8,
+      "unicode_strings": 181
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 484,
+      "by_format": {
+       "a1r5g5b5": 7,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 15,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 196,
+       "dxt3": 108,
+       "dxt5": 6,
+       "p8_bump": 13,
+       "r5g6b5": 15,
+       "x8r8g8b8": 35,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 456,
+       "3d": 6,
+       "cube": 22
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 210,
+       "size_0_offset_nonzero": 342
+      },
+      "groups": 342,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1106048,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 7783360,
+       "dxt3": 25925312,
+       "dxt5": 4041536,
+       "p8_bump": 11973056,
+       "r5g6b5": 804512,
+       "x8r8g8b8": 571520,
+       "y8": 284416
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 1105152,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 7795072,
+       "dxt3": 6484096,
+       "dxt5": 1010560,
+       "p8_bump": 2993408,
+       "r5g6b5": 805120,
+       "x8r8g8b8": 567040,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "multiplayer",
+     "declared_bytes": 47403008,
+     "map": "multiplayer-11",
+     "recorded_animations": {
+      "canonical_bytes": 0,
+      "count": 0,
+      "events": 0,
+      "length_equals_delta_sum_plus_1": 0,
+      "round_trip_exact": 0,
+      "stream_bytes": 0,
+      "versions": {}
+     },
+     "scenario_type": 1,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 9007236,
+       "xbox_adpcm/2ch/22050Hz": 2198376,
+       "xbox_adpcm/2ch/44100Hz": 4603608
+      },
+      "looping_sound_tags": 15,
+      "pcm16_bytes_if_decoded": 56210560,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 838,
+       "xbox_adpcm/2ch/22050Hz": 61,
+       "xbox_adpcm/2ch/44100Hz": 73
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 726.2,
+       "xbox_adpcm/2ch/22050Hz": 88.6,
+       "xbox_adpcm/2ch/44100Hz": 92.8
+      },
+      "tags": 318
+     },
+     "structure_bsps": 1,
+     "tag_bytes": 7101136,
+     "tag_groups": {
+      "DeLa": 30,
+      "Soul": 1,
+      "actv": 3,
+      "ant!": 3,
+      "antr": 18,
+      "bipd": 2,
+      "bitm": 342,
+      "coll": 27,
+      "colo": 4,
+      "cont": 8,
+      "deca": 35,
+      "effe": 319,
+      "eqip": 14,
+      "flag": 1,
+      "font": 4,
+      "foot": 5,
+      "grhi": 2,
+      "hmt ": 1,
+      "hud#": 1,
+      "hudg": 1,
+      "itmc": 9,
+      "jpt!": 66,
+      "lens": 20,
+      "lifi": 1,
+      "ligh": 30,
+      "lsnd": 15,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 47,
+      "part": 96,
+      "pctl": 7,
+      "phys": 3,
+      "pphy": 30,
+      "proj": 16,
+      "sbsp": 1,
+      "scen": 3,
+      "schi": 17,
+      "scnr": 1,
+      "senv": 16,
+      "sgla": 6,
+      "smet": 7,
+      "snd!": 318,
+      "snde": 1,
+      "soso": 91,
+      "sotr": 21,
+      "spla": 1,
+      "str#": 1,
+      "trak": 5,
+      "udlg": 1,
+      "unhi": 5,
+      "ustr": 8,
+      "vehi": 3,
+      "weap": 15,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 1710,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 1,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 10192,
+      "unicode_string_list_tags": 8,
+      "unicode_strings": 181
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 510,
+      "by_format": {
+       "a1r5g5b5": 7,
+       "a4r4g4b4": 1,
+       "a8r8g8b8": 13,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 209,
+       "dxt3": 112,
+       "dxt5": 5,
+       "p8_bump": 12,
+       "r5g6b5": 27,
+       "x8r8g8b8": 36,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 483,
+       "3d": 6,
+       "cube": 21
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 211,
+       "size_0_offset_nonzero": 354
+      },
+      "groups": 354,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 931072,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 8079296,
+       "dxt3": 28720000,
+       "dxt5": 3954176,
+       "p8_bump": 8739584,
+       "r5g6b5": 1046304,
+       "x8r8g8b8": 532864,
+       "y8": 284416
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8r8g8b8": 930304,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 8091776,
+       "dxt3": 7182976,
+       "dxt5": 988672,
+       "p8_bump": 2185088,
+       "r5g6b5": 1046912,
+       "x8r8g8b8": 528640,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "multiplayer",
+     "declared_bytes": 48048128,
+     "map": "multiplayer-12",
+     "recorded_animations": {
+      "canonical_bytes": 0,
+      "count": 0,
+      "events": 0,
+      "length_equals_delta_sum_plus_1": 0,
+      "round_trip_exact": 0,
+      "stream_bytes": 0,
+      "versions": {}
+     },
+     "scenario_type": 1,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 8863308,
+       "xbox_adpcm/2ch/22050Hz": 2198376,
+       "xbox_adpcm/2ch/44100Hz": 3491280
+      },
+      "looping_sound_tags": 14,
+      "pcm16_bytes_if_decoded": 51743872,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 834,
+       "xbox_adpcm/2ch/22050Hz": 61,
+       "xbox_adpcm/2ch/44100Hz": 58
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 714.6,
+       "xbox_adpcm/2ch/22050Hz": 88.6,
+       "xbox_adpcm/2ch/44100Hz": 70.4
+      },
+      "tags": 316
+     },
+     "structure_bsps": 1,
+     "tag_bytes": 7364724,
+     "tag_groups": {
+      "DeLa": 30,
+      "Soul": 1,
+      "actv": 3,
+      "ant!": 3,
+      "antr": 19,
+      "bipd": 2,
+      "bitm": 354,
+      "coll": 31,
+      "colo": 4,
+      "cont": 8,
+      "deca": 37,
+      "effe": 318,
+      "eqip": 14,
+      "flag": 1,
+      "font": 4,
+      "foot": 5,
+      "grhi": 2,
+      "hmt ": 1,
+      "hud#": 1,
+      "hudg": 1,
+      "itmc": 13,
+      "jpt!": 66,
+      "lens": 22,
+      "ligh": 32,
+      "lsnd": 14,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 56,
+      "part": 96,
+      "pctl": 7,
+      "phys": 3,
+      "pphy": 30,
+      "proj": 16,
+      "sbsp": 1,
+      "scen": 12,
+      "schi": 20,
+      "scnr": 1,
+      "senv": 15,
+      "sgla": 6,
+      "sky ": 1,
+      "smet": 7,
+      "snd!": 316,
+      "snde": 1,
+      "soso": 93,
+      "sotr": 23,
+      "spla": 1,
+      "str#": 1,
+      "trak": 5,
+      "udlg": 1,
+      "unhi": 5,
+      "ustr": 8,
+      "vehi": 3,
+      "weap": 15,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 1757,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 1,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 10192,
+      "unicode_string_list_tags": 8,
+      "unicode_strings": 181
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 471,
+      "by_format": {
+       "a1r5g5b5": 7,
+       "a4r4g4b4": 1,
+       "a8": 1,
+       "a8r8g8b8": 14,
+       "a8y8": 28,
+       "ay8": 57,
+       "dxt1": 192,
+       "dxt3": 106,
+       "dxt5": 5,
+       "p8_bump": 7,
+       "r5g6b5": 15,
+       "x8r8g8b8": 35,
+       "y8": 3
+      },
+      "by_type": {
+       "2d": 443,
+       "3d": 6,
+       "cube": 22
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 199,
+       "size_0_offset_nonzero": 329
+      },
+      "groups": 329,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8": 174816,
+       "a8r8g8b8": 1280704,
+       "a8y8": 1510112,
+       "ay8": 417152,
+       "dxt1": 7570240,
+       "dxt3": 21206464,
+       "dxt5": 3954176,
+       "p8_bump": 5331136,
+       "r5g6b5": 702624,
+       "x8r8g8b8": 571520,
+       "y8": 284416
+      },
+      "observations": {
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 817152,
+       "a4r4g4b4": 8192,
+       "a8": 87424,
+       "a8r8g8b8": 1279872,
+       "a8y8": 1510144,
+       "ay8": 416128,
+       "dxt1": 7581824,
+       "dxt3": 5304320,
+       "dxt5": 988672,
+       "p8_bump": 1332864,
+       "r5g6b5": 703232,
+       "x8r8g8b8": 567040,
+       "y8": 142336
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "multiplayer",
+     "declared_bytes": 40681984,
+     "map": "multiplayer-13",
+     "recorded_animations": {
+      "canonical_bytes": 0,
+      "count": 0,
+      "events": 0,
+      "length_equals_delta_sum_plus_1": 0,
+      "round_trip_exact": 0,
+      "stream_bytes": 0,
+      "versions": {}
+     },
+     "scenario_type": 1,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 8887248,
+       "xbox_adpcm/2ch/22050Hz": 2198376,
+       "xbox_adpcm/2ch/44100Hz": 951480
+      },
+      "looping_sound_tags": 15,
+      "pcm16_bytes_if_decoded": 42798592,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 837,
+       "xbox_adpcm/2ch/22050Hz": 61,
+       "xbox_adpcm/2ch/44100Hz": 15
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 716.5,
+       "xbox_adpcm/2ch/22050Hz": 88.6,
+       "xbox_adpcm/2ch/44100Hz": 19.2
+      },
+      "tags": 319
+     },
+     "structure_bsps": 1,
+     "tag_bytes": 7064204,
+     "tag_groups": {
+      "DeLa": 30,
+      "Soul": 1,
+      "actv": 3,
+      "ant!": 3,
+      "antr": 20,
+      "bipd": 2,
+      "bitm": 329,
+      "coll": 27,
+      "colo": 4,
+      "cont": 8,
+      "deca": 35,
+      "effe": 318,
+      "eqip": 14,
+      "flag": 1,
+      "font": 4,
+      "foot": 5,
+      "grhi": 2,
+      "hmt ": 1,
+      "hud#": 1,
+      "hudg": 1,
+      "itmc": 13,
+      "jpt!": 66,
+      "lens": 22,
+      "ligh": 33,
+      "lsnd": 15,
+      "mach": 2,
+      "matg": 1,
+      "metr": 2,
+      "mgs2": 7,
+      "mode": 48,
+      "part": 96,
+      "pctl": 7,
+      "phys": 3,
+      "pphy": 30,
+      "proj": 16,
+      "sbsp": 1,
+      "scen": 2,
+      "schi": 19,
+      "scnr": 1,
+      "senv": 10,
+      "sgla": 6,
+      "sky ": 1,
+      "smet": 7,
+      "snd!": 319,
+      "snde": 1,
+      "soso": 91,
+      "sotr": 19,
+      "spla": 1,
+      "str#": 1,
+      "trak": 5,
+      "udlg": 1,
+      "unhi": 5,
+      "ustr": 8,
+      "vehi": 3,
+      "weap": 15,
+      "wind": 1,
+      "wphi": 17
+     },
+     "tag_instances": 1704,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 1,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 10192,
+      "unicode_string_list_tags": 8,
+      "unicode_strings": 181
+     }
+    },
+    {
+     "bitmaps": {
+      "bitmaps": 384,
+      "by_format": {
+       "a1r5g5b5": 1,
+       "a4r4g4b4": 3,
+       "a8r8g8b8": 31,
+       "a8y8": 14,
+       "ay8": 27,
+       "dxt1": 98,
+       "dxt3": 173,
+       "dxt5": 8,
+       "x8r8g8b8": 27,
+       "y8": 2
+      },
+      "by_type": {
+       "2d": 368,
+       "3d": 5,
+       "cube": 11
+      },
+      "group_pixel_data_fields": {
+       "overlapping_spans_bitmap_offset": 0,
+       "overlapping_spans_plus_group_offset": 130,
+       "size_0_offset_nonzero": 195
+      },
+      "groups": 195,
+      "gx_bytes_by_format": {
+       "a1r5g5b5": 43008,
+       "a4r4g4b4": 73728,
+       "a8r8g8b8": 1759296,
+       "a8y8": 420352,
+       "ay8": 157312,
+       "dxt1": 3017120,
+       "dxt3": 49522368,
+       "dxt5": 4347200,
+       "x8r8g8b8": 449984,
+       "y8": 185792
+      },
+      "observations": {
+       "above_gx_1024": 2,
+       "linear": 1
+      },
+      "source_bytes_by_format": {
+       "a1r5g5b5": 43008,
+       "a4r4g4b4": 73728,
+       "a8r8g8b8": 1758848,
+       "a8y8": 420352,
+       "ay8": 157184,
+       "dxt1": 3019904,
+       "dxt3": 12381696,
+       "dxt5": 1086848,
+       "x8r8g8b8": 446336,
+       "y8": 92928
+      }
+     },
+     "build": "01.10.12.2276",
+     "category": "ui",
+     "declared_bytes": 33582080,
+     "map": "ui-01",
+     "recorded_animations": {
+      "canonical_bytes": 0,
+      "count": 0,
+      "events": 0,
+      "length_equals_delta_sum_plus_1": 0,
+      "round_trip_exact": 0,
+      "stream_bytes": 0,
+      "versions": {}
+     },
+     "scenario_type": 2,
+     "sounds": {
+      "bytes_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 723600,
+       "xbox_adpcm/2ch/22050Hz": 117648,
+       "xbox_adpcm/2ch/44100Hz": 11566152
+      },
+      "looping_sound_tags": 2,
+      "pcm16_bytes_if_decoded": 44115200,
+      "permutations_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 74,
+       "xbox_adpcm/2ch/22050Hz": 5,
+       "xbox_adpcm/2ch/44100Hz": 180
+      },
+      "seconds_by_codec": {
+       "xbox_adpcm/1ch/22050Hz": 58.3,
+       "xbox_adpcm/2ch/22050Hz": 4.7,
+       "xbox_adpcm/2ch/44100Hz": 233.1
+      },
+      "tags": 29
+     },
+     "structure_bsps": 1,
+     "tag_bytes": 1642244,
+     "tag_groups": {
+      "DeLa": 485,
+      "Soul": 1,
+      "bitm": 195,
+      "colo": 4,
+      "deca": 5,
+      "effe": 29,
+      "eqip": 2,
+      "font": 4,
+      "grhi": 2,
+      "hmt ": 1,
+      "hud#": 1,
+      "hudg": 1,
+      "jpt!": 5,
+      "lens": 5,
+      "ligh": 7,
+      "lsnd": 2,
+      "matg": 1,
+      "metr": 2,
+      "mode": 5,
+      "mply": 1,
+      "part": 32,
+      "pctl": 2,
+      "pphy": 13,
+      "proj": 2,
+      "sbsp": 1,
+      "scen": 1,
+      "schi": 4,
+      "scnr": 1,
+      "sky ": 1,
+      "snd!": 29,
+      "soso": 10,
+      "sotr": 3,
+      "str#": 1,
+      "trak": 1,
+      "ustr": 122,
+      "vcky": 1,
+      "wphi": 1
+     },
+     "tag_instances": 983,
+     "text": {
+      "font_tags": 4,
+      "hud_message_text_tags": 1,
+      "string_list_tags": 1,
+      "strings": 15,
+      "unicode_string_bytes": 58686,
+      "unicode_string_list_tags": 122,
+      "unicode_strings": 862
+     }
+    }
+   ],
+   "maps_by_category": {
+    "campaign": 10,
+    "multiplayer": 13,
+    "ui": 1
+   },
+   "sound_bytes_by_codec": {
+    "xbox_adpcm/1ch/22050Hz": 821420172,
+    "xbox_adpcm/2ch/22050Hz": 46179504,
+    "xbox_adpcm/2ch/44100Hz": 739086696
+   },
+   "sound_permutations_by_codec": {
+    "xbox_adpcm/1ch/22050Hz": 59681,
+    "xbox_adpcm/2ch/22050Hz": 1151,
+    "xbox_adpcm/2ch/44100Hz": 11726
+   },
+   "tag_groups_all_maps": {
+    "DeLa": 1705,
+    "Soul": 24,
+    "actr": 131,
+    "actv": 336,
+    "ant!": 49,
+    "antr": 628,
+    "bipd": 169,
+    "bitm": 9327,
+    "coll": 854,
+    "colo": 96,
+    "cont": 191,
+    "ctrl": 17,
+    "deca": 921,
+    "dobc": 10,
+    "effe": 7300,
+    "elec": 14,
+    "eqip": 276,
+    "flag": 13,
+    "fog ": 16,
+    "font": 96,
+    "foot": 137,
+    "garb": 46,
+    "glw!": 8,
+    "grhi": 48,
+    "hmt ": 34,
+    "hud#": 24,
+    "hudg": 24,
+    "itmc": 155,
+    "jpt!": 1477,
+    "lens": 641,
+    "lifi": 23,
+    "ligh": 905,
+    "lsnd": 734,
+    "mach": 122,
+    "matg": 24,
+    "metr": 48,
+    "mgs2": 171,
+    "mode": 1481,
+    "mply": 1,
+    "part": 2333,
+    "pctl": 201,
+    "phys": 86,
+    "pphy": 663,
+    "proj": 365,
+    "rain": 4,
+    "sbsp": 82,
+    "scen": 360,
+    "schi": 502,
+    "scnr": 24,
+    "senv": 496,
+    "sgla": 163,
+    "sky ": 31,
+    "smet": 129,
+    "snd!": 15698,
+    "snde": 63,
+    "soso": 2498,
+    "sotr": 707,
+    "spla": 39,
+    "ssce": 54,
+    "str#": 24,
+    "swat": 8,
+    "trak": 132,
+    "udlg": 102,
+    "unhi": 120,
+    "ustr": 418,
+    "vcky": 1,
+    "vehi": 96,
+    "weap": 316,
+    "wind": 24,
+    "wphi": 361
+   },
+   "totals": {
+    "bitmaps": 14815,
+    "pcm16_bytes_if_decoded": 5712662656,
+    "recorded_animations": 349,
+    "sound_tags": 15698
+   }
+  }
+ },
+ "movie_audio_plan": {
+  "audio_proposed": "retain Xbox ADPCM (1,606,686,372 bytes) and decode on CPU; PCM16 would be 5,712,662,656 bytes",
+  "demo_launcher_scope": "open user decision (separate disc application, not Halo)",
+  "movie_size_estimates_bytes_game_movies": {
+   "bink_as_stored": 647097636,
+   "mjpeg_pcm_sample_rate": 316000000,
+   "mpeg1_mp2_sample_rate": 155000000
+  },
+  "movies_excluded": [
+   "RAD Bink SDK (proprietary)",
+   "Nintendo THP SDK decoder (proprietary)"
+  ],
+  "movies_proposed": "host import-time transcode with the user's own FFmpeg to MPEG-1/MP2 (pl_mpeg, MIT) or MJPEG/PCM (libjpeg-turbo); chosen by a Wii decode benchmark",
+  "open": [
+   "Wii CPU/memory cost of movie decoders",
+   "A/V sync and 30 Hz playback path",
+   "Bink RDFT audio handling",
+   "ADPCM decode CPU at maximum voices on hardware",
+   "SD streaming of long 44.1 kHz permutations",
+   "DSP-ADPCM hardware path support in libogc",
+   "provenance review of pl_mpeg / JPEG decoder"
+  ],
+  "status": "proposal; every decoder choice open until measured on Wii"
+ },
+ "movies": {
+  "all_movies_decode_completely": true,
+  "ffmpeg": {
+   "sha256": "e9fd5e711debab9d680955fc1e38a2c1160fd280b144476cc3f62bc43ef49db1",
+   "version_line": "ffmpeg version 6.0-essentials_build-www.gyan.dev Copyright (c) 2000-2023 the FFmpeg developers"
+  },
+  "ffprobe": {
+   "sha256": "139f8420bcb2f29fcd5734e29d686289df826cadce5d2b7b5f56d0000ea9a951",
+   "version_line": "ffprobe version 6.0-essentials_build-www.gyan.dev Copyright (c) 2007-2023 the FFmpeg developers"
+  },
+  "format": "halo-wii-movie-probe",
+  "image_sha256": "43ec0813edadd592b7b489a930f108d289db9313ac337611110ffca8be0a7258",
+  "movies": [
+   {
+    "bytes": 506987404,
+    "decode": {
+     "decoder_messages": 0,
+     "exit": 0,
+     "frames": 16306,
+     "host_real_seconds": 17.086,
+     "host_user_seconds": null
+    },
+    "decodes_completely": true,
+    "ffprobe": [
+     {
+      "codec_name": "binkvideo",
+      "codec_type": "video",
+      "duration": "544.077411",
+      "height": 486,
+      "r_frame_rate": "2997/100",
+      "width": 720
+     },
+     {
+      "channels": 2,
+      "codec_name": "binkaudio_rdft",
+      "codec_type": "audio",
+      "r_frame_rate": "0/0",
+      "sample_rate": "44100"
+     }
+    ],
+    "file": "demo-launcher-video-1",
+    "header": {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "duration_seconds": 544.077,
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 16306,
+     "height": 486,
+     "revision": "i",
+     "width": 720
+    },
+    "kind": "demo-launcher-video"
+   },
+   {
+    "bytes": 465769704,
+    "decode": {
+     "decoder_messages": 0,
+     "exit": 0,
+     "frames": 13723,
+     "host_real_seconds": 38.467,
+     "host_user_seconds": null
+    },
+    "decodes_completely": true,
+    "ffprobe": [
+     {
+      "codec_name": "binkvideo",
+      "codec_type": "video",
+      "duration": "457.891225",
+      "height": 480,
+      "r_frame_rate": "2997/100",
+      "width": 640
+     },
+     {
+      "channels": 2,
+      "codec_name": "binkaudio_rdft",
+      "codec_type": "audio",
+      "r_frame_rate": "0/0",
+      "sample_rate": "44100"
+     }
+    ],
+    "file": "demo-launcher-video-2",
+    "header": {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "duration_seconds": 457.891,
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 13723,
+     "height": 480,
+     "revision": "i",
+     "width": 640
+    },
+    "kind": "demo-launcher-video"
+   },
+   {
+    "bytes": 133426176,
+    "decode": {
+     "decoder_messages": 0,
+     "exit": 0,
+     "frames": 4706,
+     "host_real_seconds": 6.728,
+     "host_user_seconds": null
+    },
+    "decodes_completely": true,
+    "ffprobe": [
+     {
+      "codec_name": "binkvideo",
+      "codec_type": "video",
+      "duration": "157.023690",
+      "height": 480,
+      "r_frame_rate": "2997/100",
+      "width": 640
+     },
+     {
+      "channels": 2,
+      "codec_name": "binkaudio_rdft",
+      "codec_type": "audio",
+      "r_frame_rate": "0/0",
+      "sample_rate": "44100"
+     }
+    ],
+    "file": "demo-launcher-video-3",
+    "header": {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "duration_seconds": 157.024,
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 4706,
+     "height": 480,
+     "revision": "i",
+     "width": 640
+    },
+    "kind": "demo-launcher-video"
+   },
+   {
+    "bytes": 191746528,
+    "decode": {
+     "decoder_messages": 0,
+     "exit": 0,
+     "frames": 4538,
+     "host_real_seconds": 6.235,
+     "host_user_seconds": null
+    },
+    "decodes_completely": true,
+    "ffprobe": [
+     {
+      "codec_name": "binkvideo",
+      "codec_type": "video",
+      "duration": "151.418085",
+      "height": 480,
+      "r_frame_rate": "2997/100",
+      "width": 640
+     },
+     {
+      "channels": 2,
+      "codec_name": "binkaudio_rdft",
+      "codec_type": "audio",
+      "r_frame_rate": "0/0",
+      "sample_rate": "44100"
+     }
+    ],
+    "file": "game-movie-1",
+    "header": {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "duration_seconds": 151.418,
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 4538,
+     "height": 480,
+     "revision": "i",
+     "width": 640
+    },
+    "kind": "game-movie"
+   },
+   {
+    "bytes": 164906308,
+    "decode": {
+     "decoder_messages": 0,
+     "exit": 0,
+     "frames": 3982,
+     "host_real_seconds": 5.249,
+     "host_user_seconds": null
+    },
+    "decodes_completely": true,
+    "ffprobe": [
+     {
+      "codec_name": "binkvideo",
+      "codec_type": "video",
+      "duration": "132.866200",
+      "height": 480,
+      "r_frame_rate": "2997/100",
+      "width": 640
+     },
+     {
+      "channels": 2,
+      "codec_name": "binkaudio_rdft",
+      "codec_type": "audio",
+      "r_frame_rate": "0/0",
+      "sample_rate": "44100"
+     }
+    ],
+    "file": "game-movie-2",
+    "header": {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "duration_seconds": 132.866,
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 3982,
+     "height": 480,
+     "revision": "i",
+     "width": 640
+    },
+    "kind": "game-movie"
+   },
+   {
+    "bytes": 79102884,
+    "decode": {
+     "decoder_messages": 0,
+     "exit": 0,
+     "frames": 2042,
+     "host_real_seconds": 2.508,
+     "host_user_seconds": null
+    },
+    "decodes_completely": true,
+    "ffprobe": [
+     {
+      "codec_name": "binkvideo",
+      "codec_type": "video",
+      "duration": "68.134801",
+      "height": 480,
+      "r_frame_rate": "2997/100",
+      "width": 640
+     },
+     {
+      "channels": 2,
+      "codec_name": "binkaudio_rdft",
+      "codec_type": "audio",
+      "r_frame_rate": "0/0",
+      "sample_rate": "44100"
+     }
+    ],
+    "file": "game-movie-3",
+    "header": {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "duration_seconds": 68.135,
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 2042,
+     "height": 480,
+     "revision": "i",
+     "width": 640
+    },
+    "kind": "game-movie"
+   },
+   {
+    "bytes": 200614260,
+    "decode": {
+     "decoder_messages": 0,
+     "exit": 0,
+     "frames": 5247,
+     "host_real_seconds": 5.486,
+     "host_user_seconds": null
+    },
+    "decodes_completely": true,
+    "ffprobe": [
+     {
+      "codec_name": "binkvideo",
+      "codec_type": "video",
+      "duration": "175.075075",
+      "height": 480,
+      "r_frame_rate": "2997/100",
+      "width": 640
+     },
+     {
+      "channels": 2,
+      "codec_name": "binkaudio_rdft",
+      "codec_type": "audio",
+      "r_frame_rate": "0/0",
+      "sample_rate": "44100"
+     }
+    ],
+    "file": "game-movie-4",
+    "header": {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "duration_seconds": 175.075,
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 5247,
+     "height": 480,
+     "revision": "i",
+     "width": 640
+    },
+    "kind": "game-movie"
+   },
+   {
+    "bytes": 10727656,
+    "decode": {
+     "decoder_messages": 0,
+     "exit": 0,
+     "frames": 481,
+     "host_real_seconds": 0.338,
+     "host_user_seconds": null
+    },
+    "decodes_completely": true,
+    "ffprobe": [
+     {
+      "codec_name": "binkvideo",
+      "codec_type": "video",
+      "duration": "16.049383",
+      "height": 480,
+      "r_frame_rate": "2997/100",
+      "width": 640
+     },
+     {
+      "channels": 2,
+      "codec_name": "binkaudio_rdft",
+      "codec_type": "audio",
+      "r_frame_rate": "0/0",
+      "sample_rate": "44100"
+     }
+    ],
+    "file": "game-movie-5",
+    "header": {
+     "audio_tracks": [
+      {
+       "bits": 16,
+       "channels": 2,
+       "sample_rate": 44100,
+       "transform": "rdft"
+      }
+     ],
+     "duration_seconds": 16.049,
+     "fps": [
+      2997,
+      100
+     ],
+     "frames": 481,
+     "height": 480,
+     "revision": "i",
+     "width": 640
+    },
+    "kind": "game-movie"
+   }
+  ],
+  "probe_sha256": "4da4052f4aba2ce7dbabcd124fb0e8e531aa691bdd15740be065c4ea331f765f",
+  "scope": "host decode with the user's FFmpeg build; not a Wii decoder or Wii timing",
+  "transcode_sample": {
+   "candidates": {
+    "mjpeg-intra_pcm16be-audio": {
+     "bytes": 9340683,
+     "exit": 0,
+     "host_real_seconds": 0.481,
+     "kbps": 4656.1
+    },
+    "mpeg1-video_mp2-audio": {
+     "bytes": 4571136,
+     "exit": 0,
+     "host_real_seconds": 0.544,
+     "kbps": 2278.6
+    }
+   },
+   "file": "game-movie-5",
+   "seconds": 16.049
+  }
+ },
+ "safety_owned_data": {
+  "after_kill": {
+   "discarded_stale_staging": 1,
+   "reused_existing": true,
+   "same_generation": true,
+   "staging_left": 0
+  },
+  "faults": [
+   {
+    "case": "diskfull-0",
+    "current_unchanged": true,
+    "exit": 4,
+    "staging_left": 0
+   },
+   {
+    "case": "diskfull-50MB",
+    "current_unchanged": true,
+    "exit": 4,
+    "staging_left": 0
+   },
+   {
+    "case": "diskfull-200MB",
+    "current_unchanged": true,
+    "exit": 4,
+    "staging_left": 0
+   },
+   {
+    "case": "stop-before-validate",
+    "current_unchanged": true,
+    "exit": 4,
+    "staging_left": 0
+   },
+   {
+    "case": "stop-before-promote",
+    "current_unchanged": true,
+    "exit": 4,
+    "staging_left": 0
+   },
+   {
+    "case": "stop-before-current",
+    "current_unchanged": true,
+    "exit": 4,
+    "staging_left": 0
+   }
+  ],
+  "kill": {
+   "current_unchanged": true,
+   "files_in_abandoned_staging": 181,
+   "killed_after_seconds": 12.1,
+   "staging_left": 1
+  },
+  "published_generation_unchanged_after_faults": true
+ },
+ "scope": "host-only Python inventory and conversion of owned data; no Wii, Dolphin or runtime loader",
+ "source_commit": "4062b2d6a5e4ac17f461f6e795bb284b7b6d4897",
+ "ticket": "HWI-008",
+ "tools_dirty_at_run": false
+}
