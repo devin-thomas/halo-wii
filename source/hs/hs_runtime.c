@@ -1289,7 +1289,8 @@ void hs_evaluate_wake(
 	match_assert("c:\\halo\\source\\hs\\hs_library_internal_runtime.h", 0x22e,
 		script_name_node->type==_hs_type_script);
 
-	wake_thread_index = hs_find_thread_by_script((short)script_name_node->data);
+	/* port: (a script's index is a short cell: HS_CELL_SHORT) */
+	wake_thread_index = hs_find_thread_by_script(HS_CELL_SHORT(script_name_node->data));
 	if (wake_thread_index != NONE)
 		hs_wake(wake_thread_index);
 	hs_return(thread_index, 0);
@@ -1567,7 +1568,7 @@ static void hs_inspect_boolean(
 	match_assert("c:\\halo\\source\\hs\\hs_library_internal_runtime.h", 0x241,
 		type==_hs_type_boolean);
 
-	sprintf(buffer, "%s", (boolean)value ? "true" : "false");
+	sprintf(buffer, "%s", HS_CELL_BOOLEAN(value) ? "true" : "false");
 
 	return;
 }
@@ -1593,7 +1594,7 @@ static void hs_inspect_short_integer(
 	match_assert("c:\\halo\\source\\hs\\hs_library_internal_runtime.h", 0x257,
 		type==_hs_type_short_integer);
 
-	sprintf(buffer, "%d", (short)value);
+	sprintf(buffer, "%d", HS_CELL_SHORT(value));
 
 	return;
 }
@@ -1637,18 +1638,18 @@ static void hs_inspect_enum(
 	match_assert("c:\\halo\\source\\hs\\hs_library_internal_runtime.h", 0x27b,
 		HS_TYPE_IS_ENUM(type));
 	match_vassert("c:\\halo\\source\\hs\\hs_library_internal_runtime.h", 0x27c,
-		(short)value>=0 && (short)value<enum_definition->count,
+		HS_CELL_SHORT(value)>=0 && HS_CELL_SHORT(value)<enum_definition->count,
 		"enum_value>=0 && enum_value<enum_definition->count");
 
 	/* port: a value that isn't one of the enum's isn't looked up */
-	if ((short)value<0 || (short)value>=enum_definition->count)
+	if (HS_CELL_SHORT(value)<0 || HS_CELL_SHORT(value)>=enum_definition->count)
 	{
-		sprintf(buffer, "<invalid %s %d>", hs_type_names[type], (short)value);
+		sprintf(buffer, "<invalid %s %d>", hs_type_names[type], HS_CELL_SHORT(value));
 
 		return;
 	}
 
-	sprintf(buffer, "%s", enum_definition->values[(short)value]);
+	sprintf(buffer, "%s", enum_definition->values[HS_CELL_SHORT(value)]);
 
 	return;
 }
@@ -1664,8 +1665,9 @@ static long hs_long_to_boolean(
 	   hs_cast's table index 254 (0x000000fe), so they are zero there. No January consumer reads a boolean
 	   cell beyond its low byte, but hs_return and the pass-through forms copy the whole long into hs thread
 	   stacks and hs globals, so these bytes reach the saved-game CRC and the save files
-	   (game_state_write_to_persistent_storage, game_state_write_to_file, game_state_write_core). */
-	*(boolean *)&result = n==0;
+	   (game_state_write_to_persistent_storage, game_state_write_to_file, game_state_write_core).
+	   port (HWI-016C): they are January's, n's, on every port (HS_CELL_SET_BOOLEAN) */
+	HS_CELL_SET_BOOLEAN(result, n==0, n);
 
 	return result;
 }
@@ -1680,8 +1682,10 @@ static long hs_short_to_boolean(
 	   of s. No January consumer reads a boolean cell beyond its low byte, but hs_return and the pass-through
 	   forms copy the whole long into hs thread stacks and hs globals, so these bytes reach the saved-game CRC
 	   and the save files (game_state_write_to_persistent_storage, game_state_write_to_file,
-	   game_state_write_core). */
-	*(boolean *)&result = (short)s==0;
+	   game_state_write_core).
+	   port (HWI-016C): s is a short cell (HS_CELL_SHORT), and the upper bytes are January's, s's, on
+	   every port */
+	HS_CELL_SET_BOOLEAN(result, HS_CELL_SHORT(s)==0, HS_CELL_SHORT_AS_LONG(s));
 
 	return result;
 }
@@ -1703,7 +1707,8 @@ static long hs_short_to_real(
 {
 	long result;
 
-	*(real *)&result = (real)(short)s;
+	/* port (HWI-016C): s is a short cell (HS_CELL_SHORT) */
+	*(real *)&result = (real)HS_CELL_SHORT(s);
 
 	return result;
 }
@@ -1723,7 +1728,8 @@ static long hs_enum_to_real(
 {
 	long result;
 
-	*(real *)&result = (real)((short)e+1);
+	/* port (HWI-016C): e is a short cell (HS_CELL_SHORT) */
+	*(real *)&result = (real)(HS_CELL_SHORT(e)+1);
 
 	return result;
 }
@@ -1738,8 +1744,9 @@ static long hs_real_to_short(
 	   bit pattern. No January consumer reads a short cell beyond its low word, but hs_return and the
 	   pass-through forms copy the whole long into hs thread stacks and hs globals, so these bytes reach the
 	   saved-game CRC and the save files (game_state_write_to_persistent_storage, game_state_write_to_file,
-	   game_state_write_core). */
-	*(short *)&result = (short)*(real *)&r;
+	   game_state_write_core).
+	   port (HWI-016C): it is January's, r's, on every port (HS_CELL_SET_SHORT) */
+	HS_CELL_SET_SHORT(result, (short)*(real *)&r, r);
 
 	return result;
 }
@@ -1760,8 +1767,9 @@ static long hs_long_to_short(
 	   (January returns l unchanged). No January consumer reads a short cell beyond its low word, but
 	   hs_return and the pass-through forms copy the whole long into hs thread stacks and hs globals, so these
 	   bytes reach the saved-game CRC and the save files (game_state_write_to_persistent_storage,
-	   game_state_write_to_file, game_state_write_core). */
-	*(short *)&result = (short)l;
+	   game_state_write_to_file, game_state_write_core).
+	   port (HWI-016C): it is January's, l's, on every port (HS_CELL_SET_SHORT) */
+	HS_CELL_SET_SHORT(result, (short)l, l);
 
 	return result;
 }
@@ -1772,7 +1780,8 @@ static long hs_object_name_to_object_list(
 	long object_index;
 	long object_list_index = NONE;
 
-	object_index = object_index_from_name_index((short)object_name_index);
+	/* port (HWI-016C): an object name is a short cell (HS_CELL_SHORT) */
+	object_index = object_index_from_name_index(HS_CELL_SHORT(object_name_index));
 	if (object_index != NONE)
 	{
 		object_list_index = object_list_new();
@@ -1881,8 +1890,9 @@ long hs_cast(
 	{
 		if (!HS_TYPE_IS_OBJECT(desired_type))
 			return typecasting_procedures[desired_type][actual_type](value);
+		/* port (HWI-016C): an object name is a short cell (HS_CELL_SHORT) */
 		else if (HS_TYPE_IS_OBJECT_NAME(actual_type))
-			return object_index_from_name_index((short)value);
+			return object_index_from_name_index(HS_CELL_SHORT(value));
 	}
 
 	return value;
@@ -2005,8 +2015,9 @@ void hs_evaluate_equality(
 		   (type<<16)|equal. No January consumer reads a boolean cell beyond its low byte, but hs_return and
 		   the pass-through forms copy the whole long into hs thread stacks and hs globals, so these bytes
 		   reach the saved-game CRC and the save files (game_state_write_to_persistent_storage,
-		   game_state_write_to_file, game_state_write_core). */
-		*(boolean *)&result_long = equal;
+		   game_state_write_to_file, game_state_write_core).
+		   port (HWI-016C): they are January's, (type<<16), on every port (HS_CELL_SET_BOOLEAN) */
+		HS_CELL_SET_BOOLEAN(result_long, equal, (unsigned long)(word)type<<16);
 		hs_return(thread_index, result_long);
 	}
 
@@ -2047,7 +2058,8 @@ void hs_evaluate_inequality(
 			match_assert("c:\\halo\\source\\hs\\hs_library_internal_runtime.h", 0x171,
 				parameter_types[0]==_hs_type_short_integer || HS_TYPE_IS_ENUM(parameter_types[0]));
 
-			HS_EVALUATE_INEQUALITY((real)(short)arguments[0], (real)(short)arguments[1], 0x172);
+			/* port (HWI-016C): short cells (HS_CELL_SHORT) */
+			HS_EVALUATE_INEQUALITY((real)HS_CELL_SHORT(arguments[0]), (real)HS_CELL_SHORT(arguments[1]), 0x172);
 			break;
 		}
 
@@ -2057,8 +2069,9 @@ void hs_evaluate_inequality(
 		   consumer reads a boolean cell beyond its low byte, but hs_return and the pass-through forms copy
 		   the whole long into hs thread stacks and hs globals, so these bytes reach the saved-game CRC and
 		   the save files (game_state_write_to_persistent_storage, game_state_write_to_file,
-		   game_state_write_core). */
-		*(boolean *)&result_long = comparison;
+		   game_state_write_core).
+		   port (HWI-016C): they are January's, value1's, on every port (HS_CELL_SET_BOOLEAN) */
+		HS_CELL_SET_BOOLEAN(result_long, comparison, *(unsigned long *)&value1);
 		hs_return(thread_index, result_long);
 	}
 
@@ -2113,8 +2126,10 @@ void hs_evaluate_logical(
 		   hs_thread_main's frame). No January consumer reads a boolean cell beyond its low byte, but
 		   hs_return and the pass-through forms copy the whole long into hs thread stacks and hs globals, so
 		   these bytes reach the saved-game CRC and the save files (game_state_write_to_persistent_storage,
-		   game_state_write_to_file, game_state_write_core). */
-		*(boolean *)&result_long = *result;
+		   game_state_write_to_file, game_state_write_core).
+		   port (HWI-016C): stack residue even on January, they are zero on every port
+		   (HS_CELL_SET_BOOLEAN) */
+		HS_CELL_SET_BOOLEAN(result_long, *result, 0);
 
 		hs_return(thread_index, result_long);
 	}
@@ -2149,7 +2164,8 @@ void hs_evaluate_if(
 	}
 	else if (*expression_index==NONE)
 	{
-		if ((boolean)*condition)
+		/* port (HWI-016C): a boolean cell (HS_CELL_BOOLEAN) */
+		if (HS_CELL_BOOLEAN(*condition))
 		{
 			*expression_index = hs_syntax_get(hs_syntax_get(hs_syntax_get(
 				thread->stack->expression_index)->data)->next_node_index)->next_node_index;
@@ -2586,10 +2602,14 @@ void hs_evaluate_sleep_until(
 		}
 	}
 
+	/* port (HWI-016C): the condition is a boolean cell and the period a
+	short one (HS_CELL_BOOLEAN, HS_CELL_SHORT); the timeout, a short cell
+	unless none was given (NONE), is read whole as January does
+	(HS_CELL_SHORT_AS_LONG) */
 	if (*argument_index==1)
 	{
-		if ((boolean)*condition ||
-			(*timeout!=NONE && game_time_get()>=*timeout+*start_time))
+		if (HS_CELL_BOOLEAN(*condition) ||
+			(HS_CELL_SHORT_AS_LONG(*timeout)!=NONE && game_time_get()>=HS_CELL_SHORT_AS_LONG(*timeout)+*start_time))
 		{
 			hs_return(thread_index, 0);
 		}
@@ -2599,10 +2619,10 @@ void hs_evaluate_sleep_until(
 				thread->stack->expression_index)->data)->next_node_index,
 				condition);
 
-			thread->sleep_until = game_time_get()+MAX(1, (short)*ticks);
-			if (*timeout!=NONE)
+			thread->sleep_until = game_time_get()+MAX(1, HS_CELL_SHORT(*ticks));
+			if (HS_CELL_SHORT_AS_LONG(*timeout)!=NONE)
 			{
-				thread->sleep_until = MIN(*timeout+*start_time, thread->sleep_until);
+				thread->sleep_until = MIN(HS_CELL_SHORT_AS_LONG(*timeout)+*start_time, thread->sleep_until);
 			}
 		}
 	}
@@ -2654,12 +2674,14 @@ void hs_evaluate_sleep(
 
 		if (*argument_index!=0)
 		{
-			short sleep_ticks = (short)*ticks;
+			/* port (HWI-016C): short cells (HS_CELL_SHORT); a script not
+			given is NONE whole */
+			short sleep_ticks = HS_CELL_SHORT(*ticks);
 
 			if (sleep_ticks!=0)
 			{
-				if ((short)*script_index!=NONE)
-					sleep_thread_index = hs_find_thread_by_script((short)*script_index);
+				if (HS_CELL_SHORT(*script_index)!=NONE)
+					sleep_thread_index = hs_find_thread_by_script(HS_CELL_SHORT(*script_index));
 
 				if (sleep_thread_index!=NONE)
 				{
@@ -3206,7 +3228,7 @@ static void hs_global_reconcile_write(
 		{
 		case _hs_type_boolean:
 			if (external->address)
-				*(boolean *)external->address = (boolean)global->value;
+				*(boolean *)external->address = HS_CELL_BOOLEAN(global->value);
 			break;
 		case _hs_type_real:
 			value = *(real *)&global->value;
@@ -3215,7 +3237,7 @@ static void hs_global_reconcile_write(
 			break;
 		case _hs_type_short_integer:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_long_integer:
 			if (external->address)
@@ -3227,31 +3249,31 @@ static void hs_global_reconcile_write(
 			break;
 		case _hs_type_script:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_trigger_volume:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_cutscene_flag:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_cutscene_camera_point:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_cutscene_title:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_cutscene_recording:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_device_group:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_ai:
 			if (external->address)
@@ -3259,23 +3281,23 @@ static void hs_global_reconcile_write(
 			break;
 		case _hs_type_ai_command_list:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_starting_profile:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_conversation:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_navpoint:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_hud_message:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_object_list:
 			if (external->address)
@@ -3315,23 +3337,23 @@ static void hs_global_reconcile_write(
 			break;
 		case _hs_type_enum_game_difficulty:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_enum_team:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_enum_ai_default_state:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_enum_actor_type:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_enum_hud_corner:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		case _hs_type_object:
 			if (external->address)
@@ -3359,7 +3381,7 @@ static void hs_global_reconcile_write(
 			break;
 		case _hs_type_object_name:
 			if (external->address)
-				*(short *)external->address = (short)global->value;
+				*(short *)external->address = HS_CELL_SHORT(global->value);
 			break;
 		default:
 			display_assert(NULL, "c:\\halo\\SOURCE\\hs\\hs_runtime.c", 0x671, TRUE);
