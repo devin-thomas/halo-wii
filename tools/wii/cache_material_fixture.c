@@ -950,6 +950,197 @@ static int triangle_vertices(struct context *context, struct storage *storage,
     return 0;
 }
 
+/* Per material, five vertices of x/y/z bits: ordinals 0-2 are finite edge
+ * values (signed zeros, subnormal extremes, smallest normal, largest finite);
+ * ordinals 3 and 4 each carry one infinity or NaN at a known axis. */
+static const uint32_t position_table[2][5][3] = {
+    {{UINT32_C(0x3f800000), UINT32_C(0xc0200000), UINT32_C(0x00000000)},
+     {UINT32_C(0x80000000), UINT32_C(0x00000001), UINT32_C(0x007fffff)},
+     {UINT32_C(0x00800000), UINT32_C(0x7f7fffff), UINT32_C(0xff7fffff)},
+     {UINT32_C(0x3f800000), UINT32_C(0x7f800000), UINT32_C(0x00000000)},
+     {UINT32_C(0x80000001), UINT32_C(0x3f000000), UINT32_C(0x7f800001)}},
+    {{UINT32_C(0x42c80000), UINT32_C(0xc2c80000), UINT32_C(0x3dcccccd)},
+     {UINT32_C(0x807fffff), UINT32_C(0x7f7fffff), UINT32_C(0x00000000)},
+     {UINT32_C(0xbf800000), UINT32_C(0x80800000), UINT32_C(0x3f800000)},
+     {UINT32_C(0xff800000), UINT32_C(0x00000000), UINT32_C(0x00000000)},
+     {UINT32_C(0x00000000), UINT32_C(0xffc00001), UINT32_C(0x00000000)}},
+};
+
+static int surface_positions(struct context *context, struct storage *storage,
+                             unsigned placement, unsigned offset)
+{
+    context->name = "surface_positions_finite_bits_and_nonfinite_rejection";
+    ++context->cases;
+    unsigned char *bytes;
+    struct cache_bsp_control bsp;
+    struct cache_bsp_view parent;
+    if (!prepare(storage, placement, offset, &bytes, &bsp, &parent))
+        return abort_case(context, "positions_prepare");
+    struct cache_bsp_result bsp_result;
+    int ready = cache_bsp_unload(&bsp, &bsp_result);
+    CHECK(ready, "positions_parent_unload_before_authoring");
+    if (!ready)
+        return abort_case(context, "positions_parent_unload");
+    /* Global surfaces: material 0 owns 0-3, material 1 owns 4-8. Each row is
+     * {corners, expected error, expected offset}; the error is 0 for success. */
+    static const struct { uint16_t corners[3]; enum cache_material_error error; size_t at; } surfaces[9] = {
+        {{0, 1, 2}, CACHE_MATERIAL_OK, 0}, {{2, 1, 0}, CACHE_MATERIAL_OK, 0},
+        {{0, 1, 3}, CACHE_MATERIAL_VALUE, 7}, {{4, 0, 1}, CACHE_MATERIAL_VALUE, 2},
+        {{1, 2, 0}, CACHE_MATERIAL_OK, 0}, {{2, 2, 2}, CACHE_MATERIAL_OK, 0},
+        {{0, 3, 1}, CACHE_MATERIAL_VALUE, 3}, {{0, 1, 4}, CACHE_MATERIAL_VALUE, 7},
+        {{0, 1, 5}, CACHE_MATERIAL_COUNT, 5}};
+    static const unsigned firsts[2] = {0, 4}, counts[2] = {4, 5};
+    for (unsigned ordinal = 0; ordinal < 9; ++ordinal)
+        for (unsigned corner = 0; corner < 3; ++corner)
+            half(bytes, SURFACE_AT + ordinal * 6 + corner * 2, surfaces[ordinal].corners[corner]);
+    for (unsigned material = 0; material < 2; ++material) {
+        size_t at = MAT_AT + material * 256, data_at = DATA_AT + 1024 + material * 512;
+        word(bytes, at + 20, firsts[material]);
+        word(bytes, at + 24, counts[material]);
+        word(bytes, at + 180, 5);
+        word(bytes, at + 236, 5 * 32 + 2 * 8);
+        word(bytes, at + 248, BASE + (uint32_t)data_at);
+        for (unsigned ordinal = 0; ordinal < 5; ++ordinal)
+            for (unsigned i = 0; i < 8; ++i)
+                word(bytes, data_at + ordinal * 32 + i * 4, i < 3 ? position_table[material][ordinal][i]
+                                                                  : UINT32_C(0xa5a5a5a5) ^ (ordinal << 4) ^ i);
+    }
+    ready = cache_bsp_bind(&bsp, &storage->owner, &storage->handle, TAG_BYTES, 1048576, 0, &parent, &bsp_result);
+    CHECK(ready, "positions_parent_rebind");
+    if (!ready)
+        return abort_case(context, "positions_parent_bind");
+    struct {
+        struct cache_material_control value;
+        unsigned char margin[36];
+    } control_storage;
+    struct {
+        struct cache_material_view value;
+        unsigned char margin[36];
+    } view_storage;
+    memset(&control_storage, 0, sizeof(control_storage));
+    memset(&view_storage, 0, sizeof(view_storage));
+    struct cache_material_control *control = &control_storage.value;
+    struct cache_material_view *view = &view_storage.value;
+    struct cache_material_result result;
+    memset(storage->work, 0xa7, WORK_BYTES + GUARD * 2);
+    ready = cache_material_bind(control, &parent, storage->work + GUARD, WORK_BYTES, view, &result);
+    CHECK(ready, "positions_publication");
+    if (!ready)
+        return abort_case(context, "positions_bind");
+    struct {
+        uint32_t before[2];
+        struct cache_material_surface_positions_projection value;
+        uint32_t after[2];
+    } guarded;
+    memset(&guarded, 0xa7, sizeof(guarded));
+    CHECK(sizeof(guarded.value) == 36, "positions_exact_nine_word_caller_record");
+    memcpy(storage->snapshot, bytes, SLOT_BYTES);
+    memcpy(storage->work_before, storage->work, WORK_BYTES + GUARD * 2);
+    unsigned char control_before[sizeof(control_storage)], view_before[sizeof(view_storage)];
+    struct cache_arena_owner owner_before;
+    struct cache_bsp_control bsp_before;
+    memcpy(control_before, &control_storage, sizeof(control_storage));
+    memcpy(view_before, &view_storage, sizeof(view_storage));
+    memcpy(&owner_before, &storage->owner, sizeof(owner_before));
+    memcpy(&bsp_before, &bsp, sizeof(bsp));
+#define POSITIONS_PRESERVED() (!memcmp(bytes, storage->snapshot, SLOT_BYTES) && \
+    !memcmp(storage->work, storage->work_before, WORK_BYTES + GUARD * 2) && \
+    !memcmp(&control_storage, control_before, sizeof(control_storage)) && \
+    !memcmp(&view_storage, view_before, sizeof(view_storage)) && \
+    !memcmp(&storage->owner, &owner_before, sizeof(owner_before)) && !memcmp(&bsp, &bsp_before, sizeof(bsp)))
+    for (unsigned material = 0; material < 2; ++material) {
+        for (unsigned local = 0; local < counts[material]; ++local) {
+            unsigned global = firsts[material] + local;
+            struct cache_material_surface_positions_projection before = guarded.value;
+            int obtained = cache_material_get_surface_positions(view, material, local, &guarded.value, &result);
+            if (surfaces[global].error != CACHE_MATERIAL_OK) {
+                CHECK(!obtained && result.error == surfaces[global].error &&
+                      result.offset == surfaces[global].at && !memcmp(&guarded.value, &before, sizeof(before)),
+                      "positions_nonfinite_or_bad_index_rejects_at_corner_axis_atomic");
+                continue;
+            }
+            CHECK(obtained, "positions_finite_distinct_reversed_repeated_get");
+            if (!obtained)
+                return abort_case(context, "positions_valid_get");
+            struct cache_material_surface_vertices_projection vertices;
+            ready = cache_material_get_surface_vertices(view, material, local, &vertices, &result);
+            CHECK(ready, "positions_reference_surface_vertices_get");
+            if (!ready)
+                return abort_case(context, "positions_reference_get");
+            for (unsigned corner = 0; corner < 3; ++corner)
+                for (unsigned axis = 0; axis < 3; ++axis) {
+                    uint32_t bits = guarded.value.position_bits[corner][axis];
+                    CHECK(bits == position_table[material][surfaces[global].corners[corner]][axis],
+                          "positions_bit_exact_signed_zero_subnormal_and_extreme_golden");
+                    CHECK(bits == vertices.vertices[corner].position_bits[axis],
+                          "positions_match_surface_vertices_reference");
+                }
+        }
+        struct cache_material_surface_positions_projection before = guarded.value;
+        CHECK(!cache_material_get_surface_positions(view, material, counts[material], &guarded.value, &result) &&
+              result.error == CACHE_MATERIAL_COUNT && !memcmp(&guarded.value, &before, sizeof(before)),
+              "positions_local_onepast_atomic");
+        CHECK(!cache_material_get_surface_positions(view, material, SIZE_MAX, &guarded.value, &result) &&
+              result.error == CACHE_MATERIAL_COUNT && !memcmp(&guarded.value, &before, sizeof(before)),
+              "positions_local_SIZE_MAX_atomic");
+    }
+    struct cache_material_surface_positions_projection before = guarded.value;
+    CHECK(!cache_material_get_surface_positions(view, 2, 0, &guarded.value, &result) &&
+          result.error == CACHE_MATERIAL_COUNT && !memcmp(&guarded.value, &before, sizeof(before)),
+          "positions_material_onepast_atomic");
+    CHECK(!cache_material_get_surface_positions(view, 0, 0, NULL, &result) &&
+          result.error == CACHE_MATERIAL_ARGUMENT, "positions_null_output");
+    CHECK(!cache_material_get_surface_positions(NULL, 0, 0, &guarded.value, &result) &&
+          result.error == CACHE_MATERIAL_ARGUMENT && !memcmp(&guarded.value, &before, sizeof(before)),
+          "positions_null_view_atomic");
+    CHECK(!cache_material_get_surface_positions(view, 0, 0, &guarded.value, NULL) &&
+          !memcmp(&guarded.value, &before, sizeof(before)), "positions_null_result_atomic");
+    size_t alignment = _Alignof(struct cache_material_surface_positions_projection);
+    size_t at = (alignment - (uintptr_t)bytes % alignment) % alignment;
+    void *aliases[] = {bytes + at, storage->work + GUARD, control, view, &storage->owner, &bsp};
+    const char *labels[] = {"positions_source_alias", "positions_workspace_alias", "positions_padded_control_alias",
+        "positions_padded_view_alias", "positions_owner_alias", "positions_BSP_control_alias"};
+    int enough = sizeof(storage->owner) >= sizeof(guarded.value) && sizeof(bsp) >= sizeof(guarded.value);
+    CHECK(enough, "positions_alias_owner_and_BSP_truthful36_byte_storage");
+    if (!enough)
+        return abort_case(context, "positions_alias_storage_too_small");
+    for (unsigned i = 0; i < sizeof(aliases) / sizeof(aliases[0]); ++i) {
+        CHECK(!cache_material_get_surface_positions(view, 0, 0, aliases[i], &result) &&
+              result.error == CACHE_MATERIAL_OVERLAP, labels[i]);
+        int unchanged = POSITIONS_PRESERVED();
+        CHECK(unchanged, "positions_alias_preserves_objects_and_controls");
+        if (!unchanged)
+            return abort_case(context, "positions_alias_changed_borrowed_objects");
+    }
+    int unchanged = POSITIONS_PRESERVED();
+    CHECK(unchanged, "positions_queries_preserve_source_workspace_and_controls");
+    if (!unchanged)
+        return abort_case(context, "positions_query_changed_borrowed_objects");
+#undef POSITIONS_PRESERVED
+    CHECK(guarded.before[0] == UINT32_C(0xa7a7a7a7) && guarded.before[1] == UINT32_C(0xa7a7a7a7) &&
+          guarded.after[0] == UINT32_C(0xa7a7a7a7) && guarded.after[1] == UINT32_C(0xa7a7a7a7),
+          "positions_output_canaries");
+    CHECK(all_bytes(storage->placements[placement], GUARD + offset, 0xa7) &&
+          all_bytes(bytes + SLOT_BYTES, GUARD + 8 - offset, 0xa7), "positions_source_margin_canaries");
+    struct cache_material_view stale = *view;
+    ready = cache_material_bind(control, &parent, storage->work + GUARD, WORK_BYTES, view, &result);
+    CHECK(ready, "positions_child_rebind");
+    if (!ready)
+        return abort_case(context, "positions_child_rebind");
+    CHECK(!cache_material_get_surface_positions(&stale, 0, 0, &guarded.value, &result) &&
+          result.error == CACHE_MATERIAL_STATE && !memcmp(&guarded.value, &before, sizeof(before)),
+          "positions_rebound_child_atomic");
+    stale = *view;
+    ready = cache_material_unload(control, &result);
+    CHECK(ready, "positions_child_unload");
+    if (!ready)
+        return abort_case(context, "positions_child_unload");
+    CHECK(!cache_material_get_surface_positions(&stale, 0, 0, &guarded.value, &result) &&
+          result.error == CACHE_MATERIAL_STATE && !memcmp(&guarded.value, &before, sizeof(before)),
+          "positions_unloaded_child_atomic");
+    return 0;
+}
+
 struct mutation { const char *name; size_t at; uint32_t value; unsigned width; enum cache_material_error error; };
 static int invalid_case(struct context *context, struct storage *storage, const struct mutation *mutation)
 {
@@ -1630,6 +1821,9 @@ int cache_material_fixture(FILE *report, int collect)
     for (unsigned placement = 0; placement < 2 && !aborted; ++placement)
         for (unsigned offset = 0; offset < 8 && !aborted; ++offset)
             aborted = triangle_vertices(context, &storage, placement, offset);
+    for (unsigned placement = 0; placement < 2 && !aborted; ++placement)
+        for (unsigned offset = 0; offset < 8 && !aborted; ++offset)
+            aborted = surface_positions(context, &storage, placement, offset);
     static const struct mutation mutations[] = {
         {"negative_lightmaps", ROOT_AT + 260, UINT32_MAX, 4, CACHE_MATERIAL_COUNT},
         {"overmaximum_lightmaps", ROOT_AT + 260, 129, 4, CACHE_MATERIAL_COUNT},

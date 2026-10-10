@@ -15,7 +15,8 @@ enum cache_material_error {
     CACHE_MATERIAL_GENERATION, CACHE_MATERIAL_WORKSPACE, CACHE_MATERIAL_COUNT,
     CACHE_MATERIAL_SPAN, CACHE_MATERIAL_OVERFLOW, CACHE_MATERIAL_TYPE,
     CACHE_MATERIAL_STRING, CACHE_MATERIAL_DATUM, CACHE_MATERIAL_GROUP,
-    CACHE_MATERIAL_RESOURCE, CACHE_MATERIAL_OVERLAP, CACHE_MATERIAL_CAPACITY
+    CACHE_MATERIAL_RESOURCE, CACHE_MATERIAL_OVERLAP, CACHE_MATERIAL_CAPACITY,
+    CACHE_MATERIAL_VALUE
 };
 
 struct cache_material_result {
@@ -60,6 +61,10 @@ struct cache_material_compressed_vertex_projection {
 };
 struct cache_material_surface_vertices_projection {
     struct cache_material_compressed_vertex_projection vertices[3];
+};
+/* Corner-major x, y, z binary32 bit patterns as native words. */
+struct cache_material_surface_positions_projection {
+    uint32_t position_bits[3][3];
 };
 struct cache_material_vector_projection { float components[3]; };
 struct cache_material_lightmap_projection {
@@ -156,6 +161,16 @@ int cache_material_get_compressed_vertex(const struct cache_material_view *, siz
 int cache_material_get_surface_vertices(const struct cache_material_view *, size_t material_index,
                                         size_t local_ordinal, struct cache_material_surface_vertices_projection *,
                                         struct cache_material_result *);
+/* Renderer boundary for one material-local triangle: the three positions' raw
+ * binary32 bits in corner order, as native words. Any infinity or NaN rejects
+ * with CACHE_MATERIAL_VALUE (offset = corner * 3 + axis) before publication.
+ * Zero signs and subnormals pass bit-exact; consumers store these words with
+ * integer stores (no CPU float conversion) into GX F32 position arrays.
+ * Output overlap is checked first; index bounds, parent pins, stale views and
+ * whole-output atomicity otherwise match cache_material_get_surface_vertices. */
+int cache_material_get_surface_positions(const struct cache_material_view *, size_t material_index,
+                                         size_t local_ordinal, struct cache_material_surface_positions_projection *,
+                                         struct cache_material_result *);
 /* Pure by-value decoder for source signed 11/11/10-bit packed vectors. It uses
  * the source midpoint rule (2q+1)/2047 for the first two components and /1023
  * for the third, with source float reciprocals. Zero packed fields yield a

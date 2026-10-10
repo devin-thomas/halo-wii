@@ -12,6 +12,7 @@ _Static_assert(sizeof(struct cache_material_root_projection) == 36, "root projec
 _Static_assert(sizeof(struct cache_material_surface_projection) == 6, "surface projection");
 _Static_assert(sizeof(struct cache_material_compressed_vertex_projection) == 32, "compressed vertex projection");
 _Static_assert(sizeof(struct cache_material_surface_vertices_projection) == 96, "surface vertices projection");
+_Static_assert(sizeof(struct cache_material_surface_positions_projection) == 36, "surface positions projection");
 _Static_assert(sizeof(float) == 4 && FLT_RADIX == 2 && FLT_MANT_DIG == 24 &&
                FLT_MIN_EXP == -125 && FLT_MAX_EXP == 128, "source binary32 float precision");
 _Static_assert(sizeof(struct cache_material_vector_projection) == 12, "vector projection");
@@ -593,6 +594,36 @@ int cache_material_get_surface_vertices(const struct cache_material_view *view, 
     for (unsigned i = 0; i < 3; ++i)
         if (!cache_material_get_compressed_vertex(view, material_index, surface.vertex_indices[i], &value.vertices[i], result))
             return 0;
+    *output = value;
+    return 1;
+}
+
+int cache_material_get_surface_positions(const struct cache_material_view *view, size_t material_index,
+                                         size_t local_ordinal,
+                                         struct cache_material_surface_positions_projection *output,
+                                         struct cache_material_result *result)
+{
+    if (!start(result))
+        return 0;
+    if (!output)
+        return fail(result, CACHE_MATERIAL_ARGUMENT, 0);
+    struct material_reader reader;
+    const unsigned char *published;
+    if (!graph_open(view, &reader, &published, result) ||
+        !output_object(view, &reader, output, sizeof(*output), result))
+        return 0;
+    struct cache_material_surface_vertices_projection vertices;
+    if (!cache_material_get_surface_vertices(view, material_index, local_ordinal, &vertices, result))
+        return 0;
+    struct cache_material_surface_positions_projection value;
+    for (unsigned corner = 0; corner < 3; ++corner)
+        for (unsigned axis = 0; axis < 3; ++axis) {
+            uint32_t bits = vertices.vertices[corner].position_bits[axis];
+            /* An all-ones exponent is infinity or NaN; the GP has no defined use for either. */
+            if ((bits & UINT32_C(0x7f800000)) == UINT32_C(0x7f800000))
+                return fail(result, CACHE_MATERIAL_VALUE, corner * 3 + axis);
+            value.position_bits[corner][axis] = bits;
+        }
     *output = value;
     return 1;
 }

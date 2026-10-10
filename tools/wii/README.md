@@ -369,6 +369,16 @@ view. Its 12-byte result is caller storage; persistent layouts and capacity
 remain unchanged. Host float-bit tests and PPC compilation have separate scopes;
 PPC floating-point runtime agreement requires execution evidence.
 
+`cache_material_get_surface_positions` is the renderer boundary for one
+material-local triangle. It reuses the bounded surface-to-vertex path and
+returns the three positions' binary32 bits as nine native words (36 bytes) in
+corner order. Any infinity or NaN rejects with `CACHE_MATERIAL_VALUE`, offset
+`corner * 3 + axis`, before publication. Signed zeros and subnormals pass
+bit-exact. Consumers write the words with integer stores into GX F32 position
+arrays, so no CPU float conversion can flush or reorder bits. Normals, UVs,
+lightmap records and topology beyond the selected triangle are not part of
+this boundary.
+
 The root projection grows from 24 to 36 bytes, increasing the two-half workspace
 by 24 payload bytes. For two lightmaps and 34 materials, payload is 8,856 bytes;
 an authored model using compiled PPC layouts charges 64 additional arena bytes
