@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "description": "Content loader self-test: neutral briefly, then START held for the rest of the script. The guest reads the pad only after its two check cycles, so it exits (exit=pad_start) as soon as the checks end. One entry per guest controller poll on GC port 1.",
+  "port": 1,
+  "steps": [
+    {"label": "neutral", "polls": 120},
+    {"label": "start_held", "polls": 200000, "buttons": ["START"]}
+  ]
+}

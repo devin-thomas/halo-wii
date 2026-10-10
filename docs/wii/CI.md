@@ -15,7 +15,7 @@ separately once it has happened.
 | Toolchain identity | `dkp-pacman -Q`, `check_toolchain.py`, compiler/binutils/library hashes in each `build-info.json` |
 | Authored Python checks | `python -B -m unittest discover -s . -p "test_*.py"` in `tools/wii` (synthetic inputs only) |
 | Authored host C fixtures | `run_abi_host.py` and `run_cache_address.py` default, `--widget-fixture`, `--bsp-fixture` and `--material-fixture`, compiled with the container's GCC and executed on the Linux x86-64 host |
-| Wii compile/link/convert | `configure.py --wii` then `ninja wii_probe wii_gx_scene wii_gx_materials wii_geometry_view wii_memory_strategy wii_engine`; ELF and DOL structure checks; the engine's generated unsupported-entry-point file is current (`tools/wii/engine_unsupported.py --check`) |
+| Wii compile/link/convert | `configure.py --wii` then `ninja wii_probe wii_gx_scene wii_gx_materials wii_geometry_view wii_content_loaders wii_memory_strategy wii_engine`; ELF and DOL structure checks; the engine's generated unsupported-entry-point file is current (`tools/wii/engine_unsupported.py --check`) |
 | Publishable artifact set | `package_artifacts.py stage` and `inspect` (below) before upload |
 
 The uploaded artifact `wii-build-only-<commit>` and its `MANIFEST.json` are
@@ -57,6 +57,7 @@ probe.elf  probe.dol  probe.map  build-info.json
 gx_scene.elf  gx_scene.dol  gx_scene.map  gx_scene-build-info.json
 gx_materials.elf  gx_materials.dol  gx_materials.map  gx_materials-build-info.json
 geometry_view.elf  geometry_view.dol  geometry_view.map  geometry_view-build-info.json
+content_loaders.elf  content_loaders.dol  content_loaders.map  content_loaders-build-info.json
 memory_strategy.elf  memory_strategy.dol  memory_strategy.map  memory_strategy-build-info.json
 engine.elf  engine.dol  engine.map  engine-build-info.json
 MANIFEST.json
@@ -93,7 +94,7 @@ Run the same steps locally (replace the paths):
 
 ```sh
 python configure.py --wii --wii-devkitpro <devkitPro root>
-ninja wii_probe wii_gx_scene wii_gx_materials wii_geometry_view wii_memory_strategy wii_engine
+ninja wii_probe wii_gx_scene wii_gx_materials wii_geometry_view wii_content_loaders wii_memory_strategy wii_engine
 python -B tools/wii/package_artifacts.py stage --build build/wii --output dist/wii-build-only
 python -B tools/wii/package_artifacts.py inspect dist/wii-build-only --require-clean
 ```
