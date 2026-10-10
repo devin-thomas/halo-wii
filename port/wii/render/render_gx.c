@@ -47,7 +47,6 @@
 #define RENDER_ROOT WII_ENGINE_DATA_ROOT "/render"
 #define MAX_FILE_BYTES (64u * 1024u * 1024u)
 #define MAX_MATERIALS 4096
-#define MAX_TEXTURES 256
 #define GRID_X 32
 #define GRID_Y 24
 #define RUN_GRID_X 16
@@ -99,7 +98,7 @@ static struct {
     int ready;
     unsigned long bsp_tag;
     long material_count, surface_count;
-    struct material materials[MAX_MATERIALS];
+    struct material *materials;  /* per map, material_count of them */
     unsigned char *arrays;
     uint32_t arrays_bytes;
     struct hwl_surface *surfaces;
@@ -107,8 +106,8 @@ static struct {
     struct hwl_lightmap *hwl_lightmaps;
     uint32_t hwl_lightmap_count;
     struct hwl_material *hwl_materials; /* kept while the materials are described */
-    struct texture textures[MAX_TEXTURES];
-    int texture_count;
+    struct texture *textures;    /* per map: at most a base map and a lightmap page a material */
+    int texture_count, texture_capacity;
     long lightmap_tag;
     long loads;
     /* this map's frame statistics, and the launch's */
@@ -330,7 +329,8 @@ static void release_textures(void)
         owned_sub(gx.textures[i].blob.capacity);
         content_blob_release(&gx.textures[i].blob);
     }
-    memset(gx.textures, 0, sizeof(gx.textures));
+    if (gx.textures)
+        memset(gx.textures, 0, (size_t)gx.texture_capacity * sizeof(*gx.textures));
     gx.texture_count = 0;
 }
 
@@ -347,6 +347,14 @@ void wii_gx_map_end(void)
     content_free_aligned(gx.surfaces);
     free(gx.hwl_lightmaps);
     free(gx.hwl_materials);
+    if (gx.materials)
+        owned_sub((unsigned long)gx.material_count * sizeof(*gx.materials) +
+                  (unsigned long)gx.texture_capacity * sizeof(*gx.textures));
+    free(gx.materials);
+    free(gx.textures);
+    gx.materials = NULL;
+    gx.textures = NULL;
+    gx.texture_capacity = 0;
     gx.arrays = NULL;
     gx.surfaces = NULL;
     gx.hwl_lightmaps = NULL;
@@ -407,6 +415,23 @@ int wii_gx_map_begin(unsigned long bsp_tag_index, long material_count, long surf
         hwl_release(&geometry);
         return 0;
     }
+    gx.materials = calloc((size_t)material_count + 1, sizeof(*gx.materials));
+    gx.texture_capacity = 2 * (int)material_count + 1;
+    gx.textures = calloc((size_t)gx.texture_capacity, sizeof(*gx.textures));
+    if (!gx.materials || !gx.textures) {
+        wii_log("RENDER_FAIL material_memory bsp_tag=%lu materials=%ld\n", bsp_tag_index, material_count);
+        owned_sub(decoded);
+        hwl_release(&geometry);
+        free(gx.materials);
+        free(gx.textures);
+        gx.materials = NULL;
+        gx.textures = NULL;
+        gx.texture_capacity = 0;
+        return 0;
+    }
+    gx.material_count = material_count;
+    owned_add((unsigned long)material_count * sizeof(*gx.materials) +
+              (unsigned long)gx.texture_capacity * sizeof(*gx.textures));
     /* the arrays this path draws, per material, 32-byte aligned */
     uint32_t bytes = 0;
     for (uint32_t i = 0; i < geometry.material_count; ++i) {
@@ -595,7 +620,7 @@ int wii_gx_textures_load(long lightmap_tag_index)
         }
         int t = texture_find(m->base_tag, m->base_bitmap);
         if (t < 0) {
-            if (gx.texture_count == MAX_TEXTURES)
+            if (gx.texture_count == gx.texture_capacity)
                 return 0;
             t = gx.texture_count++;
             gx.textures[t].tag = m->base_tag;
@@ -603,7 +628,8 @@ int wii_gx_textures_load(long lightmap_tag_index)
         }
         gx.textures[t].coverage += m->surface_count;
     }
-    qsort(gx.textures, (size_t)gx.texture_count, sizeof(gx.textures[0]), coverage_order);
+    if (gx.texture_count)
+        qsort(gx.textures, (size_t)gx.texture_count, sizeof(gx.textures[0]), coverage_order);
     base_total = gx.texture_count;
     /* lightmap pages first (always resident) */
     for (long i = 0; i < gx.material_count; ++i) {
@@ -612,7 +638,7 @@ int wii_gx_textures_load(long lightmap_tag_index)
             continue;
         if (texture_find(lightmap_tag_index, m->lightmap_page) >= 0)
             continue;
-        if (gx.texture_count == MAX_TEXTURES)
+        if (gx.texture_count == gx.texture_capacity)
             return 0;
         struct texture *t = &gx.textures[gx.texture_count++];
         t->tag = lightmap_tag_index;
