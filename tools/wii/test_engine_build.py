@@ -151,6 +151,23 @@ class TargetTests(unittest.TestCase):
             self.assertIn(f"-Wl,--wrap={name}", engine_build.LINK_FLAGS)
         self.assertIn("-Wl,--gc-sections", engine_build.LINK_FLAGS)
 
+    def test_render_units_are_in_the_dol_only(self):
+        # HWI-016B: the Wii rasterizer is linked into engine.dol; the i686
+        # host reference builds engine_units() and WII_PLATFORM without it
+        units = {compiled for _, compiled in engine_build.engine_units()}
+        platform = {path for path, _ in engine_build.platform_units()}
+        for unit in (*engine_build.RENDER_ENGINE, *engine_build.RENDER_GX):
+            self.assertTrue((ROOT / unit).is_file(), unit)
+            self.assertNotIn(unit, units)
+            self.assertNotIn(unit, platform)
+            self.assertNotIn(unit, engine_build.WII_PLATFORM)
+        inputs = set(engine_build.engine_inputs())
+        for path in (*engine_build.RENDER_ENGINE, *engine_build.RENDER_GX, *engine_build.RENDER_HEADERS):
+            self.assertIn(path, inputs)
+        for name in ("rasterizer_initialize_for_new_map", "rasterizer_dispose_from_old_map"):
+            self.assertIn(f"-Wl,--wrap={name}", engine_build.LINK_FLAGS)
+        self.assertIn("render_gx", engine_build.flag_sets(build.ENGINE_SEMANTIC_FLAGS))
+
     def test_diagnostic_storage_is_left_out_by_default(self):
         # HWI-015D: the Wii build's default leaves out the AI's debug records
         # and the profiler's frame history, and runs ai_debug_initialize

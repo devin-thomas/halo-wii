@@ -4,8 +4,9 @@
 the native ports compile it, linked against explicit Wii implementations of
 the platform services it calls. It is the first build that runs the shared
 engine on the Wii. It loads a real map staged on the SD card and runs the
-engine's own game tick with a player (HWI-015B); it draws nothing. Its scope
-and limits are below; see the evidence for
+engine's own game tick with a player (HWI-015B), and draws the map's
+environment through GX each frame ([the Wii rasterizer](../render/README.md),
+HWI-016B). Its scope and limits are below; see the evidence for
 [the platform runtime](../../../docs/wii/evidence/2026-10-10-platform-runtime.md) and
 [the real map's tick](../../../docs/wii/evidence/2026-10-10-real-map-tick.md).
 
@@ -152,8 +153,9 @@ private: never in Git).
 
 ## Limits
 
-- Nothing is drawn: the rasterizer, texture and sound caches are
-  unsupported, and bitmap pixels and sound samples are not staged.
+- Only the structure BSP's environment is drawn (port/wii/render, HWI-016B);
+  the rest of the renderer, the texture and sound caches are unsupported,
+  and bitmap pixels and sound samples are not staged.
 - One structure BSP per map is staged (the multiplayer maps have one);
   campaign maps with several need a BSP switch in the stager.
 - The `metr` tags (HUD meters, read only by the renderer) have no schema

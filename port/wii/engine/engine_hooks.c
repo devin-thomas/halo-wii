@@ -14,6 +14,9 @@ engine entry points the Wii build wraps (tools/wii/engine_build.py WRAPPED):
   run digests the game state (real_map_scenario.h, HWI-015B).
 - update_client_local_ticks: a real map's run hands its scripted input to
   the update server before each tick's update is built.
+- HWI-016B: rasterizer_initialize_for_new_map and
+  rasterizer_dispose_from_old_map, and the end of game_frame, call the Wii
+  rasterizer's hooks when the driver registered them (engine_hooks.h).
 
 Compiled as an engine unit.
 */
@@ -59,6 +62,18 @@ unmodified layer fails to create on the card: the full-game mode shows
 it). */
 static boolean shell_initialized_steps;
 static boolean tag_files_opened;
+/* HWI-016B: the Wii rasterizer, when the driver registered one */
+static struct wii_engine_render_hooks render_hooks;
+static boolean rasterizer_started;
+
+void wii_engine_set_render_hooks(
+	const struct wii_engine_render_hooks *hooks)
+{
+	if (hooks)
+		render_hooks = *hooks;
+	else
+		csmemset(&render_hooks, 0, sizeof(render_hooks));
+}
 
 int wii_engine_shell_initialize(
 	void)
@@ -79,9 +94,19 @@ int wii_engine_shell_initialize(
 	game_state_initialize();
 	/* rasterizer_initialize without a Direct3D device halts the engine
 	(rasterizer_xbox.c: its default bitmaps assert global_d3d_device), which
-	the full-game mode shows; the Wii renderer is HWI-016/HWI-032 work */
-	wii_unsupported("render", "rasterizer_initialize (no Direct3D 8 device; halts the engine)");
-	rasterizer = FALSE;
+	the full-game mode shows. HWI-016B: the Wii rasterizer's environment path
+	(port/wii/render) when the driver registered it; otherwise reported
+	unsupported, as before */
+	if (render_hooks.rasterizer_initialize)
+	{
+		rasterizer = render_hooks.rasterizer_initialize() ? TRUE : FALSE;
+		rasterizer_started = rasterizer;
+	}
+	else
+	{
+		wii_unsupported("render", "rasterizer_initialize (no Direct3D 8 device; halts the engine)");
+		rasterizer = FALSE;
+	}
 	shell_platform_verify();
 	shell_initialized_steps = TRUE;
 	return rasterizer;
@@ -109,6 +134,10 @@ void wii_engine_shutdown(
 	which did not initialize */
 	if (shell_initialized_steps)
 	{
+		/* HWI-016B: shell_dispose's rasterizer_dispose, for the Wii's */
+		if (rasterizer_started && render_hooks.rasterizer_dispose)
+			render_hooks.rasterizer_dispose();
+		rasterizer_started = FALSE;
 		real_math_dispose();
 		if (tag_files_opened)
 		{
@@ -208,7 +237,35 @@ void __wrap_game_frame(
 	if (fixed_step_scenario_armed())
 		fixed_step_scenario_game_frame(dt);
 	else
+	{
 		__real_game_frame(dt);
+		/* HWI-016B: the frame drawn (the Wii rasterizer), after the frame's
+		state is advanced, as main_loop draws after game_time_update */
+		if (render_hooks.frame)
+			render_hooks.frame(dt);
+	}
+}
+
+/* HWI-016B: the rasterizer's per-map halves (rasterizer_common.c, called
+by game_initialize_for_new_map and game_dispose_from_old_map): the engine's
+own, then (or first, when disposing) the Wii rasterizer's map resources */
+void __real_rasterizer_initialize_for_new_map(void);
+void __real_rasterizer_dispose_from_old_map(void);
+
+void __wrap_rasterizer_initialize_for_new_map(
+	void)
+{
+	__real_rasterizer_initialize_for_new_map();
+	if (render_hooks.new_map)
+		render_hooks.new_map();
+}
+
+void __wrap_rasterizer_dispose_from_old_map(
+	void)
+{
+	if (render_hooks.old_map)
+		render_hooks.old_map();
+	__real_rasterizer_dispose_from_old_map();
 }
 
 /* A local game takes its players' input into their queues once a frame
