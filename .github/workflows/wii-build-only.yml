@@ -1,0 +1,122 @@
+name: Wii build-only
+
+# Build-only CI for the Wii port (docs/wii/CI.md). It compiles, links and
+# converts the asset-free Wii targets with the official devkitPro container,
+# runs the authored host fixtures and Python unit tests, then stages and
+# inspects an allowlisted artifact set before uploading it.
+#
+# What a green run means: the code built and the authored synthetic checks
+# passed. It is never an emulator, gameplay, engine ABI, host-lifecycle,
+# persistence or Wii hardware result; those are recorded separately from
+# trusted local runs.
+#
+# Public-safety rules for this file:
+# - GitHub-hosted runners only; never a self-hosted, personal or Wii-LAN
+#   runner (a step below fails the job on any other runner);
+# - pull_request, never pull_request_target or workflow_run, so fork code
+#   gets a read-only token and no secrets;
+# - no secrets, no private repositories, no game data or dumps;
+# - read-only token permissions;
+# - third-party code pinned: actions by commit, the image by digest.
+on:
+  push:
+    branches: [wii]
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    branches: [wii]
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+
+concurrency:
+  group: wii-build-only-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  wii-build-only:
+    runs-on: ubuntu-24.04
+    # Official devkitPro image (Debian bookworm: devkitPPC, libogc, libfat,
+    # elf2dol, Python 3.11, Ninja, GCC 12). Tag 20260503, pinned to its
+    # multi-arch index digest; update both together after review.
+    container:
+      image: devkitpro/devkitppc:20260503@sha256:44cb1a920e1ec3ec7c06767493c3b85f8d643d6137cc4661f0201895ac6e4967
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Refuse anything but a GitHub-hosted runner
+        if: runner.environment != 'github-hosted'
+        run: |
+          echo "::error::Wii build-only CI runs only on GitHub-hosted runners"
+          exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The container runs as root over a checkout owned by the runner user.
+      - name: Trust the checkout
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Toolchain inventory
+        run: |
+          python --version
+          ninja --version
+          gcc --version | head -n 1
+          dkp-pacman -Q | tee "$RUNNER_TEMP/toolchain-packages.txt"
+          python tools/wii/check_toolchain.py --devkitpro "$DEVKITPRO"
+
+      - name: Python unit tests (authored, no game data)
+        working-directory: tools/wii
+        run: python -B -m unittest discover -s . -p "test_*.py"
+
+      - name: Host C fixtures (authored, no game data)
+        run: |
+          cc="$(command -v gcc)"
+          python -B tools/wii/run_abi_host.py --cc "$cc" --output build/ci-fixtures/abi-host
+          python -B tools/wii/run_cache_address.py --cc "$cc" --output build/ci-fixtures/cache-default
+          python -B tools/wii/run_cache_address.py --cc "$cc" --output build/ci-fixtures/cache-widget --widget-fixture
+          python -B tools/wii/run_cache_address.py --cc "$cc" --output build/ci-fixtures/cache-bsp --bsp-fixture
+          python -B tools/wii/run_cache_address.py --cc "$cc" --output build/ci-fixtures/cache-material --material-fixture
+
+      - name: Build the Wii targets (build-only)
+        run: |
+          python configure.py --wii --wii-devkitpro "$DEVKITPRO"
+          ninja wii_probe wii_gx_scene wii_geometry_view
+
+      - name: Stage the allowlisted artifacts
+        run: |
+          python -B tools/wii/package_artifacts.py stage --build build/wii --output dist/wii-build-only \
+            --toolchain-packages "$RUNNER_TEMP/toolchain-packages.txt"
+
+      - name: Inspect the artifacts before upload
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          python -B tools/wii/package_artifacts.py inspect dist/wii-build-only --require-clean --forbid-text "$OWNER"
+
+      - name: Summary
+        run: |
+          {
+            echo "## Wii build-only"
+            echo
+            echo "Compiled, linked and converted; authored host fixtures and unit tests passed;"
+            echo "artifact allowlist and content inspection passed."
+            echo "**Not** an emulator, gameplay, engine ABI, host-lifecycle, persistence or Wii hardware result."
+            echo
+            echo "| File | SHA-256 |"
+            echo "|---|---|"
+            (cd dist/wii-build-only && sha256sum -- * | awk '{print "| " $2 " | `" $1 "` |"}')
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wii-build-only-${{ github.sha }}
+          path: dist/wii-build-only/
+          if-no-files-found: error
+          retention-days: 7

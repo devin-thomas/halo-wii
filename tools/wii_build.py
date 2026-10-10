@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 
+from .wii.build import CHECKOUT_PREFIX, DEVKITPRO_PREFIX
 from .wii.check_toolchain import inspect_toolchain, toolchain_inputs
 
 BUILD = Path("build/wii")
@@ -89,6 +90,8 @@ def generate_wii_build(n, sln):
         "compiler_target": inventory["tools"]["powerpc-eabi-gcc"]["target"],
         "binutils": inventory["tools"]["powerpc-eabi-ld"]["version"],
         "compile_flags": CFLAGS, "probe_auto_exit_frames": sln.wii_probe_frames,
+        # build.py maps these build-machine roots in debug info and link maps.
+        "path_prefix_map": {"checkout": CHECKOUT_PREFIX, "devkitpro": DEVKITPRO_PREFIX},
         "wii_rules_sha256": hashlib.sha256((root / "devkitPPC/wii_rules").read_bytes()).hexdigest(),
         "libogc_sha256": hashlib.sha256((root / "libogc/lib/wii/libogc.a").read_bytes()).hexdigest(),
         "libraries_sha256": {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in libraries},

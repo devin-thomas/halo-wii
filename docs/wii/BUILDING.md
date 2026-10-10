@@ -20,7 +20,9 @@ Outputs are `build/wii/probe.elf`, `probe.dol`, `probe.map` and `build-info.json
 The manifest records input hashes, compiler identity, SDK fingerprint, build ID
 and artifact hashes. The same ID is embedded in the probe. SDK headers, tools,
 libraries, startup files and Git identity trigger reconfiguration. Generated
-files and machine paths stay outside Git.
+files and machine paths stay outside Git. Debug info and linker maps name the
+checkout as `.` and the devkitPro root as `/opt/devkitpro` (`path_prefix_map`).
+[CI](CI.md) describes the build-only workflow and the allowlisted artifact set.
 
 The native pipeline uses official Wii machine flags and libogc libraries:
 
