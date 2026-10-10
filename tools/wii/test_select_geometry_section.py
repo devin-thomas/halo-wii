@@ -1,6 +1,7 @@
 """Authored geometry-section selection fixtures: no owned assets or runtime."""
 import struct
 import unittest
+import zlib
 
 import select_geometry_section as selector
 from test_inspect_material_graph import Fixture
@@ -41,6 +42,8 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(result['extents']['min'][1], -2.5)
         self.assertEqual(result['extents']['max'][1], 100.0)
         self.assertEqual(result['consumed_bytes']['native_positions_f32'], 24)
+        self.assertEqual(result['hashes']['positions_crc32'], zlib.crc32(b''.join(struct.pack('<3I', *b) for b in BITS)))
+        self.assertEqual(result['hashes']['indices_crc32'], zlib.crc32(b''.join(struct.pack('<3H', *c) for c in CORNERS)))
         self.assertEqual((bytes(f.tags), bytes(f.bsp)), before)
 
     def test_repeated_selection_is_identical(self):

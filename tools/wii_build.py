@@ -11,6 +11,10 @@ from .wii.check_toolchain import inspect_toolchain, toolchain_inputs
 BUILD = Path("build/wii")
 SOURCES = [Path("port/wii/probe/main.c"), Path("port/wii/abi/boundary.c"), Path("port/wii/abi/fixture.c")]
 GX_SCENE_SOURCES = [Path("port/wii/gx_scene/main.c")]
+GEOMETRY_VIEW_SOURCES = [Path("port/wii/geometry_view/main.c"),
+                         *(Path("tools/wii") / name for name in (
+                             "cache_arena_plan.c", "cache_stream_io.c", "cache_address_owned.c",
+                             "cache_address_probe.c", "cache_bsp_probe.c", "cache_material_probe.c"))]
 MACHINE_FLAGS = ["-DGEKKO", "-mrvl", "-mcpu=750", "-meabi", "-mhard-float"]
 CFLAGS = ["-std=c11", "-O2", "-g", "-Wall", "-Wextra", "-Werror", "-ffp-contract=off", *MACHINE_FLAGS]
 LIBRARIES = ("libfat.a", "libwiiuse.a", "libbte.a", "libogc.a")
@@ -18,8 +22,12 @@ LIBRARIES = ("libfat.a", "libwiiuse.a", "libbte.a", "libogc.a")
 
 def source_inputs():
     return [Path("tools/wii_build.py"), Path("tools/wii/build.py"),
-            Path("tools/wii/check_toolchain.py"), *SOURCES, *GX_SCENE_SOURCES,
-            *sorted(Path("port/wii/abi").glob("*.h"))]
+            Path("tools/wii/check_toolchain.py"), *SOURCES, *GX_SCENE_SOURCES, *GEOMETRY_VIEW_SOURCES,
+            *sorted(Path("port/wii/abi").glob("*.h")),
+            *(Path("tools/wii") / name for name in (
+                "cache_arena_plan.h", "cache_stream_io.h", "cache_address_owned.h",
+                "cache_address_probe.h", "cache_bsp_probe.h", "cache_material_probe.h")),
+            Path("port/linux/include/halo_port_capacity.h")]
 
 
 def wii_configure_inputs(devkitpro=None):
@@ -105,7 +113,9 @@ def generate_wii_build(n, sln):
     # its objects in a subdirectory because both entry points are main.c.
     targets = (("wii_probe", "probe", "asset_free_probe", SOURCES, BUILD, BUILD / "build-info.json"),
                ("wii_gx_scene", "gx_scene", "asset_free_gx_scene", GX_SCENE_SOURCES, BUILD / "gx_scene",
-                BUILD / "gx_scene-build-info.json"))
+                BUILD / "gx_scene-build-info.json"),
+               ("wii_geometry_view", "geometry_view", "owned_geometry_diagnostic_no_embedded_assets",
+                GEOMETRY_VIEW_SOURCES, BUILD / "geometry_view", BUILD / "geometry_view-build-info.json"))
     for target, stem, scope, sources, object_dir, manifest in targets:
         objects = []
         for source in sources:

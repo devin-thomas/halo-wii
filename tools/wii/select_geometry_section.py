@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 import struct
 import sys
+import zlib
 
 import inspect_bsp_residency as residency
 import inspect_material_graph as graph
@@ -79,6 +80,7 @@ def select_bytes(tags, bsp, declared_map_length, bsp_ordinal, material, tag_base
         raise InspectionError("selected surface range outside the root surface table")
 
     index_hash = hashlib.sha256()
+    index_crc = 0
     referenced = set()
     degenerate = 0
     for ordinal in range(surfaces):
@@ -88,8 +90,10 @@ def select_bytes(tags, bsp, declared_map_length, bsp_ordinal, material, tag_base
         degenerate += len(set(corners)) < 3
         referenced.update(corners)
         index_hash.update(struct.pack("<3H", *corners))
+        index_crc = zlib.crc32(struct.pack("<3H", *corners), index_crc)
 
     position_hash = hashlib.sha256()
+    position_crc = 0
     lower, upper = [float("inf")] * 3, [float("-inf")] * 3
     subnormal = negative_zero = 0
     for vertex in range(vertices):
@@ -99,6 +103,7 @@ def select_bytes(tags, bsp, declared_map_length, bsp_ordinal, material, tag_base
         subnormal += sum(b & 0x7F800000 == 0 and b & 0x007FFFFF != 0 for b in bits)
         negative_zero += sum(b == 0x80000000 for b in bits)
         position_hash.update(struct.pack("<3I", *bits))
+        position_crc = zlib.crc32(struct.pack("<3I", *bits), position_crc)
         if vertex in referenced:
             for axis, value in enumerate(struct.unpack("<3f", struct.pack("<3I", *bits))):
                 lower[axis] = min(lower[axis], value)
@@ -125,7 +130,8 @@ def select_bytes(tags, bsp, declared_map_length, bsp_ordinal, material, tag_base
         "consumed_bytes": {"source_index_bytes": surfaces * 6, "source_position_records": vertices * 32,
                            "native_positions_f32": vertices * 12, "native_indices_u16": surfaces * 6},
         "hashes": {"indices_sha256": index_hash.hexdigest(), "positions_sha256": position_hash.hexdigest(),
-                   "section_sha256": section.hexdigest()},
+                   "section_sha256": section.hexdigest(),
+                   "indices_crc32": index_crc, "positions_crc32": position_crc},
         "consumer": "cache_material_get_surface_positions(material_index, local 0..surface_count-1)",
         "material_inspection_numeric_sha256": meta["numeric_projection_sha256"],
     }
