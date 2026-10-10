@@ -1019,11 +1019,11 @@ HRESULT __stdcall DmCloseModuleSections(PDM_WALK_MODSECT walk)
 HRESULT __stdcall DmWalkLoadedModules(PDM_WALK_MODULES *walk, PDMN_MODLOAD module)
 {
 	wii_unsupported("xbdm", "DmWalkLoadedModules");
-	return E_FAIL;
+	return XBDM_ENDOFLIST;
 }
 
 HRESULT __stdcall DmWalkModuleSections(PDM_WALK_MODSECT *walk, const char *module_name, PDMN_SECTIONLOAD section)
 {
 	wii_unsupported("xbdm", "DmWalkModuleSections");
-	return E_FAIL;
+	return XBDM_ENDOFLIST;
 }

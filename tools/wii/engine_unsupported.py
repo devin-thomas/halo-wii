@@ -122,8 +122,10 @@ FAILURE: Dict[str, str] = {
     "XInputDebugInitKeyboardQueue": "ERROR_DEVICE_NOT_CONNECTED",
     "halo_ws_socket": "INVALID_SOCKET",
     "halo_ws_accept": "INVALID_SOCKET",
-    "DmWalkLoadedModules": "E_FAIL",
-    "DmWalkModuleSections": "E_FAIL",
+    # a walk ends with XBDM_ENDOFLIST; any other value continues it (the
+    # engine's start-up, shell_xbox.c, walks until the end of the list)
+    "DmWalkLoadedModules": "XBDM_ENDOFLIST",
+    "DmWalkModuleSections": "XBDM_ENDOFLIST",
     "DmCloseModuleSections": "E_FAIL",
     "D3DResource_IsBusy": "FALSE",
     "D3DDevice_IsBusy": "FALSE",

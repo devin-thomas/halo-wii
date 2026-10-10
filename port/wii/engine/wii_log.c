@@ -13,6 +13,7 @@ Linux files call; here they write to the SD log.
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 static pthread_mutex_t log_lock = PTHREAD_MUTEX_INITIALIZER;
 static FILE *log_file;
@@ -49,8 +50,11 @@ static void log_line(const char *prefix, const char *format, va_list arguments)
 	{
 		size_t size = strlen(line);
 
+		/* fsync too: libfat writes a file's directory entry (its size) only
+		when it is closed or synced, and a launch that hangs or is stopped
+		never closes the log */
 		if (fwrite(line, 1, size, log_file) != size || (size && line[size - 1] != '\n' && fputc('\n', log_file) == EOF) ||
-			fflush(log_file) != 0)
+			fflush(log_file) != 0 || fsync(fileno(log_file)) != 0)
 		{
 			log_failed = 1;
 		}

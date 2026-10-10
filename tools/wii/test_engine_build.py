@@ -74,6 +74,8 @@ class UnsupportedTests(unittest.TestCase):
         self.assertEqual(engine_unsupported.failure("D3DDevice_CreateTexture", "long __stdcall"), "E_FAIL")
         self.assertEqual(engine_unsupported.failure("Direct3DCreate8", "struct Direct3D *__stdcall"), "NULL")
         self.assertIsNone(engine_unsupported.failure("D3DDevice_SetVertexData2f", "void __stdcall"))
+        # an iteration ends: the engine's start-up walks modules until the end of the list
+        self.assertEqual(engine_unsupported.failure("DmWalkLoadedModules", "HRESULT __stdcall"), "XBDM_ENDOFLIST")
 
     def test_parameters_are_named_in_declarators(self):
         self.assertEqual(engine_unsupported.named("void (__stdcall *)(void *)", 0), "void (__stdcall *a0)(void *)")

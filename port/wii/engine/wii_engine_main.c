@@ -188,9 +188,13 @@ static int run_full_game(void)
 	struct wii_arena_report arena;
 	int code;
 
+	mkdir(WII_ENGINE_DATA_ROOT, 0777);
+	mkdir(WII_ENGINE_DATA_ROOT "/maps", 0777);
+	mkdir(WII_ENGINE_SAVE_ROOT, 0777);
 	wii_log_open(LOG_PATH);
 	wii_log("BEGIN target=engine mode=full_game build=%s\n", WII_BUILD_ID);
 	stage = "full_game";
+	wii_platform_configure();
 	if (!wii_arena_open(0, GENERAL_BYTES, &arena))
 		wii_log("FAIL arena_open\n");
 	code = __real_main();
