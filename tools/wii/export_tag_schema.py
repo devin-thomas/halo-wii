@@ -23,7 +23,10 @@ SCHEMA_UNITS = sorted(path.relative_to(ROOT) for path in (ROOT / "port/linux/gam
 def schema_sources_hash(root=ROOT):
     digest = hashlib.sha256()
     for path in [Path("port/linux/game/tag_schema.h"), *SCHEMA_UNITS, Path("port/wii/memory_strategy/schema_export.c")]:
-        digest.update(path.as_posix().encode() + b"\0" + hashlib.sha256((root / path).read_bytes()).digest())
+        # Line endings are normalized so the provenance hash matches in LF (CI)
+        # and CRLF (autocrlf) checkouts; the generated offsets do not depend on them.
+        data = (root / path).read_bytes().replace(b"\r\n", b"\n")
+        digest.update(path.as_posix().encode() + b"\0" + hashlib.sha256(data).digest())
     return digest.hexdigest()
 
 
