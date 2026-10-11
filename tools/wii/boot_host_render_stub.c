@@ -63,6 +63,18 @@ void wii_ui_gx_quads(const struct wii_ui_draw *draw, const struct wii_ui_vertex 
     (void)quad_count;
 }
 
+void wii_ui_gx_plasma(const struct wii_ui_plasma *plasma, const struct wii_ui_plasma_vertex *vertices, int quad_count)
+{
+    (void)plasma;
+    (void)vertices;
+    (void)quad_count;
+}
+
+int wii_ui_gx_selftest(void)
+{
+    return 0;
+}
+
 void wii_ui_gx_text(int x, int y, int scale, uint32_t argb, const char *text)
 {
     (void)x;

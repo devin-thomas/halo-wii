@@ -511,7 +511,12 @@ static int render_engine_rasterizer_initialize(
 	wii_unsupported("render", "water, fog (atmospheric, planar, screen)");
 	wii_unsupported("render", "environment detail maps, bump maps, specular, reflections, self-illumination");
 	wii_unsupported("render", "transparent environment shaders (labelled placeholders)");
-	wii_unsupported("render", "mirrors, HUD, interface, widgets, menus, text");
+	/* HWI-033: the boot mode draws the interface's widgets, menus and text
+	(render_ui.c); the map run draws none of them */
+	if (render_engine.boot)
+		wii_unsupported("render", "mirrors, HUD");
+	else
+		wii_unsupported("render", "mirrors, HUD, interface, widgets, menus, text (drawn in the boot mode only)");
 	wii_unsupported("render", "camera effect matrix (writes player effects state)");
 
 	return TRUE;

@@ -16,6 +16,8 @@
  *      texture_budget=<bytes>    the interface's resident HWT1 bytes (3 MiB)
  *      clock=frame|real          the frame clock (boot_hooks.h; default frame)
  *      error_frames=<n>          a boot error screen stays n frames (240)
+ *      selftest=1                HWI-033: GX self-test of the plasma program and min/max blends
+ *                                before the engine starts (BOOT_UI_SELFTEST lines)
  *      tick_digests=<n>          HWI-033: the game state's digest after each of the first n
  *                                ticks of the map the menus load (BOOT_TICK; default 0)
  *      expect=refusal            a load-failure test: max_frames passes when a map
@@ -88,6 +90,7 @@ static struct {
     int expect_refusal;
     long dump_allocation;
     long tick_digests;
+    int selftest;
     /* manifest.txt */
     char source[40], generation[40], stager[40];
     struct boot_manifest_file files[BOOT_MAX_MANIFEST_FILES];
@@ -146,6 +149,8 @@ static void read_config(void)
             boot.texture_budget = strtoul(line + 15, NULL, 10);
         else if (!strncmp(line, "dump_allocation=", 16))
             boot.dump_allocation = strtol(line + 16, NULL, 10);
+        else if (!strcmp(line, "selftest=1"))
+            boot.selftest = 1;
         else if (!strncmp(line, "tick_digests=", 13))
             boot.tick_digests = strtol(line + 13, NULL, 10);
         else if (!strcmp(line, "expect=refusal"))
@@ -589,6 +594,8 @@ int wii_boot_run(const struct wii_boot_driver *driver)
     wii_ui_gx_configure(&driver->video, boot.texture_budget);
     read_manifest();
     verify_manifest();
+    if (boot.selftest)
+        wii_ui_gx_selftest();
     if (!boot.menu) {
         wii_log("BOOT_FAIL boot.txt has no mode=menu\n");
         return 0;

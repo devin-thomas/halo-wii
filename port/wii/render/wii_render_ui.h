@@ -82,7 +82,9 @@ enum
 	WII_UI_BLEND_MIN,
 	WII_UI_BLEND_MAX,
 	WII_UI_BLEND_ALPHA_MULTIPLY_ADD,
-	WII_UI_BLEND_COUNT
+	WII_UI_BLEND_COUNT,
+	/* (the GX side's own: the colour replaces the pixel; the self-test) */
+	WII_UI_BLEND_REPLACE = 16
 };
 
 struct wii_ui_draw
@@ -109,7 +111,41 @@ void wii_ui_gx_texture_dynamic_update(long handle, const uint16_t *texels);
 void wii_ui_gx_texture_release(long handle);
 /* a map's textures let go (its map is unloaded) */
 void wii_ui_gx_release_map_textures(void);
+/* quads of one texture (or none) in a framebuffer blend; min and max (which
+GX's blender lacks) through a copy of the destination and TEV compares */
 void wii_ui_gx_quads(const struct wii_ui_draw *draw, const struct wii_ui_vertex *vertices, int quad_count);
+
+/* HWI-033: the interface's plasma effect (render_ui_gx.c): maps 0 and 1 (the
+plasma bitmap, animated) combined as the Xbox's register combiners do for
+map0_to_1 = min, under map 2 (the widget's bitmap) in map1_to_2 = alpha
+blend; 8-bit colour factors as the rasterizer's constants hold them */
+struct wii_ui_plasma
+{
+	long textures[3];
+	int wrap[3];
+	int point_sampled;
+	int blend;                  /* the framebuffer's (WII_UI_BLEND_*) */
+	uint8_t map_fade[2];        /* maps 0 and 1: fade */
+	uint8_t map_tint_blue[2];   /* maps 0 and 1: tint's blue */
+	uint32_t map2_argb;         /* map 2: tint (rgb) and fade (a) */
+	uint32_t plasma_fade;       /* the plasma fade (rgb) */
+};
+
+struct wii_ui_plasma_vertex
+{
+	float x, y;
+	float st[3][2];             /* each map's texture coordinates */
+	uint32_t argb;
+};
+
+void wii_ui_gx_plasma(const struct wii_ui_plasma *plasma, const struct wii_ui_plasma_vertex *vertices,
+	int quad_count);
+
+/* HWI-033: draws authored cases of the plasma program and of min and max
+blends through GX before the engine starts, peeks the EFB and logs each
+(BOOT_UI_SELFTEST, checked by tools/wii/ui_combiners.py check-log); no game
+data. Returns the cases drawn. */
+int wii_ui_gx_selftest(void);
 /* the diagnostic font (built in: no game data), uppercase ASCII */
 void wii_ui_gx_text(int x, int y, int scale, uint32_t argb, const char *text);
 void wii_ui_gx_fill(int x0, int y0, int x1, int y1, uint32_t argb);
