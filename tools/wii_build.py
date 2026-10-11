@@ -8,7 +8,7 @@ import subprocess
 
 from .wii.build import CHECKOUT_PREFIX, DEVKITPRO_PREFIX, ENGINE_SEMANTIC_FLAGS
 from .wii.check_toolchain import inspect_toolchain, toolchain_inputs
-from .wii.engine_build import engine_flags, engine_inputs, generate_engine_build
+from .wii.engine_build import PORT_CONFIG, engine_flags, engine_inputs, flag_sets, generate_engine_build
 
 BUILD = Path("build/wii")
 SOURCES = [Path("port/wii/probe/main.c"), Path("port/wii/abi/boundary.c"), Path("port/wii/abi/fixture.c")]
@@ -72,7 +72,9 @@ def source_inputs():
             *(Path("tools/wii") / name for name in (
                 "cache_arena_plan.h", "cache_stream_io.h", "cache_address_owned.h",
                 "cache_address_probe.h", "cache_bsp_probe.h", "cache_material_probe.h")),
-            Path("port/linux/include/halo_port_capacity.h"), *engine_inputs()]
+            Path("port/linux/include/halo_port_capacity.h"),
+            # the engine's startup header (port/wii/runtime/runtime_start.c is an engine platform unit)
+            *sorted(Path("port/wii/runtime").glob("*.h")), *engine_inputs()]
 
 
 def wii_configure_inputs(devkitpro=None):
@@ -93,15 +95,92 @@ def wii_configure_inputs(devkitpro=None):
     return paths
 
 
+def build_id(public: dict) -> str:
+    """the 16-hex-digit ID of a build-info record (embedded in the DOLs as WII_BUILD_ID)"""
+    return hashlib.sha256(json.dumps(public, sort_keys=True).encode()).hexdigest()[:16]
+
+
 def write_if_changed(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists() or path.read_text(encoding="utf-8") != text:
         path.write_text(text, encoding="utf-8")
 
 
-def source_identity():
+# HWI-016G: how inputs_sha256 (and so the build ID) hashes each input. Text
+# (no NUL byte) is hashed with CRLF normalized to LF, so an LF checkout (CI,
+# Research) and a core.autocrlf=true one (Titan) of the same commit get the
+# same ID; the compiler reads both the same way. A file holding a NUL byte is
+# binary and hashed as it is. Records without this field hashed raw bytes.
+INPUTS_SHA256_RULE = "sha256; text (no NUL byte) with CRLF normalized to LF first; binary as is"
+
+
+def input_sha256(path: Path) -> str:
+    data = path.read_bytes()
+    if b"\x00" not in data:
+        data = data.replace(b"\r\n", b"\n")
+    return hashlib.sha256(data).hexdigest()
+
+
+def build_inputs():
+    """every checkout file hashed into the build ID (all targets, the engine included)"""
+    return [Path("configure.py"), *source_inputs()]
+
+
+def searched_directories() -> list:
+    """the checkout directories the targets' compiles search (-I, -iquote,
+    -idirafter, -isystem) and the engine build scans for units (port.json's
+    game root, which the semantics generator scans too)"""
+    flags = [*MEMORY_STRATEGY_INCLUDES]
+    roots = []
+    if PORT_CONFIG.is_file():
+        for values in flag_sets(ENGINE_SEMANTIC_FLAGS).values():
+            flags += values
+        roots.append(Path(json.loads(PORT_CONFIG.read_text(encoding="utf-8"))["game"]["root"]))
+    options = ("-I", "-iquote", "-idirafter", "-isystem")
+    for index, flag in enumerate(flags):
+        for option in options:
+            if flag == option and index + 1 < len(flags):
+                roots.append(Path(flags[index + 1]))
+            elif flag.startswith(option) and flag != option:
+                roots.append(Path(flag[len(option):]))
+    return sorted({root for root in roots if not root.is_absolute() and ".." not in root.parts},
+                  key=lambda root: root.as_posix())
+
+
+def consumed_paths(inputs, directories=()) -> list:
+    """The checkout paths source_dirty covers, derived from what the targets
+    read: every directory that holds a hashed input or that a compile
+    searches, with its subdirectories (a relative #include reaches below it),
+    keeping only the outermost; inputs at the checkout root by name. A
+    documented superset: a change there that no target reads still counts
+    as dirty."""
+    files = set()
+    directories = {Path(path) for path in directories} - {Path(".")}
+    for path in map(Path, inputs):
+        if path.parent == Path("."):
+            files.add(path.as_posix())
+        else:
+            directories.add(path.parent)
+    outermost = {path for path in directories if not any(other in path.parents for other in directories)}
+    return sorted(files) + sorted(path.as_posix() for path in outermost)
+
+
+def git_list(*args) -> list:
+    """the NUL-separated entries a `git ... -z` command prints"""
+    return [entry for entry in subprocess.check_output(["git", *args], text=True).split("\x00") if entry]
+
+
+def source_identity(inputs=None, directories=None):
+    """(HEAD commit, whether the checkout differs from it anywhere a target
+    reads). Dirty: a modified, staged, deleted or untracked (not ignored)
+    file under consumed_paths(), or a hashed input that git does not track."""
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
-    dirty = bool(subprocess.check_output(["git", "status", "--porcelain", "--", "configure.py", "tools/wii_build.py", "tools/wii", "port/wii"], text=True))
+    inputs = build_inputs() if inputs is None else list(inputs)
+    directories = searched_directories() if directories is None else directories
+    pathspecs = [f":(top,literal){path}" for path in consumed_paths(inputs, directories)]
+    changed = git_list("status", "--porcelain=v1", "-z", "--untracked-files=all", "--", *pathspecs)
+    tracked = set(git_list("ls-files", "-z", "--", *pathspecs))
+    dirty = bool(changed) or any(Path(path).as_posix() not in tracked for path in inputs)
     return commit, dirty
 
 
@@ -120,9 +199,10 @@ def generate_wii_build(n, sln):
     for library in libraries:
         if not library.is_file():
             raise ValueError(f"Missing official Wii development library: {library}")
-    commit, dirty = source_identity()
-    inputs = [Path("configure.py"), *source_inputs()]
-    hashes = {path.as_posix(): hashlib.sha256(path.read_bytes()).hexdigest() for path in inputs}
+    inputs = build_inputs()
+    directories = searched_directories()
+    commit, dirty = source_identity(inputs, directories)
+    hashes = {path.as_posix(): input_sha256(path) for path in inputs}
     sdk = hashlib.sha256()
     for path in toolchain_inputs(root):
         sdk.update(path.relative_to(root).as_posix().encode() + b"\0")
@@ -130,7 +210,8 @@ def generate_wii_build(n, sln):
             sdk.update(hashlib.sha256(path.read_bytes()).digest())
     public = {
         "schema_version": 1, "scope": "asset_free_probe", "source_commit": commit,
-        "source_dirty": dirty, "inputs_sha256": hashes,
+        "source_dirty": dirty, "source_dirty_paths": consumed_paths(inputs, directories),
+        "inputs_sha256": hashes, "inputs_sha256_rule": INPUTS_SHA256_RULE,
         "compiler": inventory["tools"]["powerpc-eabi-gcc"]["version"],
         "compiler_target": inventory["tools"]["powerpc-eabi-gcc"]["target"],
         "binutils": inventory["tools"]["powerpc-eabi-ld"]["version"],
@@ -149,7 +230,7 @@ def generate_wii_build(n, sln):
         "runtime_verified": False,
         "toolchain_sha256": sdk.hexdigest(),
     }
-    public["build_id"] = hashlib.sha256(json.dumps(public, sort_keys=True).encode()).hexdigest()[:16]
+    public["build_id"] = build_id(public)
     local = {"devkitpro": root.as_posix(), "tools": inventory["tools"], "public": public}
     write_if_changed(BUILD / "local-config.json", json.dumps(local, indent=2) + "\n")
     write_if_changed(BUILD / "build_id.h", f'#define WII_BUILD_ID "{public["build_id"]}"\n#define WII_PROBE_AUTO_EXIT_FRAMES {sln.wii_probe_frames}U\n')

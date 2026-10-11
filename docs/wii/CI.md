@@ -70,7 +70,8 @@ MANIFEST.json
 - an ELF/DOL fails its structure check, a map is not a GNU ld text map, or a
   file exceeds 48 MiB (128 MiB total; the whole-engine ELF keeps its debug information);
 - any recorded hash or size differs, build-info scope is unexpected,
-  `runtime_verified` is not false, the tree was dirty (`--require-clean`), or
+  `runtime_verified` is not false, the tree was dirty (`--require-clean`;
+  `source_dirty` covers `source_dirty_paths`, see [BUILDING](BUILDING.md)), or
   the manifest label/claims differ from build-only;
 - content contains a Windows drive, UNC, MSYS/WSL drive, home or CI workspace
   path, this machine's working/home/temp directories or user names, a supplied
