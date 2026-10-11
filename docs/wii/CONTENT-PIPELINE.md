@@ -58,6 +58,12 @@ python -B tools/wii/content_convert.py --staging <staging-dir> `
 #              --categories textures animations sounds models lightmaps collision
 #                           model_animations fonts strings shaders
 #              --verify-per-kind N (items re-decoded per format/type/map; default 2)
+#              --profile gx-baseline-v1 (default) | gx-splitalpha-v1 (HWI-008F)
+
+# 2b. Every texel of every DXT3/DXT5 texture of the published generation
+#     against its source (HWI-008B's check, whole set; parallel)
+python -B tools/wii/verify_textures.py --staging <staging-dir> --root <private-dir>/content `
+  --formats dxt3 dxt5 --jobs 16 --json <private-dir>/verify.json
 
 # 3. Movie decode probe with your own FFmpeg build (host only)
 python -B tools/wii/probe_movies.py --image <image.iso> --image-inventory <xiso-inventory.json> `
@@ -170,6 +176,23 @@ GX images follow in face, level, slice order. Each image is one GX-tiled 2D
 level and starts 32-byte aligned. Cube maps are six chains in Xbox hardware
 face order. Volume textures are per-level depth slices. GX has neither, so
 the renderer decides how to use them.
+
+Version 1 has zero bytes from 32 to 63. **Version 2** (`gx-splitalpha-v1`,
+DXT3 and DXT5 only) holds CMPR colour images, and bytes 32 to 47 are an
+explicit alpha section:
+
+| Field | Type |
+|---|---|
+| section version (1) | u16 |
+| kind: 1 = no plane (alpha 255 at every texel), 2 = plane | u16 |
+| plane GX format: I4 (0) or I8 (1); 0 without a plane | u16 |
+| reserved (0) | u16 |
+| plane offset (64 + data bytes), plane bytes; both 0 without a plane | u32 each |
+
+The plane follows the colour images: one I4 or I8 image per colour image,
+in the same order and size, each 32-byte aligned. Bytes 48 to 63 are zero.
+Every CMPR block of a version 2 texture is in the four-colour form (c0 > c1,
+or c0 == c1 with every index 0). The Wii loader still reads version 1.
 
 **HRA1 recorded animation.** A 32-byte header, then:
 
@@ -312,6 +335,39 @@ show the headroom.
 - Exit status as for `content_convert.py` (0, 1, 3, 4). The image is
   re-hashed after the run and must be unchanged.
 
+## Profile `gx-splitalpha-v1` (HWI-008F)
+
+`--profile gx-splitalpha-v1` converts DXT3 and DXT5 to CMPR colour plus an
+exact alpha plane (HWT1 version 2), at a quarter (I4) or three eighths (I8)
+of RGBA8's bytes. Every other format, and every other category, gives the
+same bytes as `gx-baseline-v1`, which stays available.
+
+- **Colour.** DXT3 and DXT5 colour blocks always decode in the four-colour
+  mode, but CMPR, like DXT1, uses three colours and transparency when
+  c0 <= c1. Blocks with c0 > c1 are kept. Blocks with c0 < c1 get their
+  endpoints swapped and their indices mapped 0↔1, 2↔3, which keeps the
+  palette. Blocks with c0 == c1 (every palette entry is c0) get every index
+  set to 0. GX interpolates the two middle colours at 5/8 + 3/8 instead of
+  2/3 + 1/3, as for DXT1: at most |c0−c1|/24+1, and at most 11, per channel
+  (checked for every 5-bit and 6-bit endpoint pair). Endpoint texels and
+  c0 == c1 blocks are exact.
+- **Alpha.** DXT3's explicit 4-bit alpha is I4: GX reads n back as 17n, as
+  the reference decode does. DXT5's alpha is decoded with the reference
+  rule (`_dxt5_alphas`: the 8-value mode `((7−i)·a0 + i·a1) // 7` when
+  a0 > a1, else the 6-value mode `((5−i)·a0 + i·a1) // 5` plus 0 and 255,
+  integer division rounding down) and stored in I8, or in I4 when every
+  value of the texture is a multiple of 17. Some decoders round instead
+  (`+3` before `// 7`); they differ from this rule by at most 1. A texture
+  whose alpha is 255 at every texel of every image has no plane, and its
+  header says so.
+- **Renderer.** The Wii rasterizer loads the plane as a second texture
+  object and combines it in TEV where a shader reads the base map's alpha
+  ([render README](../../port/wii/render/README.md)).
+
+On the owned set, every DXT3 texture (2,816) got an I4 plane and every DXT5
+texture (157) an I8 plane; none had constant 255 alpha or only multiples
+of 17 ([evidence](evidence/2026-10-10-split-alpha-textures.md)).
+
 ## Profile `gx-baseline-v1`
 
 | Halo format | GX format | Fidelity |
@@ -357,9 +413,11 @@ decoded.
   forms yet: skinning, the texcoord texture matrices, compressed-animation
   playback (alignment-safe reads of arrays at 2-byte offsets) and the glyph
   cache are theirs.
-- **Residency and storage budgets:** HWI-007 owns these. DXT3/DXT5 to RGBA8
-  quadruples those textures; a CMPR colour plane plus an I4/I8 alpha plane
-  is a possible smaller profile.
+- **Residency and storage budgets:** HWI-007 owns these. In
+  `gx-baseline-v1`, DXT3/DXT5 to RGBA8 quadruples those textures;
+  `gx-splitalpha-v1` (HWI-008F) stores them as CMPR plus an alpha plane, and
+  the texture total drops from 1,587,808,352 to 967,769,088 bytes. Streaming
+  textures by visibility is HWI-032's.
 - **Cube maps, volumes and oversize textures:** their handling on GX is a
   renderer decision.
 - **Bitmap pixel offsets:** the January engine source

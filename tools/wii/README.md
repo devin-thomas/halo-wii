@@ -6,7 +6,10 @@
 and convert your own staged Halo maps into versioned, verified Wii content
 outside the checkout. The supporting modules are `halo_cache.py`,
 `gx_texture.py`, `recorded_animation.py`, `media_formats.py` and
-`content_publish.py`.
+`content_publish.py`. `content_convert.py --profile gx-splitalpha-v1`
+stores DXT3/DXT5 as CMPR plus an exact alpha plane (HWI-008F), and
+`verify_textures.py` re-checks every texel of chosen formats in a published
+generation ([guide](../../docs/wii/CONTENT-PIPELINE.md)).
 
 ```powershell
 python -B -m unittest test_gx_texture test_recorded_animation test_content_pipeline
