@@ -187,7 +187,7 @@ def main() -> int:
         frames = []
         for line in args.vsync_from.read_text(encoding="ascii", errors="replace").splitlines():
             if line.startswith("VSYNC_DT "):
-                frames.extend(word for word in line.split()[3:])
+                frames.extend(word for word in line.split()[1:] if "=" not in word)
         (run_dir / "vsync.txt").write_text(" ".join(frames) + "\n", encoding="ascii", newline="\n")
         command.append(wsl(run_dir / "vsync.txt"))
     run = subprocess.run(["wsl", "-d", "Debian", "--", "sh", "-c",
