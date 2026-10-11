@@ -519,8 +519,11 @@ static void minmax_tile_copy(int x, int y, int w, int h, u8 texcoord)
     Mtx matrix;
     GX_SetTexCopySrc((u16)x, (u16)y, (u16)w, (u16)h);
     GX_SetTexCopyDst((u16)w, (u16)h, GX_TF_RGBA8, GX_FALSE);
+    /* (the copy unfiltered: the display copy's vertical filter would mix rows) */
+    GX_SetCopyFilter(GX_FALSE, NULL, GX_FALSE, NULL);
     GX_CopyTex(minmax_copy, GX_FALSE);
     GX_PixModeSync();
+    GX_SetCopyFilter(ui.mode->aa, ui.mode->sample_pattern, GX_TRUE, ui.mode->vfilter);
     GX_InvalidateTexAll();
     GX_InitTexObj(&object, minmax_copy, (u16)w, (u16)h, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
     GX_InitTexObjFilterMode(&object, GX_NEAR, GX_NEAR);

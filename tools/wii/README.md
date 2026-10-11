@@ -130,6 +130,24 @@ digests compare with the Wii's.
 python -B tools/wii/run_boot_host.py --build <dir> --run <new dir> --wii-log <Wii engine.log> --map <ui.le.wmap> --map <prisoner.le.wmap> --max-frames <n> --environment-frames 150
 ```
 
+### Comparing a boot launch with its host replay (HWI-033)
+
+`boot.txt` `tick_digests=<n>` logs the whole game state's digest after each
+of the first n ticks of the map the menus load (`BOOT_TICK`);
+`run_boot_host.py --tick-digests <n>` does the same on the host.
+`compare_boot_runs.py` pairs the screens, the environment and the ticks of
+the two logs. With `dump_allocation=<index>` (host: `--dump`), the
+allocation is written at every sampled screen; `compare_hs_threads.py`
+checks two such sets of script-thread dumps value by value across the byte
+orders. `ui_combiners.py check-log` checks a launch's GX self-test lines
+(`selftest=1`) against the Xbox's combiner program.
+
+```powershell
+python -B tools/wii/compare_boot_runs.py <Wii engine.log> <host engine.log> [--json <out>]
+python -B tools/wii/compare_hs_threads.py <Wii dump dir> <host dump dir>
+python -B tools/wii/ui_combiners.py check-log <Wii engine.log>
+```
+
 ## Offline Windows shutdown symbols
 
 Read the executable's PE CodeView identity without loading it:
