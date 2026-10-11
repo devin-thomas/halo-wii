@@ -39,23 +39,47 @@ python -B tools/wii/map_stage.py --map <your .map> --output <private directory> 
 python3 -B tools/wii/map_stage.py --map <your .map> --output <private directory> --cc clang # walker built natively
 ```
 
-On the card: `sd:/halo-wii-engine/data/maps/<name>.wmap`, and
-`sd:/halo-wii-engine/map.txt` holding its scenario path (`levels\...\<name>`).
+A campaign map's every structure BSP is staged (HWI-016C, format
+`HWIMAP02`): the tag data and each BSP are segments, each with its own CRC
+over its bytes and relocations. The output directory's `manifest.txt` (and
+`manifest.le.txt`, the host reference's) gets one line per map: its name,
+format version, bytes, staging digest and SHA-256; restaging a map replaces
+its line and keeps the others.
+
+On the card: `sd:/halo-wii-engine/data/maps/<name>.wmap` and `manifest.txt`,
+and `sd:/halo-wii-engine/map.txt`, the run's plan: one line per map run
+(`levels\...\<name>` and options) or refused load (`fail ...`); the format is
+in `port/wii/engine/engine_map_run.h`. Before it uses a staged map, the
+Wii's cache layer checks it against the manifest and its CRCs and refuses a
+missing, truncated, damaged, stale or mismatched staging, or a wrong data
+root, with an error that says what to copy again (`MAP_ERROR` in the log).
+
+`map_load_failures.py` makes those failures from your stagings (private, in
+both byte orders): a truncated copy, a changed byte, a format-1 staging, a
+mismatched manifest line and a multi-BSP map with a damaged second BSP.
+
+```powershell
+python -B tools/wii/map_load_failures.py --staged <stagings> --map <map> --old <format-1 staging dir> --bsp-map <multi-BSP map> --output <new private dir>
+```
 
 `run_engine_map_host.py` builds the same engine units and platform layer as
 `engine.dol` for i686 (clang in WSL Debian) and runs the same real-map run
-(`port/wii/engine/engine_map_run.c`) on the little-endian staging, with MEM2
+(`port/wii/engine/engine_map_run.c`) and plan on the little-endian stagings
+(`*.le.wmap` and `manifest.le.txt` of each `--maps` directory), with MEM2
 mapped at the Wii run's addresses; `--vsync-from <Wii engine.log>` replays the
 Wii's measured retrace frame times. `compare_map_runs.py` compares two logs
-run by run, allocation by allocation and tick by tick.
+map by map, run by run, allocation by allocation and tick by tick, and the
+refused loads.
 
 ```powershell
-python -B tools/wii/run_engine_map_host.py --build <dir> --map <private .le.wmap> --scenario <levels\...\name> --run <new dir> --vsync-from <Wii engine.log> [--offset 4096]
+python -B tools/wii/run_engine_map_host.py --build <dir> --maps <private stagings> [<more>] --plan <map.txt> --run <new dir> --vsync-from <Wii engine.log> [--offset 4096]
 python -B tools/wii/compare_map_runs.py --wii <Wii engine.log> --host <host engine.log> --json <out>
 ```
 
-`test_map_stage.py` covers the layouts, the plan, the data rules and the file
-format with synthetic data and the committed tables only.
+`test_map_stage.py` covers the layouts, the plan, the data rules, the file
+format, the manifest and the load-failure files with synthetic data and the
+committed tables only. `test_hs_cells.py` checks the script runtime's value
+cells against the evaluators' types, in the engine's source.
 
 ## Environment render staging (HWI-016B)
 
