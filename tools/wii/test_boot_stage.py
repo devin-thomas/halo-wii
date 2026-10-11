@@ -119,5 +119,16 @@ class DolphinProfileTests(unittest.TestCase):
         self.assertNotIn("SafeTextureCacheColorSamples", run_dolphin.profile_files("D3D")["GFX.ini"])
 
 
+class HostReplayTests(unittest.TestCase):
+    def test_pad_and_arena_lines(self):
+        import run_boot_host
+        log = "\n".join([
+            "ARENA open offset=4096 low=0x90002000 high_before=0x933db7e0 high_during=0x9",
+            "BOOT_PAD scan=0 clock_ms=0 connected=1 buttons=0000 stick=0,0 cstick=0,0 triggers=0,0",
+            "BOOT_PAD scan=498 clock_ms=16401 connected=1 buttons=0104 stick=-3,7 cstick=0,0 triggers=0,255"])
+        self.assertEqual(run_boot_host.pad_lines(log), ["0 1 0000 0 0 0 0 0 0", "498 1 0104 -3 7 0 0 0 255"])
+        self.assertEqual(run_boot_host.arena_of(log), ("0x90002000", "0x933db7e0", "4096"))
+
+
 if __name__ == "__main__":
     unittest.main()
