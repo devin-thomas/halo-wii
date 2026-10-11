@@ -59,6 +59,7 @@ the EFB on a 32x24 grid and the game state's digest.
 #include "scenario/scenario.h"
 #include "tag_files/tag_files.h"
 #include "tag_files/tag_groups.h"
+#include "memory/crc.h"
 
 #include "wii_render.h"
 #include "wii_render_ui.h"
@@ -151,6 +152,7 @@ struct boot_ui_globals
 	long screen_count;
 	unsigned long state_digests[BOOT_UI_MAXIMUM_STATE_ALLOCATIONS];
 	boolean finished;
+	long screen_samples;
 };
 
 /* ---------- globals */
@@ -348,6 +350,47 @@ static void *boot_ui_bitmap_hardware_format(
 	return boot_ui_texture(bitmap) >= 0 ? (void *)bitmap : NULL;
 }
 
+/* each recorded allocation's digest (the last wii_boot_state_digest), for
+comparing a checkpoint with the host's allocation by allocation */
+static void boot_ui_log_allocations(
+	char const *checkpoint)
+{
+	long index;
+
+	for (index = 0; index < real_map_allocation_count() && index < BOOT_UI_MAXIMUM_STATE_ALLOCATIONS; index++)
+	{
+		wii_log("BOOT_STATE_ALLOCATION at=%s frame=%ld index=%ld digest=%08lx name=%s\n", checkpoint, boot_ui.frame,
+			index, boot_ui.state_digests[index], real_map_allocation_name(index));
+	}
+}
+
+/* the last digests without the script runtime's allocations ("hs ..."), whose
+stack slots hold shorts in longs that the PowerPC lays out differently
+(HWI-016C fixes the script runtime): the rest compares with the host */
+static unsigned long boot_ui_state_without_scripts(
+	void)
+{
+	unsigned long crc;
+	long index;
+
+	crc_new(&crc);
+	for (index = 0; index < real_map_allocation_count() && index < BOOT_UI_MAXIMUM_STATE_ALLOCATIONS; index++)
+	{
+		unsigned long digest = boot_ui.state_digests[index];
+		byte word[4];
+
+		if (!csstrncmp(real_map_allocation_name(index), "hs ", 3))
+			continue;
+		word[0] = (byte)digest;
+		word[1] = (byte)(digest >> 8);
+		word[2] = (byte)(digest >> 16);
+		word[3] = (byte)(digest >> 24);
+		crc_checksum_buffer(&crc, word, 4);
+	}
+
+	return crc;
+}
+
 /* ---------- the screens */
 
 static void boot_ui_screen_check(
@@ -381,10 +424,26 @@ static void boot_ui_screen_check(
 
 		current->sampled = TRUE;
 		wii_log("BOOT_SCREEN frame=%ld clock_ms=%lu map=%s screen_tag=%ld focused_tag=%ld efb_crc=%08lx covered=%d "
-			"state=%08lx game_time=%ld\n", boot_ui.frame, wii_boot_clock_milliseconds(), boot_ui.map_name,
-			screen_tag == NONE ? -1L : (long)DATUM_INDEX_TO_ABSOLUTE_INDEX(screen_tag),
+			"state=%08lx state_without_scripts=%08lx game_time=%ld\n", boot_ui.frame, wii_boot_clock_milliseconds(),
+			boot_ui.map_name, screen_tag == NONE ? -1L : (long)DATUM_INDEX_TO_ABSOLUTE_INDEX(screen_tag),
 			focused_tag == NONE ? -1L : (long)DATUM_INDEX_TO_ABSOLUTE_INDEX(focused_tag), crc, covered, state,
-			game_in_progress() ? game_time_get() : -1L);
+			boot_ui_state_without_scripts(), game_in_progress() ? game_time_get() : -1L);
+		if (boot_ui.screen_samples++ == 0)
+		{
+			boot_ui_log_allocations("first_screen");
+			if (boot_ui.config.dump_allocation >= 0 &&
+				boot_ui.config.dump_allocation < real_map_allocation_count())
+			{
+				FILE *dump = fopen("d:\\boot_dump.bin", "wb");
+
+				if (dump)
+				{
+					fwrite(real_map_allocation_address(boot_ui.config.dump_allocation), 1,
+						real_map_allocation_bytes(boot_ui.config.dump_allocation), dump);
+					fclose(dump);
+				}
+			}
+		}
 	}
 }
 
@@ -569,6 +628,7 @@ static void boot_ui_present(
 			wii_log("BOOT_ENVIRONMENT first frame=%ld clock_ms=%lu map=%s efb_crc=%08lx covered=%d state=%08lx "
 				"game_time=%ld\n", boot_ui.frame, wii_boot_clock_milliseconds(), boot_ui.map_name, crc, covered,
 				state, game_in_progress() ? game_time_get() : -1L);
+			boot_ui_log_allocations("first_environment");
 		}
 	}
 	wii_ui_gx_present();

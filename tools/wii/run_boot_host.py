@@ -33,7 +33,7 @@ import run_engine_map_host as map_host  # noqa: E402
 DRIVER = Path("tools/wii/boot_menu_host.c")
 STUB = Path("tools/wii/boot_host_render_stub.c")
 ENGINE_SIDE = Path("port/wii/render/render_ui.c")
-PAD_LINE = re.compile(r"^BOOT_PAD scan=(\d+) clock_ms=\d+ connected=([0-9a-f]+) buttons=([0-9a-f]+) "
+PAD_LINE = re.compile(r"^BOOT_PAD(2?) scan=(\d+) clock_ms=\d+ connected=([0-9a-f]+) buttons=([0-9a-f]+) "
                       r"stick=(-?\d+),(-?\d+) cstick=(-?\d+),(-?\d+) triggers=(\d+),(\d+)")
 ARENA_LINE = re.compile(r"^ARENA open offset=(\d+) low=(0x[0-9a-f]+) high_before=(0x[0-9a-f]+)")
 
@@ -94,12 +94,14 @@ def build(out: Path) -> Path:
 
 
 def pad_lines(log_text):
-    """the Wii launch's pad changes: '<scan> <connected> <buttons> <sx> <sy> <cx> <cy> <l> <r>' lines"""
+    """the Wii launch's pad changes: '<port> <scan> <connected> <buttons> <sx> <sy> <cx> <cy> <l> <r>' lines
+    (port 0, or 1 for the BOOT_PAD2 lines of a second player)"""
     result = []
     for line in log_text.splitlines():
         match = PAD_LINE.match(line)
         if match:
-            result.append(" ".join(match.groups()))
+            groups = match.groups()
+            result.append(" ".join(("1" if groups[0] else "0", *groups[1:])))
     return result
 
 
@@ -122,6 +124,8 @@ def main() -> int:
     parser.add_argument("--max-frames", type=int, default=5400)
     parser.add_argument("--environment-frames", type=int, default=150)
     parser.add_argument("--settle-frames", type=int, default=45)
+    parser.add_argument("--dump", type=int, help="a recorded allocation's index: its bytes at the first screen "
+                                               "sample to the data folder's boot_dump.bin (diagnosis)")
     args = parser.parse_args()
     out = args.build.resolve()
     program = out / "boot_menu_host" if args.no_build else build(out)
@@ -147,7 +151,9 @@ def main() -> int:
                str(args.environment_frames), str(args.settle_frames)]
     started = time.perf_counter()
     run = subprocess.run(["wsl", "-d", "Debian", "--", "sh", "-c",
-                          f"cd {map_host.sh(map_host.wsl(run_dir))} && {' '.join(map_host.sh(part) for part in command)}"],
+                          f"cd {map_host.sh(map_host.wsl(run_dir))} && "
+                          f"{('BOOT_DUMP=' + str(args.dump) + ' ') if args.dump is not None else ''}"
+                          f"{' '.join(map_host.sh(part) for part in command)}"],
                          capture_output=True, text=True)
     seconds = time.perf_counter() - started
     record = {"command": ["boot_menu_host", *command[1:4], "pad.txt", *command[5:]], "exit_code": run.returncode,

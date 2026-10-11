@@ -36,6 +36,7 @@ int wii_platform_configure(void);
 int __real_main(void);
 
 struct pad_change {
+    int port;
     unsigned long scan;
     struct wii_pad_state state;
 };
@@ -43,7 +44,7 @@ struct pad_change {
 static struct pad_change pad_changes[MAX_PAD_CHANGES];
 static long pad_change_count;
 static unsigned long pad_scans;
-static struct wii_pad_state pad_now;
+static struct wii_pad_state pad_now[2];
 
 static void fault(int signal_number)
 {
@@ -66,22 +67,24 @@ void wii_driver_halt(const char *error_text)
     exit(1);
 }
 
-/* "<scan> <connected> <buttons> <sx> <sy> <cx> <cy> <l> <r>" lines, scans ascending */
+/* "<port> <scan> <connected> <buttons> <sx> <sy> <cx> <cy> <l> <r>" lines (port 0 or 1), scans ascending */
 static int pad_load(const char *path)
 {
     FILE *file = fopen(path, "rb");
     unsigned long scan;
     unsigned int connected, buttons, l, r;
-    int sx, sy, cx, cy;
+    int port, sx, sy, cx, cy;
 
     if (!file)
         return 0;
     while (pad_change_count < MAX_PAD_CHANGES &&
-           fscanf(file, "%lu %x %x %d %d %d %d %u %u", &scan, &connected, &buttons, &sx, &sy, &cx, &cy, &l, &r) == 9) {
+           fscanf(file, "%d %lu %x %x %d %d %d %d %u %u", &port, &scan, &connected, &buttons, &sx, &sy, &cx, &cy,
+                  &l, &r) == 10) {
         struct pad_change *change = &pad_changes[pad_change_count++];
 
+        change->port = port == 1 ? 1 : 0;
         change->scan = scan;
-        change->state.connected = (int)(connected & 1u);
+        change->state.connected = (int)((connected >> change->port) & 1u);
         change->state.buttons = (unsigned short)buttons;
         change->state.stick_x = (signed char)sx;
         change->state.stick_y = (signed char)sy;
@@ -100,18 +103,18 @@ static unsigned int pad_scan(void)
     long index;
 
     for (index = 0; index < pad_change_count && pad_changes[index].scan <= pad_scans; index++)
-        pad_now = pad_changes[index].state;
+        pad_now[pad_changes[index].port] = pad_changes[index].state;
     if (pad_change_count == 0)
-        pad_now.connected = 1;
+        pad_now[0].connected = 1;
     pad_scans++;
-    return pad_now.connected ? 1u : 0u;
+    return (pad_now[0].connected ? 1u : 0u) | (pad_now[1].connected ? 2u : 0u);
 }
 
 static void pad_read(int port, struct wii_pad_state *state)
 {
     memset(state, 0, sizeof(*state));
-    if (port == 0)
-        *state = pad_now;
+    if (port == 0 || port == 1)
+        *state = pad_now[port];
 }
 
 /* the Wii's check without its manifest: the staged file is there and is one
@@ -142,6 +145,11 @@ static int map_check(const char *map_name, char *reason, unsigned long reason_si
 
 static void finish(int result, const char *reason)
 {
+    struct wii_xinput_report input;
+
+    wii_xinput_report_get(&input);
+    wii_log("BOOT_INPUT scans=%lu reads=%lu packets=%lu last_buttons=%04x\n", input.scans, input.reads, input.packets,
+            input.last_xbox_buttons);
     wii_log("UNSUPPORTED names=%lu calls=%lu\n", wii_unsupported_names(), wii_unsupported_calls());
     wii_log("END target=engine_host mode=boot reason=%s pad_scans=%lu result=%s\n", reason, pad_scans,
             result ? "pass" : "fail");
@@ -187,6 +195,7 @@ int __wrap_main(int argc, char **argv)
     config.max_frames = strtol(argv[5], NULL, 10);
     config.environment_frames = strtol(argv[6], NULL, 10);
     config.screen_settle_frames = strtol(argv[7], NULL, 10);
+    config.dump_allocation = getenv("BOOT_DUMP") ? strtol(getenv("BOOT_DUMP"), NULL, 10) : -1;
     config.overlay = "";
     config.finish = finish;
     config.map_check = map_check;

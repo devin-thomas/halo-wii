@@ -76,6 +76,7 @@ static struct {
     unsigned long texture_budget;
     int frame_clock;
     int expect_refusal;
+    long dump_allocation;
     /* manifest.txt */
     char source[40], generation[40], stager[40];
     struct boot_manifest_file files[BOOT_MAX_MANIFEST_FILES];
@@ -110,6 +111,7 @@ static void read_config(void)
     boot.error_frames = 240;
     boot.texture_budget = WII_UI_DEFAULT_TEXTURE_BUDGET;
     boot.frame_clock = 1;
+    boot.dump_allocation = -1;
     if (!file)
         return;
     size_t used = fread(text, 1, sizeof(text) - 1, file);
@@ -128,6 +130,8 @@ static void read_config(void)
             boot.error_frames = strtol(line + 13, NULL, 10);
         else if (!strncmp(line, "texture_budget=", 15))
             boot.texture_budget = strtoul(line + 15, NULL, 10);
+        else if (!strncmp(line, "dump_allocation=", 16))
+            boot.dump_allocation = strtol(line + 16, NULL, 10);
         else if (!strcmp(line, "expect=refusal"))
             boot.expect_refusal = 1;
         else if (!strcmp(line, "clock=real"))
@@ -497,6 +501,7 @@ int wii_boot_run(const struct wii_boot_driver *driver)
     config.environment_frames = boot.environment_frames;
     config.screen_settle_frames = boot.settle_frames;
     config.expect_refusal = boot.expect_refusal;
+    config.dump_allocation = boot.dump_allocation;
     config.overlay = boot.overlay;
     config.finish = engine_finish;
     config.map_check = map_check;

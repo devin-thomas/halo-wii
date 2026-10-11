@@ -309,6 +309,26 @@ void __stdcall __wrap_Sleep(
 /* ---------- the game state's digest at a boot-mode checkpoint */
 
 
+struct boot_nibble_probe
+{
+	char first : 4;
+	byte second : 4;
+};
+
+static boolean boot_nibble_first_high(
+	void)
+{
+	union
+	{
+		struct boot_nibble_probe fields;
+		byte value;
+	} probe;
+
+	probe.value = 0;
+	probe.fields.first = 1;
+	return probe.value == 0x10;
+}
+
 unsigned long wii_boot_state_digest(
 	unsigned long *per_allocation,
 	long count)
@@ -332,7 +352,23 @@ unsigned long wii_boot_state_digest(
 
 			size = MIN(live, size);
 		}
-		digest = real_map_digest_bytes(address, size);
+		/* ADR-018: the one in-memory nibble bit-field unit the game state
+		holds (players globals' bsp switch state, byte 0x2F) is read
+		low-field-first, as real_map_scenario.c's digest reads it: swapped in
+		place for the digest on a compiler that allocates the first field high,
+		then put back */
+		if (!csstrcmp(real_map_allocation_name(index), "players globals") && size > 0x2F && boot_nibble_first_high())
+		{
+			byte *unit = (byte *)address + 0x2F;
+
+			*unit = (byte)((*unit >> 4) | (*unit << 4));
+			digest = real_map_digest_bytes(address, size);
+			*unit = (byte)((*unit >> 4) | (*unit << 4));
+		}
+		else
+		{
+			digest = real_map_digest_bytes(address, size);
+		}
 		if (per_allocation && index < count)
 			per_allocation[index] = digest;
 		word[0] = (byte)digest;
@@ -489,4 +525,97 @@ boolean __wrap_cache_files_precache_map_begin(
 		return TRUE;
 	}
 	return __real_cache_files_precache_map_begin(map_name, copy_map);
+}
+
+/* ---------- the engine's worker threads, under the frame clock
+
+The menus' first screen waits on a worker thread (the saved games' file
+system check, ui_widget.c's process_ui_widgets: "if the thread has not
+exited, return"). Under the frame clock a frame takes no real time, so how
+many frames the menus wait would follow the host's speed, not the game's.
+With the frame clock on, asking whether a thread has exited waits (in real
+time) until it has: the menus then take the same frames in every launch and
+on the host. Every other caller already waits in a loop. */
+
+struct thread_reference;
+boolean __real_thread_has_exited(struct thread_reference *thread);
+
+boolean __wrap_thread_has_exited(
+	struct thread_reference *thread)
+{
+	long waits;
+
+	if (!boot_frame_clock)
+		return __real_thread_has_exited(thread);
+	for (waits = 0; waits < 30000; waits++)
+	{
+		if (__real_thread_has_exited(thread))
+			return TRUE;
+		__real_Sleep(1);
+	}
+	wii_log("BOOT_THREAD_WAIT a worker thread did not exit in 30 s\n");
+	return FALSE;
+}
+
+/* ---------- the C library's random numbers and the calendar, under the frame clock
+
+The engine seeds its local random numbers from the calendar, the clock and
+rand() (random_math.c), and a few callers use rand() directly. The C
+libraries differ (newlib's rand() is not glibc's, the Wii's calendar is not
+the host's), so under the frame clock rand() is the Xbox's own C library's
+(Microsoft's linear congruential generator) and the calendar is a fixed
+date plus the frame clock: every launch and the i686 host start the same. */
+
+int __real_rand(void);
+void __real_srand(unsigned int seed);
+unsigned long __real_system_seconds(void);
+
+static unsigned long boot_rand_state = 1;
+
+int __wrap_rand(
+	void)
+{
+	if (!boot_frame_clock)
+		return __real_rand();
+	boot_rand_state = boot_rand_state * 214013UL + 2531011UL;
+	return (int)((boot_rand_state >> 16) & 0x7FFF);
+}
+
+void __wrap_srand(
+	unsigned int seed)
+{
+	if (!boot_frame_clock)
+	{
+		__real_srand(seed);
+		return;
+	}
+	boot_rand_state = seed;
+}
+
+unsigned long __wrap_system_seconds(
+	void)
+{
+	/* 2006-07-02 00:00:00 UTC, the date the emulator's clock showed */
+	if (boot_frame_clock)
+		return 1151798400UL + boot_clock / 1000UL;
+	return __real_system_seconds();
+}
+
+/* (the C library's calendar, which a few engine callers read directly:
+srand(time(NULL)) in bungie_net's random_numbers.c) */
+#include <time.h>
+
+time_t __real_time(time_t *result);
+
+time_t __wrap_time(
+	time_t *result)
+{
+	time_t now;
+
+	if (!boot_frame_clock)
+		return __real_time(result);
+	now = (time_t)__wrap_system_seconds();
+	if (result)
+		*result = now;
+	return now;
 }
