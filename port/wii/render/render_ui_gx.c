@@ -51,6 +51,8 @@ struct ui_texture {
     uint32_t bytes;            /* resident bytes (budget) */
     int width, height, levels, gx_format;
     void *image;               /* level 0 */
+    void *alpha_image;         /* HWT1 version 2: the alpha plane's level 0 (I4 or I8), or NULL */
+    int alpha_format;
     unsigned long last_frame;
     unsigned long draws;
 };
@@ -64,6 +66,7 @@ static struct {
     unsigned long frame;
     int window_x0, window_y0, window_w, window_h;
     struct ui_texture textures[UI_MAX_TEXTURES];
+    unsigned long alpha_planes;
     unsigned long loads, load_failures, evictions, quads, text_quads, blend_approximated, failed_draws;
     unsigned long long load_us;
 } ui;
@@ -207,6 +210,10 @@ long wii_ui_gx_texture_tag(const char *map, long tag, long bitmap, int width, in
         why = "dimensions_differ_from_engine";
     else if (hwt_image_at(&header, 0, &image) != CONTENT_OK || !image.gx_loadable || (image.offset & 31u))
         why = "not_gx_loadable";
+    struct hwt_image alpha_image;
+    if (!why && header.alpha_kind == HWT_ALPHA_PLANE &&
+        (hwt_alpha_image_at(&header, 0, &alpha_image) != CONTENT_OK || (alpha_image.offset & 31u)))
+        why = "alpha_plane_not_loadable";
     if (why) {
         content_blob_release(&blob);
         texture_failed(map, tag, bitmap, why, 0);
@@ -235,6 +242,12 @@ long wii_ui_gx_texture_tag(const char *map, long tag, long bitmap, int width, in
     t->levels = (int)header.levels;
     t->gx_format = (int)header.gx_format;
     t->image = blob.data + image.offset;
+    /* HWI-008F's split alpha: CMPR colour and an I4/I8 plane of the alpha
+    (a DXT3/DXT5 source); without a plane the alpha is 255 */
+    t->alpha_image = header.alpha_kind == HWT_ALPHA_PLANE ? blob.data + alpha_image.offset : NULL;
+    t->alpha_format = (int)header.alpha_gx_format;
+    if (t->alpha_image)
+        ui.alpha_planes++;
     t->last_frame = ui.frame;
     DCFlushRange(blob.data, blob.capacity);
     ui.resident += blob.capacity;
@@ -395,6 +408,7 @@ void wii_ui_gx_quads(const struct wii_ui_draw *draw, const struct wii_ui_vertex 
         ui.failed_draws++;
         return;
     }
+    int stages = 1;
     state_2d();
     blend(draw->blend);
     if (t) {
@@ -415,6 +429,24 @@ void wii_ui_gx_quads(const struct wii_ui_draw *draw, const struct wii_ui_vertex 
         GX_SetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
         GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
         GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+        if (t->alpha_image) {
+            /* the alpha plane, same chain and footprint: alpha = plane x vertex alpha */
+            GXTexObj alpha;
+            GX_InitTexObj(&alpha, t->alpha_image, (u16)t->width, (u16)t->height, (u8)t->alpha_format, wrap, wrap,
+                          levels > 1 ? GX_TRUE : GX_FALSE);
+            if (levels > 1)
+                GX_InitTexObjLOD(&alpha, draw->point_sampled ? GX_NEAR_MIP_NEAR : GX_LIN_MIP_LIN, filter, 0.0f,
+                                 (f32)(levels - 1), 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+            else
+                GX_InitTexObjFilterMode(&alpha, filter, filter);
+            GX_LoadTexObj(&alpha, GX_TEXMAP1);
+            GX_SetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP1, GX_COLOR0A0);
+            GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_CPREV);
+            GX_SetTevColorOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+            GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_TEXA, GX_CA_RASA, GX_CA_ZERO);
+            GX_SetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+            stages = 2;
+        }
         t->last_frame = ui.frame;
         t->draws++;
     } else {
@@ -424,15 +456,15 @@ void wii_ui_gx_quads(const struct wii_ui_draw *draw, const struct wii_ui_vertex 
     }
     if (draw->alpha_weighted) {
         /* the colour times its alpha (Halo PC's HUD overlays) */
-        GX_SetTevOrder(GX_TEVSTAGE1, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLORNULL);
-        GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_APREV, GX_CC_ZERO);
-        GX_SetTevColorOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
-        GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
-        GX_SetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
-        GX_SetNumTevStages(2);
-    } else {
-        GX_SetNumTevStages(1);
+        u8 stage = (u8)(GX_TEVSTAGE0 + stages);
+        GX_SetTevOrder(stage, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLORNULL);
+        GX_SetTevColorIn(stage, GX_CC_ZERO, GX_CC_CPREV, GX_CC_APREV, GX_CC_ZERO);
+        GX_SetTevColorOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        GX_SetTevAlphaIn(stage, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
+        GX_SetTevAlphaOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        stages++;
     }
+    GX_SetNumTevStages((u8)stages);
     for (int done = 0; done < quad_count;) {
         int batch = quad_count - done > 4096 ? 4096 : quad_count - done;
         GX_Begin(GX_QUADS, GX_VTXFMT2, (u16)(batch * 4));
@@ -578,8 +610,8 @@ void wii_ui_gx_report(void)
     for (int i = 0; i < UI_MAX_TEXTURES; ++i)
         tags += ui.textures[i].kind == TEXTURE_TAG;
     wii_log("BOOT_UI_GX_TOTALS frames=%lu quads=%lu text_quads=%lu loads=%lu load_failures=%lu evictions=%lu "
-            "resident=%lu resident_peak=%lu budget=%lu tag_textures_now=%d load_ms=%llu blend_approximated=%lu "
+            "resident=%lu resident_peak=%lu budget=%lu tag_textures_now=%d alpha_planes=%lu load_ms=%llu blend_approximated=%lu "
             "failed_draws=%lu\n",
             ui.frame, ui.quads, ui.text_quads, ui.loads, ui.load_failures, ui.evictions, ui.resident, ui.resident_peak,
-            ui.budget, tags, ui.load_us / 1000ull, ui.blend_approximated, ui.failed_draws);
+            ui.budget, tags, ui.alpha_planes, ui.load_us / 1000ull, ui.blend_approximated, ui.failed_draws);
 }
