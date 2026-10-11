@@ -142,6 +142,32 @@ decals' per-map vertex-cache flush (the decals' own unlocking is kept).
 With `sd:/halo-wii-engine/full_game.txt` on the card, the engine's own
 `main` runs instead and shows what the unmodified start-up does on the Wii.
 
+## The boot mode: through the original menus (HWI-016D)
+
+With `sd:/halo-wii-engine/boot.txt` (`mode=menu`) on the card, the driver
+runs the engine's own `main` after its checks: `shell_initialize`, then
+`main_loop`, which loads the UI map, runs the interface's own widgets and
+changes maps as the menus ask ([evidence](../../../docs/wii/evidence/2026-10-10-boot-menu.md)).
+
+| Part | File | What |
+|---|---|---|
+| Driver | `boot_main.c` | `boot.txt`; `manifest.txt` (each staged map's SHA-256, checked); the UI map's load-failure screens; the GameCube pad; the end of the launch |
+| Wrapped entry points | `boot_hooks.c` | pass-through unless the boot mode registered: the rasterizer backend main_loop's frame reaches, the menus' map selection checked before the engine commits, the frame clock, sound and movie start-up |
+| Input | `wii_xinput.c` | XInput on the GameCube pad (minimum menu mapping: A/B/X/Y, Start, Z as Back, D-pad, sticks, triggers) |
+| Sockets | `wii_loopback_net.c` | an in-process loopback under the Linux port's `xnet.c`: a split-screen game's host and client |
+| Rasterizer | [port/wii/render](../render/README.md) `render_ui.c`, `render_ui_gx.c` | the environment from each window's camera, then the engine's own `render_ui_widgets` |
+
+`boot.txt` keys: `mode=menu`, `max_frames`, `environment_frames` (the launch
+passes this many frames after a map other than the menus' draws),
+`settle_frames`, `texture_budget`, `clock=frame|real`, `error_frames`,
+`expect=refusal` (a load-failure test), `dump_allocation` (diagnosis).
+
+**The frame clock** (the default): main_update_time's 33 ms wait advances a
+clock of the boot mode's own, which `system_milliseconds` reads; `rand` is
+the Xbox C library's generator and the calendar a fixed date. Every launch,
+and the i686 host reference (`tools/wii/run_boot_host.py`), then runs the
+same frames for the same pad input.
+
 ## Files on the SD card
 
 `sd:/halo-wii-engine/`: `engine.log` (the report), `runs.txt` (launch
