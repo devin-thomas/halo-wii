@@ -148,7 +148,7 @@ STOCK_REQUIRED = {("Core", "EnableCheats"): "False", ("Core", "OverclockEnable")
                   ("Core", "RAMOverrideEnable"): "False", ("Core", "EmulationSpeed"): "1.0"}
 
 
-def profile_files(backend="D3D", efb_access=False, dump_frames=False):
+def profile_files(backend="D3D", efb_access=False, dump_frames=False, safe_texture_cache=False):
     """Config files for a new Wii-mode profile: stock clock/memory, no cheats."""
     dolphin = {
         "Core": [("CPUThread", "False"), ("EnableCheats", "False"), ("OverclockEnable", "False"),
@@ -163,6 +163,10 @@ def profile_files(backend="D3D", efb_access=False, dump_frames=False):
     gfx = {"Settings": [("InternalResolution", "1")]}
     if dump_frames:
         gfx["Settings"].append(("DumpFramesAsImages", "True"))
+    if safe_texture_cache:
+        # a texture the guest rewrites in place (HWI-016D: the engine's glyph
+        # cache) is hashed whole, not by samples, so no change is missed
+        gfx["Settings"].append(("SafeTextureCacheColorSamples", "0"))
     if efb_access:
         gfx["Hacks"] = [("EFBAccessEnable", "True")]
     wiimotes = {name: [("Source", "0")] for name in
@@ -1182,6 +1186,8 @@ def parse_args(argv):
     parser.add_argument("--timeout", type=float, default=120.0, help="seconds before a launch is force-stopped")
     parser.add_argument("--backend", help="video backend (default: D3D on Windows, Vulkan on macOS)")
     parser.add_argument("--efb-access", action="store_true", help="enable CPU EFB peeks (GFX Hacks)")
+    parser.add_argument("--safe-texture-cache", action="store_true",
+                        help="hash every texel of a texture (textures the guest rewrites in place)")
     parser.add_argument("--dump-frames", action="store_true", help="dump rendered frames as PNG")
     movie = parser.add_mutually_exclusive_group()
     movie.add_argument("--input-script", type=Path, help="JSON pad script to author into a DTM")
@@ -1245,7 +1251,7 @@ def main(argv=None):
         identity.update(build_id=build_id, source_commit=info.get("source_commit"),
                         source_dirty=info.get("source_dirty"), scope=info.get("scope"),
                         compiler=info.get("compiler"), auto_exit_frames=info.get("probe_auto_exit_frames"))
-    files = profile_files(backend, args.efb_access, args.dump_frames)
+    files = profile_files(backend, args.efb_access, args.dump_frames, args.safe_texture_cache)
     check_stock_limits(files)
     if running_count(exe.name, host):
         print("another Dolphin process is running; exclusive ownership required", file=sys.stderr)
@@ -1342,6 +1348,7 @@ def main(argv=None):
         "identity": identity,
         "profile": {"new": True, "isolated": True, "stock_limits": {f"{s}.{k}": v for (s, k), v in STOCK_REQUIRED.items()},
                     "backend": backend, "efb_access": args.efb_access, "dump_frames": args.dump_frames,
+                    "safe_texture_cache": args.safe_texture_cache,
                     "config_sha256": {n: hashlib.sha256(t.encode()).hexdigest() for n, t in files.items()},
                     "controllers": "GC port 1 standard controller; Wii remotes disabled"},
         "input": input_record, "staging": staging, "initial_sd": initial,
