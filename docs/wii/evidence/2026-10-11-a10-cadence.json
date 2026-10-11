@@ -1,0 +1,2742 @@
+{
+ "ticket": "HWI-016F",
+ "date": "2026-10-11",
+ "build": {
+  "source_commit": "4a4aa208a7a7fb1e05d73d74f31d93e8081b88e2",
+  "source_dirty": false,
+  "build_id": "6958875983abf052",
+  "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0"
+ },
+ "measurements_before": {
+  "source": "base 186343a6 with the trace diagnosis only; i686 host; a10 9,000 ticks at 30 Hz and at 60 Hz, each after its own 30-tick warm-up",
+  "simulation_first_divergent_tick_hwi015b": 3,
+  "allocations": [
+   {
+    "allocation": "object globals",
+    "first_tick": 1,
+    "ticks_differing": 61,
+    "field": "pvs_activation union (offset 0x94)",
+    "values": [
+     "0x00000000",
+     "0x090004e5"
+    ],
+    "class": "history (b, fixed)"
+   },
+   {
+    "allocation": "object looping sounds",
+    "first_tick": 3,
+    "ticks_differing": 8998,
+    "field": "element 134 last_audible_frame_index (offset 0x14)",
+    "values": [
+     1,
+     4
+    ],
+    "class": "a (frame-coupled)"
+   },
+   {
+    "allocation": "effect",
+    "first_tick": 52,
+    "ticks_differing": 8949,
+    "field": "element 3 event_duration (0x54), particle_counts (0xDC); element 5 at 60 Hz only",
+    "class": "b (fixed: tick random stream)"
+   },
+   {
+    "allocation": "effect location",
+    "first_tick": 3634,
+    "ticks_differing": 5367,
+    "class": "b (fixed: tick random stream)"
+   },
+   {
+    "allocation": "objects",
+    "first_tick": 6971,
+    "ticks_differing": 2030,
+    "field": "three objects' effect attachment handles (identifier counter 0x92f5 vs 0x9325: 48 more effects at 60 Hz)",
+    "class": "b (fixed: tick random stream)"
+   }
+  ],
+  "after_tick_stream": [
+   {
+    "allocation": "scenario globals",
+    "first_tick": 1513,
+    "field": "sound environment (offset 0xB8 on)",
+    "class": "a (frame-coupled fields)"
+   },
+   {
+    "allocation": "object looping sounds",
+    "cadence": "20hz",
+    "first_tick": 1513,
+    "field": "background sound's index",
+    "class": "a (frame-coupled)"
+   },
+   {
+    "allocation": "all",
+    "cadence": "retrace replay",
+    "first_tick": 2,
+    "field": "a10's opening checkpoint saved after tick 3 instead of 1",
+    "class": "b (fixed: requests between ticks)"
+   }
+  ],
+  "wii_confirmation": "HWI-016C Research launch 1: a10's 60 Hz and retrace runs differ from 30 Hz in objects (end), object globals (60 Hz, tick 1), effect (150), effect location (end), object looping sounds (30), and the frame-coupled particle, particle systems, game sound globals, game time globals: the host's picture",
+  "prisoner_whole_attribution": {
+   "run": "Prisoner, 60 Hz after a 30 Hz warm-up (HWI-016B's first run)",
+   "without_tick_stream": "6d88af44",
+   "with_tick_stream": "7eb53576",
+   "allocations_changed": [
+    "first person weapons (from tick 30)",
+    "particle (from tick 150)"
+   ],
+   "simulation_hwi015b": "127656ef"
+  }
+ },
+ "host_reference": {
+  "plan": "all six cadences, one line per map: Prisoner 300 ticks and a10 9,000 ticks after a 30-tick warm-up; retrace paced by HWI-016C's measured Wii frame times",
+  "program_sha256": "acdda3792aaf7eade9f9976a1e30a7d789668861b9302fbeb9a8d89586311ef2",
+  "seconds": 61.9,
+  "runs": [
+   {
+    "map": "prisoner",
+    "cycle": "-1",
+    "cadence": "30hz",
+    "frames": "300",
+    "most_ticks_in_a_frame": "1",
+    "sim": "961a5ec5",
+    "sim_raw_chain": "a6414e3a",
+    "sim_hwi015b": "127656ef",
+    "first_divergent_tick": "1",
+    "digest": "cd443b39",
+    "frame_effects": "0",
+    "frame_sounds": "0"
+   },
+   {
+    "map": "prisoner",
+    "cycle": "0",
+    "cadence": "30hz",
+    "frames": "300",
+    "most_ticks_in_a_frame": "1",
+    "sim": "961a5ec5",
+    "sim_raw_chain": "a6414e3a",
+    "sim_hwi015b": "127656ef",
+    "first_divergent_tick": "-1",
+    "digest": "cd443b39",
+    "frame_effects": "0",
+    "frame_sounds": "0"
+   },
+   {
+    "map": "prisoner",
+    "cycle": "0",
+    "cadence": "60hz",
+    "frames": "600",
+    "most_ticks_in_a_frame": "1",
+    "sim": "961a5ec5",
+    "sim_raw_chain": "a6414e3a",
+    "sim_hwi015b": "127656ef",
+    "first_divergent_tick": "-1",
+    "digest": "7eb53576",
+    "frame_effects": "0",
+    "frame_sounds": "0"
+   },
+   {
+    "map": "prisoner",
+    "cycle": "0",
+    "cadence": "20hz",
+    "frames": "201",
+    "most_ticks_in_a_frame": "2",
+    "sim": "961a5ec5",
+    "sim_raw_chain": "a6414e3a",
+    "sim_hwi015b": "127656ef",
+    "first_divergent_tick": "-1",
+    "digest": "9b47e748",
+    "frame_effects": "0",
+    "frame_sounds": "0"
+   },
+   {
+    "map": "prisoner",
+    "cycle": "0",
+    "cadence": "144hz",
+    "frames": "1441",
+    "most_ticks_in_a_frame": "1",
+    "sim": "961a5ec5",
+    "sim_raw_chain": "a6414e3a",
+    "sim_hwi015b": "127656ef",
+    "first_divergent_tick": "-1",
+    "digest": "15b24084",
+    "frame_effects": "0",
+    "frame_sounds": "0"
+   },
+   {
+    "map": "prisoner",
+    "cycle": "0",
+    "cadence": "irregular",
+    "frames": "224",
+    "most_ticks_in_a_frame": "7",
+    "sim": "961a5ec5",
+    "sim_raw_chain": "a6414e3a",
+    "sim_hwi015b": "127656ef",
+    "first_divergent_tick": "-1",
+    "digest": "bae2e07a",
+    "frame_effects": "0",
+    "frame_sounds": "0"
+   },
+   {
+    "map": "prisoner",
+    "cycle": "0",
+    "cadence": "vsync_measured",
+    "frames": "115",
+    "most_ticks_in_a_frame": "7",
+    "sim": "961a5ec5",
+    "sim_raw_chain": "a6414e3a",
+    "sim_hwi015b": "127656ef",
+    "first_divergent_tick": "-1",
+    "digest": "5457aa61",
+    "frame_effects": "0",
+    "frame_sounds": "0"
+   },
+   {
+    "map": "a10",
+    "cycle": "-1",
+    "cadence": "30hz",
+    "frames": "30",
+    "most_ticks_in_a_frame": "1",
+    "sim": "d6db8c70",
+    "sim_raw_chain": "0289ca88",
+    "sim_hwi015b": "77749370",
+    "first_divergent_tick": "1",
+    "digest": "783f693a",
+    "frame_effects": "0",
+    "frame_sounds": "0"
+   },
+   {
+    "map": "a10",
+    "cycle": "0",
+    "cadence": "30hz",
+    "frames": "9000",
+    "most_ticks_in_a_frame": "1",
+    "sim": "f752db70",
+    "sim_raw_chain": "a6377d09",
+    "sim_hwi015b": "ed1fa3d9",
+    "first_divergent_tick": "-1",
+    "digest": "5f5ef9b6",
+    "frame_effects": "0",
+    "frame_sounds": "1"
+   },
+   {
+    "map": "a10",
+    "cycle": "0",
+    "cadence": "60hz",
+    "frames": "18000",
+    "most_ticks_in_a_frame": "1",
+    "sim": "f752db70",
+    "sim_raw_chain": "a6377d09",
+    "sim_hwi015b": "b6451dc1",
+    "first_divergent_tick": "-1",
+    "digest": "6cbd506c",
+    "frame_effects": "0",
+    "frame_sounds": "1"
+   },
+   {
+    "map": "a10",
+    "cycle": "0",
+    "cadence": "20hz",
+    "frames": "6001",
+    "most_ticks_in_a_frame": "2",
+    "sim": "f752db70",
+    "sim_raw_chain": "a6377d09",
+    "sim_hwi015b": "796efc23",
+    "first_divergent_tick": "-1",
+    "digest": "ef167f1f",
+    "frame_effects": "0",
+    "frame_sounds": "1"
+   },
+   {
+    "map": "a10",
+    "cycle": "0",
+    "cadence": "144hz",
+    "frames": "43201",
+    "most_ticks_in_a_frame": "1",
+    "sim": "f752db70",
+    "sim_raw_chain": "a6377d09",
+    "sim_hwi015b": "05e28ffe",
+    "first_divergent_tick": "-1",
+    "digest": "81498898",
+    "frame_effects": "0",
+    "frame_sounds": "1"
+   },
+   {
+    "map": "a10",
+    "cycle": "0",
+    "cadence": "irregular",
+    "frames": "6927",
+    "most_ticks_in_a_frame": "7",
+    "sim": "f752db70",
+    "sim_raw_chain": "a6377d09",
+    "sim_hwi015b": "ec07374c",
+    "first_divergent_tick": "-1",
+    "digest": "421eb53b",
+    "frame_effects": "0",
+    "frame_sounds": "1"
+   },
+   {
+    "map": "a10",
+    "cycle": "0",
+    "cadence": "vsync_measured",
+    "frames": "2279",
+    "most_ticks_in_a_frame": "7",
+    "sim": "f752db70",
+    "sim_raw_chain": "a6377d09",
+    "sim_hwi015b": "cf4f3e88",
+    "first_divergent_tick": "-1",
+    "digest": "e50a3552",
+    "frame_effects": "0",
+    "frame_sounds": "1"
+   }
+  ]
+ },
+ "hosts": {
+  "titan": {
+   "identity": {
+    "dol_sha256": "9e04aac151cf60597b336eee80a5dae51ef422b6c718b39493ed04e184247a29",
+    "dol_bytes": 4174592,
+    "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+    "build_id": "6958875983abf052",
+    "source_commit": "4a4aa208a7a7fb1e05d73d74f31d93e8081b88e2",
+    "source_dirty": false
+   },
+   "backend": "D3D",
+   "os_stability": {
+    "observation": "no_instability_events_observed",
+    "instability_events": 0,
+    "dolphin_application_events": [],
+    "window_utc": [
+     "2026-10-11T21:46:22+00:00",
+     "2026-10-11T22:24:12+00:00"
+    ]
+   },
+   "physical_wii": "untested",
+   "launches": [
+    {
+     "previous_runs": 0,
+     "host_process": {
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 1128.043,
+      "outcome": "exit_zero"
+     },
+     "persistence": "passed",
+     "persist": {
+      "previous_result": "0",
+      "digest": "00000000",
+      "chain": "00000000"
+     },
+     "fixed_step": {
+      "ticks": "300",
+      "digest": "c1ad6ae6",
+      "chain": "58ce9719",
+      "pass": "1"
+     },
+     "arena_open": {
+      "offset": "0",
+      "required": "51380224",
+      "spare": "2985984"
+     },
+     "arena_close": {
+      "restored": "1",
+      "heap_in_use": "2126040"
+     },
+     "stack": {
+      "peak_below_entry": "105152"
+     },
+     "map_plan": {
+      "lines": "12",
+      "maps": "6",
+      "runs": "25",
+      "simulation_identical": "1",
+      "whole_identical_per_cadence": "0",
+      "heap_flat": "1",
+      "expectations": "12",
+      "met": "12",
+      "map_errors": "7",
+      "failures": "0"
+     },
+     "end": {
+      "failures": "0",
+      "elapsed_ms": "1124303",
+      "result": "pass"
+     },
+     "expect": [
+      {
+       "map": "prisoner",
+       "simulation_hwi015b": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation_hwi015b": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation_hwi015b": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      }
+     ],
+     "expect_sim": [
+      {
+       "map": "prisoner",
+       "simulation": "961a5ec5",
+       "expected": "961a5ec5",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation": "961a5ec5",
+       "expected": "961a5ec5",
+       "pass": "1"
+      }
+     ],
+     "load_failures": [
+      {
+       "map": "nomap",
+       "expected": "not_staged",
+       "kind": "not_staged",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "a10",
+       "expected": "data_root",
+       "kind": "data_root",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonertrunc",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerflip",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerold",
+       "expected": "stale",
+       "kind": "stale",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonermm",
+       "expected": "manifest_mismatch",
+       "kind": "manifest_mismatch",
+       "loaded": "0",
+       "pass": "1"
+      }
+     ],
+     "bsp_failures": [
+      {
+       "map": "a10bsp",
+       "expected": "damaged",
+       "kind": "damaged",
+       "bsp_before": "7",
+       "bsp_after": "7",
+       "pass": "1"
+      }
+     ],
+     "runs": [
+      {
+       "map": "prisoner",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "cc2f2207",
+       "raw_chain": "3488ac42",
+       "ms": "6275"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "frames_without_ticks": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "7eb53576",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "c1322c57",
+       "raw_chain": "09fd66d7",
+       "ms": "6458"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "cc2f2207",
+       "raw_chain": "3488ac42",
+       "ms": "6274"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "cc2f2207",
+       "raw_chain": "3488ac42",
+       "ms": "6275"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "frames_without_ticks": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "7eb53576",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "c1322c57",
+       "raw_chain": "09fd66d7",
+       "ms": "6457"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "2",
+       "digest": "9b47e748",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "92e093ee",
+       "raw_chain": "0fe8d394",
+       "ms": "6307"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "frames_without_ticks": "1141",
+       "most_ticks_in_a_frame": "1",
+       "digest": "15b24084",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "5bffd983",
+       "raw_chain": "c90a5e8f",
+       "ms": "6947"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "frames_without_ticks": "28",
+       "most_ticks_in_a_frame": "7",
+       "digest": "bae2e07a",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "544798df",
+       "raw_chain": "d97e1236",
+       "ms": "6298"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "frames_without_ticks": "1",
+       "most_ticks_in_a_frame": "1",
+       "digest": "764a2a94",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "b1af85b6",
+       "raw_chain": "49214c55",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "cc2f2207",
+       "raw_chain": "3488ac42",
+       "ms": "6278"
+      },
+      {
+       "map": "a10",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "30",
+       "frames": "30",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "783f693a",
+       "sim": "d6db8c70",
+       "sim_raw": "021a9596",
+       "sim_raw_chain": "0289ca88",
+       "sim_hwi015b": "77749370",
+       "sim_hwi015b_raw_chain": "041ed72f",
+       "first_divergent_tick": "1",
+       "seed": "c7e37649",
+       "objects": "344",
+       "bsp": "7",
+       "bsp_switches": "1",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "8be34804",
+       "raw_chain": "d325c602",
+       "ms": "1654"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "9000",
+       "frames": "9000",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "5f5ef9b6",
+       "sim": "f752db70",
+       "sim_raw": "6ef0e857",
+       "sim_raw_chain": "a6377d09",
+       "sim_hwi015b": "ed1fa3d9",
+       "sim_hwi015b_raw_chain": "ca173d67",
+       "first_divergent_tick": "-1",
+       "seed": "0352e038",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "frame_effects": "0",
+       "frame_sounds": "1",
+       "raw": "24b8d151",
+       "raw_chain": "468eb3ac",
+       "ms": "304132"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "9000",
+       "frames": "18000",
+       "frames_without_ticks": "9000",
+       "most_ticks_in_a_frame": "1",
+       "digest": "6cbd506c",
+       "sim": "f752db70",
+       "sim_raw": "6ef0e857",
+       "sim_raw_chain": "a6377d09",
+       "sim_hwi015b": "b6451dc1",
+       "sim_hwi015b_raw_chain": "d2bcad11",
+       "first_divergent_tick": "-1",
+       "seed": "0352e038",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "frame_effects": "0",
+       "frame_sounds": "1",
+       "raw": "55f42b91",
+       "raw_chain": "d22cc921",
+       "ms": "309363"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "9000",
+       "frames": "1796",
+       "frames_without_ticks": "1",
+       "most_ticks_in_a_frame": "7",
+       "digest": "5bac3150",
+       "sim": "f752db70",
+       "sim_raw": "6ef0e857",
+       "sim_raw_chain": "a6377d09",
+       "sim_hwi015b": "2be002fd",
+       "sim_hwi015b_raw_chain": "52537f98",
+       "first_divergent_tick": "-1",
+       "seed": "0352e038",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "frame_effects": "0",
+       "frame_sounds": "1",
+       "raw": "563cb1f6",
+       "raw_chain": "77ccc7eb",
+       "ms": "317780"
+      }
+     ],
+     "host_comparison": {
+      "simulation_all_same": true,
+      "whole_all_same_unpaced": true,
+      "allocations_all_same_unpaced": true,
+      "allocations_compared": 1794,
+      "ticks_compared": {
+       "a10": 9000,
+       "a10bsp": 10,
+       "a10sw": 600,
+       "prisoner": 900
+      },
+      "first_divergent_tick": {
+       "a10": null,
+       "a10bsp": null,
+       "a10sw": null,
+       "prisoner": null
+      },
+      "ticks_all_same": true,
+      "fixed_step_same": true,
+      "failures_same": true
+     },
+     "cadence_invariance_wii": {
+      "a10": {
+       "invariant": true,
+       "runs": 3,
+       "cadences": [
+        "30hz",
+        "60hz",
+        "vsync_measured"
+       ],
+       "different": []
+      },
+      "a10bsp": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "a10sw": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "prisoner": {
+       "invariant": true,
+       "runs": 18,
+       "cadences": [
+        "60hz",
+        "30hz",
+        "20hz",
+        "144hz",
+        "irregular",
+        "vsync_measured"
+       ],
+       "different": []
+      }
+     },
+     "cadence_invariance_host": {
+      "a10": {
+       "invariant": true,
+       "runs": 3,
+       "cadences": [
+        "30hz",
+        "60hz",
+        "vsync_measured"
+       ],
+       "different": []
+      },
+      "a10bsp": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "a10sw": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "prisoner": {
+       "invariant": true,
+       "runs": 18,
+       "cadences": [
+        "60hz",
+        "30hz",
+        "20hz",
+        "144hz",
+        "irregular",
+        "vsync_measured"
+       ],
+       "different": []
+      }
+     },
+     "every_run_line": {
+      "wii_runs": 28,
+      "host_runs": 28,
+      "equal": 28,
+      "different": []
+     }
+    },
+    {
+     "previous_runs": 1,
+     "host_process": {
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 1128.251,
+      "outcome": "exit_zero"
+     },
+     "persistence": "passed",
+     "persist": {
+      "previous_result": "1",
+      "digest": "961a5ec5",
+      "chain": "357d9f3b"
+     },
+     "fixed_step": {
+      "ticks": "300",
+      "digest": "c1ad6ae6",
+      "chain": "58ce9719",
+      "pass": "1"
+     },
+     "arena_open": {
+      "offset": "4096",
+      "required": "51380224",
+      "spare": "2981888"
+     },
+     "arena_close": {
+      "restored": "1",
+      "heap_in_use": "2126072"
+     },
+     "stack": {
+      "peak_below_entry": "105152"
+     },
+     "map_plan": {
+      "lines": "12",
+      "maps": "6",
+      "runs": "25",
+      "simulation_identical": "1",
+      "whole_identical_per_cadence": "0",
+      "heap_flat": "1",
+      "expectations": "12",
+      "met": "12",
+      "map_errors": "7",
+      "failures": "0"
+     },
+     "end": {
+      "failures": "0",
+      "elapsed_ms": "1124250",
+      "result": "pass"
+     },
+     "expect": [
+      {
+       "map": "prisoner",
+       "simulation_hwi015b": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation_hwi015b": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation_hwi015b": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      }
+     ],
+     "expect_sim": [
+      {
+       "map": "prisoner",
+       "simulation": "961a5ec5",
+       "expected": "961a5ec5",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation": "961a5ec5",
+       "expected": "961a5ec5",
+       "pass": "1"
+      }
+     ],
+     "load_failures": [
+      {
+       "map": "nomap",
+       "expected": "not_staged",
+       "kind": "not_staged",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "a10",
+       "expected": "data_root",
+       "kind": "data_root",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonertrunc",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerflip",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerold",
+       "expected": "stale",
+       "kind": "stale",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonermm",
+       "expected": "manifest_mismatch",
+       "kind": "manifest_mismatch",
+       "loaded": "0",
+       "pass": "1"
+      }
+     ],
+     "bsp_failures": [
+      {
+       "map": "a10bsp",
+       "expected": "damaged",
+       "kind": "damaged",
+       "bsp_before": "7",
+       "bsp_after": "7",
+       "pass": "1"
+      }
+     ],
+     "runs": [
+      {
+       "map": "prisoner",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "c1f5dbb4",
+       "raw_chain": "f75dbbb7",
+       "ms": "6275"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "frames_without_ticks": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "7eb53576",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "9740ade4",
+       "raw_chain": "c61b4cef",
+       "ms": "6458"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "c1f5dbb4",
+       "raw_chain": "f75dbbb7",
+       "ms": "6274"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "c1f5dbb4",
+       "raw_chain": "f75dbbb7",
+       "ms": "6275"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "frames_without_ticks": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "7eb53576",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "9740ade4",
+       "raw_chain": "c61b4cef",
+       "ms": "6457"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "2",
+       "digest": "9b47e748",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "ec65f1e5",
+       "raw_chain": "bfa97621",
+       "ms": "6307"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "frames_without_ticks": "1141",
+       "most_ticks_in_a_frame": "1",
+       "digest": "15b24084",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "0f6d86cc",
+       "raw_chain": "807c5f0f",
+       "ms": "6947"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "frames_without_ticks": "28",
+       "most_ticks_in_a_frame": "7",
+       "digest": "bae2e07a",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "4909ea13",
+       "raw_chain": "d9805461",
+       "ms": "6298"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "frames_without_ticks": "1",
+       "most_ticks_in_a_frame": "1",
+       "digest": "764a2a94",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "ef33482c",
+       "raw_chain": "0cf14579",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "c1f5dbb4",
+       "raw_chain": "f75dbbb7",
+       "ms": "6275"
+      },
+      {
+       "map": "a10",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "30",
+       "frames": "30",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "783f693a",
+       "sim": "d6db8c70",
+       "sim_raw": "3def7427",
+       "sim_raw_chain": "540b0723",
+       "sim_hwi015b": "77749370",
+       "sim_hwi015b_raw_chain": "a646a4dd",
+       "first_divergent_tick": "1",
+       "seed": "c7e37649",
+       "objects": "344",
+       "bsp": "7",
+       "bsp_switches": "1",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "119965d0",
+       "raw_chain": "5ce26a39",
+       "ms": "1654"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "9000",
+       "frames": "9000",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "83eae4ab",
+       "sim": "03181654",
+       "sim_raw": "c7e796a2",
+       "sim_raw_chain": "5f497c77",
+       "sim_hwi015b": "eb7e0f29",
+       "sim_hwi015b_raw_chain": "2a63d79b",
+       "first_divergent_tick": "-1",
+       "seed": "0352e038",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "frame_effects": "0",
+       "frame_sounds": "1",
+       "raw": "97541c1c",
+       "raw_chain": "f05afc16",
+       "ms": "304131"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "9000",
+       "frames": "18000",
+       "frames_without_ticks": "9000",
+       "most_ticks_in_a_frame": "1",
+       "digest": "b0094d71",
+       "sim": "03181654",
+       "sim_raw": "c7e796a2",
+       "sim_raw_chain": "5f497c77",
+       "sim_hwi015b": "b024b131",
+       "sim_hwi015b_raw_chain": "aba82697",
+       "first_divergent_tick": "-1",
+       "seed": "0352e038",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "frame_effects": "0",
+       "frame_sounds": "1",
+       "raw": "75628cd6",
+       "raw_chain": "133ffa4e",
+       "ms": "309363"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "9000",
+       "frames": "1796",
+       "frames_without_ticks": "1",
+       "most_ticks_in_a_frame": "7",
+       "digest": "93ed0040",
+       "sim": "03181654",
+       "sim_raw": "c7e796a2",
+       "sim_raw_chain": "5f497c77",
+       "sim_hwi015b": "2d81ae0d",
+       "sim_hwi015b_raw_chain": "cef1ab33",
+       "first_divergent_tick": "-1",
+       "seed": "0352e038",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "frame_effects": "0",
+       "frame_sounds": "1",
+       "raw": "c411760b",
+       "raw_chain": "d4af5e3f",
+       "ms": "317780"
+      }
+     ],
+     "host_comparison": {
+      "simulation_all_same": true,
+      "whole_all_same_unpaced": true,
+      "allocations_all_same_unpaced": true,
+      "allocations_compared": 1794,
+      "ticks_compared": {
+       "a10": 9000,
+       "a10bsp": 10,
+       "a10sw": 600,
+       "prisoner": 900
+      },
+      "first_divergent_tick": {
+       "a10": null,
+       "a10bsp": null,
+       "a10sw": null,
+       "prisoner": null
+      },
+      "ticks_all_same": true,
+      "fixed_step_same": true,
+      "failures_same": true
+     },
+     "cadence_invariance_wii": {
+      "a10": {
+       "invariant": true,
+       "runs": 3,
+       "cadences": [
+        "30hz",
+        "60hz",
+        "vsync_measured"
+       ],
+       "different": []
+      },
+      "a10bsp": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "a10sw": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "prisoner": {
+       "invariant": true,
+       "runs": 18,
+       "cadences": [
+        "60hz",
+        "30hz",
+        "20hz",
+        "144hz",
+        "irregular",
+        "vsync_measured"
+       ],
+       "different": []
+      }
+     },
+     "cadence_invariance_host": {
+      "a10": {
+       "invariant": true,
+       "runs": 3,
+       "cadences": [
+        "30hz",
+        "60hz",
+        "vsync_measured"
+       ],
+       "different": []
+      },
+      "a10bsp": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "a10sw": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "prisoner": {
+       "invariant": true,
+       "runs": 18,
+       "cadences": [
+        "60hz",
+        "30hz",
+        "20hz",
+        "144hz",
+        "irregular",
+        "vsync_measured"
+       ],
+       "different": []
+      }
+     },
+     "every_run_line": {
+      "wii_runs": 28,
+      "host_runs": 28,
+      "equal": 28,
+      "different": []
+     }
+    }
+   ]
+  },
+  "research": {
+   "identity": {
+    "dol_sha256": "9e04aac151cf60597b336eee80a5dae51ef422b6c718b39493ed04e184247a29",
+    "dol_bytes": 4174592,
+    "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+    "build_id": "6958875983abf052",
+    "source_commit": "4a4aa208a7a7fb1e05d73d74f31d93e8081b88e2",
+    "source_dirty": false
+   },
+   "backend": "Vulkan",
+   "os_stability": {
+    "observation": "no_instability_events_observed",
+    "instability_events": 0,
+    "dolphin_application_events": [
+     "dolphin_crash_report",
+     "dolphin_fault_or_crash_log_message",
+     "dolphin_fault_or_crash_log_message"
+    ],
+    "window_utc": [
+     "2026-10-11T21:45:35+00:00",
+     "2026-10-11T22:23:17+00:00"
+    ]
+   },
+   "physical_wii": "untested",
+   "launches": [
+    {
+     "previous_runs": 0,
+     "host_process": {
+      "exit_code_hex": "0xfffffffb",
+      "forced_stop": false,
+      "elapsed_seconds": 1125.171,
+      "outcome": "nonzero_exit"
+     },
+     "persistence": "passed",
+     "persist": {
+      "previous_result": "0",
+      "digest": "00000000",
+      "chain": "00000000"
+     },
+     "fixed_step": {
+      "ticks": "300",
+      "digest": "c1ad6ae6",
+      "chain": "58ce9719",
+      "pass": "1"
+     },
+     "arena_open": {
+      "offset": "0",
+      "required": "51380224",
+      "spare": "2985984"
+     },
+     "arena_close": {
+      "restored": "1",
+      "heap_in_use": "2126040"
+     },
+     "stack": {
+      "peak_below_entry": "105152"
+     },
+     "map_plan": {
+      "lines": "12",
+      "maps": "6",
+      "runs": "25",
+      "simulation_identical": "1",
+      "whole_identical_per_cadence": "0",
+      "heap_flat": "1",
+      "expectations": "12",
+      "met": "12",
+      "map_errors": "7",
+      "failures": "0"
+     },
+     "end": {
+      "failures": "0",
+      "elapsed_ms": "1124303",
+      "result": "pass"
+     },
+     "expect": [
+      {
+       "map": "prisoner",
+       "simulation_hwi015b": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation_hwi015b": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation_hwi015b": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      }
+     ],
+     "expect_sim": [
+      {
+       "map": "prisoner",
+       "simulation": "961a5ec5",
+       "expected": "961a5ec5",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation": "961a5ec5",
+       "expected": "961a5ec5",
+       "pass": "1"
+      }
+     ],
+     "load_failures": [
+      {
+       "map": "nomap",
+       "expected": "not_staged",
+       "kind": "not_staged",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "a10",
+       "expected": "data_root",
+       "kind": "data_root",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonertrunc",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerflip",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerold",
+       "expected": "stale",
+       "kind": "stale",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonermm",
+       "expected": "manifest_mismatch",
+       "kind": "manifest_mismatch",
+       "loaded": "0",
+       "pass": "1"
+      }
+     ],
+     "bsp_failures": [
+      {
+       "map": "a10bsp",
+       "expected": "damaged",
+       "kind": "damaged",
+       "bsp_before": "7",
+       "bsp_after": "7",
+       "pass": "1"
+      }
+     ],
+     "runs": [
+      {
+       "map": "prisoner",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "cc2f2207",
+       "raw_chain": "3488ac42",
+       "ms": "6275"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "frames_without_ticks": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "7eb53576",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "c1322c57",
+       "raw_chain": "09fd66d7",
+       "ms": "6458"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "cc2f2207",
+       "raw_chain": "3488ac42",
+       "ms": "6274"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "cc2f2207",
+       "raw_chain": "3488ac42",
+       "ms": "6275"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "frames_without_ticks": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "7eb53576",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "c1322c57",
+       "raw_chain": "09fd66d7",
+       "ms": "6457"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "2",
+       "digest": "9b47e748",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "92e093ee",
+       "raw_chain": "0fe8d394",
+       "ms": "6307"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "frames_without_ticks": "1141",
+       "most_ticks_in_a_frame": "1",
+       "digest": "15b24084",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "5bffd983",
+       "raw_chain": "c90a5e8f",
+       "ms": "6947"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "frames_without_ticks": "28",
+       "most_ticks_in_a_frame": "7",
+       "digest": "bae2e07a",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "544798df",
+       "raw_chain": "d97e1236",
+       "ms": "6298"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "frames_without_ticks": "1",
+       "most_ticks_in_a_frame": "1",
+       "digest": "764a2a94",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "b1af85b6",
+       "raw_chain": "49214c55",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "f9b207d5",
+       "sim_raw_chain": "a6414e3a",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "3a74cc6b",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "cc2f2207",
+       "raw_chain": "3488ac42",
+       "ms": "6278"
+      },
+      {
+       "map": "a10",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "30",
+       "frames": "30",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "783f693a",
+       "sim": "d6db8c70",
+       "sim_raw": "021a9596",
+       "sim_raw_chain": "0289ca88",
+       "sim_hwi015b": "77749370",
+       "sim_hwi015b_raw_chain": "041ed72f",
+       "first_divergent_tick": "1",
+       "seed": "c7e37649",
+       "objects": "344",
+       "bsp": "7",
+       "bsp_switches": "1",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "8be34804",
+       "raw_chain": "d325c602",
+       "ms": "1654"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "9000",
+       "frames": "9000",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "5f5ef9b6",
+       "sim": "f752db70",
+       "sim_raw": "6ef0e857",
+       "sim_raw_chain": "a6377d09",
+       "sim_hwi015b": "ed1fa3d9",
+       "sim_hwi015b_raw_chain": "ca173d67",
+       "first_divergent_tick": "-1",
+       "seed": "0352e038",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "frame_effects": "0",
+       "frame_sounds": "1",
+       "raw": "24b8d151",
+       "raw_chain": "468eb3ac",
+       "ms": "304132"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "9000",
+       "frames": "18000",
+       "frames_without_ticks": "9000",
+       "most_ticks_in_a_frame": "1",
+       "digest": "6cbd506c",
+       "sim": "f752db70",
+       "sim_raw": "6ef0e857",
+       "sim_raw_chain": "a6377d09",
+       "sim_hwi015b": "b6451dc1",
+       "sim_hwi015b_raw_chain": "d2bcad11",
+       "first_divergent_tick": "-1",
+       "seed": "0352e038",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "frame_effects": "0",
+       "frame_sounds": "1",
+       "raw": "55f42b91",
+       "raw_chain": "d22cc921",
+       "ms": "309363"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "9000",
+       "frames": "1796",
+       "frames_without_ticks": "1",
+       "most_ticks_in_a_frame": "7",
+       "digest": "5bac3150",
+       "sim": "f752db70",
+       "sim_raw": "6ef0e857",
+       "sim_raw_chain": "a6377d09",
+       "sim_hwi015b": "2be002fd",
+       "sim_hwi015b_raw_chain": "52537f98",
+       "first_divergent_tick": "-1",
+       "seed": "0352e038",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "frame_effects": "0",
+       "frame_sounds": "1",
+       "raw": "563cb1f6",
+       "raw_chain": "77ccc7eb",
+       "ms": "317780"
+      }
+     ],
+     "host_comparison": {
+      "simulation_all_same": true,
+      "whole_all_same_unpaced": true,
+      "allocations_all_same_unpaced": true,
+      "allocations_compared": 1794,
+      "ticks_compared": {
+       "a10": 9000,
+       "a10bsp": 10,
+       "a10sw": 600,
+       "prisoner": 900
+      },
+      "first_divergent_tick": {
+       "a10": null,
+       "a10bsp": null,
+       "a10sw": null,
+       "prisoner": null
+      },
+      "ticks_all_same": true,
+      "fixed_step_same": true,
+      "failures_same": true
+     },
+     "cadence_invariance_wii": {
+      "a10": {
+       "invariant": true,
+       "runs": 3,
+       "cadences": [
+        "30hz",
+        "60hz",
+        "vsync_measured"
+       ],
+       "different": []
+      },
+      "a10bsp": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "a10sw": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "prisoner": {
+       "invariant": true,
+       "runs": 18,
+       "cadences": [
+        "60hz",
+        "30hz",
+        "20hz",
+        "144hz",
+        "irregular",
+        "vsync_measured"
+       ],
+       "different": []
+      }
+     },
+     "cadence_invariance_host": {
+      "a10": {
+       "invariant": true,
+       "runs": 3,
+       "cadences": [
+        "30hz",
+        "60hz",
+        "vsync_measured"
+       ],
+       "different": []
+      },
+      "a10bsp": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "a10sw": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "prisoner": {
+       "invariant": true,
+       "runs": 18,
+       "cadences": [
+        "60hz",
+        "30hz",
+        "20hz",
+        "144hz",
+        "irregular",
+        "vsync_measured"
+       ],
+       "different": []
+      }
+     },
+     "every_run_line": {
+      "wii_runs": 28,
+      "host_runs": 28,
+      "equal": 28,
+      "different": []
+     }
+    },
+    {
+     "previous_runs": 1,
+     "host_process": {
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 1125.1,
+      "outcome": "exit_zero"
+     },
+     "persistence": "passed",
+     "persist": {
+      "previous_result": "1",
+      "digest": "961a5ec5",
+      "chain": "357d9f3b"
+     },
+     "fixed_step": {
+      "ticks": "300",
+      "digest": "c1ad6ae6",
+      "chain": "58ce9719",
+      "pass": "1"
+     },
+     "arena_open": {
+      "offset": "4096",
+      "required": "51380224",
+      "spare": "2981888"
+     },
+     "arena_close": {
+      "restored": "1",
+      "heap_in_use": "2126072"
+     },
+     "stack": {
+      "peak_below_entry": "105152"
+     },
+     "map_plan": {
+      "lines": "12",
+      "maps": "6",
+      "runs": "25",
+      "simulation_identical": "1",
+      "whole_identical_per_cadence": "0",
+      "heap_flat": "1",
+      "expectations": "12",
+      "met": "12",
+      "map_errors": "7",
+      "failures": "0"
+     },
+     "end": {
+      "failures": "0",
+      "elapsed_ms": "1124233",
+      "result": "pass"
+     },
+     "expect": [
+      {
+       "map": "prisoner",
+       "simulation_hwi015b": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation_hwi015b": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation_hwi015b": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      }
+     ],
+     "expect_sim": [
+      {
+       "map": "prisoner",
+       "simulation": "961a5ec5",
+       "expected": "961a5ec5",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation": "961a5ec5",
+       "expected": "961a5ec5",
+       "pass": "1"
+      }
+     ],
+     "load_failures": [
+      {
+       "map": "nomap",
+       "expected": "not_staged",
+       "kind": "not_staged",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "a10",
+       "expected": "data_root",
+       "kind": "data_root",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonertrunc",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerflip",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerold",
+       "expected": "stale",
+       "kind": "stale",
+       "loaded": "0",
+       "pass": "1"
+      },
+      {
+       "map": "prisonermm",
+       "expected": "manifest_mismatch",
+       "kind": "manifest_mismatch",
+       "loaded": "0",
+       "pass": "1"
+      }
+     ],
+     "bsp_failures": [
+      {
+       "map": "a10bsp",
+       "expected": "damaged",
+       "kind": "damaged",
+       "bsp_before": "7",
+       "bsp_after": "7",
+       "pass": "1"
+      }
+     ],
+     "runs": [
+      {
+       "map": "prisoner",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "c1f5dbb4",
+       "raw_chain": "f75dbbb7",
+       "ms": "6275"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "frames_without_ticks": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "7eb53576",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "9740ade4",
+       "raw_chain": "c61b4cef",
+       "ms": "6458"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "c1f5dbb4",
+       "raw_chain": "f75dbbb7",
+       "ms": "6274"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "c1f5dbb4",
+       "raw_chain": "f75dbbb7",
+       "ms": "6275"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "frames_without_ticks": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "7eb53576",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "9740ade4",
+       "raw_chain": "c61b4cef",
+       "ms": "6457"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "2",
+       "digest": "9b47e748",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "ec65f1e5",
+       "raw_chain": "bfa97621",
+       "ms": "6307"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "frames_without_ticks": "1141",
+       "most_ticks_in_a_frame": "1",
+       "digest": "15b24084",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "0f6d86cc",
+       "raw_chain": "807c5f0f",
+       "ms": "6947"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "frames_without_ticks": "28",
+       "most_ticks_in_a_frame": "7",
+       "digest": "bae2e07a",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "4909ea13",
+       "raw_chain": "d9805461",
+       "ms": "6298"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "frames_without_ticks": "1",
+       "most_ticks_in_a_frame": "1",
+       "digest": "764a2a94",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "ef33482c",
+       "raw_chain": "0cf14579",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cd443b39",
+       "sim": "961a5ec5",
+       "sim_raw": "07ddaad5",
+       "sim_raw_chain": "1f36416e",
+       "sim_hwi015b": "127656ef",
+       "sim_hwi015b_raw_chain": "9dd50085",
+       "first_divergent_tick": "-1",
+       "seed": "70999115",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "c1f5dbb4",
+       "raw_chain": "f75dbbb7",
+       "ms": "6275"
+      },
+      {
+       "map": "a10",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "30",
+       "frames": "30",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "783f693a",
+       "sim": "d6db8c70",
+       "sim_raw": "3def7427",
+       "sim_raw_chain": "540b0723",
+       "sim_hwi015b": "77749370",
+       "sim_hwi015b_raw_chain": "a646a4dd",
+       "first_divergent_tick": "1",
+       "seed": "c7e37649",
+       "objects": "344",
+       "bsp": "7",
+       "bsp_switches": "1",
+       "frame_effects": "0",
+       "frame_sounds": "0",
+       "raw": "119965d0",
+       "raw_chain": "5ce26a39",
+       "ms": "1654"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "9000",
+       "frames": "9000",
+       "frames_without_ticks": "0",
+       "most_ticks_in_a_frame": "1",
+       "digest": "83eae4ab",
+       "sim": "03181654",
+       "sim_raw": "c7e796a2",
+       "sim_raw_chain": "5f497c77",
+       "sim_hwi015b": "eb7e0f29",
+       "sim_hwi015b_raw_chain": "2a63d79b",
+       "first_divergent_tick": "-1",
+       "seed": "0352e038",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "frame_effects": "0",
+       "frame_sounds": "1",
+       "raw": "97541c1c",
+       "raw_chain": "f05afc16",
+       "ms": "304130"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "9000",
+       "frames": "18000",
+       "frames_without_ticks": "9000",
+       "most_ticks_in_a_frame": "1",
+       "digest": "b0094d71",
+       "sim": "03181654",
+       "sim_raw": "c7e796a2",
+       "sim_raw_chain": "5f497c77",
+       "sim_hwi015b": "b024b131",
+       "sim_hwi015b_raw_chain": "aba82697",
+       "first_divergent_tick": "-1",
+       "seed": "0352e038",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "frame_effects": "0",
+       "frame_sounds": "1",
+       "raw": "75628cd6",
+       "raw_chain": "133ffa4e",
+       "ms": "309363"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "9000",
+       "frames": "1796",
+       "frames_without_ticks": "1",
+       "most_ticks_in_a_frame": "7",
+       "digest": "87182c4d",
+       "sim": "03181654",
+       "sim_raw": "c7e796a2",
+       "sim_raw_chain": "5f497c77",
+       "sim_hwi015b": "2d81ae0d",
+       "sim_hwi015b_raw_chain": "cef1ab33",
+       "first_divergent_tick": "-1",
+       "seed": "0352e038",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "frame_effects": "0",
+       "frame_sounds": "1",
+       "raw": "11cf0b5f",
+       "raw_chain": "61bd245b",
+       "ms": "317780"
+      }
+     ],
+     "host_comparison": {
+      "simulation_all_same": true,
+      "whole_all_same_unpaced": true,
+      "allocations_all_same_unpaced": true,
+      "allocations_compared": 1794,
+      "ticks_compared": {
+       "a10": 9000,
+       "a10bsp": 10,
+       "a10sw": 600,
+       "prisoner": 900
+      },
+      "first_divergent_tick": {
+       "a10": null,
+       "a10bsp": null,
+       "a10sw": null,
+       "prisoner": null
+      },
+      "ticks_all_same": true,
+      "fixed_step_same": true,
+      "failures_same": true
+     },
+     "cadence_invariance_wii": {
+      "a10": {
+       "invariant": true,
+       "runs": 3,
+       "cadences": [
+        "30hz",
+        "60hz",
+        "vsync_measured"
+       ],
+       "different": []
+      },
+      "a10bsp": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "a10sw": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "prisoner": {
+       "invariant": true,
+       "runs": 18,
+       "cadences": [
+        "60hz",
+        "30hz",
+        "20hz",
+        "144hz",
+        "irregular",
+        "vsync_measured"
+       ],
+       "different": []
+      }
+     },
+     "cadence_invariance_host": {
+      "a10": {
+       "invariant": true,
+       "runs": 3,
+       "cadences": [
+        "30hz",
+        "60hz",
+        "vsync_measured"
+       ],
+       "different": []
+      },
+      "a10bsp": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "a10sw": {
+       "invariant": true,
+       "runs": 1,
+       "cadences": [
+        "30hz"
+       ],
+       "different": []
+      },
+      "prisoner": {
+       "invariant": true,
+       "runs": 18,
+       "cadences": [
+        "60hz",
+        "30hz",
+        "20hz",
+        "144hz",
+        "irregular",
+        "vsync_measured"
+       ],
+       "different": []
+      }
+     },
+     "every_run_line": {
+      "wii_runs": 28,
+      "host_runs": 28,
+      "equal": 28,
+      "different": []
+     }
+    }
+   ]
+  }
+ }
+}

@@ -37,6 +37,14 @@ static const char *const cadence_names[ENGINE_MAP_RUN_CADENCES] =
 	"60hz", "30hz", "20hz", "144hz", "irregular", "vsync_measured"
 };
 
+/* (HWI-016F) the order a line's cadences run in: 30 Hz first, the game's
+own (a frame a tick, as on the Xbox), so a line's reference run is the
+native cadence's */
+static const enum cadence cadence_order[ENGINE_MAP_RUN_CADENCES] =
+{
+	_cadence_30, _cadence_60, _cadence_20, _cadence_144, _cadence_irregular, _cadence_vsync
+};
+
 /* a line of the plan (engine_map_run.h) */
 struct map_line
 {
@@ -48,7 +56,9 @@ struct map_line
 	unsigned cadences;           /* bit per enum cadence */
 	int warmup;
 	int has_expect;
-	unsigned long expect;
+	unsigned long expect;        /* the simulation as HWI-015B classified it (HWI-015B's Prisoner: 127656ef) */
+	int has_expect_simulation;
+	unsigned long expect_simulation; /* (HWI-016F) the simulation, HWI-016F's frame-coupled fields left out */
 	long switch_tick;
 	int switch_index;
 	short expected_error;        /* a fail line's, or a map line's expect_error= */
@@ -141,8 +151,61 @@ static void dump_allocations(long tick)
 	}
 }
 
+/* (HWI-016F) "trace:<index>[,<index>...]": those allocations' raw digests
+after every tick of every run, logged after the run (ALLOC_TRACE lines, a
+hundred ticks a line: the log syncs every line), to find the tick at which
+two runs' allocation first differs. Diagnosis only: its buffer is taken from
+the heap when the spec is given. */
+#define TRACE_PER_LINE 100
+
+static long trace_indices[DUMP_MAXIMUM];
+static int trace_count;
+static long trace_run;
+static long trace_ticks;
+static unsigned long *trace_digests;
+
+static void trace_allocations(long tick)
+{
+	if (tick == 1)
+	{
+		trace_run++;
+		trace_ticks = 0;
+	}
+	if (!trace_digests || tick < 1 || tick > REAL_MAP_MAXIMUM_TICKS)
+		return;
+	for (int item = 0; item < trace_count; item++)
+	{
+		unsigned long digest = 0;
+
+		if (trace_indices[item] >= 0 && trace_indices[item] < real_map_allocation_count())
+			digest = real_map_allocation_digest_now(trace_indices[item]);
+		trace_digests[(size_t)item * REAL_MAP_MAXIMUM_TICKS + (size_t)(tick - 1)] = digest;
+	}
+	trace_ticks = tick;
+}
+
+static void trace_flush(void)
+{
+	for (int item = 0; trace_digests && item < trace_count; item++)
+	{
+		for (long tick = 0; tick < trace_ticks; tick += TRACE_PER_LINE)
+		{
+			char text[16 + TRACE_PER_LINE * 9];
+			int used = 0;
+
+			for (long index = tick; index < tick + TRACE_PER_LINE && index < trace_ticks; index++)
+				used += snprintf(text + used, sizeof(text) - (size_t)used, " %08lx",
+					trace_digests[(size_t)item * REAL_MAP_MAXIMUM_TICKS + (size_t)index]);
+			wii_log("ALLOC_TRACE run=%ld index=%ld from=%ld%s\n", trace_run, trace_indices[item], tick + 1, text);
+		}
+	}
+	trace_ticks = 0;
+}
+
 static void tick_observer(long tick)
 {
+	if (trace_count)
+		trace_allocations(tick);
 	if (dump_count)
 		dump_allocations(tick);
 	if (progress_logging && (tick == 1 || tick % PROGRESS_INTERVAL == 0))
@@ -165,6 +228,24 @@ int engine_map_run_set_dump(const char *spec, const char *directory)
 
 	if (!colon || !directory)
 		return 0;
+	if (!strncmp(spec, "trace:", 6))
+	{
+		trace_count = 0;
+		trace_run = 0;
+		for (cursor = spec + 6; *cursor && trace_count < DUMP_MAXIMUM;)
+		{
+			char *end;
+			long index = strtol(cursor, &end, 10);
+
+			if (end == cursor)
+				return 0;
+			trace_indices[trace_count++] = index;
+			cursor = *end == ',' ? end + 1 : end;
+		}
+		if (trace_count && !trace_digests)
+			trace_digests = malloc(sizeof(unsigned long) * (size_t)REAL_MAP_MAXIMUM_TICKS * DUMP_MAXIMUM);
+		return trace_count > 0 && trace_digests != NULL;
+	}
 	dump_count = 0;
 	while (cursor < colon && dump_count < DUMP_MAXIMUM)
 	{
@@ -278,6 +359,11 @@ static int parse_line(char *text, int default_cycles, struct map_line *line)
 		{
 			line->has_expect = 1;
 			line->expect = strtoul(value, NULL, 16);
+		}
+		else if (!strcmp(word, "expect_sim"))
+		{
+			line->has_expect_simulation = 1;
+			line->expect_simulation = strtoul(value, NULL, 16);
 		}
 		else if (!strcmp(word, "switch_bsp"))
 		{
@@ -418,6 +504,8 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 	*milliseconds = (unsigned long)((wii_time_microseconds() - started) / 1000ULL);
 	real_map_end(result);
 	progress_logging = 0;
+	if (trace_count)
+		trace_flush();
 	if (reference)
 	{
 		memcpy(reference_digests, real_map_tick_digests(), sizeof(unsigned long) * (size_t)line->ticks);
@@ -428,7 +516,8 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 		"sim=%08lx sim_chain=%08lx sim_at1=%08lx sim_at30=%08lx sim_at150=%08lx sim_atend=%08lx first_divergent_tick=%ld "
 		"seed=%08lx objects=%ld player_unit=%08lx spawn_tick=%ld position=%.6f,%.6f,%.6f tags_end=%08lx "
 		"bsp=%d bsp_switches=%ld command_tick=%ld command_result=%ld requests_left=%ld sim_raw=%08lx "
-		"sim_raw_chain=%08lx raw=%08lx raw_chain=%08lx ms=%lu\n",
+		"sim_raw_chain=%08lx raw=%08lx raw_chain=%08lx sim_hwi015b=%08lx sim_hwi015b_raw=%08lx "
+		"sim_hwi015b_raw_chain=%08lx frame_effects=%ld frame_sounds=%ld ms=%lu\n",
 		line->name, cycle, cadence_names[cadence], result->ticks, result->frames, result->frames_without_ticks,
 		result->most_ticks_in_a_frame, result->digest, result->chain, result->digest_at[0], result->digest_at[1],
 		result->digest_at[2], result->digest_at[3], result->simulation_digest, result->simulation_chain,
@@ -438,7 +527,9 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 		(double)result->player_position[0], (double)result->player_position[1], (double)result->player_position[2],
 		result->tags_at_end, result->structure_bsp_index, result->bsp_switches, result->command_tick,
 		result->command_result, result->requests_left, result->simulation_raw_digest,
-		result->simulation_raw_chain, result->raw_digest, result->raw_chain, *milliseconds);
+		result->simulation_raw_chain, result->raw_digest, result->raw_chain, result->simulation_hwi015b_digest,
+		result->simulation_hwi015b_raw_digest, result->simulation_hwi015b_raw_chain, result->frame_made_effects,
+		result->frame_made_looping_sounds, *milliseconds);
 	if (cadence == _cadence_vsync)
 	{
 		/* the frame times, bit for bit, ten a line */
@@ -534,8 +625,9 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 		long heap;
 
 		/* every run loads the map, as a new game does, and unloads it */
-		for (int cadence = 0; cadence < ENGINE_MAP_RUN_CADENCES; cadence++)
+		for (int order = 0; order < ENGINE_MAP_RUN_CADENCES; order++)
 		{
+			int cadence = (int)cadence_order[order];
 			struct wii_cache_load_report load;
 			struct real_map_result result;
 			unsigned long milliseconds = 0;
@@ -686,14 +778,25 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 	}
 	if (line->has_expect)
 	{
-		int pass = have_first && first.simulation_digest == line->expect;
+		int pass = have_first && first.simulation_hwi015b_digest == line->expect;
 
 		report->expectations++;
 		report->expectations_met += pass;
 		if (!pass)
 			report->failures++;
-		wii_log("EXPECT map=%s simulation=%08lx expected=%08lx pass=%d\n", line->name, first.simulation_digest,
-			line->expect, pass);
+		wii_log("EXPECT map=%s simulation_hwi015b=%08lx expected=%08lx pass=%d\n", line->name,
+			first.simulation_hwi015b_digest, line->expect, pass);
+	}
+	if (line->has_expect_simulation)
+	{
+		int pass = have_first && first.simulation_digest == line->expect_simulation;
+
+		report->expectations++;
+		report->expectations_met += pass;
+		if (!pass)
+			report->failures++;
+		wii_log("EXPECT_SIM map=%s simulation=%08lx expected=%08lx pass=%d\n", line->name, first.simulation_digest,
+			line->expect_simulation, pass);
 	}
 	wii_log("MAP_RUNS map=%s runs=%d simulation_identical=%d whole_identical_per_cadence=%d heap_flat=%d digest=%08lx "
 		"chain=%08lx sim=%08lx sim_chain=%08lx tags_start=%08lx spawn_tick=%ld\n",

@@ -3232,10 +3232,45 @@ void main_port_game_requests(
 		if (main_globals.load_core)
 			main_load_core_private();
 	}
-	else if (main_globals.saving_map)
+	else if (main_globals.saving_map && game_time_get_elapsed() > 0)
 	{
+		/* (HWI-016F: after a frame that ran a tick, as main_loop) */
 		main_save_map_private();
 	}
+
+	return;
+}
+
+/* port (HWI-016F): what main_loop does once a frame for the game, done
+between the ticks of a frame that runs several (game_time_update), so each
+tick is followed by it as at 30 Hz, a frame a tick, as on the Xbox. The
+checkpoint save counts its tries in updates (ticks_unable_to_save,
+ticks_until_next_save_check: main_save_map_private, run once a frame), and
+the save, a structure bsp switch a script asked for and a respawn otherwise
+fell on a tick that depended on how many ticks the frames ran (measured:
+a10's opening checkpoint, saved after tick 1 at 30 Hz and after tick 3 at
+the Wii's measured retrace). At 30 Hz this never runs and nothing changes.
+A loss, a win, a revert, a reset, a core save or load and a map change stay
+with main_loop's next frame; while one is waiting this does nothing. */
+void main_port_game_requests_between_ticks(
+	void)
+{
+	if (game_in_editor() || main_globals.lost_map || main_globals.won_map || main_globals.revert_map ||
+		main_globals.reset_map || main_globals.save_core || main_globals.load_core ||
+		main_globals.defer_map_change)
+	{
+		return;
+	}
+	/* (the previous tick's update done: main_loop after game_time_update) */
+	if (main_globals.saving_map)
+		main_save_map_private();
+	/* (the next tick's update to come: main_loop before game_time_update) */
+	if (main_globals.switch_to_structure_bsp_index != NONE)
+		main_switch_to_structure_bsp_private();
+	if (main_globals.respawn)
+		main_respawn_private();
+	if (main_globals.save_map_completed)
+		main_saving_map_private();
 
 	return;
 }
@@ -3452,7 +3487,10 @@ void main_loop(
 					game_engine_update_non_deterministic((real)main_globals.halt_time_scale*main_globals.seconds_elapsed);
 				}
 
-				if (main_globals.saving_map)
+				/* port (HWI-016F): after a frame that ran a tick, once a tick
+				(game_time_update does it between a frame's ticks): its
+				counts are of updates, as on the Xbox, a frame a tick */
+				if (main_globals.saving_map && game_time_get_elapsed() > 0)
 				{
 					main_save_map_private();
 				}

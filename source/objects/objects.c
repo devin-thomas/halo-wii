@@ -1080,6 +1080,10 @@ void objects_initialize_for_new_map(
 	memset(object_globals->last_active_cluster_bits, 0, sizeof(object_globals->last_active_cluster_bits));
 	memset(object_globals->active_cluster_bits, 0, sizeof(object_globals->active_cluster_bits));
 	object_globals->pvs_activation_type = 0;
+	/* port (HWI-016F): and its union, which no reader looks at while the type
+	is normal, but which kept the last map's activation object, so a map's
+	game state depended on what ran before it until its scripts set one */
+	object_globals->pvs_activation.object_index = 0;
 	object_globals->object_marker_initialized = FALSE;
 	global_object_marker = 0;
 	object_globals->first_garbage_object_index = NONE;

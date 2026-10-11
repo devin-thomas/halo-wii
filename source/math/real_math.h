@@ -842,6 +842,11 @@ real_vector3d *matrix3x3_transform_vector(real_matrix3x3 const *matrix, real_vec
 
 unsigned long *get_global_random_seed_address(void);
 unsigned long *get_global_local_random_seed_address(void);
+/* port (HWI-016F): the game ticks' own stream of local random numbers,
+apart from the frames' (random_math.c) */
+void local_random_tick_begin(void);
+void local_random_tick_end(void);
+unsigned long *get_tick_local_random_seed_address(void);
 void random_seed_debug_log(
 	boolean log);
 void random_math_initialize(

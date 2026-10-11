@@ -146,6 +146,54 @@ unsigned long *get_global_local_random_seed_address(
 	return &random_math_globals.global_local_random_seed;
 }
 
+/* port (HWI-016F): the local random numbers the game ticks draw are a stream
+of their own. On the Xbox a frame was a tick (one game_frame after each
+game_tick), so the ticks and the frames drew in turn from one stream; the
+ports draw several frames per tick, or none, and the frames' particles,
+contrails and sounds then moved the numbers that the ticks' effects, model
+animations and first-person weapons draw next. Both streams start from the
+clock, as the one stream did (random_math_initialize): no value of either is
+fixed by the game, and the draws of each are unchanged. game_time_update
+makes the tick stream the local one for each game_tick. */
+static unsigned long tick_local_random_seed;
+static long tick_local_random_depth;
+
+static void local_random_swap(
+	void)
+{
+	unsigned long seed = random_math_globals.global_local_random_seed;
+
+	random_math_globals.global_local_random_seed = tick_local_random_seed;
+	tick_local_random_seed = seed;
+
+	return;
+}
+
+void local_random_tick_begin(
+	void)
+{
+	if (tick_local_random_depth++ == 0)
+		local_random_swap();
+
+	return;
+}
+
+void local_random_tick_end(
+	void)
+{
+	if (tick_local_random_depth > 0 && --tick_local_random_depth == 0)
+		local_random_swap();
+
+	return;
+}
+
+/* the tick stream's seed, wherever it is now */
+unsigned long *get_tick_local_random_seed_address(
+	void)
+{
+	return tick_local_random_depth ? &random_math_globals.global_local_random_seed : &tick_local_random_seed;
+}
+
 void
 random_seed_debug_log(
 	boolean log)
@@ -167,6 +215,7 @@ random_math_initialize(
 	short index;
 
 	random_math_globals.global_local_random_seed= get_number_suitable_for_initializing_random_seed();
+	tick_local_random_seed= get_number_suitable_for_initializing_random_seed(); /* port (HWI-016F) */
 	random_direction_geosphere= geosphere_new(RANDOM_DIRECTION_TABLE_GEOSPHERE_SEGMENT_COUNT);
 	match_assert("c:\\halo\\SOURCE\\math\\random_math.c", 174, random_direction_geosphere);
 	random_math_globals.random_direction_table= match_malloc(

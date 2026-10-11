@@ -49,6 +49,10 @@ char *main_get_multiplayer_map_name(
 short main_get_difficulty(
 	void);
 
+/* port (HWI-016F): main_loop's once-a-frame handling of the game's
+requests, between the ticks of a frame that runs several (main.c) */
+void main_port_game_requests_between_ticks(
+	void);
 boolean main_saving_map(
 	void);
 

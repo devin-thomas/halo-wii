@@ -59,6 +59,13 @@ struct real_map_result
 	for the Wii and the host of one launch */
 	unsigned long simulation_raw_digest;
 	unsigned long simulation_raw_chain;
+	/* (HWI-016F) the simulation's digests with HWI-016F's frame-coupled
+	fields kept in (HWI-015B's classification, under which its Prisoner
+	gives 127656ef): the last tick's canonical and raw ones, and the raw
+	chain */
+	unsigned long simulation_hwi015b_digest;
+	unsigned long simulation_hwi015b_raw_digest;
+	unsigned long simulation_hwi015b_raw_chain;
 	unsigned long raw_digest;                    /* the whole state's, raw */
 	unsigned long raw_chain;
 	unsigned long tags_at_start, tags_at_end;    /* the tag slot */
@@ -74,6 +81,11 @@ struct real_map_result
 	long command_result;                         /* hs_compile_and_evaluate's */
 	short command_bsp_before, command_bsp_after; /* the structure bsp loaded as the command ran, and after it */
 	long requests_left;                          /* frames ending with a won map or a reset asked for */
+	/* (HWI-016F) effects and object looping sounds made by the frames
+	(game_frame: a particle's effect, a background sound), outside the
+	ticks, in arrays whose other datums the ticks make */
+	long frame_made_effects;
+	long frame_made_looping_sounds;
 };
 
 /* the game's state at a tick, for the log (engine_map_run.c's PROGRESS lines) */
