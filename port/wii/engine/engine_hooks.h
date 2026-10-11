@@ -64,6 +64,12 @@ struct wii_engine_render_hooks
 
 void wii_engine_set_render_hooks(const struct wii_engine_render_hooks *hooks);
 
+/* HWI-016D: the boot mode's answer to the texture cache's question for a
+bitmap (_texture_cache_bitmap_get_hardware_format): non-NULL when the
+interface can draw it; NULL (none registered) everywhere else */
+struct bitmap_data;
+void wii_engine_set_bitmap_hardware_format(void *(*proc)(struct bitmap_data *bitmap));
+
 /* the halt report (wii_engine_main.c): the engine stops here */
 void wii_driver_halt(const char *error_text) __attribute__((noreturn));
 

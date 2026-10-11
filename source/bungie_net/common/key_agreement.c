@@ -409,7 +409,11 @@ static word *key_agreement_build_message(
 	union key_agreement_packet_value encoded_packet_size;
 	word *message = NULL;
 
-	encoded_packet_size.value = sizeof(encoded_packet);
+	/* port: the short is the size (the encoder's), as every little-endian
+	port read the long; on a big-endian target the short is the long's high
+	half (network_messages.c create_network_game_message, the same) */
+	encoded_packet_size.value = 0;
+	encoded_packet_size.encoded = (short)sizeof(encoded_packet);
 	if (key_agreement_encode_packet(
 		packet,
 		encoded_packet,
@@ -420,7 +424,7 @@ static word *key_agreement_build_message(
 		message = create_message(
 			_message_type_packet,
 			encoded_packet,
-			encoded_packet_size.value,
+			(long)encoded_packet_size.encoded,
 			buffer,
 			buffer_size);
 		if (message)

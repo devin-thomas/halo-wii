@@ -101,6 +101,35 @@ On the card: `sd:/halo-wii-engine/data/render/<map>/lightmaps/<bsp tag>.hwl`
 and `.../textures/<bitmap tag>-<bitmap>.hwt`. `test_render_stage.py` covers
 the selection with authored fixtures.
 
+## Boot mode staging and its host reference (HWI-016D)
+
+`boot_stage.py` lays out the card's `sd:/halo-wii-engine/` folder for the
+boot mode (`port/wii/engine/README.md`): the staged maps (`map_stage.py`
+outputs, with `map_stage.py`'s `manifest.txt` lines for them as
+`data/maps/manifest.txt`, whose SHA-256 the guest checks), every converted
+texture of the UI map, an environment map's render files
+(`render_stage.py`), and `manifest.txt` (the source image's identity, the
+generation, the stager). Private output: never commit it.
+
+```powershell
+python -B tools/wii/boot_stage.py --generation <generation dir> --stage-dir <map_stage outputs> --ui ui --environment prisoner=<your prisoner.map> --out <new private dir>
+```
+
+Add `boot.txt` (`mode=menu` ...) and copy the folder to the card.
+`run_dolphin.py --input-script` drives the menus (`"ports": 2` for a second
+player; split screen needs two); `--safe-texture-cache` keeps Dolphin from
+showing a stale glyph cache.
+
+`run_boot_host.py` builds the i686 host reference of the boot mode and
+replays a Wii launch (its pad, scan by scan, and its arena placement) with
+the little-endian staged maps (and their lines of the `manifest.le.txt`
+beside them); its `BOOT_SCREEN` and `BOOT_ENVIRONMENT`
+digests compare with the Wii's.
+
+```powershell
+python -B tools/wii/run_boot_host.py --build <dir> --run <new dir> --wii-log <Wii engine.log> --map <ui.le.wmap> --map <prisoner.le.wmap> --max-frames <n> --environment-frames 150
+```
+
 ## Offline Windows shutdown symbols
 
 Read the executable's PE CodeView identity without loading it:

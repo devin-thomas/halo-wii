@@ -2132,6 +2132,32 @@ boolean main_menu_screen_is_active(
 	return FALSE;
 }
 
+/* port (Wii, HWI-016D): the screen a local player sees, for the Wii boot
+mode's log and its frame checks (port/wii/render/render_ui.c): its active
+widget's definition tag and the deepest focused child's, NONE when there is
+none. Reads only; no other port calls it. */
+void ui_widget_port_active_screen(
+	short local_player_index,
+	long *screen_tag_index,
+	long *focused_tag_index)
+{
+	struct widget_instance *widget = NULL;
+
+	*screen_tag_index = NONE;
+	*focused_tag_index = NONE;
+	if (local_player_index >= 0 && local_player_index < MAXIMUM_NUMBER_OF_LOCAL_PLAYERS)
+		widget = widget_globals.active_widgets[local_player_index];
+	if (widget)
+	{
+		*screen_tag_index = widget->definition_tag_index;
+		while (widget->focused_child)
+			widget = widget->focused_child;
+		*focused_tag_index = widget->definition_tag_index;
+	}
+
+	return;
+}
+
 static void *pool_alloc(
 	unsigned long size)
 {

@@ -3349,9 +3349,14 @@ static boolean multiplayer_profiles_list_initialize(
 	if (profile_indices)
 	{
 		long profile_count;
+		/* port: the function counts in a word (playlist_profile.c), which
+		written through the long landed in its high half on a big-endian
+		target (the Wii): the list then took 100 gametypes, most of them
+		never written */
+		word enumerated_count = 100;
 
-		profile_count = 100;
-		playlist_profiles_enumerate_available_to_local_player_index(0, &profile_count, profile_indices);
+		playlist_profiles_enumerate_available_to_local_player_index(0, (long *)&enumerated_count, profile_indices);
+		profile_count = enumerated_count;
 		if ((word)profile_count < 3)
 		{
 			long *profile_index_pointer;
