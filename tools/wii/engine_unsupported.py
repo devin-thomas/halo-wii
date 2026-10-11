@@ -88,10 +88,7 @@ SUBSYSTEMS: Dict[str, List[str]] = {
         "IDirectSound_SetOrientation", "IDirectSound_SetPosition", "IDirectSound_SetRolloffFactor",
         "IDirectSound_SetVelocity",
     ],
-    "input": [
-        "XGetDeviceChanges", "XInitDevices", "XInputClose", "XInputDebugGetKeystroke",
-        "XInputDebugInitKeyboardQueue", "XInputGetState", "XInputOpen", "XInputSetState",
-    ],
+    # (input: XInput is implemented on the GameCube pad, port/wii/engine/wii_xinput.c, HWI-016D)
     "network": [
         "WSACleanup", "WSAGetLastError", "WSAStartup", "XNetCleanup", "XNetCreateKey",
         "XNetGetEthernetLinkStatus", "XNetGetTitleXnAddr", "XNetRandom", "XNetRegisterKey", "XNetStartup",

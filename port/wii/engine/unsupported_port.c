@@ -197,11 +197,7 @@ unsigned long __stdcall DirectSoundGetStreamVoiceStatus(LPDIRECTSOUNDSTREAM stre
 	return 0;
 }
 
-/* ---------- input devices (no device is ever reported) */
-
-XPP_DEVICE_TYPE XDEVICE_TYPE_GAMEPAD_TABLE;
-XPP_DEVICE_TYPE XDEVICE_TYPE_MEMORY_UNIT_TABLE;
-XPP_DEVICE_TYPE XDEVICE_TYPE_DEBUG_KEYBOARD_TABLE;
+/* ---------- input devices (the device tables and XInput: wii_xinput.c, HWI-016D) */
 
 void halo_input_name(int input, char *name, size_t size)
 {

@@ -784,54 +784,6 @@ long __stdcall IDirectSound_SetVelocity(struct IDirectSound * a0, float a1, floa
 	return E_FAIL;
 }
 
-/* ---------- input */
-
-int __stdcall XGetDeviceChanges(struct _XPP_DEVICE_TYPE * a0, unsigned long * a1, unsigned long * a2)
-{
-	wii_unsupported("input", "XGetDeviceChanges");
-	return 0;
-}
-
-void __stdcall XInitDevices(unsigned long a0, struct _XDEVICE_PREALLOC_TYPE * a1)
-{
-	wii_unsupported("input", "XInitDevices");
-}
-
-void __stdcall XInputClose(void * a0)
-{
-	wii_unsupported("input", "XInputClose");
-}
-
-unsigned long __stdcall XInputDebugGetKeystroke(struct _XINPUT_DEBUG_KEYSTROKE * a0)
-{
-	wii_unsupported("input", "XInputDebugGetKeystroke");
-	return ERROR_DEVICE_NOT_CONNECTED;
-}
-
-unsigned long __stdcall XInputDebugInitKeyboardQueue(struct _XINPUT_DEBUG_KEYQUEUE_PARAMETERS * a0)
-{
-	wii_unsupported("input", "XInputDebugInitKeyboardQueue");
-	return ERROR_DEVICE_NOT_CONNECTED;
-}
-
-unsigned long __stdcall XInputGetState(void * a0, struct _XINPUT_STATE * a1)
-{
-	wii_unsupported("input", "XInputGetState");
-	return ERROR_DEVICE_NOT_CONNECTED;
-}
-
-void *__stdcall XInputOpen(struct _XPP_DEVICE_TYPE * a0, unsigned long a1, unsigned long a2, struct _XINPUT_POLLING_PARAMETERS * a3)
-{
-	wii_unsupported("input", "XInputOpen");
-	return NULL;
-}
-
-unsigned long __stdcall XInputSetState(void * a0, struct _XINPUT_FEEDBACK * a1)
-{
-	wii_unsupported("input", "XInputSetState");
-	return ERROR_DEVICE_NOT_CONNECTED;
-}
-
 /* ---------- network */
 
 int __stdcall WSACleanup(void)

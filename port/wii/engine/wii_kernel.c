@@ -771,6 +771,13 @@ static unsigned long long time_base(void)
 #endif
 }
 
+/* HWI-016D: the calling thread, for the boot mode's frame clock
+(boot_hooks.c), which only the engine's main thread advances */
+unsigned long wii_thread_self(void)
+{
+	return (unsigned long)pthread_self();
+}
+
 unsigned long long wii_time_microseconds(void)
 {
 	return time_base() * 4ULL / 243ULL;

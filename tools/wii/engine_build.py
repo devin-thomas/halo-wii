@@ -58,7 +58,9 @@ REWRITTEN = (Path("source/memory/byte_swapping.c"),)
 # Authored units compiled as engine units (the engine's headers and flags):
 # the driver's engine-side half and the controlled fixed-step scenario.
 ENGINE_AUTHORED = (ENGINE_DIR / "engine_hooks.c", ENGINE_DIR / "fixed_step_scenario.c",
-                   ENGINE_DIR / "real_map_scenario.c")
+                   ENGINE_DIR / "real_map_scenario.c",
+                   # HWI-016D: the boot mode's wrapped entry points (pass-through unless registered)
+                   ENGINE_DIR / "boot_hooks.c")
 
 # Linux platform files whose code only needs a C library: reused unchanged.
 REUSED_PLATFORM = tuple(LINUX_PLATFORM / name for name in (
@@ -67,7 +69,9 @@ REUSED_PLATFORM = tuple(LINUX_PLATFORM / name for name in (
 WII_PLATFORM = tuple(ENGINE_DIR / name for name in (
     "wii_log.c", "wii_kernel.c", "wii_memory.c", "wii_posix_files.c", "wii_sdl_files.c",
     "wii_platform_checks.c", "unsupported_sdk.c", "unsupported_port.c", "engine_map_run.c",
-    "wii_engine_main.c")) + (
+    "wii_engine_main.c",
+    # HWI-016D: XInput on the GameCube pad
+    "wii_xinput.c")) + (
     Path("port/wii/runtime/runtime_start.c"), Path("tools/wii/cache_arena_plan.c"))
 WII_HEADERS = tuple(sorted(ENGINE_DIR.glob("*.h"))) + (PREFIX, ENGINE_DIR / "sdl/SDL3/SDL.h")
 # HWI-016B: the Wii rasterizer's environment path, in engine.dol only (the
@@ -77,11 +81,17 @@ WII_HEADERS = tuple(sorted(ENGINE_DIR.glob("*.h"))) + (PREFIX, ENGINE_DIR / "sdl
 # HWL1/HWT1 loaders (strict C11, libogc).
 RENDER_DIR = Path("port/wii/render")
 CONTENT_DIR = Path("port/wii/content")
-RENDER_ENGINE = (RENDER_DIR / "render_engine.c",)
+RENDER_ENGINE = (RENDER_DIR / "render_engine.c",
+                 # HWI-016D: the boot mode's interface and frame
+                 RENDER_DIR / "render_ui.c")
 RENDER_GX = (RENDER_DIR / "render_gx.c",) + tuple(CONTENT_DIR / name for name in (
-    "content_common.c", "content_sections.c", "hwl_lightmap.c", "hwt_texture.c"))
-RENDER_HEADERS = (RENDER_DIR / "wii_render.h",) + tuple(CONTENT_DIR / name for name in (
-    "content_common.h", "content_sections.h", "hwl_lightmap.h", "hwt_texture.h"))
+    "content_common.c", "content_sections.c", "hwl_lightmap.c", "hwt_texture.c")) + (
+    RENDER_DIR / "render_ui_gx.c",)
+RENDER_HEADERS = (RENDER_DIR / "wii_render.h", RENDER_DIR / "wii_render_ui.h") + tuple(
+    CONTENT_DIR / name for name in ("content_common.h", "content_sections.h", "hwl_lightmap.h", "hwt_texture.h"))
+# HWI-016D: the boot mode's driver half (libogc; engine.dol only, like the
+# rasterizer's GX side): boot.txt, the manifests, the pad, the boot errors
+BOOT_DRIVER = (ENGINE_DIR / "boot_main.c",)
 
 MUSL_MATH = Path("port/third_party/musl-math")
 ZLIB = Path("port/third_party/zlib")
@@ -117,7 +127,17 @@ WRAPPED = ("main", "halt_and_catch_fire", "game_tick", "game_frame", "update_cli
            "predicted_resources_precache", "_rasterizer_decals_dispose_from_old_map",
            "_texture_cache_bitmap_get_hardware_format",
            # HWI-016B: the Wii rasterizer's per-map halves (engine_hooks.c)
-           "rasterizer_initialize_for_new_map", "rasterizer_dispose_from_old_map")
+           "rasterizer_initialize_for_new_map", "rasterizer_dispose_from_old_map",
+           # HWI-016D: the boot mode (boot_hooks.c): the rasterizer backend the
+           # menus and main_loop's frame reach, the menus' map selection, and
+           # the frame clock; each passes through unless the boot mode registered
+           "_rasterizer_initialize", "_rasterizer_dispose", "render_frame", "render_frame_pregame",
+           "render_frame_present", "_rasterizer_window_begin", "_rasterizer_window_end",
+           "_rasterizer_psuedo_dynamic_screen_quad_draw", "rasterizer_text_begin",
+           "rasterizer_text_draw_character", "rasterizer_text_end", "rasterizer_bitmap_new",
+           "rasterizer_bitmap_changed", "rasterizer_bitmap_delete", "main_set_map_name",
+           "main_menu_switch_to_single_player", "system_milliseconds", "Sleep", "sound_initialize",
+           "bink_playback_start", "sound_cache_idle")
 # Diagnostic storage (HWI-015D): "omit" (the default) compiles the engine
 # without the AI's debug records and the profiler's frame history; "keep"
 # compiles them as the other ports do, and then wraps ai_debug_initialize
@@ -248,7 +268,7 @@ def engine_inputs() -> List[Path]:
     return [Path("tools/wii/engine_build.py"), Path("tools/wii/engine_semantics.py"),
             Path("tools/wii/engine_rewrite.py"), Path("tools/linux_msvc_semantics.py"), PORT_CONFIG,
             *WII_HEADERS, *game_units(), *ENGINE_AUTHORED, *(path for path, _ in platform_units()),
-            *RENDER_ENGINE, *RENDER_GX, *RENDER_HEADERS,
+            *RENDER_ENGINE, *RENDER_GX, *RENDER_HEADERS, *BOOT_DRIVER,
             *REPLACED.values(), *sorted(set(headers))]
 
 
@@ -309,7 +329,7 @@ def generate_engine_build(n, semantic_flags: List[str], libraries: List[Path],
         n.build(obj, "wii_cc_file", unit, implicit=[*common, SEMANTICS, flag_files["engine"]],
                 variables={"flags": flag_files["engine"].as_posix()})
         engine_objects.append(obj)
-    for unit in RENDER_GX:
+    for unit in (*RENDER_GX, *BOOT_DRIVER):
         obj = object_path(unit)
         n.build(obj, "wii_cc_file", unit, implicit=[*common, PLATFORM_SEMANTICS, flag_files["render_gx"]],
                 variables={"flags": flag_files["render_gx"].as_posix()})
