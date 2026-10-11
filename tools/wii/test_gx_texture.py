@@ -209,5 +209,235 @@ class GxEncodingTests(unittest.TestCase):
         self.assertEqual(first, gt.convert(fields, bytes(pixels))[1])
 
 
+SPLIT = gt.PROFILE_GX_SPLITALPHA
+
+
+def dxt_block(name, colour, alpha):
+    """A 16-byte DXT3/DXT5 block: alpha (8 bytes) then colour (c0, c1, indices)."""
+    return bytes(alpha) + struct.pack("<HHI", *colour)
+
+
+def one_block_texture(name, block, size=4):
+    """A size x size 2D texture (no mips) whose blocks all equal block."""
+    fields = {"width": size, "height": size, "depth": 1, "type": 0, "format": gt.FORMAT_IDS[name],
+              "flags": gt.FLAG_POW2 | gt.FLAG_COMPRESSED, "mipmap_count": 0}
+    layout = gt.describe(size, size, 1, 0, fields["format"], fields["flags"], 0)
+    pixels = block * ((size // 4) ** 2)
+    return fields, pixels + bytes(layout["bytes"] - len(pixels))   # the face pads to 128 bytes
+
+
+def split_texels(header, data, images, image=0):
+    """Row-major RGBA of one converted split-alpha image, by the independent decoder."""
+    alpha = header["alpha"]
+    colour_bytes = header["colour_bytes"]
+    info = images[image]
+    colour = data[info["offset"]:info["offset"] + info["bytes"]]
+    out = []
+    for y in range(info["height"]):
+        for x in range(info["width"]):
+            rgba = gt.gx_decode_texel(gt.GX_CMPR, colour, info["width"], x, y)
+            if alpha["kind"] == "plane":
+                a = alpha["images"][image]
+                plane = data[colour_bytes + a["offset"]:colour_bytes + a["offset"] + a["bytes"]]
+                rgba = rgba[:3] + (gt.gx_decode_texel(alpha["gx_format"], plane, info["width"], x, y)[3],)
+            out.append(rgba)
+    return out
+
+
+class SplitAlphaColourTests(unittest.TestCase):
+    """gx-splitalpha-v1 colour: every DXT colour block case on authored blocks."""
+
+    def test_interpolation_rule_is_bounded_exhaustively(self):
+        # every 5- and 6-bit endpoint pair: GX's 5/8+3/8 against DXT's 2/3+1/3
+        self.assertEqual(gt.interpolation_error_table(), {5: (11, 0), 6: (11, 0)})
+
+    def check_block(self, colour, expected_case):
+        indices = colour[2]
+        for name in ("dxt3", "dxt5"):
+            block = dxt_block(name, colour, b"\xff" * 8 if name == "dxt3" else bytes([255, 255]) + bytes(6))
+            fixed, case = gt.four_colour_block(block[8:])
+            self.assertEqual(case, expected_case)
+            fields, pixels = one_block_texture(name, block, 8)
+            header, data, images, layout = gt.convert(fields, pixels, SPLIT)
+            self.assertEqual(header["alpha"]["colour_blocks"][expected_case], 4)
+            # the CMPR block is the fixed DXT1-form block, endpoints big-endian
+            c0, c1, idx = struct.unpack("<HHI", fixed)
+            self.assertEqual(struct.unpack_from(">HH", data, 0), (c0, c1))
+            reference = gt.decode_dxt_block(name, block)
+            got = split_texels(header, data, images)
+            for y in range(4):
+                for x in range(4):
+                    ref, gx = reference[y * 4 + x], got[y * 8 + x]
+                    i = (indices >> (2 * (y * 4 + x))) & 3
+                    bound = gt.tolerance(name, ref, block[8:], split=True)
+                    self.assertTrue(all(abs(a - b) <= t for a, b, t in zip(gx, ref, bound)), (gx, ref, bound))
+                    if i < 2 or expected_case == gt.BLOCK_UNIFORM:
+                        self.assertEqual(gx, ref)          # endpoints (and uniform blocks) are exact
+                    self.assertEqual(gx[3], 255)
+            result = gt.verify(fields, pixels, data, images, layout, alpha=header["alpha"])
+            self.assertLessEqual(max(result["max_channel_error"]), 11)
+        return fixed
+
+    def test_c0_greater_than_c1_is_kept(self):
+        colour = (0xF800, 0x001F, 0b11100100 * 0x01010101)   # red > blue, indices 0,1,2,3 per row
+        fixed = self.check_block(colour, gt.BLOCK_KEPT)
+        self.assertEqual(fixed, struct.pack("<HHI", *colour))
+
+    def test_c0_less_than_c1_swaps_endpoints_and_indices(self):
+        colour = (0x001F, 0xF800, 0b11100100 * 0x01010101)   # blue < red: DXT1 would use 3 colours
+        fixed = self.check_block(colour, gt.BLOCK_SWAPPED)
+        self.assertEqual(fixed, struct.pack("<HHI", 0xF800, 0x001F, 0b10110001 * 0x01010101))  # 0<->1, 2<->3
+        # the DXT1 rule on the raw block would have made index 3 transparent black
+        self.assertEqual(gt.decode_dxt_block("dxt1", struct.pack("<HHI", *colour))[3], (0, 0, 0, 0))
+
+    def test_c0_equal_c1_clears_the_indices(self):
+        colour = (0x7BEF, 0x7BEF, 0xFFFFFFFF)                # every index 3: transparent under DXT1/CMPR rules
+        fixed = self.check_block(colour, gt.BLOCK_UNIFORM)
+        self.assertEqual(fixed, struct.pack("<HHI", 0x7BEF, 0x7BEF, 0))
+
+    def test_exhaustive_index_permutation_on_swapped_blocks(self):
+        # every endpoint swap keeps the palette: DXT(c0, c1)[i] == DXT(c1, c0)[i ^ 1]
+        for c0, c1 in ((0, 1), (0x0001, 0xFFFF), (0x8410, 0x841F), (0x07E0, 0xF81F)):
+            a = gt._dxt_colours(struct.pack("<HH", c0, c1), True)
+            b = gt._dxt_colours(struct.pack("<HH", c1, c0), True)
+            self.assertEqual([a[i] for i in range(4)], [b[i ^ 1] for i in range(4)])
+
+
+class SplitAlphaPlaneTests(unittest.TestCase):
+    """gx-splitalpha-v1 alpha: exact planes, edge values, omission."""
+
+    def plane_of(self, name, alpha_bytes, colour=(0xF800, 0x001F, 0)):
+        fields, pixels = one_block_texture(name, dxt_block(name, colour, alpha_bytes), 8)
+        header, data, images, layout = gt.convert(fields, pixels, SPLIT)
+        result = gt.verify(fields, pixels, data, images, layout, alpha=header["alpha"])
+        self.assertEqual((result["alpha_exact"], result["max_channel_error"][3]), (result["texels_checked"], 0))
+        return header, data, images, [t[3] for t in split_texels(header, data, images)]
+
+    def test_dxt3_every_nibble_is_exact_in_i4(self):
+        alpha = struct.pack("<Q", 0xFEDCBA9876543210)          # nibbles 0..15, texel i holds i
+        header, data, images, got = self.plane_of("dxt3", alpha)
+        self.assertEqual((header["alpha"]["kind"], header["alpha"]["gx_format"]), ("plane", gt.GX_I4))
+        self.assertEqual(got[:4] + got[8:12], [0, 17, 34, 51, 68, 85, 102, 119])
+        # I4 tile: high nibble first; row 0 of the 8x8 tile is texels 0..3 of two blocks
+        plane = data[header["colour_bytes"]:]
+        self.assertEqual(plane[:4], bytes([0x01, 0x23, 0x01, 0x23]))
+        self.assertEqual(len(plane), 32)
+
+    def test_dxt3_extremes_and_opaque_omission(self):
+        _, _, _, got = self.plane_of("dxt3", bytes(8))
+        self.assertEqual(set(got), {0})
+        header, data, _, got = self.plane_of("dxt3", b"\xff" * 8)
+        self.assertEqual((header["alpha"]["kind"], header["alpha"]["bytes"], set(got)), ("omitted", 0, {255}))
+        self.assertEqual(len(data), header["colour_bytes"])
+
+    def test_dxt5_eight_and_six_value_modes_are_exact_in_i8(self):
+        bits = sum(i % 8 << (3 * i) for i in range(16)).to_bytes(6, "little")
+        header, _, _, got = self.plane_of("dxt5", bytes([200, 100]) + bits)
+        self.assertEqual(header["alpha"]["gx_format"], gt.GX_I8)
+        self.assertEqual(got[:4] + got[8:12], [200, 100, 185, 171, 157, 142, 128, 114])
+        header, _, _, got = self.plane_of("dxt5", bytes([100, 200]) + bits)
+        self.assertEqual(got[:4] + got[8:12], [100, 200, 120, 140, 160, 180, 0, 255])
+        # the reference rounds down: (6 * 1 + 1 * 0) // 7 = 0 where round-to-nearest would give 1
+        header, _, _, got = self.plane_of("dxt5", bytes([1, 0]) + bits)
+        self.assertEqual(got[:4] + got[8:12], [1, 0, 0, 0, 0, 0, 0, 0])
+
+    def test_dxt5_multiples_of_17_use_i4_and_constants_keep_a_plane(self):
+        bits = sum(i % 8 << (3 * i) for i in range(16)).to_bytes(6, "little")
+        header, _, _, got = self.plane_of("dxt5", bytes([0, 255]) + bits)
+        self.assertEqual((header["alpha"]["gx_format"], sorted(set(got))), (gt.GX_I4, [0, 51, 102, 153, 204, 255]))
+        header, _, _, got = self.plane_of("dxt5", bytes([128, 128]) + bytes(6))   # constant, but not 255
+        self.assertEqual((header["alpha"]["kind"], header["alpha"]["gx_format"], set(got)), ("plane", gt.GX_I8, {128}))
+        header, _, _, got = self.plane_of("dxt5", bytes([255, 255]) + bytes(6))
+        self.assertEqual((header["alpha"]["kind"], set(got)), ("omitted", {255}))
+        # a0 == a1 == 255 is the six-value mode: index 6 is 0, so the plane stays
+        header, _, _, got = self.plane_of("dxt5", bytes([255, 255]) + (6).to_bytes(6, "little"))
+        self.assertEqual((header["alpha"]["kind"], got[0], got[1]), ("plane", 0, 255))
+
+
+class SplitAlphaLayoutTests(unittest.TestCase):
+    """Mips, cube maps, volumes, dimension flags and the version 2 container."""
+
+    def convert(self, name, w, h, d=1, kind="2d", mips=0, alpha=None, seed=3):
+        fields, pixels, layout = fx.source_pixels(name, w, h, d, kind, mips, seed=seed, alpha=alpha)
+        header, data, images, layout = gt.convert(fields, pixels, SPLIT)
+        result = gt.verify(fields, pixels, data, images, layout, alpha=header["alpha"])
+        self.assertEqual(result["texels_checked"],
+                         layout["faces"] * sum(lv["w"] * lv["h"] * lv["d"] for lv in layout["levels"]))
+        self.assertEqual(result["alpha_exact"], result["texels_checked"])
+        self.assertLessEqual(max(result["max_channel_error"]), 11)
+        return header, data, images, result
+
+    def test_mips_cube_and_volume(self):
+        header, data, images, _ = self.convert("dxt3", 64, 16, mips=6, alpha="edges")
+        self.assertEqual((header["levels"], len(images), len(header["alpha"]["images"])), (5, 5, 5))  # stops at 4
+        self.assertEqual([i["width"] for i in images], [64, 32, 16, 8, 4])
+        header, _, images, _ = self.convert("dxt5", 16, 16, kind="cube", mips=2, alpha="edges")
+        self.assertEqual((header["faces"], len(images), header["alpha"]["gx_format"]), (6, 18, gt.GX_I8))
+        header, _, images, _ = self.convert("dxt5", 8, 8, d=4, kind="3d", mips=1, alpha="steps17")
+        self.assertEqual(([i["slice"] for i in images], header["alpha"]["gx_format"]), ([0, 1, 2, 3, 0, 1], gt.GX_I4))
+        header, _, _, _ = self.convert("dxt3", 8, 8, kind="cube", alpha="opaque")
+        self.assertEqual(header["alpha"]["kind"], "omitted")
+
+    def test_oversize_flag_and_non_power_of_two(self):
+        header, _, _, _ = self.convert("dxt3", 2048, 4)
+        self.assertFalse(header["gx_loadable_dimensions"])
+        header, _, _, _ = self.convert("dxt5", 1024, 8)
+        self.assertTrue(header["gx_loadable_dimensions"])
+        for w, h in ((12, 8), (8, 6)):   # block formats need power-of-two dimensions
+            with self.subTest(w=w, h=h), self.assertRaises(gt.TextureError):
+                gt.describe(w, h, 1, 0, gt.FORMAT_IDS["dxt3"], gt.FLAG_COMPRESSED, 0)
+
+    def test_sizes_against_rgba8(self):
+        for name, plane, ratio in (("dxt3", gt.GX_I4, 4), ("dxt5", gt.GX_I8, 8 / 3)):
+            fields, pixels, layout = fx.source_pixels(name, 64, 64, mipmap_count=4, seed=8)
+            split = gt.pack_hwt(*gt.convert(fields, pixels, SPLIT)[:2])
+            base = gt.pack_hwt(*gt.convert(fields, pixels)[:2])
+            # every level is whole GX tiles: CMPR plus I4 is 1 byte a texel, plus I8 1.5
+            self.assertEqual(len(split) - 64, sum(gt.gx_level_bytes(gt.GX_CMPR, lv["w"], lv["h"]) +
+                                                  gt.gx_level_bytes(plane, lv["w"], lv["h"]) for lv in layout["levels"]))
+            self.assertEqual(gt.gx_level_bytes(gt.GX_CMPR, 64, 64) + gt.gx_level_bytes(plane, 64, 64),
+                             64 * 64 * 4 / ratio)   # the top level: exactly 1/4 (I4) or 3/8 (I8) of RGBA8
+            self.assertLessEqual(len(split) - 64, (len(base) - 64) / ratio + 2 * 64 * len(layout["levels"]))
+
+    def test_other_formats_are_identical_to_the_baseline(self):
+        for name in ("dxt1", "a8r8g8b8", "a4r4g4b4", "p8_bump", "ay8"):
+            fields, pixels, _ = fx.source_pixels(name, 16, 8, mipmap_count=2, seed=5)
+            with self.subTest(name=name):
+                self.assertEqual(gt.pack_hwt(*gt.convert(fields, pixels, SPLIT)[:2]),
+                                 gt.pack_hwt(*gt.convert(fields, pixels)[:2]))
+
+    def test_version_2_container_round_trip_and_rejections(self):
+        fields, pixels, _ = fx.source_pixels("dxt5", 16, 16, mipmap_count=2, seed=6)
+        header, data, _, _ = gt.convert(fields, pixels, SPLIT)
+        blob = gt.pack_hwt(header, data)
+        parsed, colour = gt.unpack_hwt(blob)
+        self.assertEqual((parsed["version"], parsed["gx_format"], parsed["alpha"]["kind"]), (2, gt.GX_CMPR, "plane"))
+        self.assertEqual(bytes(colour) + bytes(parsed["alpha"]["data"]), data)
+        self.assertEqual(struct.unpack_from(">HHHHII", blob, 32),
+                         (1, gt.HWT_ALPHA_PLANE, gt.GX_I8, 0, 64 + header["colour_bytes"], header["alpha"]["bytes"]))
+        self.assertEqual(gt.unpack_hwt(gt.pack_hwt(*gt.convert(fields, pixels)[:2]))[0]["alpha"], None)  # version 1
+
+        def edited(offset, fmt, value):
+            m = bytearray(blob)
+            struct.pack_into(fmt, m, offset, value)
+            return bytes(m)
+        for broken in (blob[:-1], blob + b"\0", edited(32, ">H", 2), edited(34, ">H", 3), edited(36, ">H", 3),
+                       edited(38, ">H", 1), edited(40, ">I", 0), edited(50, ">B", 1), edited(20, ">H", 14),
+                       edited(4, ">H", 3)):
+            with self.subTest(size=len(broken)), self.assertRaises(gt.TextureError):
+                gt.unpack_hwt(broken)
+        fields, pixels, _ = fx.source_pixels("dxt3", 8, 8, alpha="opaque", seed=6)
+        header, data, _, _ = gt.convert(fields, pixels, SPLIT)
+        blob = gt.pack_hwt(header, data)
+        self.assertEqual(struct.unpack_from(">HHHHII", blob, 32), (1, gt.HWT_ALPHA_OMITTED, 0, 0, 0, 0))
+        self.assertEqual(gt.unpack_hwt(blob)[0]["alpha"]["kind"], "omitted")
+
+    def test_split_conversion_is_deterministic(self):
+        fields, pixels, _ = fx.source_pixels("dxt5", 32, 16, mipmap_count=3, seed=12, alpha="edges")
+        first = gt.convert(fields, pixels, SPLIT)
+        second = gt.convert(fields, bytes(pixels), SPLIT)
+        self.assertEqual(gt.pack_hwt(*first[:2]), gt.pack_hwt(*second[:2]))
+
+
 if __name__ == "__main__":
     unittest.main()

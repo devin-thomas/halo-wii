@@ -1,0 +1,941 @@
+{
+ "build": {
+  "build_id": "67c8dc836ab55999",
+  "content_loaders_dol_sha256": "2e385b2497c84f2f4bc87c835289b0d6ed101cd2270af5b71bac7e286e6be83a",
+  "engine_dol_bytes": 4100672,
+  "engine_dol_sha256": "50132f8a426ca91a92b086c8eb7d7876149f6b7c0fe75e6af01ef6dfada50438",
+  "source_commit": "a4a4b0a9",
+  "source_dirty": false,
+  "toolchain": "devkitPPC GCC 16.1.0, binutils 2.46.0"
+ },
+ "content_loaders_titan": {
+  "cases": 227,
+  "controls_detected": "38/42",
+  "cycle_crc": "a22a1a5f",
+  "elapsed_seconds": [
+   23.543,
+   23.188
+  ],
+  "gx_images": 751,
+  "heap_growth": 0,
+  "host_check_research": "227/227",
+  "host_exit": [
+   "0x00000000",
+   "0x00000000"
+  ],
+  "launches": 2,
+  "malformed": 148,
+  "max_err": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "mip_levels": 131,
+  "mismatches": 0,
+  "passed_per_cycle": 227,
+  "valid": 79
+ },
+ "conversion": {
+  "alpha_planes_omitted": 0,
+  "baseline_generation": "17189aa32aa83526",
+  "by_format_bytes": {
+   "dxt3": {
+    "alpha_plane": "I4 in all 2816",
+    "baseline": 722167616,
+    "split_alpha": 180848320,
+    "textures": 2816
+   },
+   "dxt5": {
+    "alpha_plane": "I8 in all 157",
+    "baseline": 125974784,
+    "split_alpha": 47254816,
+    "textures": 157
+   },
+   "other_formats": "byte-identical to gx-baseline-v1"
+  },
+  "byte_identical_runs": [
+   "research R1",
+   "research R2 (fresh root)",
+   "titan T1"
+  ],
+  "dxt5_in_i4": 0,
+  "generation": "6e7b87372c08e3fa",
+  "in_run_verification": {
+   "texture:dxt1:2d": {
+    "max_channel_error": [
+     11,
+     11,
+     11,
+     0
+    ],
+    "texels_checked": 3703920,
+    "texels_exact": 2487162,
+    "textures": 48
+   },
+   "texture:dxt1:cube": {
+    "max_channel_error": [
+     10,
+     10,
+     11,
+     0
+    ],
+    "texels_checked": 1571328,
+    "texels_exact": 963360,
+    "textures": 48
+   },
+   "texture:dxt3:2d:split-I4": {
+    "alpha_exact": 5878228,
+    "max_channel_error": [
+     11,
+     11,
+     11,
+     0
+    ],
+    "texels_checked": 5878228,
+    "texels_exact": 2966457,
+    "textures": 48
+   },
+   "texture:dxt5:2d:split-I8": {
+    "alpha_exact": 3992020,
+    "max_channel_error": [
+     11,
+     11,
+     11,
+     0
+    ],
+    "texels_checked": 3992020,
+    "texels_exact": 2391462,
+    "textures": 48
+   }
+  },
+  "maps": {
+   "a10": {
+    "all_textures": {
+     "baseline": 111677824,
+     "split_alpha": 72005952
+    },
+    "environment_base_maps": {
+     "baseline": 103822464,
+     "count": 122,
+     "split_alpha": 27807296
+    }
+   },
+   "prisoner": {
+    "all_textures": {
+     "baseline": 51278368,
+     "split_alpha": 30288864
+    },
+    "environment_base_maps": {
+     "baseline": 9088384,
+     "count": 10,
+     "split_alpha": 2316960
+    }
+   }
+  },
+  "outputs": 91397,
+  "outputs_identical_to_baseline": 88424,
+  "outputs_split_alpha": 2973,
+  "texture_bytes": {
+   "baseline": 1587808352,
+   "saved": 620039264,
+   "split_alpha": 967769088
+  },
+  "tree_bytes": 3070519883,
+  "tree_files": 91399,
+  "tree_sha256": "b21735679ce706ca64841b64621a147dcbaa9565057c9fc8471627f4a846098b"
+ },
+ "date": "2026-10-11",
+ "fidelity": {
+  "dxt5_alpha_rule": "reference _dxt5_alphas: integer division rounding down",
+  "interpolation_bound_exhaustive": {
+   "5_bit_pairs": "max 11, 0 over |c0-c1|//24+1",
+   "6_bit_pairs": "max 11, 0 over |c0-c1|//24+1"
+  },
+  "whole_set": {
+   "alpha_exact": 211953332,
+   "by_kind": {
+    "dxt3:split-I4": {
+     "alpha_exact": 180463732,
+     "max_channel_error": [
+      11,
+      11,
+      11,
+      0
+     ],
+     "texels_checked": 180463732,
+     "texels_exact": 127309031,
+     "textures": 2816
+    },
+    "dxt5:split-I8": {
+     "alpha_exact": 31489600,
+     "max_channel_error": [
+      11,
+      11,
+      11,
+      0
+     ],
+     "texels_checked": 31489600,
+     "texels_exact": 19227719,
+     "textures": 157
+    }
+   },
+   "colour_blocks": {
+    "kept": 9149973,
+    "swapped": 2972902,
+    "uniform": 1126377
+   },
+   "max_channel_error": [
+    11,
+    11,
+    11,
+    0
+   ],
+   "texels_checked": 211953332,
+   "texels_exact": 146536750,
+   "textures": 2973
+  }
+ },
+ "host_comparison": {
+  "ev-titan-launch1": {
+   "allocations_all_same_unpaced": true,
+   "allocations_compared": 1404,
+   "first_divergent_tick": null,
+   "fixed_step_same": true,
+   "runs": 18,
+   "runs_simulation_same": 18,
+   "runs_whole_same": 18,
+   "simulation_all_same": true,
+   "ticks_compared": 300,
+   "whole_all_same_unpaced": true
+  },
+  "ev-titan-launch2": {
+   "allocations_all_same_unpaced": true,
+   "allocations_compared": 1404,
+   "first_divergent_tick": null,
+   "fixed_step_same": true,
+   "runs": 18,
+   "runs_simulation_same": 18,
+   "runs_whole_same": 18,
+   "simulation_all_same": true,
+   "ticks_compared": 300,
+   "whole_all_same_unpaced": true
+  },
+  "research_ev-research-launch1": {
+   "allocations_all_same_unpaced": true,
+   "allocations_compared": 1404,
+   "first_divergent_tick": null,
+   "fixed_step_same": true,
+   "runs": 18,
+   "runs_simulation_same": 18,
+   "runs_whole_same": 18,
+   "simulation_all_same": true,
+   "ticks_compared": 300,
+   "whole_all_same_unpaced": true
+  },
+  "research_ev-research-launch2": {
+   "allocations_all_same_unpaced": true,
+   "allocations_compared": 1404,
+   "first_divergent_tick": null,
+   "fixed_step_same": true,
+   "runs": 18,
+   "runs_simulation_same": 18,
+   "runs_whole_same": 18,
+   "simulation_all_same": true,
+   "ticks_compared": 300,
+   "whole_all_same_unpaced": true
+  }
+ },
+ "memory": {
+  "heap_mem1_bytes": 491520,
+  "heap_mem1_bytes_hwi016b": 454656,
+  "heap_mem2_bytes": 2482176,
+  "heap_mem2_bytes_hwi016b": 2002944,
+  "image_bytes": 21353248,
+  "image_bytes_hwi016b": 21349792,
+  "mem1_free_after_engine_start": 835584,
+  "mem1_free_after_engine_start_hwi016b": 839680,
+  "mem1_free_after_gx": 1916928,
+  "mem1_free_after_gx_hwi016b": 1921024,
+  "mem1_left_after_heap": 344064,
+  "mem1_left_after_heap_hwi016b": 348160,
+  "mem2_spare_after": 503808,
+  "mem2_spare_after_hwi016b": 983040,
+  "mem2_spare_before": 2985984
+ },
+ "not_verified": [
+  "physical Wii",
+  "detail maps, specular and alpha test that consume base-map alpha (HWI-032)",
+  "campaign BSP rendering (a10 is a byte count only)"
+ ],
+ "profile": "gx-splitalpha-v1",
+ "profile_comparison_base_limit_2_titan": {
+  "rgba8": {
+   "diagnostic_override_high": {
+    "base_alpha_below_255": "306",
+    "covered": "570",
+    "crc_base_alpha": "f38736c0",
+    "crc_base_only": "d2a10c92",
+    "crc_full": "43ef5ac6",
+    "crc_lightmap_only": "901338d3",
+    "differs_base_only": "570",
+    "differs_lightmap_only": "306",
+    "distinct": "412",
+    "facing_back": "570/0",
+    "facing_front": "0/564",
+    "facing_none": "26/545",
+    "pass": "1",
+    "state_unchanged": "1"
+   },
+   "diagnostic_override_mid": {
+    "base_alpha_below_255": "532",
+    "covered": "768",
+    "crc_base_alpha": "055bd740",
+    "crc_base_only": "6139401d",
+    "crc_full": "9ee96a71",
+    "crc_lightmap_only": "4091a476",
+    "differs_base_only": "768",
+    "differs_lightmap_only": "533",
+    "distinct": "527",
+    "facing_back": "768/0",
+    "facing_front": "0/501",
+    "facing_none": "767/1",
+    "pass": "1",
+    "state_unchanged": "1"
+   },
+   "engine_tick_150": {
+    "base_alpha_below_255": "354",
+    "covered": "768",
+    "crc_base_alpha": "5bc991fd",
+    "crc_base_only": "67543a9c",
+    "crc_full": "993081a3",
+    "crc_lightmap_only": "9048d8f1",
+    "differs_base_only": "768",
+    "differs_lightmap_only": "354",
+    "distinct": "628",
+    "facing_back": "768/0",
+    "facing_front": "0/71",
+    "facing_none": "768/0",
+    "pass": "1",
+    "state_unchanged": "1"
+   },
+   "engine_tick_30": {
+    "base_alpha_below_255": "392",
+    "covered": "768",
+    "crc_base_alpha": "5e793a3a",
+    "crc_base_only": "0eca4555",
+    "crc_full": "88d296c4",
+    "crc_lightmap_only": "6fbcf093",
+    "differs_base_only": "768",
+    "differs_lightmap_only": "392",
+    "distinct": "567",
+    "facing_back": "768/0",
+    "facing_front": "0/547",
+    "facing_none": "766/2",
+    "pass": "1",
+    "state_unchanged": "1"
+   },
+   "engine_tick_300": {
+    "base_alpha_below_255": "313",
+    "covered": "768",
+    "crc_base_alpha": "5f7e9efe",
+    "crc_base_only": "50117629",
+    "crc_full": "58e3520f",
+    "crc_lightmap_only": "601026aa",
+    "differs_base_only": "768",
+    "differs_lightmap_only": "313",
+    "distinct": "636",
+    "facing_back": "768/0",
+    "facing_front": "0/98",
+    "facing_none": "768/0",
+    "pass": "1",
+    "state_unchanged": "1"
+   }
+  },
+  "split_alpha": {
+   "diagnostic_override_high": {
+    "base_alpha_below_255": "306",
+    "covered": "570",
+    "crc_base_alpha": "f38736c0",
+    "crc_base_only": "6f4f9df4",
+    "crc_full": "bf853d41",
+    "crc_lightmap_only": "901338d3",
+    "differs_base_only": "570",
+    "differs_lightmap_only": "306",
+    "distinct": "412",
+    "facing_back": "570/0",
+    "facing_front": "0/564",
+    "facing_none": "26/545",
+    "pass": "1",
+    "state_unchanged": "1"
+   },
+   "diagnostic_override_mid": {
+    "base_alpha_below_255": "532",
+    "covered": "768",
+    "crc_base_alpha": "055bd740",
+    "crc_base_only": "782ac3ac",
+    "crc_full": "2bb7d721",
+    "crc_lightmap_only": "4091a476",
+    "differs_base_only": "768",
+    "differs_lightmap_only": "533",
+    "distinct": "531",
+    "facing_back": "768/0",
+    "facing_front": "0/501",
+    "facing_none": "767/1",
+    "pass": "1",
+    "state_unchanged": "1"
+   },
+   "engine_tick_150": {
+    "base_alpha_below_255": "354",
+    "covered": "768",
+    "crc_base_alpha": "5bc991fd",
+    "crc_base_only": "7ca750b4",
+    "crc_full": "f8568e93",
+    "crc_lightmap_only": "9048d8f1",
+    "differs_base_only": "768",
+    "differs_lightmap_only": "354",
+    "distinct": "637",
+    "facing_back": "768/0",
+    "facing_front": "0/71",
+    "facing_none": "768/0",
+    "pass": "1",
+    "state_unchanged": "1"
+   },
+   "engine_tick_30": {
+    "base_alpha_below_255": "392",
+    "covered": "768",
+    "crc_base_alpha": "5e793a3a",
+    "crc_base_only": "80d8373c",
+    "crc_full": "ab9d28d3",
+    "crc_lightmap_only": "6fbcf093",
+    "differs_base_only": "768",
+    "differs_lightmap_only": "392",
+    "distinct": "571",
+    "facing_back": "768/0",
+    "facing_front": "0/547",
+    "facing_none": "766/2",
+    "pass": "1",
+    "state_unchanged": "1"
+   },
+   "engine_tick_300": {
+    "base_alpha_below_255": "313",
+    "covered": "768",
+    "crc_base_alpha": "5f7e9efe",
+    "crc_base_only": "96f27517",
+    "crc_full": "b795d665",
+    "crc_lightmap_only": "601026aa",
+    "differs_base_only": "768",
+    "differs_lightmap_only": "313",
+    "distinct": "638",
+    "facing_back": "768/0",
+    "facing_front": "0/98",
+    "facing_none": "768/0",
+    "pass": "1",
+    "state_unchanged": "1"
+   }
+  }
+ },
+ "research": {
+  "backend": "Vulkan",
+  "launches": [
+   {
+    "dolphin_processes_after": 0,
+    "elapsed_seconds": 120.595,
+    "forced": false,
+    "guest_end": {
+     "build": "67c8dc836ab55999",
+     "failures": "0",
+     "result": "pass"
+    },
+    "host_exit": "0x00000000",
+    "map_runs": {
+     "chain": "fb5dcbf2",
+     "digest": "6d88af44",
+     "heap_flat": "1",
+     "runs": "18",
+     "sim": "127656ef",
+     "sim_chain": "73904c7f",
+     "simulation_identical": "1"
+    },
+    "persistence": {
+     "chain": "00000000",
+     "digest": "00000000",
+     "previous_result": "0"
+    },
+    "poses": {
+     "diagnostic_override_high": {
+      "base_alpha_below_255": "569",
+      "covered": "570",
+      "crc_base_alpha": "3bec7072",
+      "crc_base_only": "ac480d14",
+      "crc_full": "a6357304",
+      "crc_lightmap_only": "3e5fc9da",
+      "differs_base_only": "570",
+      "differs_lightmap_only": "570",
+      "distinct": "424",
+      "facing_back": "570/0",
+      "facing_front": "0/564",
+      "facing_none": "26/545",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "diagnostic_override_mid": {
+      "base_alpha_below_255": "767",
+      "covered": "768",
+      "crc_base_alpha": "94c5f3f8",
+      "crc_base_only": "f0623062",
+      "crc_full": "972ab0b9",
+      "crc_lightmap_only": "75a7bfdf",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "545",
+      "facing_back": "768/0",
+      "facing_front": "0/501",
+      "facing_none": "767/1",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "engine_tick_150": {
+      "base_alpha_below_255": "768",
+      "covered": "768",
+      "crc_base_alpha": "3724bb8d",
+      "crc_base_only": "e54b870d",
+      "crc_full": "4e99f685",
+      "crc_lightmap_only": "287a85e4",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "632",
+      "facing_back": "768/0",
+      "facing_front": "0/71",
+      "facing_none": "768/0",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "engine_tick_30": {
+      "base_alpha_below_255": "766",
+      "covered": "768",
+      "crc_base_alpha": "e40b0b2b",
+      "crc_base_only": "aea7eae6",
+      "crc_full": "1de20107",
+      "crc_lightmap_only": "3a5d7e24",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "546",
+      "facing_back": "768/0",
+      "facing_front": "0/547",
+      "facing_none": "766/2",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "engine_tick_300": {
+      "base_alpha_below_255": "768",
+      "covered": "768",
+      "crc_base_alpha": "7b30a93b",
+      "crc_base_only": "0d29668e",
+      "crc_full": "e3eb3c53",
+      "crc_lightmap_only": "7787d69e",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "584",
+      "facing_back": "768/0",
+      "facing_front": "0/98",
+      "facing_none": "768/0",
+      "pass": "1",
+      "state_unchanged": "1"
+     }
+    }
+   },
+   {
+    "dolphin_processes_after": 0,
+    "elapsed_seconds": 119.654,
+    "forced": false,
+    "guest_end": {
+     "build": "67c8dc836ab55999",
+     "failures": "0",
+     "result": "pass"
+    },
+    "host_exit": "0x00000000",
+    "map_runs": {
+     "chain": "fb5dcbf2",
+     "digest": "6d88af44",
+     "heap_flat": "1",
+     "runs": "18",
+     "sim": "127656ef",
+     "sim_chain": "73904c7f",
+     "simulation_identical": "1"
+    },
+    "persistence": {
+     "chain": "73904c7f",
+     "digest": "127656ef",
+     "previous_result": "1"
+    },
+    "poses": {
+     "diagnostic_override_high": {
+      "base_alpha_below_255": "569",
+      "covered": "570",
+      "crc_base_alpha": "3bec7072",
+      "crc_base_only": "ac480d14",
+      "crc_full": "a6357304",
+      "crc_lightmap_only": "3e5fc9da",
+      "differs_base_only": "570",
+      "differs_lightmap_only": "570",
+      "distinct": "424",
+      "facing_back": "570/0",
+      "facing_front": "0/564",
+      "facing_none": "26/545",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "diagnostic_override_mid": {
+      "base_alpha_below_255": "767",
+      "covered": "768",
+      "crc_base_alpha": "94c5f3f8",
+      "crc_base_only": "f0623062",
+      "crc_full": "972ab0b9",
+      "crc_lightmap_only": "75a7bfdf",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "545",
+      "facing_back": "768/0",
+      "facing_front": "0/501",
+      "facing_none": "767/1",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "engine_tick_150": {
+      "base_alpha_below_255": "768",
+      "covered": "768",
+      "crc_base_alpha": "3724bb8d",
+      "crc_base_only": "e54b870d",
+      "crc_full": "4e99f685",
+      "crc_lightmap_only": "287a85e4",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "632",
+      "facing_back": "768/0",
+      "facing_front": "0/71",
+      "facing_none": "768/0",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "engine_tick_30": {
+      "base_alpha_below_255": "766",
+      "covered": "768",
+      "crc_base_alpha": "e40b0b2b",
+      "crc_base_only": "aea7eae6",
+      "crc_full": "1de20107",
+      "crc_lightmap_only": "3a5d7e24",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "546",
+      "facing_back": "768/0",
+      "facing_front": "0/547",
+      "facing_none": "766/2",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "engine_tick_300": {
+      "base_alpha_below_255": "768",
+      "covered": "768",
+      "crc_base_alpha": "7b30a93b",
+      "crc_base_only": "0d29668e",
+      "crc_full": "e3eb3c53",
+      "crc_lightmap_only": "7787d69e",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "584",
+      "facing_back": "768/0",
+      "facing_front": "0/98",
+      "facing_none": "768/0",
+      "pass": "1",
+      "state_unchanged": "1"
+     }
+    }
+   }
+  ],
+  "os_stability": "no_instability_events_observed"
+ },
+ "residency_prisoner": {
+  "alpha_planes": 10,
+  "base_alpha_used_by_shaders": 0,
+  "base_budget": 3145728,
+  "base_bytes": 2316960,
+  "base_maps": 10,
+  "base_not_resident_bytes": 0,
+  "base_resident": 10,
+  "environment_types_normal_blended_specular": "11/0/0",
+  "hwi016b": {
+   "base_bytes": 1747840,
+   "base_resident": 2,
+   "shortage": 5802612
+  },
+  "owned_peak": 2865752,
+  "resident_total": 2833356
+ },
+ "source_commits": {
+  "loader": "8a7df1cf",
+  "profile": "36745438",
+  "renderer": "a4a4b0a9"
+ },
+ "ticket": "HWI-008F",
+ "timings": {
+  "hwi008c_baseline": {
+   "research_seconds": [
+    272.3,
+    272.9
+   ],
+   "titan_seconds": 1431.9
+  },
+  "research": {
+   "conversion_seconds": [
+    144.984,
+    141.666
+   ],
+   "conversion_wall_seconds": [
+    145.1,
+    141.8
+   ],
+   "dolphin_batch_wall_seconds": {
+    "full_x2": 252,
+    "poses_x2": 55
+   },
+   "map_staging_seconds": 2.2,
+   "verify_all_dxt3_dxt5_seconds": 57.5,
+   "verify_jobs": 16
+  },
+  "titan": {
+   "conversion_note": "Titan shared (other agents and Dolphin)",
+   "conversion_seconds": 1438.048,
+   "conversion_wall_seconds": 1438.9,
+   "dolphin_batch_wall_seconds": {
+    "cmp_rgba8_x1": 39,
+    "cmp_split_x1": 67,
+    "content_loaders_x2": 100,
+    "full_x2": 289,
+    "poses_x2": 89
+   },
+   "host_reference_build_seconds": 202.8,
+   "wii_build_seconds_after_reconfigure": 90
+  }
+ },
+ "titan": {
+  "backend": "D3D",
+  "launches": [
+   {
+    "dolphin_processes_after": 0,
+    "elapsed_seconds": 123.536,
+    "forced": false,
+    "guest_end": {
+     "build": "67c8dc836ab55999",
+     "failures": "0",
+     "result": "pass"
+    },
+    "host_exit": "0x00000000",
+    "map_runs": {
+     "chain": "fb5dcbf2",
+     "digest": "6d88af44",
+     "heap_flat": "1",
+     "runs": "18",
+     "sim": "127656ef",
+     "sim_chain": "73904c7f",
+     "simulation_identical": "1"
+    },
+    "persistence": {
+     "chain": "00000000",
+     "digest": "00000000",
+     "previous_result": "0"
+    },
+    "poses": {
+     "diagnostic_override_high": {
+      "base_alpha_below_255": "569",
+      "covered": "570",
+      "crc_base_alpha": "c7e7125f",
+      "crc_base_only": "b65549e8",
+      "crc_full": "76e27f63",
+      "crc_lightmap_only": "901338d3",
+      "differs_base_only": "570",
+      "differs_lightmap_only": "570",
+      "distinct": "424",
+      "facing_back": "570/0",
+      "facing_front": "0/564",
+      "facing_none": "26/545",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "diagnostic_override_mid": {
+      "base_alpha_below_255": "767",
+      "covered": "768",
+      "crc_base_alpha": "b6717942",
+      "crc_base_only": "15dcbbdb",
+      "crc_full": "acf4671e",
+      "crc_lightmap_only": "4091a476",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "542",
+      "facing_back": "768/0",
+      "facing_front": "0/501",
+      "facing_none": "767/1",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "engine_tick_150": {
+      "base_alpha_below_255": "768",
+      "covered": "768",
+      "crc_base_alpha": "58a363f1",
+      "crc_base_only": "9d778aa2",
+      "crc_full": "f815b5a5",
+      "crc_lightmap_only": "9048d8f1",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "624",
+      "facing_back": "768/0",
+      "facing_front": "0/71",
+      "facing_none": "768/0",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "engine_tick_30": {
+      "base_alpha_below_255": "766",
+      "covered": "768",
+      "crc_base_alpha": "95bc1c61",
+      "crc_base_only": "7dbade27",
+      "crc_full": "62ff41b0",
+      "crc_lightmap_only": "6fbcf093",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "551",
+      "facing_back": "768/0",
+      "facing_front": "0/547",
+      "facing_none": "766/2",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "engine_tick_300": {
+      "base_alpha_below_255": "768",
+      "covered": "768",
+      "crc_base_alpha": "1d85735a",
+      "crc_base_only": "a47b7c72",
+      "crc_full": "2fd595e3",
+      "crc_lightmap_only": "601026aa",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "588",
+      "facing_back": "768/0",
+      "facing_front": "0/98",
+      "facing_none": "768/0",
+      "pass": "1",
+      "state_unchanged": "1"
+     }
+    }
+   },
+   {
+    "dolphin_processes_after": 0,
+    "elapsed_seconds": 122.371,
+    "forced": false,
+    "guest_end": {
+     "build": "67c8dc836ab55999",
+     "failures": "0",
+     "result": "pass"
+    },
+    "host_exit": "0x00000000",
+    "map_runs": {
+     "chain": "fb5dcbf2",
+     "digest": "6d88af44",
+     "heap_flat": "1",
+     "runs": "18",
+     "sim": "127656ef",
+     "sim_chain": "73904c7f",
+     "simulation_identical": "1"
+    },
+    "persistence": {
+     "chain": "73904c7f",
+     "digest": "127656ef",
+     "previous_result": "1"
+    },
+    "poses": {
+     "diagnostic_override_high": {
+      "base_alpha_below_255": "569",
+      "covered": "570",
+      "crc_base_alpha": "c7e7125f",
+      "crc_base_only": "b65549e8",
+      "crc_full": "76e27f63",
+      "crc_lightmap_only": "901338d3",
+      "differs_base_only": "570",
+      "differs_lightmap_only": "570",
+      "distinct": "424",
+      "facing_back": "570/0",
+      "facing_front": "0/564",
+      "facing_none": "26/545",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "diagnostic_override_mid": {
+      "base_alpha_below_255": "767",
+      "covered": "768",
+      "crc_base_alpha": "b6717942",
+      "crc_base_only": "15dcbbdb",
+      "crc_full": "acf4671e",
+      "crc_lightmap_only": "4091a476",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "542",
+      "facing_back": "768/0",
+      "facing_front": "0/501",
+      "facing_none": "767/1",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "engine_tick_150": {
+      "base_alpha_below_255": "768",
+      "covered": "768",
+      "crc_base_alpha": "58a363f1",
+      "crc_base_only": "9d778aa2",
+      "crc_full": "f815b5a5",
+      "crc_lightmap_only": "9048d8f1",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "624",
+      "facing_back": "768/0",
+      "facing_front": "0/71",
+      "facing_none": "768/0",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "engine_tick_30": {
+      "base_alpha_below_255": "766",
+      "covered": "768",
+      "crc_base_alpha": "95bc1c61",
+      "crc_base_only": "7dbade27",
+      "crc_full": "62ff41b0",
+      "crc_lightmap_only": "6fbcf093",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "551",
+      "facing_back": "768/0",
+      "facing_front": "0/547",
+      "facing_none": "766/2",
+      "pass": "1",
+      "state_unchanged": "1"
+     },
+     "engine_tick_300": {
+      "base_alpha_below_255": "768",
+      "covered": "768",
+      "crc_base_alpha": "1d85735a",
+      "crc_base_only": "a47b7c72",
+      "crc_full": "2fd595e3",
+      "crc_lightmap_only": "601026aa",
+      "differs_base_only": "768",
+      "differs_lightmap_only": "768",
+      "distinct": "588",
+      "facing_back": "768/0",
+      "facing_front": "0/98",
+      "facing_none": "768/0",
+      "pass": "1",
+      "state_unchanged": "1"
+     }
+    }
+   }
+  ],
+  "os_stability": "no_instability_events_observed"
+ }
+}

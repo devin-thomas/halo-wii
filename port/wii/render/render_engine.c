@@ -399,6 +399,11 @@ static boolean render_engine_map_load(
 					(environment->diffuse.secondary_detail_map.index != NONE) +
 					(environment->diffuse.micro_detail_map.index != NONE);
 				description.bump_map = environment->diffuse.bump_map.index != NONE;
+				/* rasterizer_xbox_environment.c's diffuse pass reads texture 0's
+				(the base map's) alpha for _shader_environment_type_blended (1)
+				and _blended_base_specular (2) */
+				description.environment_type = environment->type;
+				description.base_alpha_used = environment->type == 1 || environment->type == 2;
 			}
 			else if (shader->base.type >= _render_shader_type_transparent_generic &&
 				shader->base.type <= _render_shader_type_transparent_plasma)
@@ -662,14 +667,15 @@ static int render_engine_capture(
 		result.differs_base_only > 0 && result.facing_back[1] == 0 && result.facing_front[1] > 0 &&
 		result.facing_front[2] == 0;
 	wii_log("RENDER_POSE name=%s camera=%s eye=%.4f,%.4f,%.4f leaf=%ld cluster=%ld clusters=%ld surfaces=%ld "
-		"crc_full=%08lx crc_lightmap_only=%08lx crc_base_only=%08lx samples=%d covered=%d distinct=%d "
+		"crc_full=%08lx crc_lightmap_only=%08lx crc_base_only=%08lx crc_base_alpha=%08lx base_alpha_below_255=%d "
+		"samples=%d covered=%d distinct=%d "
 		"differs_lightmap_only=%d differs_base_only=%d facing_none=%d/%d facing_back=%d/%d facing_front=%d/%d "
 		"draw_us=%lu state_before=%08lx state_after=%08lx state_unchanged=%d camera_effect_writes=%d pass=%d\n",
 		name, diagnostic_override ? "diagnostic_override" : "engine_unit_deterministic",
 		(double)render_engine.view.eye[0], (double)render_engine.view.eye[1], (double)render_engine.view.eye[2],
 		render_engine.view.leaf_index, render_engine.view.cluster_index, render_engine.view.rendered_clusters,
 		render_engine.view.visible_surfaces, result.crc_full, result.crc_lightmap_only, result.crc_base_only,
-		result.samples, result.covered, result.distinct, result.differs_lightmap_only, result.differs_base_only,
+		result.crc_base_alpha, result.base_alpha_below_255, result.samples, result.covered, result.distinct, result.differs_lightmap_only, result.differs_base_only,
 		result.facing_front[0], result.facing_back[0], result.facing_front[1], result.facing_back[1],
 		result.facing_front[2], result.facing_back[2], result.draw_us, before, after, before == after,
 		camera_effect_writes, ok);

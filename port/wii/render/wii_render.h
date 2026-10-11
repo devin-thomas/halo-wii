@@ -27,14 +27,18 @@ Configuration: WII_ENGINE_ROOT/render.txt, optional, "key=value" lines:
   mode=poses_only      skip the map run; load the map once and run the
                        fixed-pose checks (frame dumps stay short)
   base_budget=<bytes>  base map residency budget (default below)
+  base_limit=<count>   at most this many base maps resident, in coverage
+                       order (comparisons of texture profiles at equal
+                       residency; default: no limit)
 */
 
 #ifndef __HALO_WII_RENDER_H
 #define __HALO_WII_RENDER_H
 
 /* the provisional residency budget for environment base maps, pending the
-Wii texture cache (HWI-032): bytes of HWT1 texture data */
-#define WII_RENDER_DEFAULT_BASE_BUDGET 2097152UL
+Wii texture cache (HWI-032): bytes of HWT1 texture data. 3 MiB holds all ten
+of Prisoner's base maps in gx-splitalpha-v1 (HWI-008F) */
+#define WII_RENDER_DEFAULT_BASE_BUDGET 3145728UL
 
 /* ---------- driver (wii_engine_main.c) */
 
@@ -80,6 +84,11 @@ struct wii_gx_material
 	long first_surface, surface_count;
 	int detail_maps;          /* not drawn (counted): detail, micro detail */
 	int bump_map;             /* not drawn (counted) */
+	int environment_type;     /* shader_environment's type: normal 0, blended 1,
+	                          blended base specular 2 */
+	int base_alpha_used;      /* the shader reads the base map's alpha (environment
+	                          types blended and blended base specular: it blends
+	                          the detail maps, and is the specular mask) */
 };
 
 struct wii_gx_view
@@ -115,6 +124,11 @@ typedef int (*wii_gx_frontfacing_proc)(const float eye[3], const float p0[3], co
 struct wii_gx_pose_result
 {
 	unsigned long crc_full, crc_lightmap_only, crc_base_only;
+	/* the base maps' alpha as TEV combines it (CMPR colour's map with its
+	alpha plane, or RGBA8's own alpha), shown as grey: its CRC and the
+	samples below 255 */
+	unsigned long crc_base_alpha;
+	int base_alpha_below_255;
 	int samples, covered, distinct, differs_lightmap_only, differs_base_only;
 	int facing_front[3], facing_back[3]; /* classified, cull none/back/front */
 	unsigned long draw_us;

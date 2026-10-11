@@ -8,7 +8,9 @@
  * (content_check.c). The decoded kinds also log their decoded memory, the
  * heap they held and their load times (MEMORY lines). Textures are
  * also uploaded to GX and read back from the EFB, texel by texel, against
- * the CPU decode. Malformed and truncated inputs must be rejected with the
+ * the CPU decode; a split-alpha texture (HWT1 version 2, HWI-008F) is drawn
+ * as TEV combines it: CMPR colour in stage 0, the alpha plane's alpha in
+ * stage 1. Malformed and truncated inputs must be rejected with the
  * stated reason. Every case runs in two load/check/release cycles, which
  * must agree and leave the heap where it started.
  *
@@ -126,17 +128,50 @@ static int cmpr_interpolated(const unsigned char *image, uint32_t width, uint32_
     return index >= 2;
 }
 
+/* The split-alpha combination (HWI-008F): stage 0 takes the colour map's
+ * colour (TEXMAP0), stage 1 keeps it and takes the alpha plane's alpha
+ * (TEXMAP1, I4/I8 give the intensity as alpha); with show_alpha, stage 2
+ * shows the combined alpha (APREV) as grey. */
+static void tev_split(int show_alpha)
+{
+    GX_SetNumTevStages(show_alpha ? 3 : 2);
+    GX_SetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP1, GX_COLORNULL);
+    GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_CPREV);
+    GX_SetTevColorOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_TEXA);
+    GX_SetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    if (show_alpha) {
+        GX_SetTevOrder(GX_TEVSTAGE2, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLORNULL);
+        GX_SetTevColorIn(GX_TEVSTAGE2, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_APREV);
+        GX_SetTevColorOp(GX_TEVSTAGE2, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        GX_SetTevAlphaIn(GX_TEVSTAGE2, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
+        GX_SetTevAlphaOp(GX_TEVSTAGE2, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    }
+}
+
+/* One image to compare: its colour and, for a split-alpha texture, its alpha
+ * plane (alpha_object NULL when the texture has none: the alpha is 255). */
+struct compared_image {
+    GXTexObj *object, *alpha_object;
+    uint32_t gx_format, alpha_format, split;
+    const unsigned char *image, *alpha_image;
+};
+
 /* Draws the texture object over a crop of the level (lw x lh texels) and
  * compares every texel's colour, then its alpha (shown as grey through
- * GX_CC_TEXA, since the EFB is RGB8), with the CPU decode of image. */
-static void gx_compare(GXTexObj *object, uint32_t gx_format, const unsigned char *image, uint32_t lw, uint32_t lh,
-                       struct content_readback *rb)
+ * GX_CC_TEXA, or for a split-alpha texture the combined APREV, since the EFB
+ * is RGB8), with the CPU decode of image. */
+static void gx_compare(const struct compared_image *ci, uint32_t lw, uint32_t lh, struct content_readback *rb)
 {
     uint32_t w = lw < CROP ? lw : CROP, h = lh < CROP ? lh : CROP;
+    uint32_t gx_format = ci->gx_format;
     for (int pass = 0; pass < 2; ++pass) {
         gx_state();
-        GX_LoadTexObj(object, GX_TEXMAP0);
-        if (pass == 1) {
+        GX_LoadTexObj(ci->object, GX_TEXMAP0);
+        if (ci->alpha_object != NULL) {
+            GX_LoadTexObj(ci->alpha_object, GX_TEXMAP1);
+            tev_split(pass == 1);
+        } else if (pass == 1) {
             GX_SetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_TEXA);
             GX_SetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
         }
@@ -146,7 +181,13 @@ static void gx_compare(GXTexObj *object, uint32_t gx_format, const unsigned char
         for (uint32_t y = 0; y < h; ++y)
             for (uint32_t x = 0; x < w; ++x) {
                 unsigned char expected[4];
-                hwt_decode_texel(gx_format, image, lw, x, y, expected);
+                hwt_decode_texel(gx_format, ci->image, lw, x, y, expected);
+                if (ci->split) {
+                    unsigned char alpha[4] = {255, 255, 255, 255};
+                    if (ci->alpha_image != NULL)
+                        hwt_decode_texel(ci->alpha_format, ci->alpha_image, lw, x, y, alpha);
+                    expected[3] = alpha[3];
+                }
                 GXColor seen;
                 GX_PeekARGB((u16)x, (u16)y, &seen);
                 ++rb->peeks;
@@ -154,7 +195,7 @@ static void gx_compare(GXTexObj *object, uint32_t gx_format, const unsigned char
                 rb->crc = content_crc32(rb->crc, observed, 3);
                 if (pass == 0 && gx_format == HWT_GX_CMPR && expected[3] == 0)
                     continue;   /* the colour of a transparent CMPR texel is unspecified */
-                int loose = pass == 0 && gx_format == HWT_GX_CMPR && cmpr_interpolated(image, lw, x, y);
+                int loose = pass == 0 && gx_format == HWT_GX_CMPR && cmpr_interpolated(ci->image, lw, x, y);
                 int tolerance = loose ? CMPR_TOLERANCE : 0, bad = 0;
                 for (int c = 0; c < 3; ++c) {
                     int want = pass == 0 ? expected[c] : expected[3];
@@ -222,36 +263,61 @@ static int texture_control(const struct content_blob *blob, const struct hwt_hea
 }
 
 /* Every GX-loadable image on its own, then each level of a 2D chain through
- * one mipmapped texture object with its LOD pinned to that level. */
+ * one mipmapped texture object with its LOD pinned to that level (a split
+ * texture's plane likewise, beside it). */
 static void texture_readback(const struct content_blob *blob, const struct hwt_header *h, struct content_outcome *o)
 {
     DCFlushRange(blob->data, blob->capacity);
     GX_InvalidateTexAll();
     o->control = texture_control(blob, h);
+    int plane = h->alpha_kind == HWT_ALPHA_PLANE;
     for (uint32_t i = 0; i < h->images; ++i) {
-        struct hwt_image image;
+        struct hwt_image image, alpha_image;
         if (hwt_image_at(h, i, &image) != CONTENT_OK || !image.gx_loadable)
             continue;
-        GXTexObj object;
+        if (plane && hwt_alpha_image_at(h, i, &alpha_image) != CONTENT_OK)
+            continue;
+        GXTexObj object, alpha_object;
         GX_InitTexObj(&object, blob->data + image.offset, (u16)image.width, (u16)image.height, (u8)h->gx_format,
                       GX_CLAMP, GX_CLAMP, GX_FALSE);
         GX_InitTexObjFilterMode(&object, GX_NEAR, GX_NEAR);
-        gx_compare(&object, h->gx_format, blob->data + image.offset, image.width, image.height, &o->readback);
+        struct compared_image ci = {&object, NULL, h->gx_format, h->alpha_gx_format, h->version == 2,
+                                    blob->data + image.offset, NULL};
+        if (plane) {
+            GX_InitTexObj(&alpha_object, blob->data + alpha_image.offset, (u16)image.width, (u16)image.height,
+                          (u8)h->alpha_gx_format, GX_CLAMP, GX_CLAMP, GX_FALSE);
+            GX_InitTexObjFilterMode(&alpha_object, GX_NEAR, GX_NEAR);
+            ci.alpha_object = &alpha_object;
+            ci.alpha_image = blob->data + alpha_image.offset;
+        }
+        gx_compare(&ci, image.width, image.height, &o->readback);
         ++o->gx_images;
     }
     if (h->type != HWT_TYPE_2D || h->levels < 2 || h->width > HWT_GX_MAX_DIMENSION ||
         h->height > HWT_GX_MAX_DIMENSION)
         return;
     for (uint32_t level = 0; level < h->levels; ++level) {
-        struct hwt_image image;
+        struct hwt_image image, alpha_image;
         if (hwt_image_at(h, level, &image) != CONTENT_OK)
             return;
-        GXTexObj object;
+        if (plane && hwt_alpha_image_at(h, level, &alpha_image) != CONTENT_OK)
+            return;
+        GXTexObj object, alpha_object;
         GX_InitTexObj(&object, blob->data + HWT_HEADER_BYTES, (u16)h->width, (u16)h->height, (u8)h->gx_format,
                       GX_CLAMP, GX_CLAMP, GX_TRUE);
         GX_InitTexObjLOD(&object, GX_NEAR_MIP_NEAR, GX_NEAR, (f32)level, (f32)level, 0.0f, GX_FALSE, GX_FALSE,
                          GX_ANISO_1);
-        gx_compare(&object, h->gx_format, blob->data + image.offset, image.width, image.height, &o->readback);
+        struct compared_image ci = {&object, NULL, h->gx_format, h->alpha_gx_format, h->version == 2,
+                                    blob->data + image.offset, NULL};
+        if (plane) {
+            GX_InitTexObj(&alpha_object, blob->data + h->alpha_offset, (u16)h->width, (u16)h->height,
+                          (u8)h->alpha_gx_format, GX_CLAMP, GX_CLAMP, GX_TRUE);
+            GX_InitTexObjLOD(&alpha_object, GX_NEAR_MIP_NEAR, GX_NEAR, (f32)level, (f32)level, 0.0f, GX_FALSE,
+                             GX_FALSE, GX_ANISO_1);
+            ci.alpha_object = &alpha_object;
+            ci.alpha_image = blob->data + alpha_image.offset;
+        }
+        gx_compare(&ci, image.width, image.height, &o->readback);
         ++o->mip_levels;
     }
 }

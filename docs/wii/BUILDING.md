@@ -72,7 +72,8 @@ files staged from a content pipeline generation
 [evidence](evidence/2026-10-10-engine-environment-render.md)). Without them
 on the card nothing is drawn, the log says `RENDER_FAIL` and the pose check
 fails; `render.txt` with `render=off` restores the HWI-015B build's
-behaviour:
+behaviour. Stage from a `gx-splitalpha-v1` generation to hold every base
+map of Prisoner ([HWI-008F](evidence/2026-10-10-split-alpha-textures.md)):
 
 ```powershell
 python -B tools/wii/render_stage.py --generation <generation dir> --map <your .map> --name <map> --out <new private dir> --stage-args
