@@ -19,6 +19,23 @@ the same engine units without this directory and registers none, so it runs
 the HWI-015B sequence unchanged: the comparison of the two shows whether
 drawing changes the game state.
 
+## The boot mode's interface (HWI-016D)
+
+In the boot mode (port/wii/engine/README.md) the engine's own `main_loop`
+draws, and the boot hooks route its rasterizer backend here:
+
+| File | Side | What |
+|---|---|---|
+| [`wii_render_ui.h`](wii_render_ui.h) | interface | the boot configuration and the 2D GX calls |
+| [`render_ui.c`](render_ui.c) | engine unit | `render_frame` for main_loop's windows (the environment from each window's own camera, then `render_ui_widgets`); the screen quads (each bitmap by its tag and index in its tag); the engine's own text and glyph cache; which screen is up (BOOT_SCREEN: EFB CRC and game-state digest once it has stood); the manifest line and the map's label; the end of the launch |
+| [`render_ui_gx.c`](render_ui_gx.c) | libogc | 2D GX state, the engine's framebuffer blend functions, the menus' HWT1 textures from the card in a bounded cache (split-alpha CMPR with its I4/I8 plane on a second TEV stage), the glyph cache's A4R4G4B4 bitmap as an IA4 texture, a built-in 5x7 diagnostic font, the frame copy |
+
+Approximations, each counted: the menus' plasma effect is not composited
+(the widget's own bitmap is drawn); GX has no component min or max blend
+(drawn as the alpha blend). The console window, the HUD and the game
+engine's overlays are not drawn in the boot mode. Textures are read from
+`data/render/<map>/textures/<tag>-<bitmap>.hwt` (`tools/wii/boot_stage.py`).
+
 ## What is drawn
 
 - **Geometry:** every material of the BSP, in `structure_render_pass`'s

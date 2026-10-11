@@ -56,6 +56,7 @@ textures are loaded.
 #include "bitmaps/bitmap_group_lookup.h"
 #include "physics/breakable_surfaces.h"
 #include "effects/player_effects.h"
+#include "tag_files/tag_files.h"
 
 #include "wii_render.h"
 #include "../engine/engine_hooks.h"
@@ -151,6 +152,10 @@ struct render_engine_globals
 	long frames;
 	long camera_effect_skipped;
 	boolean pose_phase;
+	/* HWI-016D: the boot mode draws from main_loop's own window camera
+	inside its render_frame (port/wii/render/render_ui.c); the frame hook
+	stands aside */
+	boolean boot;
 };
 
 /* ---------- globals */
@@ -540,7 +545,7 @@ static void render_engine_frame(
 	unsigned long crc = 0;
 	int covered = 0;
 
-	if (!render_engine.initialized)
+	if (!render_engine.initialized || render_engine.boot)
 		return;
 	/* (a map's resources load in its first frame: timed by the load, not
 	the frame) */
@@ -795,4 +800,43 @@ int wii_render_pose_phase(
 	render_engine.pose_phase = FALSE;
 
 	return failures == 0 && captured == RENDER_POSE_TICK_COUNT + RENDER_OVERRIDE_POSES;
+}
+
+/* ---------- HWI-016D: the boot mode (wii_render.h)
+
+main_loop runs the engine's own director and observer updates, so the
+window's camera is the engine's own (set_window_camera_values); the boot
+mode's render_frame (render_ui.c) hands it here for the environment, then
+draws the interface over it and presents the frame itself. */
+
+void wii_render_environment_boot(
+	void)
+{
+	render_engine.boot = TRUE;
+	render_engine_rasterizer_initialize();
+}
+
+int wii_render_environment_draw(
+	const void *render_camera)
+{
+	unsigned long long started;
+	struct render_camera camera;
+
+	if (!render_engine.initialized || !render_engine.boot || global_scenario_index == NONE)
+		return FALSE;
+	/* the map's resources are the loaded scenario's (render/<map>/...) */
+	wii_render_set_map(tag_get_name(global_scenario_index));
+	if (!render_engine_map_current())
+		return FALSE;
+	started = wii_time_microseconds();
+	render_engine_clip_distances();
+	camera = *(struct render_camera const *)render_camera;
+	render_engine_visibility(&camera);
+	render_engine_materials_drawn();
+	render_engine.view_valid = TRUE;
+	render_engine.view.visibility_us = (unsigned long)(wii_time_microseconds() - started);
+	wii_gx_environment_draw(&render_engine.view, render.environment_surface_flags, render_engine.drawn);
+	render_engine.frames++;
+
+	return TRUE;
 }

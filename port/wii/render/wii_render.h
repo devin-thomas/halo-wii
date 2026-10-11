@@ -137,4 +137,16 @@ struct wii_gx_pose_result
 void wii_gx_pose_capture(const struct wii_gx_view *view, const unsigned long *surface_flags,
 	const unsigned char *material_drawn, wii_gx_frontfacing_proc frontfacing, int present_frames,
 	struct wii_gx_pose_result *out);
+/* ---------- HWI-016D: the boot mode (render_ui.c)
+
+wii_render_environment_boot: the rasterizer's start-up for the boot mode;
+the per-frame hook then stands aside. wii_render_environment_draw: the
+loaded scenario's environment from a window's camera (struct render_camera
+const *, main_loop's own), into the EFB without the frame copy; 1 if drawn.
+wii_gx_environment_draw: its GX half. */
+void wii_render_environment_boot(void);
+int wii_render_environment_draw(const void *render_camera);
+void wii_gx_environment_draw(const struct wii_gx_view *view, const unsigned long *surface_flags,
+	const unsigned char *material_drawn);
+
 #endif

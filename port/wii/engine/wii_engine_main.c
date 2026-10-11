@@ -55,6 +55,7 @@ One launch:
 #include "engine_map_run.h"
 #include "../runtime/runtime_start.h"
 #include "../render/wii_render.h"
+#include "boot_main.h"
 
 #define LOG_PATH WII_ENGINE_ROOT "/engine.log"
 #define RUNS_PATH WII_ENGINE_ROOT "/runs.txt"
@@ -402,6 +403,22 @@ int __wrap_main(void)
 
 		wii_log("PLATFORM failures=%d\n", platform_failures);
 		check(!platform_failures, "platform_checks");
+	}
+
+	/* HWI-016D: the boot mode (boot.txt, boot_main.c): the engine's own main
+	through the original menus, in place of the start-up and map run below;
+	the launch ends inside it */
+	if (wii_boot_requested())
+	{
+		struct wii_boot_driver boot;
+
+		stage = "boot_menu";
+		boot.video.mode = mode;
+		boot.video.xfb[0] = xfb0;
+		boot.video.xfb[1] = xfb1;
+		boot.real_main = __real_main;
+		wii_boot_run(&boot);
+		stage = "platform";
 	}
 
 	/* ---------- the engine's start-up */

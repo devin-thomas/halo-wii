@@ -63,7 +63,10 @@ class UnsupportedTests(unittest.TestCase):
     def test_every_stub_reports_and_none_reports_success(self):
         text = engine_unsupported.generate()
         bodies = text.split("\n{\n")[1:]
-        self.assertGreater(len(bodies), 150)
+        # (HWI-016D implements XInput, Winsock and XNet: wii_xinput.c, xnet.c over wii_loopback_net.c)
+        self.assertGreater(len(bodies), 140)
+        for implemented in ("XInputGetState", "XNetStartup", "halo_ws_socket", "WSAStartup"):
+            self.assertNotIn(f" {implemented}(", text)
         for body in bodies:
             self.assertIn("wii_unsupported(", body.split("}")[0])
         # status returns where 0 would read as success

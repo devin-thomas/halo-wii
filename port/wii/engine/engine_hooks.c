@@ -370,13 +370,27 @@ made, so a shot leaves no mark in the game state's decals: a measured gap
 until the Wii has a texture cache (HWI-032). */
 struct bitmap_data;
 
+/* HWI-016D: the boot mode answers for the interface's own bitmaps (the
+button icons its text draws inline, ui_widget.c), which its GX side draws
+from the card; every other bitmap still has none */
+static void *(*boot_bitmap_hardware_format)(struct bitmap_data *bitmap);
+
+void wii_engine_set_bitmap_hardware_format(
+	void *(*proc)(struct bitmap_data *bitmap))
+{
+	boot_bitmap_hardware_format = proc;
+}
+
 void *__wrap__texture_cache_bitmap_get_hardware_format(
 	struct bitmap_data *bitmap,
 	boolean block,
 	boolean load)
 {
-	wii_unsupported("render", "texture_cache_bitmap_get_hardware_format (no texture cache: none)");
-	return NULL;
+	void *answer = boot_bitmap_hardware_format ? boot_bitmap_hardware_format(bitmap) : NULL;
+
+	if (!answer)
+		wii_unsupported("render", "texture_cache_bitmap_get_hardware_format (no texture cache: none)");
+	return answer;
 }
 
 /* The sound cache likewise (source/cache/xbox_sound_cache.c) is made by

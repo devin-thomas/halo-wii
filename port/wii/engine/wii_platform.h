@@ -115,5 +115,7 @@ void wii_thread_report_get(struct wii_thread_report *report);
 
 /* microseconds since boot, from the time base */
 unsigned long long wii_time_microseconds(void);
+/* the calling thread's identity (HWI-016D: the boot mode's frame clock) */
+unsigned long wii_thread_self(void);
 
 #endif

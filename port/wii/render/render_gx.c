@@ -1103,6 +1103,22 @@ void wii_gx_frame(const struct wii_gx_view *view, const unsigned long *surface_f
               view->rendered_clusters);
 }
 
+/* HWI-016D: the environment drawn into the EFB, without the frame copy: the
+boot mode's frame (render_ui.c) draws the interface over it and presents the
+frame itself */
+void wii_gx_environment_draw(const struct wii_gx_view *view, const unsigned long *surface_flags,
+                             const unsigned char *material_drawn)
+{
+    if (!gx.ready)
+        return;
+    u64 start = gettime();
+    load_view(view);
+    unsigned long triangles = draw_materials(surface_flags, material_drawn, DRAW_FULL, GX_CULL_BACK);
+    unsigned long submit = elapsed_us(start);
+    stats_add(&gx.map_stats, view->visibility_us, submit, 0, 0, triangles, view->visible_surfaces,
+              view->rendered_clusters);
+}
+
 /* ---------- the pose checks */
 
 static uint32_t pose_full[GRID_X * GRID_Y], pose_other[GRID_X * GRID_Y];

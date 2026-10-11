@@ -2428,8 +2428,12 @@ static boolean network_game_server_handle_message_client_game_start_request(
 			&packet_version,
 			_network_game_packet_class_client_pregame))
 		{
-			/* (a short on the wire: the rest of the long is not written) */
-			short countdown_event = (short)game_start_request.countdown_time;
+			/* (a short on the wire: the rest of the long is not written).
+			port: the short the decoder wrote, at the long's start: the long's
+			low half on a little-endian target, its high half on the Wii's */
+			short countdown_event;
+
+			csmemcpy(&countdown_event, &game_start_request.countdown_time, sizeof(countdown_event));
 
 			/* port: the pregame screen's faster and slower, from any machine;
 			to stop the countdown or start at once (a script's), the host's own
