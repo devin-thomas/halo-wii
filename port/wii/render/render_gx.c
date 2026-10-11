@@ -11,7 +11,7 @@
  *   WII_ENGINE_DATA_ROOT/render/<map>/lightmaps/<bsp tag:05>.hwl
  *   WII_ENGINE_DATA_ROOT/render/<map>/textures/<bitmap tag:05>-<bitmap:03>.hwt
  *
- * Geometry (HWI-016E): GX draws from the tag slot. The staged map
+ * Geometry (HWI-030): GX draws from the tag slot. The staged map
  * (map_stage.py, HWIMAP02) holds each BSP material's compressed_vertex_data
  * in big-endian: vertex_count compressed environment vertices of 32 bytes
  * (position F32 xyz at 0, three packed normals, texcoord F32 st at 24), then
@@ -161,7 +161,7 @@ struct memory_now {
 static struct {
     int configured, enabled, poses_only;
     /* the boot mode (HWI-016D): the menus' texture cache shares the heap, so
-    each texture is its own heap block, as before HWI-016E, not a pool */
+    each texture is its own heap block, as before HWI-030, not a pool */
     int heap_textures;
     unsigned long base_budget;
     long base_limit;

@@ -159,7 +159,7 @@ struct real_map_globals
 	long command_ran_tick;
 	long command_result;
 	short command_bsp_before, command_bsp_after;
-	/* HWI-016E: more commands, each after its own tick */
+	/* HWI-030: more commands, each after its own tick */
 	long more_command_ticks[REAL_MAP_MAXIMUM_MORE_COMMANDS];
 	char more_commands[REAL_MAP_MAXIMUM_MORE_COMMANDS][32];
 	int more_command_count;

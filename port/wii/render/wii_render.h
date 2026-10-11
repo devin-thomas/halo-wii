@@ -30,7 +30,7 @@ Configuration: WII_ENGINE_ROOT/render.txt, optional, "key=value" lines:
   base_limit=<count>   at most this many base maps resident, in coverage
                        order (comparisons of texture profiles at equal
                        residency; default: no limit)
-  pool_max=<bytes>     the render pool's largest size (HWI-016E, below;
+  pool_max=<bytes>     the render pool's largest size (HWI-030, below;
                        default: what the heap has above the keeps)
   pool_keep=<mem1>,<mem2>  heap bytes the pool leaves the engine in each
                        bank (defaults below)
@@ -48,14 +48,14 @@ Configuration: WII_ENGINE_ROOT/render.txt, optional, "key=value" lines:
                        the end); one line each, in order (default: one, on
                        the plan's first map)
 
-Geometry (HWI-016E): GX draws each BSP material's vertices where the staged
+Geometry (HWI-030): GX draws each BSP material's vertices where the staged
 map holds them, in the tag slot: the compressed environment vertex
 (position F32 at 0, texcoord F32 at 24, stride 32) and the lightmap vertex
 (texcoord S16 at 4, stride 8), as map_stage.py converts them to big-endian,
 and the BSP's surfaces (three u16 each). Nothing is copied; the HWL1 file
 (the same bytes, from the content pipeline) is only compared.
 
-Textures (HWI-016E): one render pool per map, taken from the heap at the
+Textures (HWI-030): one render pool per map, taken from the heap at the
 map's first BSP load in two parts (MEM1's arena above its keep, MEM2's
 above the arena reserve and its keep) and given back when the map unloads;
 each BSP load fills it again: the material tables, every lightmap page,
@@ -123,7 +123,7 @@ struct wii_gx_material
 	int base_alpha_used;      /* the shader reads the base map's alpha (environment
 	                          types blended and blended base specular: it blends
 	                          the detail maps, and is the specular mask) */
-	/* HWI-016E: the material's vertices in the tag slot (its
+	/* HWI-030: the material's vertices in the tag slot (its
 	compressed_vertex_data: vertex_count compressed environment vertices,
 	32 bytes each, then lightmap_vertex_count lightmap vertices, 8 bytes
 	each, big-endian as staged), and its vertex buffers' types */

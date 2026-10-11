@@ -1,4 +1,4 @@
-"""Campaign render residency (HWI-016E): the Wii rasterizer draws BSP geometry from the tag slot.
+"""Campaign render residency (HWI-030): the Wii rasterizer draws BSP geometry from the tag slot.
 
 GX reads each BSP material's vertices where the staged map (map_stage.py)
 holds them, and the HWL1 file (content_geometry.py) is only compared with

@@ -61,7 +61,7 @@ struct map_line
 	unsigned long expect_simulation; /* (HWI-016F) the simulation, HWI-016F's frame-coupled fields left out */
 	long switch_tick;
 	int switch_index;
-	/* HWI-016E: switch_bsp=<tick>:<index>,<tick>:<index>,...: the switches
+	/* HWI-030: switch_bsp=<tick>:<index>,<tick>:<index>,...: the switches
 	after the first */
 	int more_switches;
 	long more_switch_ticks[REAL_MAP_MAXIMUM_MORE_COMMANDS];
@@ -379,7 +379,7 @@ static int parse_line(char *text, int default_cycles, struct map_line *line)
 				return 0;
 			line->switch_tick = strtol(value, NULL, 10);
 			line->switch_index = (int)strtol(colon + 1, &next, 10);
-			/* (HWI-016E) more switches, each "<tick>:<index>" after a comma */
+			/* (HWI-030) more switches, each "<tick>:<index>" after a comma */
 			while (*next == ',')
 			{
 				char *pair = next + 1;

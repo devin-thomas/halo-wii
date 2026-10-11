@@ -386,7 +386,7 @@ static boolean render_engine_map_load(
 			description.base_tag = -1;
 			description.first_surface = material->first_surface_index;
 			description.surface_count = material->surface_count;
-			/* HWI-016E: GX draws the material's vertices where the tag slot holds
+			/* HWI-030: GX draws the material's vertices where the tag slot holds
 			them (as map_stage.py stages them: big-endian) */
 			description.vertex_data = material->compressed_vertex_data.address;
 			description.vertex_data_bytes = material->compressed_vertex_data.size;
@@ -1104,7 +1104,7 @@ void wii_render_environment_boot(
 	void)
 {
 	render_engine.boot = TRUE;
-	/* the menus' texture cache shares the heap: no render pool (HWI-016E) */
+	/* the menus' texture cache shares the heap: no render pool (HWI-030) */
 	wii_gx_heap_textures(1);
 	render_engine_rasterizer_initialize();
 }
