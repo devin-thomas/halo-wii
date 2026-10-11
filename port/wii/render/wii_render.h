@@ -151,6 +151,9 @@ int wii_gx_textures_load(long lightmap_tag_index);
 void wii_gx_map_end(void);
 /* the map unloads: the render pool goes back to the heap */
 void wii_gx_pool_release(void);
+/* the boot mode (HWI-016D): each texture its own heap block (the menus'
+texture cache shares the heap), no pool */
+void wii_gx_heap_textures(int on);
 int wii_gx_map_ready(void);
 /* render.txt's run_pose_ticks (count at most max) and the pose phases */
 int wii_render_run_pose_ticks(long *ticks, int max);

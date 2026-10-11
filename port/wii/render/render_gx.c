@@ -157,7 +157,9 @@ struct memory_now {
 
 static struct {
     int configured, enabled, poses_only;
-    int boot_defaults;           /* the boot mode (HWI-016D) reads no render.txt */
+    /* the boot mode (HWI-016D): the menus' texture cache shares the heap, so
+    each texture is its own heap block, as before HWI-016E, not a pool */
+    int heap_textures;
     unsigned long base_budget;
     long base_limit;
     unsigned long pool_max, pool_keep[2];
@@ -639,12 +641,48 @@ void wii_gx_pool_release(void)
     gx.pool_live = 0;
 }
 
+void wii_gx_heap_textures(int on)
+{
+    wii_gx_map_end();
+    wii_gx_pool_release();
+    gx.heap_textures = on;
+}
+
+/* a BSP's memory: the map's pool, or (the boot mode) its own heap block */
+static void *store_take(uint32_t bytes)
+{
+    if (!gx.heap_textures)
+        return pool_take(bytes);
+    void *p = content_alloc_aligned(align32(bytes ? bytes : 32u));
+    if (p)
+        owned_add(align32(bytes ? bytes : 32u));
+    return p;
+}
+
+/* given back: a heap block is freed; the pool is refilled from its start at
+the next BSP load (pool_reset) */
+static void store_give(void *p, uint32_t bytes)
+{
+    if (!gx.heap_textures || !p)
+        return;
+    owned_sub(align32(bytes ? bytes : 32u));
+    content_free_aligned(p);
+}
+
+static int store_fits(uint32_t bytes)
+{
+    return gx.heap_textures ? 1 : pool_fits(bytes);
+}
+
 /* ---------- per BSP: geometry */
 
 static void release_textures(void)
 {
-    if (gx.textures)
+    if (gx.textures) {
+        for (int i = 0; i < gx.texture_count; ++i)
+            store_give(gx.textures[i].data, gx.textures[i].file_bytes);
         memset(gx.textures, 0, (size_t)gx.texture_capacity * sizeof(*gx.textures));
+    }
     gx.texture_count = 0;
 }
 
@@ -655,6 +693,10 @@ void wii_gx_map_end(void)
         stats_merge(&gx.totals, &gx.map_stats);
     }
     release_textures();
+    if (gx.materials)
+        store_give(gx.materials, (uint32_t)((size_t)gx.material_count + 1) * (uint32_t)sizeof(*gx.materials));
+    if (gx.textures)
+        store_give(gx.textures, (uint32_t)gx.texture_capacity * (uint32_t)sizeof(*gx.textures));
     gx.materials = NULL;
     gx.textures = NULL;
     gx.surfaces = NULL;
@@ -693,14 +735,9 @@ int wii_gx_map_begin(unsigned long bsp_tag_index, long material_count, long surf
 {
     uintptr_t first, end;
 
-    if (!gx.configured && !gx.boot_defaults) {
-        /* the boot mode: no render.txt; its base budget stays HWI-016D's (0:
-        the menus' textures share the heap), the pool and the check as here */
-        unsigned long base_budget = gx.base_budget;
-        config_defaults();
-        gx.base_budget = base_budget;
-        gx.boot_defaults = 1;
-    }
+    char path[192];
+    struct stat information;
+
     wii_gx_map_end();
     gx.loads++;
     load_started = gettime();
@@ -720,13 +757,21 @@ int wii_gx_map_begin(unsigned long bsp_tag_index, long material_count, long surf
                 bsp_tag_index, surface_count);
         return 0;
     }
-    if (!pool_allocate()) {
+    /* a BSP whose converted resources are not staged is not drawn (its HWL1
+    file marks them, as in HWI-016B), and takes no memory */
+    snprintf(path, sizeof(path), RENDER_ROOT "/%s/lightmaps/%05lu.hwl", gx.map, bsp_tag_index);
+    if (stat(path, &information) != 0) {
+        wii_log("RENDER_FAIL geometry_file bsp_tag=%lu error=io (not staged: not drawn)\n", bsp_tag_index);
+        return 0;
+    }
+    if (!gx.heap_textures && !pool_allocate()) {
         wii_log("RENDER_FAIL pool bsp_tag=%lu\n", bsp_tag_index);
         return 0;
     }
+    gx.material_count = material_count;
     gx.texture_capacity = 2 * (int)material_count + 1;
-    gx.materials = pool_take((uint32_t)((size_t)material_count + 1) * (uint32_t)sizeof(*gx.materials));
-    gx.textures = pool_take((uint32_t)gx.texture_capacity * (uint32_t)sizeof(*gx.textures));
+    gx.materials = store_take((uint32_t)((size_t)material_count + 1) * (uint32_t)sizeof(*gx.materials));
+    gx.textures = store_take((uint32_t)gx.texture_capacity * (uint32_t)sizeof(*gx.textures));
     if (!gx.materials || !gx.textures) {
         wii_log("RENDER_FAIL material_memory bsp_tag=%lu materials=%ld pool=%lu\n", bsp_tag_index, material_count,
                 (unsigned long)pool_bytes());
@@ -877,14 +922,14 @@ static int geometry_check(void)
     memset(&s, 0, sizeof(s));
     if (stat(path, &information) != 0 || !(s.file = fopen(path, "rb"))) {
         gx.checks_missing++;
-        wii_log("RENDER_GEOMETRY_CHECK bsp_tag=%lu result=missing (not compared: no HWL1 file staged)\n", gx.bsp_tag);
-        return 1;
+        wii_log("RENDER_GEOMETRY_CHECK bsp_tag=%lu result=unreadable\n", gx.bsp_tag);
+        return 0;
     }
     gx.checks++;
     /* the chunk: the pool's free end, given back after */
     uint32_t mark[2] = {gx.pool[0].used, gx.pool[1].used};
     s.chunk_bytes = CHECK_CHUNK_BYTES;
-    s.chunk = pool_take(s.chunk_bytes);
+    s.chunk = store_take(s.chunk_bytes);
     if (!s.chunk || fread(head, 1, sizeof(head), s.file) != sizeof(head) || memcmp(head, "HWL1", 4) ||
         content_be16(head + 4) != 1 || content_be16(head + 6) != CONTENT_SECTIONS_HEADER_BYTES ||
         content_be16(head + 8) != 6 || content_be16(head + 10) != 0 ||
@@ -966,6 +1011,7 @@ static int geometry_check(void)
         surface_differ = s.differ - vertex_differ - lightmap_differ;
     }
     fclose(s.file);
+    store_give(s.chunk, s.chunk_bytes);
     gx.pool[0].used = mark[0];
     gx.pool[1].used = mark[1];
     int equal = ok && materials_differ == 0 && s.differ == 0;
@@ -1002,13 +1048,17 @@ static enum content_error texture_read(const char *path, uint32_t size, unsigned
     *out = NULL;
     if (size == 0 || size > MAX_FILE_BYTES)
         return CONTENT_SIZE;
-    if (!pool_fits(size))
+    if (!store_fits(size))
         return CONTENT_MEMORY;
     FILE *file = fopen(path, "rb");
     if (!file)
         return CONTENT_IO;
-    unsigned char *data = pool_take(size);
+    unsigned char *data = store_take(size);
     unsigned char extra;
+    if (!data) {
+        fclose(file);
+        return CONTENT_MEMORY;
+    }
     enum content_error error = CONTENT_OK;
     memset(data + size, 0, align32(size) - size);
     if (fread(data, 1, size, file) != size || fread(&extra, 1, 1, file) != 0)
@@ -1017,6 +1067,8 @@ static enum content_error texture_read(const char *path, uint32_t size, unsigned
         error = CONTENT_IO;
     if (error == CONTENT_OK)
         *out = data;
+    else
+        store_give(data, size);
     return error;
 }
 
@@ -1050,6 +1102,7 @@ static int texture_load(struct texture *t, int lightmap, int width, int height, 
     if (error != CONTENT_OK) {
         wii_log("RENDER_TEXTURE_FAIL tag=%ld bitmap=%ld kind=%s error=%s\n", t->tag, t->bitmap,
                 lightmap ? "lightmap" : "base", content_error_name(error));
+        store_give(t->data, size);
         t->data = NULL;
         gx.pool[0].used = mark[0];
         gx.pool[1].used = mark[1];
@@ -1199,7 +1252,7 @@ int wii_gx_textures_load(long lightmap_tag_index)
                     t->tag, t->bitmap, size, t->coverage, gx.base_budget - base_bytes);
             continue;
         }
-        if (!pool_fits((uint32_t)size)) {
+        if (!store_fits((uint32_t)size)) {
             missing_bytes += size;
             pool_short_bytes += size;
             base_pool_short++;

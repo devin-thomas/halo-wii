@@ -865,6 +865,8 @@ void wii_render_environment_boot(
 	void)
 {
 	render_engine.boot = TRUE;
+	/* the menus' texture cache shares the heap: no render pool (HWI-016E) */
+	wii_gx_heap_textures(1);
 	render_engine_rasterizer_initialize();
 }
 
