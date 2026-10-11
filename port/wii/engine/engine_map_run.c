@@ -51,6 +51,11 @@ struct map_line
 	unsigned long expect;
 	long switch_tick;
 	int switch_index;
+	/* HWI-016E: switch_bsp=<tick>:<index>,<tick>:<index>,...: the switches
+	after the first */
+	int more_switches;
+	long more_switch_ticks[REAL_MAP_MAXIMUM_MORE_COMMANDS];
+	int more_switch_indices[REAL_MAP_MAXIMUM_MORE_COMMANDS];
 	short expected_error;        /* a fail line's, or a map line's expect_error= */
 	char directory[96];          /* a fail line's maps directory */
 	int canonical_every_tick;    /* canonical=every (the default) or canonical=checkpoints */
@@ -282,11 +287,27 @@ static int parse_line(char *text, int default_cycles, struct map_line *line)
 		else if (!strcmp(word, "switch_bsp"))
 		{
 			char *colon = strchr(value, ':');
+			char *next;
 
 			if (!colon)
 				return 0;
 			line->switch_tick = strtol(value, NULL, 10);
-			line->switch_index = (int)strtol(colon + 1, NULL, 10);
+			line->switch_index = (int)strtol(colon + 1, &next, 10);
+			/* (HWI-016E) more switches, each "<tick>:<index>" after a comma */
+			while (*next == ',')
+			{
+				char *pair = next + 1;
+				int more = line->more_switches;
+
+				colon = strchr(pair, ':');
+				if (!colon || more >= REAL_MAP_MAXIMUM_MORE_COMMANDS)
+					return 0;
+				line->more_switch_ticks[more] = strtol(pair, NULL, 10);
+				line->more_switch_indices[more] = (int)strtol(colon + 1, &next, 10);
+				if (line->more_switch_ticks[more] < 1)
+					return 0;
+				line->more_switches++;
+			}
 		}
 		else if (!strcmp(word, "expect_error"))
 		{
@@ -305,6 +326,11 @@ static int parse_line(char *text, int default_cycles, struct map_line *line)
 		else if (!strcmp(word, "directory"))
 			snprintf(line->directory, sizeof(line->directory), "%s", value);
 		else
+			return 0;
+	}
+	for (int more = 0; more < line->more_switches; more++)
+	{
+		if (line->more_switch_ticks[more] >= line->ticks)
 			return 0;
 	}
 	return line->ticks >= 1 && line->ticks <= REAL_MAP_MAXIMUM_TICKS && line->cycles >= 1 && line->cycles <= 8 &&
@@ -404,6 +430,11 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 
 		snprintf(command, sizeof(command), "(switch_bsp %d)", line->switch_index);
 		real_map_set_command(line->switch_tick, command);
+		for (int more = 0; more < line->more_switches; more++)
+		{
+			snprintf(command, sizeof(command), "(switch_bsp %d)", line->more_switch_indices[more]);
+			real_map_add_command(line->more_switch_ticks[more], command);
+		}
 	}
 	progress_logging = reference;
 	real_map_set_canonical_every_tick(line->canonical_every_tick);
@@ -439,6 +470,13 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 		result->tags_at_end, result->structure_bsp_index, result->bsp_switches, result->command_tick,
 		result->command_result, result->requests_left, result->simulation_raw_digest,
 		result->simulation_raw_chain, result->raw_digest, result->raw_chain, *milliseconds);
+	if (line->more_switches)
+	{
+		wii_log("RUN_SWITCHES map=%s cycle=%d cadence=%s asked=%d ran=%ld bsp_after_last=%d bsp_at_end=%d "
+			"bsp_switches=%ld\n", line->name, cycle, cadence_names[cadence], line->more_switches,
+			result->more_commands_ran, result->more_commands_bsp_after, result->structure_bsp_index,
+			result->bsp_switches);
+	}
 	if (cadence == _cadence_vsync)
 	{
 		/* the frame times, bit for bit, ten a line */

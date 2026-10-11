@@ -151,6 +151,12 @@ struct real_map_globals
 	long command_ran_tick;
 	long command_result;
 	short command_bsp_before, command_bsp_after;
+	/* HWI-016E: more commands, each after its own tick */
+	long more_command_ticks[REAL_MAP_MAXIMUM_MORE_COMMANDS];
+	char more_commands[REAL_MAP_MAXIMUM_MORE_COMMANDS][32];
+	int more_command_count;
+	long more_commands_ran;
+	short more_commands_bsp_after;
 	long bsp_reads_at_begin;
 	long requests_left;                /* frames ending with a won map or a reset asked for */
 };
@@ -1037,6 +1043,19 @@ void real_map_after_tick(
 		real_map_globals.command_result = hs_compile_and_evaluate(real_map_globals.command);
 		real_map_globals.command_bsp_after = global_structure_bsp_index;
 	}
+	{
+		int index;
+
+		for (index = 0; index < real_map_globals.more_command_count; index++)
+		{
+			if (real_map_globals.more_command_ticks[index] == tick)
+			{
+				hs_compile_and_evaluate(real_map_globals.more_commands[index]);
+				real_map_globals.more_commands_ran++;
+				real_map_globals.more_commands_bsp_after = global_structure_bsp_index;
+			}
+		}
+	}
 
 	return;
 }
@@ -1047,6 +1066,7 @@ void real_map_set_command(
 {
 	real_map_globals.command_tick = tick;
 	real_map_globals.command[0] = 0;
+	real_map_globals.more_command_count = 0;
 	if (command)
 	{
 		csstrncpy(real_map_globals.command, command, sizeof(real_map_globals.command) - 1);
@@ -1054,6 +1074,24 @@ void real_map_set_command(
 	}
 
 	return;
+}
+
+int real_map_add_command(
+	long tick,
+	const char *command)
+{
+	int index = real_map_globals.more_command_count;
+
+	if (index >= REAL_MAP_MAXIMUM_MORE_COMMANDS || !command ||
+		csstrlen(command) >= sizeof(real_map_globals.more_commands[0]))
+	{
+		return FALSE;
+	}
+	real_map_globals.more_command_ticks[index] = tick;
+	csstrcpy(real_map_globals.more_commands[index], command);
+	real_map_globals.more_command_count++;
+
+	return TRUE;
 }
 
 void real_map_progress_get(
@@ -1178,6 +1216,8 @@ int real_map_begin(
 	real_map_globals.ticks = ticks;
 	real_map_globals.command_ran_tick = NONE;
 	real_map_globals.command_result = 0;
+	real_map_globals.more_commands_ran = 0;
+	real_map_globals.more_commands_bsp_after = NONE;
 	real_map_globals.final_structure_bsp_index = NONE;
 	real_map_globals.tick = 0;
 	real_map_globals.frames = 0;
@@ -1282,6 +1322,8 @@ void real_map_end(
 	result->command_result = real_map_globals.command_result;
 	result->command_bsp_before = real_map_globals.command_bsp_before;
 	result->command_bsp_after = real_map_globals.command_bsp_after;
+	result->more_commands_ran = real_map_globals.more_commands_ran;
+	result->more_commands_bsp_after = real_map_globals.more_commands_bsp_after;
 	result->requests_left = real_map_globals.requests_left;
 	real_map_globals.armed = FALSE;
 	game_time_end();

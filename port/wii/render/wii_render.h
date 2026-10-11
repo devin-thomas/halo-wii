@@ -30,6 +30,33 @@ Configuration: WII_ENGINE_ROOT/render.txt, optional, "key=value" lines:
   base_limit=<count>   at most this many base maps resident, in coverage
                        order (comparisons of texture profiles at equal
                        residency; default: no limit)
+  pool_max=<bytes>     the render pool's largest size (HWI-016E, below;
+                       default: what the heap has above the keeps)
+  pool_keep=<mem1>,<mem2>  heap bytes the pool leaves the engine in each
+                       bank (defaults below)
+  geometry_check=0|1   compare the drawn geometry, as the tag slot holds it,
+                       with the content generation's HWL1 file, read in
+                       chunks, at every BSP load (default 1)
+  run_pose_ticks=<t>,...  the map run's sampled frames (game ticks; default
+                       30,150,300)
+  poses=<scenario path> [ticks=<t>,...]  a fixed-pose phase on that map, the
+                       engine's camera at those ticks (default 30,150,300);
+                       one line each, in order (default: one, on the plan's
+                       first map)
+
+Geometry (HWI-016E): GX draws each BSP material's vertices where the staged
+map holds them, in the tag slot: the compressed environment vertex
+(position F32 at 0, texcoord F32 at 24, stride 32) and the lightmap vertex
+(texcoord S16 at 4, stride 8), as map_stage.py converts them to big-endian,
+and the BSP's surfaces (three u16 each). Nothing is copied; the HWL1 file
+(the same bytes, from the content pipeline) is only compared.
+
+Textures (HWI-016E): one render pool per map, taken from the heap at the
+map's first BSP load in two parts (MEM1's arena above its keep, MEM2's
+above the arena reserve and its keep) and given back when the map unloads;
+each BSP load fills it again: the material tables, every lightmap page,
+then base maps by coverage while they fit both the base budget and the
+pool. Nothing else is allocated per BSP.
 */
 
 #ifndef __HALO_WII_RENDER_H
@@ -54,11 +81,14 @@ int wii_render_enabled(void);
 int wii_render_poses_only(void);
 /* the engine-side hooks (render_engine.c), registered with engine_hooks.c */
 void wii_render_register_hooks(void);
-/* the staged map (map.txt's scenario path, levels\...\<name>) */
+/* the staged map (a scenario path, levels\...\<name>: render/<name>/...);
+each BSP load sets it again from the loaded scenario's own name */
 void wii_render_set_map(const char *scenario_path);
-/* load the map once, run the scripted player at 30 Hz with the frames
-drawn, and check fixed poses: three of the engine's own camera (ticks 30,
-150, 300) and two labelled diagnostic overrides. 1 if every check passed */
+/* each pose phase (render.txt's poses lines; by default one, on
+scenario_path, the plan's first map): load the map once, run the scripted
+player at 30 Hz with the frames drawn, and check fixed poses: the engine's
+own camera at the phase's ticks (default 30, 150, 300) and two labelled
+diagnostic overrides. 1 if every check passed */
 int wii_render_pose_phase(const char *scenario_path);
 /* the totals over the launch (RENDER_TOTALS) */
 void wii_render_report(void);
@@ -89,6 +119,15 @@ struct wii_gx_material
 	int base_alpha_used;      /* the shader reads the base map's alpha (environment
 	                          types blended and blended base specular: it blends
 	                          the detail maps, and is the specular mask) */
+	/* HWI-016E: the material's vertices in the tag slot (its
+	compressed_vertex_data: vertex_count compressed environment vertices,
+	32 bytes each, then lightmap_vertex_count lightmap vertices, 8 bytes
+	each, big-endian as staged), and its vertex buffers' types */
+	const void *vertex_data;
+	long vertex_data_bytes;
+	long vertex_count, lightmap_vertex_count;
+	int vertex_type, lightmap_vertex_type;
+	long uncompressed_bytes;  /* the uncompressed vertex data: none is staged */
 };
 
 struct wii_gx_view
@@ -101,14 +140,23 @@ struct wii_gx_view
 	unsigned long visibility_us; /* camera and visibility, CPU */
 };
 
-/* per map: HWL1 geometry of the BSP whose tag index this is; 1 on success */
-int wii_gx_map_begin(unsigned long bsp_tag_index, long material_count, long surface_count);
+/* per BSP: the BSP whose tag index this is, its materials and its surfaces
+block (surface_count of three u16 vertex indices, local to each material,
+in the tag slot); 1 on success. The render pool is taken at a map's first */
+int wii_gx_map_begin(unsigned long bsp_tag_index, long material_count, long surface_count, const void *surfaces);
 int wii_gx_material_set(long index, const struct wii_gx_material *material);
 /* the lightmap pages and the base maps that fit the budget, by surface
 coverage; 1 on success (base maps left out are reported, not failed) */
 int wii_gx_textures_load(long lightmap_tag_index);
 void wii_gx_map_end(void);
+/* the map unloads: the render pool goes back to the heap */
+void wii_gx_pool_release(void);
 int wii_gx_map_ready(void);
+/* render.txt's run_pose_ticks (count at most max) and the pose phases */
+int wii_render_run_pose_ticks(long *ticks, int max);
+int wii_render_pose_phase_count(void);
+/* the n-th pose phase's scenario path (NULL: the plan's first map) and ticks */
+const char *wii_render_pose_phase_map(int phase, long *ticks, int max, int *count);
 
 /* one game frame: every visible surface (surface_flags: the engine's bit
 vector, bit i of word i/32) of every material whose breakable surface stands

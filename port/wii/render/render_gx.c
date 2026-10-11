@@ -2,26 +2,40 @@
  * RENDER_GX.C
  *
  * The GX side of the Wii rasterizer's environment path (HWI-016B,
- * wii_render.h): the converted geometry and textures of the loaded BSP, GX
- * state, each frame's draw and copy, the fixed-pose EFB checks, timings and
- * memory. Strict C11 against libogc; no engine header.
+ * wii_render.h): the loaded BSP's geometry and textures, GX state, each
+ * frame's draw and copy, the fixed-pose EFB checks, timings and memory.
+ * Strict C11 against libogc; no engine header.
  *
  * Resources, staged on the card by tools/wii/render_stage.py from the
  * content pipeline's outputs (private: never in Git):
  *   WII_ENGINE_DATA_ROOT/render/<map>/lightmaps/<bsp tag:05>.hwl
  *   WII_ENGINE_DATA_ROOT/render/<map>/textures/<bitmap tag:05>-<bitmap:03>.hwt
  *
- * Geometry: the HWL1 decoded form (hwl_lightmap.c) is reduced to what this
- * path draws, per material and 32-byte aligned: positions (F32 xyz), base
- * texcoords (F32 st) and lightmap texcoords (S16 st, the engine's
- * (2s + 1) / 65535 in the texture matrix), with the surfaces' u16 triangles
- * (indices local to the material), as GX indexed arrays. The decoded form and
- * the file are released after.
+ * Geometry (HWI-016E): GX draws from the tag slot. The staged map
+ * (map_stage.py, HWIMAP02) holds each BSP material's compressed_vertex_data
+ * in big-endian: vertex_count compressed environment vertices of 32 bytes
+ * (position F32 xyz at 0, three packed normals, texcoord F32 st at 24), then
+ * lightmap_vertex_count lightmap vertices of 8 bytes (a packed incident
+ * radiosity direction, then the lightmap texcoord S16 st at 4: the engine's
+ * (2s + 1) / 65535 is in the texture matrix); and the BSP's surfaces block,
+ * three u16 vertex indices each, local to the surface's material. Those are
+ * GX's indexed arrays (strides 32 and 8): nothing is decoded or copied, and
+ * the BSP's geometry costs no memory beyond the tag slot. The HWL1 file holds
+ * the same bytes, converted by the content pipeline from the same source
+ * map; with geometry_check (the default) it is read in chunks at every BSP
+ * load and compared byte for byte, and a BSP whose bytes differ is not drawn.
+ * HWI-016B's path (the HWL1 file decoded whole, then reduced to 24 bytes a
+ * vertex) needed the file and its decoded form at once: a10's first BSP
+ * 8,100,736 bytes, its largest 11,664,352.
  *
- * Textures: every lightmap page the BSP's materials use, then the base maps
- * of its environment materials in order of the surfaces they cover, while
- * they fit the base map budget (wii_render.h); a base map left out is
- * reported with its bytes, and its materials draw lightmap-only, labelled.
+ * Textures: one render pool a map (pool_allocate), taken from the heap at
+ * the map's first BSP load and given back when the map unloads; each BSP
+ * load refills it from the start: the material and texture tables, every
+ * lightmap page the BSP's materials use, then the base maps of its
+ * environment materials in order of the surfaces they cover, while they fit
+ * the base map budget (wii_render.h) and the pool. A base map left out is
+ * reported with its bytes and why, and its materials draw lightmap-only,
+ * labelled.
  *
  * Textures are HWT1 version 1, or version 2 (gx-splitalpha-v1, HWI-008F):
  * CMPR colour with an alpha plane (I4 or I8) loaded as a second texture
@@ -40,6 +54,7 @@
  * HWI-016A; checked again at every pose here).
  */
 #include <gccore.h>
+#include <malloc.h>
 #include <ogc/lwp_watchdog.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,6 +63,7 @@
 
 #include "wii_platform.h"
 #include "wii_render.h"
+#include "cache_files_wii.h"
 #include "content_common.h"
 #include "hwl_lightmap.h"
 #include "hwt_texture.h"
@@ -60,6 +76,25 @@
 #define GRID_Y 24
 #define RUN_GRID_X 16
 #define RUN_GRID_Y 12
+#define MAX_POSE_TICKS 16
+#define MAX_POSE_PHASES 4
+/* the compressed environment vertex and the lightmap vertex, as staged */
+#define VERTEX_BYTES 32u
+#define VERTEX_TEXCOORD_OFFSET 24u
+#define LIGHTMAP_VERTEX_BYTES 8u
+#define LIGHTMAP_TEXCOORD_OFFSET 4u
+#define ENVIRONMENT_COMPRESSED 1
+#define LIGHTMAP_COMPRESSED 3
+/* the MEM2 arena reserve below the engine's plan (wii_memory.c), left to
+libogc and IOS buffers: the pool never takes it */
+#define MEM2_RESERVE_BYTES 0x200000u
+/* what the pool leaves the engine's heap in each bank by default: the
+engine's own allocations after a map's start (stdio buffers, a BSP switch's
+reads) grow the heap there */
+#define POOL_KEEP_MEM1 65536u
+#define POOL_KEEP_MEM2 262144u
+/* the HWL1 comparison's chunk, taken from the pool's free end */
+#define CHECK_CHUNK_BYTES 32768u
 
 static const GXColor clear_colour = {18, 22, 30, 255};
 static const GXColor placeholder_transparent = {255, 0, 255, 128};
@@ -68,6 +103,7 @@ static const GXColor flat_grey = {128, 128, 128, 255};
 static const GXColor opaque_white = {255, 255, 255, 255};
 static const GXColor front_colour = {0, 255, 0, 255};
 static const GXColor back_colour = {255, 0, 0, 255};
+static const long default_pose_ticks[3] = {30, 150, 300};
 
 /* DRAW_BASE_ALPHA: each environment material's base map alpha, as TEV
 combines it, shown as grey (255 where no base map is resident) */
@@ -76,7 +112,8 @@ enum draw_mode { DRAW_FULL, DRAW_LIGHTMAP_ONLY, DRAW_BASE_ONLY, DRAW_BASE_ALPHA 
 struct texture {
     long tag;
     long bitmap;
-    struct content_blob blob;
+    unsigned char *data;     /* in the render pool */
+    uint32_t file_bytes;
     struct hwt_header header;
     GXTexObj object;
     GXTexObj alpha_object;   /* a version 2 texture's alpha plane */
@@ -89,8 +126,9 @@ struct texture {
 struct material {
     struct wii_gx_material engine;
     uint32_t vertex_count, lightmap_vertex_count;
-    uint32_t positions, texcoords, lightmap_texcoords; /* offsets into the arrays buffer */
-    int lightmap_texture, base_texture;                /* indices into textures, or -1 */
+    const unsigned char *vertices;           /* the tag slot: stride 32 */
+    const unsigned char *lightmap_vertices;  /* the tag slot: stride 8 */
+    int lightmap_texture, base_texture;      /* indices into textures, or -1 */
 };
 
 struct frame_stats {
@@ -101,37 +139,64 @@ struct frame_stats {
     unsigned long triangles_max, surfaces_max, clusters_max;
 };
 
+/* the render pool: two parts, MEM1's then MEM2's, each filled from its start */
+struct pool_part {
+    unsigned char *base;
+    uint32_t bytes, used, peak;
+};
+
+/* the memory as a load leaves it */
+struct memory_now {
+    unsigned long mem1_free;             /* MEM1's arena above the heap */
+    unsigned long mem2_free;             /* MEM2's arena above the heap, below the engine's plan */
+    unsigned long mem2_above_reserve;    /* of which above the reserve */
+    unsigned long heap_free;             /* free chunks inside the heap (mallinfo fordblks) */
+    unsigned long heap_in_use;           /* mallinfo uordblks (counts the gap between the banks once crossed) */
+    uintptr_t arena1_lo, arena2_lo;
+};
+
 static struct {
     int configured, enabled, poses_only;
+    int boot_defaults;           /* the boot mode (HWI-016D) reads no render.txt */
     unsigned long base_budget;
     long base_limit;
+    unsigned long pool_max, pool_keep[2];
+    int geometry_check;
+    long run_pose_ticks[MAX_POSE_TICKS];
+    int run_pose_count;
+    char pose_map[MAX_POSE_PHASES][64];
+    long pose_ticks[MAX_POSE_PHASES][MAX_POSE_TICKS];
+    int pose_tick_count[MAX_POSE_PHASES];
+    int pose_phases;
     GXRModeObj *mode;
     void *xfb[2];
     int fb;
     char map[64];
+    /* the render pool, for the map loaded */
+    struct pool_part pool[2];
+    int pool_live;
+    long pools;
     /* the loaded BSP */
     int ready;
     unsigned long bsp_tag;
     long material_count, surface_count;
-    struct material *materials;  /* per map, material_count of them */
-    unsigned char *arrays;
-    uint32_t arrays_bytes;
-    struct hwl_surface *surfaces;
-    uint32_t surfaces_bytes;
-    struct hwl_lightmap *hwl_lightmaps;
-    uint32_t hwl_lightmap_count;
-    struct hwl_material *hwl_materials; /* kept while the materials are described */
-    struct texture *textures;    /* per map: at most a base map and a lightmap page a material */
+    struct material *materials;  /* in the pool, material_count of them */
+    const struct hwl_surface *surfaces;  /* the BSP's surfaces block, in the tag slot */
+    struct texture *textures;    /* in the pool: at most a base map and a lightmap page a material */
     int texture_count, texture_capacity;
     long lightmap_tag;
     long loads;
+    long vertex_data_unaligned32; /* materials whose vertex data does not start on 32 bytes */
+    unsigned long vertex_data_bytes;
     /* this map's frame statistics, and the launch's */
     struct frame_stats map_stats, totals;
     unsigned long load_ms_max;
-    /* memory this path owns (files, decoded and drawn forms, textures), now
-    and at its peak; the heap's arena bounds show which bank it came from
-    (mallinfo counts the gap between MEM1 and MEM2 once the heap crosses) */
+    /* memory this path owns (the pool), now and at its peak; and the least
+    free memory any frame or load saw (the arena tails above the heap) */
     unsigned long owned, owned_peak;
+    unsigned long mem1_free_min, mem2_above_reserve_min;
+    /* geometry checks against HWL1 */
+    long checks, checks_equal, checks_missing;
     int placeholder_reported[NUMBER_OF_WII_GX_MATERIAL_KINDS];
 } gx;
 
@@ -163,6 +228,33 @@ static void owned_sub(unsigned long bytes)
 static unsigned long arena1_free(void)
 {
     return (unsigned long)((uintptr_t)SYS_GetArena1Hi() - (uintptr_t)SYS_GetArena1Lo());
+}
+
+/* the MEM2 arena's top while the engine's plan is open (its high bound), or
+the arena's own */
+static void memory_now(struct memory_now *m)
+{
+    struct mallinfo heap = mallinfo();
+    uintptr_t lo2 = (uintptr_t)SYS_GetArena2Lo(), hi2 = (uintptr_t)SYS_GetArena2Hi();
+    m->arena1_lo = (uintptr_t)SYS_GetArena1Lo();
+    m->arena2_lo = lo2;
+    m->mem1_free = arena1_free();
+    m->mem2_free = hi2 > lo2 ? (unsigned long)(hi2 - lo2) : 0;
+    m->mem2_above_reserve = m->mem2_free > MEM2_RESERVE_BYTES ? m->mem2_free - MEM2_RESERVE_BYTES : 0;
+    m->heap_free = (unsigned long)heap.fordblks;
+    m->heap_in_use = (unsigned long)heap.uordblks;
+}
+
+/* the least free memory seen: cheap enough for every frame */
+static void memory_low_water(void)
+{
+    uintptr_t lo2 = (uintptr_t)SYS_GetArena2Lo(), hi2 = (uintptr_t)SYS_GetArena2Hi();
+    unsigned long mem1 = arena1_free();
+    unsigned long mem2 = hi2 > lo2 + MEM2_RESERVE_BYTES ? (unsigned long)(hi2 - lo2 - MEM2_RESERVE_BYTES) : 0;
+    if (mem1 < gx.mem1_free_min)
+        gx.mem1_free_min = mem1;
+    if (mem2 < gx.mem2_above_reserve_min)
+        gx.mem2_above_reserve_min = mem2;
 }
 
 static uint32_t align32(uint32_t value)
@@ -237,16 +329,48 @@ static void stats_merge(struct frame_stats *into, const struct frame_stats *from
 #undef MERGE
 }
 
+/* "t,t,t" into at most max ticks; the count, or -1 */
+static int parse_ticks(const char *text, long *ticks, int max)
+{
+    int count = 0;
+    while (*text && count < max) {
+        char *end;
+        long value = strtol(text, &end, 10);
+        if (end == text || value < 1)
+            return -1;
+        ticks[count++] = value;
+        text = end;
+        if (*text == ',')
+            text++;
+        else
+            break;
+    }
+    return count;
+}
+
 /* ---------- configuration and GX state (driver) */
 
-static void read_config(void)
+static void config_defaults(void)
 {
-    char text[512] = "";
-    FILE *file = fopen(RENDER_TXT, "rb");
     gx.enabled = 1;
     gx.poses_only = 0;
     gx.base_budget = WII_RENDER_DEFAULT_BASE_BUDGET;
     gx.base_limit = -1;
+    gx.pool_max = 0xFFFFFFFFul;
+    gx.pool_keep[0] = POOL_KEEP_MEM1;
+    gx.pool_keep[1] = POOL_KEEP_MEM2;
+    gx.geometry_check = 1;
+    memcpy(gx.run_pose_ticks, default_pose_ticks, sizeof(default_pose_ticks));
+    gx.run_pose_count = 3;
+    gx.pose_phases = 0;
+    gx.mem1_free_min = gx.mem2_above_reserve_min = 0xFFFFFFFFul;
+}
+
+static void read_config(void)
+{
+    char text[2048] = "";
+    FILE *file = fopen(RENDER_TXT, "rb");
+    config_defaults();
     if (!file)
         return;
     size_t used = fread(text, 1, sizeof(text) - 1, file);
@@ -261,6 +385,33 @@ static void read_config(void)
             gx.base_budget = strtoul(line + 12, NULL, 10);
         else if (!strncmp(line, "base_limit=", 11))
             gx.base_limit = strtol(line + 11, NULL, 10);
+        else if (!strncmp(line, "pool_max=", 9))
+            gx.pool_max = strtoul(line + 9, NULL, 10);
+        else if (!strncmp(line, "pool_keep=", 10)) {
+            char *comma;
+            gx.pool_keep[0] = strtoul(line + 10, &comma, 10);
+            if (*comma == ',')
+                gx.pool_keep[1] = strtoul(comma + 1, NULL, 10);
+        } else if (!strncmp(line, "geometry_check=", 15))
+            gx.geometry_check = (int)strtol(line + 15, NULL, 10);
+        else if (!strncmp(line, "run_pose_ticks=", 15)) {
+            int count = parse_ticks(line + 15, gx.run_pose_ticks, MAX_POSE_TICKS);
+            gx.run_pose_count = count > 0 ? count : 0;
+        } else if (!strncmp(line, "poses=", 6) && gx.pose_phases < MAX_POSE_PHASES) {
+            int phase = gx.pose_phases++;
+            char *path = line + 6, *ticks = strstr(path, " ticks=");
+            int count = -1;
+            if (ticks) {
+                *ticks = 0;
+                count = parse_ticks(ticks + 7, gx.pose_ticks[phase], MAX_POSE_TICKS);
+            }
+            snprintf(gx.pose_map[phase], sizeof(gx.pose_map[phase]), "%s", path);
+            if (count <= 0) {
+                memcpy(gx.pose_ticks[phase], default_pose_ticks, sizeof(default_pose_ticks));
+                count = 3;
+            }
+            gx.pose_tick_count[phase] = count;
+        }
     }
 }
 
@@ -306,8 +457,10 @@ int wii_render_configure(const struct wii_render_video *video)
         GX_CopyDisp(gx.xfb[gx.fb], GX_TRUE);
         GX_DrawDone();
     }
-    wii_log("RENDER_CONFIG enabled=%d poses_only=%d base_budget=%lu base_limit=%ld efb=%ux%u xfb=%ux%u\n",
-            gx.enabled, gx.poses_only, gx.base_budget, gx.base_limit, gx.mode->fbWidth, gx.mode->efbHeight,
+    wii_log("RENDER_CONFIG enabled=%d poses_only=%d base_budget=%lu base_limit=%ld pool_max=%lu pool_keep=%lu,%lu "
+            "geometry=tag_slot geometry_check=%d run_pose_ticks=%d pose_phases=%d efb=%ux%u xfb=%ux%u\n",
+            gx.enabled, gx.poses_only, gx.base_budget, gx.base_limit, gx.pool_max, gx.pool_keep[0], gx.pool_keep[1],
+            gx.geometry_check, gx.run_pose_count, gx.pose_phases, gx.mode->fbWidth, gx.mode->efbHeight,
             gx.mode->fbWidth, gx.mode->xfbHeight);
     return gx.enabled;
 }
@@ -322,6 +475,33 @@ int wii_render_poses_only(void)
     return wii_render_enabled() && gx.poses_only;
 }
 
+int wii_render_run_pose_ticks(long *ticks, int max)
+{
+    int count = gx.run_pose_count < max ? gx.run_pose_count : max;
+    memcpy(ticks, gx.run_pose_ticks, (size_t)count * sizeof(long));
+    return count;
+}
+
+int wii_render_pose_phase_count(void)
+{
+    return gx.pose_phases ? gx.pose_phases : 1;
+}
+
+const char *wii_render_pose_phase_map(int phase, long *ticks, int max, int *count)
+{
+    const long *source = default_pose_ticks;
+    int n = 3;
+    const char *map = NULL;
+    if (gx.pose_phases && phase >= 0 && phase < gx.pose_phases) {
+        source = gx.pose_ticks[phase];
+        n = gx.pose_tick_count[phase];
+        map = gx.pose_map[phase];
+    }
+    *count = n < max ? n : max;
+    memcpy(ticks, source, (size_t)*count * sizeof(long));
+    return map;
+}
+
 void wii_render_set_map(const char *scenario_path)
 {
     const char *name = strrchr(scenario_path, '\\');
@@ -334,19 +514,135 @@ void wii_render_report(void)
     if (!wii_render_enabled())
         return;
     stats_log("RENDER_TOTALS", gx.loads, &gx.totals);
-    wii_log("RENDER_TOTALS_MEMORY loads=%ld load_ms_max=%lu owned_peak=%lu owned_now=%lu arena1_lo=%p arena1_free=%lu "
-            "arena2_lo=%p\n", gx.loads, gx.load_ms_max, gx.owned_peak, gx.owned, SYS_GetArena1Lo(), arena1_free(),
-            SYS_GetArena2Lo());
+    wii_log("RENDER_TOTALS_MEMORY loads=%ld pools=%ld load_ms_max=%lu owned_peak=%lu owned_now=%lu arena1_lo=%p "
+            "arena1_free=%lu arena2_lo=%p mem1_free_min=%lu mem2_above_reserve_min=%lu geometry_checks=%ld "
+            "geometry_equal=%ld geometry_missing=%ld\n", gx.loads, gx.pools, gx.load_ms_max, gx.owned_peak, gx.owned,
+            SYS_GetArena1Lo(), arena1_free(), SYS_GetArena2Lo(), gx.mem1_free_min, gx.mem2_above_reserve_min,
+            gx.checks, gx.checks_equal, gx.checks_missing);
 }
 
-/* ---------- per map: geometry */
+/* ---------- the render pool */
+
+static int in_mem1(const void *pointer)
+{
+    uintptr_t p = (uintptr_t)pointer;
+    return p >= 0x80000000u && p < 0x81800000u;
+}
+
+/* the map's pool: MEM1's arena above its keep, then MEM2's above the
+reserve and its keep, at most pool_max together. Each part is one heap
+block (32-byte aligned); 1 if any was taken */
+static int pool_allocate(void)
+{
+    struct memory_now before, after;
+    uint32_t want[2] = {0, 0};
+    unsigned long left = gx.pool_max;
+
+    if (gx.pool_live)
+        return 1;
+    memory_now(&before);
+    if (before.mem1_free > gx.pool_keep[0] + 8192u)
+        want[0] = (uint32_t)((before.mem1_free - gx.pool_keep[0] - 8192u) & ~4095ul);
+    if (want[0] > left)
+        want[0] = (uint32_t)(left & ~31ul);
+    if (want[0]) {
+        gx.pool[0].base = content_alloc_aligned(want[0]);
+        /* only MEM1's: a block the heap had to take from MEM2 is not this part */
+        if (gx.pool[0].base && !in_mem1(gx.pool[0].base)) {
+            content_free_aligned(gx.pool[0].base);
+            gx.pool[0].base = NULL;
+        }
+        gx.pool[0].bytes = gx.pool[0].base ? want[0] : 0;
+        left -= gx.pool[0].bytes;
+    }
+    {
+        struct memory_now middle;
+        memory_now(&middle);
+        if (middle.mem2_above_reserve > gx.pool_keep[1] + 8192u)
+            want[1] = (uint32_t)((middle.mem2_above_reserve - gx.pool_keep[1] - 8192u) & ~4095ul);
+    }
+    if (want[1] > left)
+        want[1] = (uint32_t)(left & ~31ul);
+    if (want[1]) {
+        gx.pool[1].base = content_alloc_aligned(want[1]);
+        gx.pool[1].bytes = gx.pool[1].base ? want[1] : 0;
+    }
+    memory_now(&after);
+    gx.pool_live = gx.pool[0].base != NULL || gx.pool[1].base != NULL;
+    gx.pools += gx.pool_live;
+    owned_add(gx.pool[0].bytes + gx.pool[1].bytes);
+    wii_log("RENDER_POOL map=%s mem1=%p+%lu mem2=%p+%lu total=%lu keep=%lu,%lu max=%lu "
+            "before_mem1_free=%lu before_mem2_above_reserve=%lu before_heap_free=%lu "
+            "after_mem1_free=%lu after_mem2_above_reserve=%lu after_heap_free=%lu arena1_lo=%p arena2_lo=%p ok=%d\n",
+            gx.map, (void *)gx.pool[0].base, (unsigned long)gx.pool[0].bytes, (void *)gx.pool[1].base,
+            (unsigned long)gx.pool[1].bytes, (unsigned long)(gx.pool[0].bytes + gx.pool[1].bytes), gx.pool_keep[0],
+            gx.pool_keep[1], gx.pool_max, before.mem1_free, before.mem2_above_reserve, before.heap_free,
+            after.mem1_free, after.mem2_above_reserve, after.heap_free, (void *)after.arena1_lo,
+            (void *)after.arena2_lo, gx.pool_live);
+    return gx.pool_live;
+}
+
+static void pool_reset(void)
+{
+    for (int i = 0; i < 2; ++i)
+        gx.pool[i].used = 0;
+}
+
+static uint32_t pool_used(void)
+{
+    return gx.pool[0].used + gx.pool[1].used;
+}
+
+static uint32_t pool_bytes(void)
+{
+    return gx.pool[0].bytes + gx.pool[1].bytes;
+}
+
+/* the first part with room: bytes, 32-byte aligned, or NULL */
+static void *pool_take(uint32_t bytes)
+{
+    bytes = align32(bytes ? bytes : 32u);
+    for (int i = 0; i < 2; ++i) {
+        struct pool_part *p = &gx.pool[i];
+        if (p->base && p->bytes - p->used >= bytes) {
+            void *out = p->base + p->used;
+            p->used += bytes;
+            if (p->used > p->peak)
+                p->peak = p->used;
+            return out;
+        }
+    }
+    return NULL;
+}
+
+/* would bytes fit (without taking them)? */
+static int pool_fits(uint32_t bytes)
+{
+    bytes = align32(bytes ? bytes : 32u);
+    for (int i = 0; i < 2; ++i)
+        if (gx.pool[i].base && gx.pool[i].bytes - gx.pool[i].used >= bytes)
+            return 1;
+    return 0;
+}
+
+void wii_gx_pool_release(void)
+{
+    if (!gx.pool_live)
+        return;
+    wii_log("RENDER_POOL_RELEASE map=%s mem1_peak=%lu/%lu mem2_peak=%lu/%lu\n", gx.map,
+            (unsigned long)gx.pool[0].peak, (unsigned long)gx.pool[0].bytes, (unsigned long)gx.pool[1].peak,
+            (unsigned long)gx.pool[1].bytes);
+    owned_sub(gx.pool[0].bytes + gx.pool[1].bytes);
+    content_free_aligned(gx.pool[1].base);
+    content_free_aligned(gx.pool[0].base);
+    memset(gx.pool, 0, sizeof(gx.pool));
+    gx.pool_live = 0;
+}
+
+/* ---------- per BSP: geometry */
 
 static void release_textures(void)
 {
-    for (int i = 0; i < gx.texture_count; ++i) {
-        owned_sub(gx.textures[i].blob.capacity);
-        content_blob_release(&gx.textures[i].blob);
-    }
     if (gx.textures)
         memset(gx.textures, 0, (size_t)gx.texture_capacity * sizeof(*gx.textures));
     gx.texture_count = 0;
@@ -354,33 +650,20 @@ static void release_textures(void)
 
 void wii_gx_map_end(void)
 {
-    if (gx.ready || gx.arrays || gx.surfaces) {
+    if (gx.ready || gx.materials) {
         stats_log("RENDER_MAP_STATS", gx.loads, &gx.map_stats);
         stats_merge(&gx.totals, &gx.map_stats);
     }
     release_textures();
-    if (gx.arrays)
-        owned_sub(gx.arrays_bytes + gx.surfaces_bytes);
-    content_free_aligned(gx.arrays);
-    content_free_aligned(gx.surfaces);
-    free(gx.hwl_lightmaps);
-    free(gx.hwl_materials);
-    if (gx.materials)
-        owned_sub((unsigned long)gx.material_count * sizeof(*gx.materials) +
-                  (unsigned long)gx.texture_capacity * sizeof(*gx.textures));
-    free(gx.materials);
-    free(gx.textures);
     gx.materials = NULL;
     gx.textures = NULL;
-    gx.texture_capacity = 0;
-    gx.arrays = NULL;
     gx.surfaces = NULL;
-    gx.hwl_lightmaps = NULL;
-    gx.hwl_materials = NULL;
-    gx.arrays_bytes = gx.surfaces_bytes = 0;
-    gx.hwl_lightmap_count = 0;
+    gx.texture_capacity = 0;
     gx.ready = 0;
     gx.material_count = gx.surface_count = 0;
+    gx.vertex_data_unaligned32 = 0;
+    gx.vertex_data_bytes = 0;
+    pool_reset();
     memset(&gx.map_stats, 0, sizeof(gx.map_stats));
 }
 
@@ -392,152 +675,123 @@ int wii_gx_map_ready(void)
 static u64 load_started;
 static uintptr_t load_arena1_before, load_arena2_before;
 
-int wii_gx_map_begin(unsigned long bsp_tag_index, long material_count, long surface_count)
+/* the BSP's range of the tag slot (the structure BSP read last) */
+static int tag_slot_bsp_range(uintptr_t *first, uintptr_t *end)
 {
-    char path[192];
-    struct content_blob blob;
-    struct hwl_geometry geometry;
-    enum content_error error;
+    struct wii_cache_load_report load;
+    size_t slot_bytes = 0;
+    uintptr_t slot = (uintptr_t)wii_arena_region(_wii_arena_tag_cache, &slot_bytes);
+    wii_cache_load_report_get(&load);
+    if (!slot || load.range_count < 2 || load.range_offset[1] + load.range_size[1] > slot_bytes)
+        return 0;
+    *first = slot + load.range_offset[1];
+    *end = *first + load.range_size[1];
+    return 1;
+}
 
+int wii_gx_map_begin(unsigned long bsp_tag_index, long material_count, long surface_count, const void *surfaces)
+{
+    uintptr_t first, end;
+
+    if (!gx.configured && !gx.boot_defaults) {
+        /* the boot mode: no render.txt; its base budget stays HWI-016D's (0:
+        the menus' textures share the heap), the pool and the check as here */
+        unsigned long base_budget = gx.base_budget;
+        config_defaults();
+        gx.base_budget = base_budget;
+        gx.boot_defaults = 1;
+    }
     wii_gx_map_end();
     gx.loads++;
     load_started = gettime();
     load_arena1_before = (uintptr_t)SYS_GetArena1Lo();
     load_arena2_before = (uintptr_t)SYS_GetArena2Lo();
     gx.bsp_tag = bsp_tag_index;
-    snprintf(path, sizeof(path), RENDER_ROOT "/%s/lightmaps/%05lu.hwl", gx.map, bsp_tag_index);
-    error = content_load_file(path, MAX_FILE_BYTES, &blob);
-    if (error != CONTENT_OK) {
-        wii_log("RENDER_FAIL geometry_file bsp_tag=%lu error=%s\n", bsp_tag_index, content_error_name(error));
-        return 0;
-    }
-    owned_add(blob.capacity);
-    error = hwl_load(blob.data, blob.bytes, &geometry);
-    unsigned long file_bytes = blob.bytes, file_capacity = blob.capacity;
-    if (error != CONTENT_OK) {
-        owned_sub(file_capacity);
-        content_blob_release(&blob);
-        wii_log("RENDER_FAIL geometry_decode bsp_tag=%lu error=%s\n", bsp_tag_index, content_error_name(error));
-        return 0;
-    }
-    unsigned long decoded = geometry.arena.bytes;
-    owned_add(decoded);
-    owned_sub(file_capacity);
-    content_blob_release(&blob);
-    if ((long)geometry.material_count != material_count || (long)geometry.surface_count != surface_count ||
-        material_count > MAX_MATERIALS) {
-        wii_log("RENDER_FAIL geometry_counts bsp_tag=%lu materials=%lu/%ld surfaces=%lu/%ld\n", bsp_tag_index,
-                (unsigned long)geometry.material_count, material_count, (unsigned long)geometry.surface_count,
+    if (material_count < 0 || material_count > MAX_MATERIALS || surface_count < 0 ||
+        (surface_count && !surfaces) || ((uintptr_t)surfaces & 1u)) {
+        wii_log("RENDER_FAIL geometry_counts bsp_tag=%lu materials=%ld surfaces=%ld\n", bsp_tag_index, material_count,
                 surface_count);
-        owned_sub(decoded);
-        hwl_release(&geometry);
         return 0;
     }
-    gx.materials = calloc((size_t)material_count + 1, sizeof(*gx.materials));
+    /* the surfaces block lies in the BSP's range of the tag slot */
+    if (surface_count && (!tag_slot_bsp_range(&first, &end) || (uintptr_t)surfaces < first ||
+                          (uintptr_t)surfaces + 6u * (uintptr_t)surface_count > end)) {
+        wii_log("RENDER_FAIL geometry_surfaces bsp_tag=%lu surfaces=%ld (not in the loaded BSP's range)\n",
+                bsp_tag_index, surface_count);
+        return 0;
+    }
+    if (!pool_allocate()) {
+        wii_log("RENDER_FAIL pool bsp_tag=%lu\n", bsp_tag_index);
+        return 0;
+    }
     gx.texture_capacity = 2 * (int)material_count + 1;
-    gx.textures = calloc((size_t)gx.texture_capacity, sizeof(*gx.textures));
+    gx.materials = pool_take((uint32_t)((size_t)material_count + 1) * (uint32_t)sizeof(*gx.materials));
+    gx.textures = pool_take((uint32_t)gx.texture_capacity * (uint32_t)sizeof(*gx.textures));
     if (!gx.materials || !gx.textures) {
-        wii_log("RENDER_FAIL material_memory bsp_tag=%lu materials=%ld\n", bsp_tag_index, material_count);
-        owned_sub(decoded);
-        hwl_release(&geometry);
-        free(gx.materials);
-        free(gx.textures);
-        gx.materials = NULL;
-        gx.textures = NULL;
-        gx.texture_capacity = 0;
-        return 0;
-    }
-    gx.material_count = material_count;
-    owned_add((unsigned long)material_count * sizeof(*gx.materials) +
-              (unsigned long)gx.texture_capacity * sizeof(*gx.textures));
-    /* the arrays this path draws, per material, 32-byte aligned */
-    uint32_t bytes = 0;
-    for (uint32_t i = 0; i < geometry.material_count; ++i) {
-        const struct hwl_material *m = &geometry.materials[i];
-        struct material *out = &gx.materials[i];
-        memset(out, 0, sizeof(*out));
-        out->vertex_count = m->vertex_count;
-        out->lightmap_vertex_count = m->lightmap_vertex_count;
-        out->positions = bytes;
-        bytes += align32(m->vertex_count * 12u);
-        out->texcoords = bytes;
-        bytes += align32(m->vertex_count * 8u);
-        out->lightmap_texcoords = bytes;
-        bytes += align32(m->lightmap_vertex_count * 4u);
-        out->lightmap_texture = out->base_texture = -1;
-    }
-    gx.arrays = content_alloc_aligned(bytes ? bytes : 32u);
-    gx.surfaces_bytes = geometry.surface_count * (uint32_t)sizeof(struct hwl_surface);
-    gx.surfaces = content_alloc_aligned(gx.surfaces_bytes ? gx.surfaces_bytes : 32u);
-    gx.hwl_lightmaps = malloc(geometry.lightmap_count * sizeof(struct hwl_lightmap) + 1);
-    gx.hwl_materials = malloc(geometry.material_count * sizeof(struct hwl_material) + 1);
-    if (!gx.arrays || !gx.surfaces || !gx.hwl_lightmaps || !gx.hwl_materials) {
-        wii_log("RENDER_FAIL geometry_memory bsp_tag=%lu bytes=%lu\n", bsp_tag_index, (unsigned long)bytes);
-        owned_sub(decoded);
-        hwl_release(&geometry);
-        content_free_aligned(gx.arrays);
-        content_free_aligned(gx.surfaces);
-        gx.arrays = NULL;
-        gx.surfaces = NULL;
+        wii_log("RENDER_FAIL material_memory bsp_tag=%lu materials=%ld pool=%lu\n", bsp_tag_index, material_count,
+                (unsigned long)pool_bytes());
         wii_gx_map_end();
         return 0;
     }
-    gx.arrays_bytes = bytes;
-    owned_add(gx.arrays_bytes + gx.surfaces_bytes);
-    for (uint32_t i = 0; i < geometry.material_count; ++i) {
-        const struct hwl_material *m = &geometry.materials[i];
-        const struct material *out = &gx.materials[i];
-        float *positions = (float *)(gx.arrays + out->positions);
-        float *texcoords = (float *)(gx.arrays + out->texcoords);
-        int16_t *lightmap = (int16_t *)(gx.arrays + out->lightmap_texcoords);
-        for (uint32_t v = 0; v < m->vertex_count; ++v) {
-            const struct hwl_vertex *source = &geometry.vertices[m->first_vertex + v];
-            memcpy(positions + 3 * v, source->position, 12);
-            memcpy(texcoords + 2 * v, source->texcoord, 8);
-        }
-        for (uint32_t v = 0; v < m->lightmap_vertex_count; ++v) {
-            const struct hwl_lightmap_vertex *source = &geometry.lightmap_vertices[m->first_lightmap_vertex + v];
-            lightmap[2 * v] = source->texcoord[0];
-            lightmap[2 * v + 1] = source->texcoord[1];
-        }
-    }
-    memcpy(gx.surfaces, geometry.surfaces, gx.surfaces_bytes);
-    memcpy(gx.hwl_lightmaps, geometry.lightmaps, geometry.lightmap_count * sizeof(struct hwl_lightmap));
-    memcpy(gx.hwl_materials, geometry.materials, geometry.material_count * sizeof(struct hwl_material));
-    gx.hwl_lightmap_count = geometry.lightmap_count;
+    memset(gx.materials, 0, ((size_t)material_count + 1) * sizeof(*gx.materials));
+    memset(gx.textures, 0, (size_t)gx.texture_capacity * sizeof(*gx.textures));
+    for (long i = 0; i < material_count; ++i)
+        gx.materials[i].lightmap_texture = gx.materials[i].base_texture = -1;
     gx.material_count = material_count;
     gx.surface_count = surface_count;
-    owned_sub(decoded);
-    hwl_release(&geometry);
-    DCFlushRange(gx.arrays, gx.arrays_bytes);
-    DCFlushRange(gx.surfaces, gx.surfaces_bytes);
-    wii_log("RENDER_GEOMETRY bsp_tag=%lu file_bytes=%lu decoded_bytes=%lu materials=%ld surfaces=%ld arrays_bytes=%lu "
-            "surfaces_bytes=%lu owned_peak=%lu\n",
-            bsp_tag_index, file_bytes, decoded, material_count, surface_count, (unsigned long)gx.arrays_bytes,
-            (unsigned long)gx.surfaces_bytes, gx.owned_peak);
+    gx.surfaces = surfaces;
+    /* the tag slot's bytes changed under the same addresses: GX's vertex
+    cache must not keep the last BSP's */
+    GX_InvVtxCache();
     return 1;
 }
 
 int wii_gx_material_set(long index, const struct wii_gx_material *material)
 {
-    if (index < 0 || index >= gx.material_count || !gx.hwl_materials)
+    uintptr_t first, end;
+    if (index < 0 || index >= gx.material_count || !gx.materials)
         return 0;
-    const struct hwl_material *m = &gx.hwl_materials[index];
-    long lightmap_page = -2;
-    for (uint32_t i = 0; i < gx.hwl_lightmap_count; ++i)
-        if ((uint32_t)index >= gx.hwl_lightmaps[i].first_material &&
-            (uint32_t)index < gx.hwl_lightmaps[i].first_material + gx.hwl_lightmaps[i].material_count)
-            lightmap_page = gx.hwl_lightmaps[i].bitmap_index;
-    /* the converted BSP must be the loaded one: each material's surfaces and
-    lightmap page as the engine's tags have them */
-    if (m->first_surface != material->first_surface || m->surface_count != material->surface_count ||
-        (material->lightmap_page >= 0 && lightmap_page != material->lightmap_page)) {
-        wii_log("RENDER_FAIL material_mismatch index=%ld surfaces=%ld+%ld/%ld+%ld page=%ld/%ld\n", index,
-                (long)m->first_surface, (long)m->surface_count, material->first_surface, material->surface_count,
-                lightmap_page, material->lightmap_page);
+    struct material *out = &gx.materials[index];
+    const unsigned char *data = material->vertex_data;
+    long vertices = material->vertex_count, lightmap = material->lightmap_vertex_count;
+    /* what the converter (content_geometry.py) and hwl_load require of a
+    material, checked on the tag slot's own: compressed vertex types, counts
+    in bounds, the data's size from its counts, no uncompressed vertices,
+    surfaces inside the block and every index below the vertex count */
+    int ok = material->vertex_type == ENVIRONMENT_COMPRESSED &&
+             material->lightmap_vertex_type == (lightmap ? LIGHTMAP_COMPRESSED : material->lightmap_vertex_type) &&
+             vertices >= 0 && lightmap >= 0 && vertices <= (long)HWL_MAX_MATERIAL_VERTICES && lightmap <= vertices &&
+             material->uncompressed_bytes == 0 &&
+             material->vertex_data_bytes == vertices * (long)VERTEX_BYTES + lightmap * (long)LIGHTMAP_VERTEX_BYTES &&
+             material->first_surface >= 0 && material->surface_count >= 0 &&
+             material->first_surface + material->surface_count <= gx.surface_count;
+    if (ok && vertices) {
+        ok = data && !((uintptr_t)data & 3u) && tag_slot_bsp_range(&first, &end) && (uintptr_t)data >= first &&
+             (uintptr_t)data + (uintptr_t)material->vertex_data_bytes <= end;
+    }
+    for (long s = 0; ok && s < material->surface_count; ++s)
+        for (int k = 0; k < 3; ++k)
+            if (gx.surfaces[material->first_surface + s].vertex[k] >= (unsigned long)vertices)
+                ok = 0;
+    if (!ok) {
+        wii_log("RENDER_FAIL material_geometry index=%ld vertex_type=%d/%d vertices=%ld/%ld bytes=%ld uncompressed=%ld "
+                "surfaces=%ld+%ld/%ld\n", index, material->vertex_type, material->lightmap_vertex_type, vertices,
+                lightmap, material->vertex_data_bytes, material->uncompressed_bytes, material->first_surface,
+                material->surface_count, gx.surface_count);
         return 0;
     }
-    gx.materials[index].engine = *material;
+    out->engine = *material;
+    out->vertex_count = (uint32_t)vertices;
+    out->lightmap_vertex_count = (uint32_t)lightmap;
+    out->vertices = data;
+    out->lightmap_vertices = data ? data + VERTEX_BYTES * (uint32_t)vertices : NULL;
+    out->lightmap_texture = out->base_texture = -1;
+    if (vertices) {
+        /* the CPU loaded these bytes into the tag slot: GX reads memory */
+        DCStoreRange((void *)data, (u32)material->vertex_data_bytes);
+        gx.vertex_data_unaligned32 += ((uintptr_t)data & 31u) != 0;
+        gx.vertex_data_bytes += (unsigned long)material->vertex_data_bytes;
+    }
     if (material->kind != _wii_gx_material_environment && !gx.placeholder_reported[material->kind]) {
         gx.placeholder_reported[material->kind] = 1;
         wii_log("RENDER_PLACEHOLDER kind=%s first_material=%ld shader_type=%d (labelled: %s)\n",
@@ -549,7 +803,184 @@ int wii_gx_material_set(long index, const struct wii_gx_material *material)
     return 1;
 }
 
-/* ---------- per map: textures */
+/* ---------- per BSP: the HWL1 comparison, in chunks */
+
+struct hwl_stream {
+    FILE *file;
+    unsigned char *chunk;
+    uint32_t chunk_bytes;
+    unsigned long compared, differ;
+};
+
+/* bytes of the file at offset against count memory segments (pointer, size)
+in order: the differing bytes are counted */
+static int stream_compare(struct hwl_stream *s, uint32_t offset, uint32_t bytes, int kind)
+{
+    long material = 0;
+    uint32_t inside = 0;
+    if (fseek(s->file, (long)offset, SEEK_SET) != 0)
+        return 0;
+    while (bytes) {
+        uint32_t take = bytes < s->chunk_bytes ? bytes : s->chunk_bytes;
+        if (fread(s->chunk, 1, take, s->file) != take)
+            return 0;
+        uint32_t at = 0;
+        while (at < take) {
+            const unsigned char *memory;
+            uint32_t size;
+            if (kind == 2) {
+                memory = (const unsigned char *)gx.surfaces;
+                size = (uint32_t)gx.surface_count * 6u;
+            } else {
+                if (material >= gx.material_count)
+                    return 0;
+                const struct material *m = &gx.materials[material];
+                memory = kind == 0 ? m->vertices : m->lightmap_vertices;
+                size = kind == 0 ? m->vertex_count * VERTEX_BYTES : m->lightmap_vertex_count * LIGHTMAP_VERTEX_BYTES;
+            }
+            if (inside >= size) {
+                if (kind == 2)
+                    return 0;
+                material++;
+                inside = 0;
+                continue;
+            }
+            uint32_t n = size - inside < take - at ? size - inside : take - at;
+            for (uint32_t i = 0; i < n; ++i)
+                s->differ += memory[inside + i] != s->chunk[at + i];
+            s->compared += n;
+            inside += n;
+            at += n;
+        }
+        bytes -= take;
+    }
+    return 1;
+}
+
+/* the BSP's HWL1 file (the content generation's) against what is drawn: its
+records against the engine's materials, its vertex, lightmap vertex and
+surface sections byte for byte against the tag slot's. 1 if equal or not
+checked; 0 if they differ or the file is malformed */
+static int geometry_check(void)
+{
+    static const uint32_t record_bytes[6] = {16, 12, 188, 32, 8, 6};
+    char path[192];
+    unsigned char head[CONTENT_SECTIONS_HEADER_BYTES + 6 * CONTENT_SECTIONS_ENTRY_BYTES];
+    uint32_t count[6], offset[6];
+    struct hwl_stream s;
+    struct stat information;
+    unsigned long materials_differ = 0;
+    int ok = 1;
+    u64 started = gettime();
+
+    snprintf(path, sizeof(path), RENDER_ROOT "/%s/lightmaps/%05lu.hwl", gx.map, gx.bsp_tag);
+    memset(&s, 0, sizeof(s));
+    if (stat(path, &information) != 0 || !(s.file = fopen(path, "rb"))) {
+        gx.checks_missing++;
+        wii_log("RENDER_GEOMETRY_CHECK bsp_tag=%lu result=missing (not compared: no HWL1 file staged)\n", gx.bsp_tag);
+        return 1;
+    }
+    gx.checks++;
+    /* the chunk: the pool's free end, given back after */
+    uint32_t mark[2] = {gx.pool[0].used, gx.pool[1].used};
+    s.chunk_bytes = CHECK_CHUNK_BYTES;
+    s.chunk = pool_take(s.chunk_bytes);
+    if (!s.chunk || fread(head, 1, sizeof(head), s.file) != sizeof(head) || memcmp(head, "HWL1", 4) ||
+        content_be16(head + 4) != 1 || content_be16(head + 6) != CONTENT_SECTIONS_HEADER_BYTES ||
+        content_be16(head + 8) != 6 || content_be16(head + 10) != 0 ||
+        content_be32(head + 12) != (uint32_t)information.st_size)
+        ok = 0;
+    for (int i = 0; ok && i < 6; ++i) {
+        const unsigned char *e = head + CONTENT_SECTIONS_HEADER_BYTES + CONTENT_SECTIONS_ENTRY_BYTES * i;
+        count[i] = content_be32(e + 4);
+        offset[i] = content_be32(e + 8);
+        if (content_be16(e) != (uint32_t)i + 1 || content_be16(e + 2) != record_bytes[i] ||
+            content_be32(e + 12) != count[i] * record_bytes[i] ||
+            (uint64_t)offset[i] + content_be32(e + 12) > (uint64_t)information.st_size)
+            ok = 0;
+    }
+    /* the BSP record, the lightmaps and the materials, record by record */
+    if (ok && (count[0] != 1 || count[2] != (uint32_t)gx.material_count))
+        ok = 0;
+    if (ok) {
+        unsigned char r[16];
+        ok = fseek(s.file, (long)offset[0], SEEK_SET) == 0 && fread(r, 1, 16, s.file) == 16 &&
+             content_be32(r + 4) == count[1] && content_be32(r + 8) == count[2] &&
+             content_be32(r + 12) == (uint32_t)gx.surface_count && count[5] == (uint32_t)gx.surface_count;
+    }
+    if (ok && fseek(s.file, (long)offset[1], SEEK_SET) == 0) {
+        uint32_t next = 0;
+        for (uint32_t i = 0; ok && i < count[1]; ++i) {
+            unsigned char r[12];
+            if (fread(r, 1, 12, s.file) != 12) {
+                ok = 0;
+                break;
+            }
+            long page = content_s16(r);
+            uint32_t first = content_be32(r + 4), n = content_be32(r + 8);
+            if (first != next || (uint64_t)first + n > (uint64_t)gx.material_count)
+                ok = 0;
+            for (uint32_t k = first; ok && k < first + n; ++k)
+                materials_differ += gx.materials[k].engine.lightmap_page >= 0 &&
+                                    gx.materials[k].engine.lightmap_page != page;
+            next = first + n;
+        }
+        ok = ok && next == (uint32_t)gx.material_count;
+    } else {
+        ok = 0;
+    }
+    if (ok && fseek(s.file, (long)offset[2], SEEK_SET) == 0) {
+        uint32_t vertices = 0, lightmap = 0;
+        for (long i = 0; ok && i < gx.material_count; ++i) {
+            unsigned char r[188];
+            const struct material *m = &gx.materials[i];
+            if (fread(r, 1, 188, s.file) != 188) {
+                ok = 0;
+                break;
+            }
+            materials_differ += (long)(int32_t)content_be32(r + 12) != m->engine.first_surface ||
+                                (long)(int32_t)content_be32(r + 16) != m->engine.surface_count ||
+                                content_s16(r + 168) != m->engine.vertex_type ||
+                                content_be32(r + 172) != m->vertex_count || content_be32(r + 176) != vertices ||
+                                content_be32(r + 180) != m->lightmap_vertex_count ||
+                                content_be32(r + 184) != lightmap;
+            vertices += m->vertex_count;
+            lightmap += m->lightmap_vertex_count;
+        }
+        ok = ok && vertices == count[3] && lightmap == count[4];
+    } else {
+        ok = 0;
+    }
+    /* the vertices, the lightmap vertices and the surfaces, byte for byte */
+    unsigned long vertex_differ = 0, lightmap_differ = 0, surface_differ = 0;
+    if (ok) {
+        ok = stream_compare(&s, offset[3], count[3] * 32u, 0);
+        vertex_differ = s.differ;
+    }
+    if (ok) {
+        ok = stream_compare(&s, offset[4], count[4] * 8u, 1);
+        lightmap_differ = s.differ - vertex_differ;
+    }
+    if (ok) {
+        ok = stream_compare(&s, offset[5], count[5] * 6u, 2);
+        surface_differ = s.differ - vertex_differ - lightmap_differ;
+    }
+    fclose(s.file);
+    gx.pool[0].used = mark[0];
+    gx.pool[1].used = mark[1];
+    int equal = ok && materials_differ == 0 && s.differ == 0;
+    gx.checks_equal += equal;
+    wii_log("RENDER_GEOMETRY_CHECK bsp_tag=%lu file_bytes=%lu materials=%ld vertices=%lu lightmap_vertices=%lu "
+            "surfaces=%ld bytes_compared=%lu materials_differ=%lu vertex_bytes_differ=%lu lightmap_bytes_differ=%lu "
+            "surface_bytes_differ=%lu well_formed=%d equal=%d chunk=%lu ms=%lu\n",
+            gx.bsp_tag, (unsigned long)information.st_size, gx.material_count, ok ? (unsigned long)count[3] : 0ul,
+            ok ? (unsigned long)count[4] : 0ul, gx.surface_count, s.compared, materials_differ, vertex_differ,
+            lightmap_differ, surface_differ, ok, equal, (unsigned long)s.chunk_bytes,
+            (unsigned long)ticks_to_millisecs(gettime() - started));
+    return equal;
+}
+
+/* ---------- per BSP: textures */
 
 static int texture_find(long tag, long bitmap)
 {
@@ -564,16 +995,42 @@ static void texture_path(char *path, size_t size, long tag, long bitmap)
     snprintf(path, size, RENDER_ROOT "/%s/textures/%05ld-%03ld.hwt", gx.map, tag, bitmap);
 }
 
-static int texture_load(struct texture *t, int lightmap, int width, int height)
+/* the file whole into the pool (its size as stat gave it); CONTENT_MEMORY
+if the pool has no room */
+static enum content_error texture_read(const char *path, uint32_t size, unsigned char **out)
+{
+    *out = NULL;
+    if (size == 0 || size > MAX_FILE_BYTES)
+        return CONTENT_SIZE;
+    if (!pool_fits(size))
+        return CONTENT_MEMORY;
+    FILE *file = fopen(path, "rb");
+    if (!file)
+        return CONTENT_IO;
+    unsigned char *data = pool_take(size);
+    unsigned char extra;
+    enum content_error error = CONTENT_OK;
+    memset(data + size, 0, align32(size) - size);
+    if (fread(data, 1, size, file) != size || fread(&extra, 1, 1, file) != 0)
+        error = CONTENT_IO;
+    if (fclose(file) != 0 && error == CONTENT_OK)
+        error = CONTENT_IO;
+    if (error == CONTENT_OK)
+        *out = data;
+    return error;
+}
+
+static int texture_load(struct texture *t, int lightmap, int width, int height, uint32_t size)
 {
     char path[192];
     struct hwt_image image;
     enum content_error error;
+    uint32_t mark[2] = {gx.pool[0].used, gx.pool[1].used};
 
     texture_path(path, sizeof(path), t->tag, t->bitmap);
-    error = content_load_file(path, MAX_FILE_BYTES, &t->blob);
+    error = texture_read(path, size, &t->data);
     if (error == CONTENT_OK)
-        error = hwt_parse(t->blob.data, t->blob.bytes, &t->header);
+        error = hwt_parse(t->data, size, &t->header);
     if (error == CONTENT_OK && (t->header.type != HWT_TYPE_2D || t->header.faces != 1 || t->header.depth != 1))
         error = CONTENT_DIMENSIONS;
     if (error == CONTENT_OK && width > 0 && ((int)t->header.width != width || (int)t->header.height != height))
@@ -593,12 +1050,14 @@ static int texture_load(struct texture *t, int lightmap, int width, int height)
     if (error != CONTENT_OK) {
         wii_log("RENDER_TEXTURE_FAIL tag=%ld bitmap=%ld kind=%s error=%s\n", t->tag, t->bitmap,
                 lightmap ? "lightmap" : "base", content_error_name(error));
-        content_blob_release(&t->blob);
+        t->data = NULL;
+        gx.pool[0].used = mark[0];
+        gx.pool[1].used = mark[1];
         return 0;
     }
     int levels = (int)t->header.levels;
     u8 wrap = lightmap ? GX_CLAMP : GX_REPEAT;
-    GX_InitTexObj(&t->object, t->blob.data + image.offset, (u16)image.width, (u16)image.height,
+    GX_InitTexObj(&t->object, t->data + image.offset, (u16)image.width, (u16)image.height,
                   (u8)t->header.gx_format, wrap, wrap, levels > 1 ? GX_TRUE : GX_FALSE);
     if (levels > 1)
         GX_InitTexObjLOD(&t->object, GX_LIN_MIP_LIN, GX_LINEAR, 0.0f, (f32)(levels - 1), 0.0f, GX_FALSE, GX_FALSE,
@@ -608,7 +1067,7 @@ static int texture_load(struct texture *t, int lightmap, int width, int height)
     if (t->alpha_plane) {
         /* sampled with the colour's texcoord, wrap and filter: the same texel
         footprint, so colour and alpha stay one RGBA texel */
-        GX_InitTexObj(&t->alpha_object, t->blob.data + alpha_image.offset, (u16)image.width, (u16)image.height,
+        GX_InitTexObj(&t->alpha_object, t->data + alpha_image.offset, (u16)image.width, (u16)image.height,
                       (u8)t->header.alpha_gx_format, wrap, wrap, levels > 1 ? GX_TRUE : GX_FALSE);
         if (levels > 1)
             GX_InitTexObjLOD(&t->alpha_object, GX_LIN_MIP_LIN, GX_LINEAR, 0.0f, (f32)(levels - 1), 0.0f, GX_FALSE,
@@ -616,10 +1075,10 @@ static int texture_load(struct texture *t, int lightmap, int width, int height)
         else
             GX_InitTexObjFilterMode(&t->alpha_object, GX_LINEAR, GX_LINEAR);
     }
-    DCFlushRange(t->blob.data, t->blob.capacity);
-    t->bytes = t->blob.bytes;
+    DCFlushRange(t->data, align32(size));
+    t->file_bytes = size;
+    t->bytes = size;
     t->resident = 1;
-    owned_add(t->blob.capacity);
     return 1;
 }
 
@@ -633,17 +1092,31 @@ static int coverage_order(const void *a, const void *b)
     return x->bitmap < y->bitmap ? -1 : x->bitmap > y->bitmap;
 }
 
+static unsigned long file_size(long tag, long bitmap, int *found)
+{
+    char path[192];
+    struct stat information;
+    texture_path(path, sizeof(path), tag, bitmap);
+    *found = stat(path, &information) == 0;
+    return *found ? (unsigned long)information.st_size : 0ul;
+}
+
 int wii_gx_textures_load(long lightmap_tag_index)
 {
-    unsigned long lightmap_bytes = 0, base_bytes = 0, missing_bytes = 0;
+    unsigned long lightmap_bytes = 0, base_bytes = 0, missing_bytes = 0, pool_short_bytes = 0;
     int lightmap_pages = 0, lightmap_failed = 0, base_total = 0, base_resident = 0, base_failed = 0;
+    int base_pool_short = 0, base_budget_short = 0;
     long kinds[NUMBER_OF_WII_GX_MATERIAL_KINDS] = {0}, kind_surfaces[NUMBER_OF_WII_GX_MATERIAL_KINDS] = {0};
     long detail = 0, bump = 0, no_base = 0, no_lightmap = 0;
     long alpha_used = 0, alpha_used_split = 0, environment_types[4] = {0};
+    long environment_surfaces_textured = 0, environment_surfaces_lightmap_only = 0;
     int base_split = 0, base_planes = 0, base_alpha_omitted = 0, base_limited = 0;
+    int geometry_equal = 1;
 
     gx.lightmap_tag = lightmap_tag_index;
     release_textures();
+    if (gx.geometry_check)
+        geometry_equal = geometry_check();
     /* the base maps, by the surfaces they cover */
     for (long i = 0; i < gx.material_count; ++i) {
         const struct wii_gx_material *m = &gx.materials[i].engine;
@@ -681,34 +1154,37 @@ int wii_gx_textures_load(long lightmap_tag_index)
         if (gx.texture_count == gx.texture_capacity)
             return 0;
         struct texture *t = &gx.textures[gx.texture_count++];
+        int found;
+        unsigned long size;
         t->tag = lightmap_tag_index;
         t->bitmap = m->lightmap_page;
         t->coverage = -1;
         lightmap_pages++;
-        if (texture_load(t, 1, 0, 0))
+        size = file_size(t->tag, t->bitmap, &found);
+        if (found && texture_load(t, 1, 0, 0, (uint32_t)size))
             lightmap_bytes += t->bytes;
-        else
+        else {
+            if (!found)
+                wii_log("RENDER_TEXTURE_FAIL tag=%ld bitmap=%ld kind=lightmap error=missing\n", t->tag, t->bitmap);
             lightmap_failed++;
+        }
     }
-    /* then the base maps that fit the budget */
+    /* then the base maps that fit the budget and the pool */
     for (int i = 0; i < base_total; ++i) {
         struct texture *t = &gx.textures[i];
-        char path[192];
-        struct stat information;
-        int width = 0, height = 0;
+        int width = 0, height = 0, found;
         for (long k = 0; k < gx.material_count; ++k)
             if (gx.materials[k].engine.base_tag == t->tag && gx.materials[k].engine.base_bitmap == t->bitmap) {
                 width = gx.materials[k].engine.base_width;
                 height = gx.materials[k].engine.base_height;
                 break;
             }
-        texture_path(path, sizeof(path), t->tag, t->bitmap);
-        if (stat(path, &information) != 0) {
+        unsigned long size = file_size(t->tag, t->bitmap, &found);
+        if (!found) {
             wii_log("RENDER_TEXTURE_FAIL tag=%ld bitmap=%ld kind=base error=missing\n", t->tag, t->bitmap);
             base_failed++;
             continue;
         }
-        unsigned long size = (unsigned long)information.st_size;
         if (gx.base_limit >= 0 && base_resident >= gx.base_limit) {
             missing_bytes += size;
             base_limited++;
@@ -718,11 +1194,21 @@ int wii_gx_textures_load(long lightmap_tag_index)
         }
         if (base_bytes + size > gx.base_budget) {
             missing_bytes += size;
-            wii_log("RENDER_BASE_NOT_RESIDENT tag=%ld bitmap=%ld bytes=%lu surfaces=%ld budget_left=%lu\n", t->tag,
-                    t->bitmap, size, t->coverage, gx.base_budget - base_bytes);
+            base_budget_short++;
+            wii_log("RENDER_BASE_NOT_RESIDENT tag=%ld bitmap=%ld bytes=%lu surfaces=%ld reason=budget budget_left=%lu\n",
+                    t->tag, t->bitmap, size, t->coverage, gx.base_budget - base_bytes);
             continue;
         }
-        if (texture_load(t, 0, width, height)) {
+        if (!pool_fits((uint32_t)size)) {
+            missing_bytes += size;
+            pool_short_bytes += size;
+            base_pool_short++;
+            wii_log("RENDER_BASE_NOT_RESIDENT tag=%ld bitmap=%ld bytes=%lu surfaces=%ld reason=pool pool_left=%lu,%lu\n",
+                    t->tag, t->bitmap, size, t->coverage, (unsigned long)(gx.pool[0].bytes - gx.pool[0].used),
+                    (unsigned long)(gx.pool[1].bytes - gx.pool[1].used));
+            continue;
+        }
+        if (texture_load(t, 0, width, height, (uint32_t)size)) {
             base_bytes += t->bytes;
             base_resident++;
             base_split += t->header.version == 2;
@@ -754,25 +1240,43 @@ int wii_gx_textures_load(long lightmap_tag_index)
             alpha_used++;
             alpha_used_split += m->base_texture >= 0 && gx.textures[m->base_texture].header.version == 2;
         }
+        if (m->engine.kind == _wii_gx_material_environment && m->engine.base_tag >= 0) {
+            if (m->base_texture >= 0)
+                environment_surfaces_textured += m->engine.surface_count;
+            else
+                environment_surfaces_lightmap_only += m->engine.surface_count;
+        }
     }
     GX_InvalidateTexAll();
-    free(gx.hwl_materials);
-    gx.hwl_materials = NULL;
     unsigned long load_ms = (unsigned long)ticks_to_millisecs(gettime() - load_started);
     if (load_ms > gx.load_ms_max)
         gx.load_ms_max = load_ms;
-    wii_log("RENDER_MAP_LOAD load=%ld map=%s bsp_tag=%lu lightmap_tag=%ld geometry_bytes=%lu lightmap_pages=%d "
+    struct memory_now memory;
+    struct wii_cache_load_report slot;
+    memory_now(&memory);
+    memory_low_water();
+    wii_cache_load_report_get(&slot);
+    wii_log("RENDER_MAP_LOAD load=%ld map=%s bsp_tag=%lu lightmap_tag=%ld geometry=tag_slot geometry_bytes=%lu "
+            "geometry_owned=0 vertex_data_unaligned32=%ld geometry_check=%d lightmap_pages=%d "
             "lightmap_failed=%d lightmap_bytes=%lu base_maps=%d base_resident=%d base_failed=%d base_bytes=%lu "
-            "base_not_resident_bytes=%lu base_budget=%lu base_limited=%d base_split=%d base_alpha_planes=%d "
-            "base_alpha_omitted=%d resident_total=%lu owned=%lu owned_peak=%lu "
-            "arena1_lo=%p->%p arena1_free=%lu arena2_lo=%p->%p ms=%lu\n",
-            gx.loads, gx.map, gx.bsp_tag, lightmap_tag_index,
-            (unsigned long)(gx.arrays_bytes + gx.surfaces_bytes), lightmap_pages, lightmap_failed, lightmap_bytes,
-            base_total, base_resident, base_failed, base_bytes, missing_bytes, gx.base_budget, base_limited,
-            base_split, base_planes, base_alpha_omitted,
-            (unsigned long)(gx.arrays_bytes + gx.surfaces_bytes) + lightmap_bytes + base_bytes, gx.owned,
-            gx.owned_peak, (void *)load_arena1_before, SYS_GetArena1Lo(), arena1_free(), (void *)load_arena2_before,
-            SYS_GetArena2Lo(), load_ms);
+            "base_not_resident_bytes=%lu base_budget=%lu base_limited=%d base_budget_short=%d base_pool_short=%d "
+            "base_pool_short_bytes=%lu base_split=%d base_alpha_planes=%d "
+            "base_alpha_omitted=%d environment_surfaces_textured=%ld environment_surfaces_lightmap_only=%ld "
+            "pool_used=%lu pool_bytes=%lu pool_used_mem1=%lu pool_used_mem2=%lu owned=%lu owned_peak=%lu "
+            "arena1_lo=%p->%p mem1_free=%lu arena2_lo=%p->%p mem2_free=%lu mem2_above_reserve=%lu heap_free=%lu "
+            "heap_in_use=%lu tag_slot_tags=%lu tag_slot_bsp=%lu+%lu ms=%lu\n",
+            gx.loads, gx.map, gx.bsp_tag, lightmap_tag_index, gx.vertex_data_bytes +
+            (unsigned long)gx.surface_count * 6ul, gx.vertex_data_unaligned32, gx.geometry_check ? geometry_equal : -1,
+            lightmap_pages, lightmap_failed, lightmap_bytes, base_total, base_resident, base_failed, base_bytes,
+            missing_bytes, gx.base_budget, base_limited, base_budget_short, base_pool_short, pool_short_bytes,
+            base_split, base_planes, base_alpha_omitted, environment_surfaces_textured,
+            environment_surfaces_lightmap_only, (unsigned long)pool_used(), (unsigned long)pool_bytes(),
+            (unsigned long)gx.pool[0].used, (unsigned long)gx.pool[1].used, gx.owned, gx.owned_peak,
+            (void *)load_arena1_before, (void *)memory.arena1_lo, memory.mem1_free, (void *)load_arena2_before,
+            (void *)memory.arena2_lo, memory.mem2_free, memory.mem2_above_reserve, memory.heap_free,
+            memory.heap_in_use, slot.range_count > 0 ? slot.range_size[0] : 0ul,
+            slot.range_count > 1 ? slot.range_offset[1] : 0ul, slot.range_count > 1 ? slot.range_size[1] : 0ul,
+            load_ms);
     wii_log("RENDER_MATERIALS load=%ld environment=%ld environment_surfaces=%ld transparent_placeholder=%ld "
             "transparent_surfaces=%ld other_placeholder=%ld other_surfaces=%ld detail_maps_not_drawn=%ld "
             "bump_maps_not_drawn=%ld environment_without_base=%ld environment_without_lightmap=%ld "
@@ -780,7 +1284,10 @@ int wii_gx_textures_load(long lightmap_tag_index)
             gx.loads, kinds[0], kind_surfaces[0], kinds[1], kind_surfaces[1], kinds[2], kind_surfaces[2], detail, bump,
             no_base, no_lightmap, environment_types[0], environment_types[1], environment_types[2],
             environment_types[3], alpha_used, alpha_used_split);
-    gx.ready = lightmap_failed == 0;
+    if (!geometry_equal)
+        wii_log("RENDER_FAIL geometry_check bsp_tag=%lu (the tag slot's geometry differs from the HWL1 file: not drawn)\n",
+                gx.bsp_tag);
+    gx.ready = lightmap_failed == 0 && geometry_equal;
     return gx.ready;
 }
 
@@ -892,10 +1399,12 @@ static void set_arrays(const struct material *m, int lightmap)
     GX_SetVtxDesc(GX_VA_POS, GX_INDEX16);
     GX_SetVtxDesc(GX_VA_TEX0, GX_INDEX16);
     GX_SetVtxDesc(GX_VA_TEX1, lightmap ? GX_INDEX16 : GX_NONE);
-    GX_SetArray(GX_VA_POS, gx.arrays + m->positions, 12);
-    GX_SetArray(GX_VA_TEX0, gx.arrays + m->texcoords, 8);
+    /* the tag slot's vertices: position at 0 and texcoord at 24 of each
+    32-byte vertex, the lightmap texcoord at 4 of each 8-byte lightmap vertex */
+    GX_SetArray(GX_VA_POS, (void *)m->vertices, VERTEX_BYTES);
+    GX_SetArray(GX_VA_TEX0, (void *)(m->vertices + VERTEX_TEXCOORD_OFFSET), VERTEX_BYTES);
     if (lightmap)
-        GX_SetArray(GX_VA_TEX1, gx.arrays + m->lightmap_texcoords, 4);
+        GX_SetArray(GX_VA_TEX1, (void *)(m->lightmap_vertices + LIGHTMAP_TEXCOORD_OFFSET), LIGHTMAP_VERTEX_BYTES);
 }
 
 /* the visible surfaces of one material, as indexed triangles */
@@ -997,15 +1506,16 @@ static void draw_classified(const struct wii_gx_view *view, const unsigned long 
         const struct material *m = &gx.materials[i];
         if (!drawn[i] || !m->vertex_count)
             continue;
-        const float *positions = (const float *)(gx.arrays + m->positions);
-        GX_SetArray(GX_VA_POS, gx.arrays + m->positions, 12);
+        GX_SetArray(GX_VA_POS, (void *)m->vertices, VERTEX_BYTES);
         long first = m->engine.first_surface, end = first + m->engine.surface_count;
         for (long s = first; s < end; ++s) {
             if (!surface_visible(flags, s))
                 continue;
             const struct hwl_surface *surface = &gx.surfaces[s];
-            int front = frontfacing(view->eye, positions + 3 * surface->vertex[0], positions + 3 * surface->vertex[1],
-                                    positions + 3 * surface->vertex[2]);
+            float corner[3][3];
+            for (int k = 0; k < 3; ++k)
+                memcpy(corner[k], m->vertices + VERTEX_BYTES * surface->vertex[k], sizeof(corner[k]));
+            int front = frontfacing(view->eye, corner[0], corner[1], corner[2]);
             GXColor c = front ? front_colour : back_colour;
             GX_Begin(GX_TRIANGLES, GX_VTXFMT1, 3);
             for (int k = 0; k < 3; ++k) {
@@ -1084,6 +1594,7 @@ void wii_gx_frame(const struct wii_gx_view *view, const unsigned long *surface_f
 {
     if (!gx.ready)
         return;
+    memory_low_water();
     u64 start = gettime();
     load_view(view);
     unsigned long triangles = draw_materials(surface_flags, material_drawn, DRAW_FULL, GX_CULL_BACK);
@@ -1111,6 +1622,7 @@ void wii_gx_environment_draw(const struct wii_gx_view *view, const unsigned long
 {
     if (!gx.ready)
         return;
+    memory_low_water();
     u64 start = gettime();
     load_view(view);
     unsigned long triangles = draw_materials(surface_flags, material_drawn, DRAW_FULL, GX_CULL_BACK);

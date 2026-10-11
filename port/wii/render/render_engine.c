@@ -80,11 +80,9 @@ enum
 };
 
 #define RENDER_MAXIMUM_MATERIALS 4096
-#define RENDER_POSE_TICK_COUNT 3
+#define RENDER_MAXIMUM_POSE_TICKS 16
 #define RENDER_OVERRIDE_POSES 2
 #define RENDER_SNAPSHOT_BYTES 16384
-
-static const long render_pose_ticks[RENDER_POSE_TICK_COUNT] = { 30, 150, 300 };
 
 /* ---------- structures */
 
@@ -148,6 +146,11 @@ struct render_engine_globals
 	struct wii_gx_view view;
 	boolean view_valid;
 	long load_ordinal;         /* maps loaded so far (the warm-up run is 0) */
+	long bsp_loads;            /* BSP loads in this map (a switch loads again) */
+	/* the map run's sampled frames (render.txt run_pose_ticks): the next one
+	of this map's */
+	long run_pose_ticks[RENDER_MAXIMUM_POSE_TICKS];
+	int run_pose_count;
 	long next_run_pose;
 	long frames;
 	long camera_effect_skipped;
@@ -350,8 +353,12 @@ static boolean render_engine_map_load(
 			RENDER_MAXIMUM_MATERIALS);
 		return FALSE;
 	}
+	/* the map's resources are the loaded scenario's own (render/<name>/...):
+	a map staged under another name keeps its scenario's */
+	wii_render_set_map(tag_get_name(global_scenario_index));
 	if (!wii_gx_map_begin((unsigned long)DATUM_INDEX_TO_ABSOLUTE_INDEX(bsp_tag_index), material_total,
-		structure_bsp->surfaces.count))
+		structure_bsp->surfaces.count, structure_bsp->surfaces.count > 0 ?
+		structure_bsp->surfaces.address : NULL))
 		return FALSE;
 	render_engine.material_count = material_total;
 	ok = TRUE;
@@ -374,6 +381,15 @@ static boolean render_engine_map_load(
 			description.base_tag = -1;
 			description.first_surface = material->first_surface_index;
 			description.surface_count = material->surface_count;
+			/* HWI-016E: GX draws the material's vertices where the tag slot holds
+			them (as map_stage.py stages them: big-endian) */
+			description.vertex_data = material->compressed_vertex_data.address;
+			description.vertex_data_bytes = material->compressed_vertex_data.size;
+			description.vertex_count = material->vertices.count;
+			description.lightmap_vertex_count = material->lightmap_vertices.count;
+			description.vertex_type = material->vertices.type;
+			description.lightmap_vertex_type = material->lightmap_vertices.type;
+			description.uncompressed_bytes = material->uncompressed_vertex_data.size;
 			if (shader->base.type == _render_shader_type_environment)
 			{
 				struct render_shader_environment *environment = (struct render_shader_environment *)shader;
@@ -423,9 +439,11 @@ static boolean render_engine_map_load(
 		ok = wii_gx_textures_load(structure_bsp->lightmap_group.index == NONE ? -1 :
 			(long)DATUM_INDEX_TO_ABSOLUTE_INDEX(structure_bsp->lightmap_group.index));
 	}
-	wii_log("RENDER_BSP load=%ld bsp_tag=%lu clusters=%ld cluster_portals=%ld surfaces=%ld lightmaps=%ld materials=%ld "
+	wii_log("RENDER_BSP load=%ld bsp_load=%ld bsp=%d bsp_tag=%lu game_time=%ld clusters=%ld cluster_portals=%ld "
+		"surfaces=%ld lightmaps=%ld materials=%ld "
 		"weather_palette=%ld fog_palette=%ld lens_flares=%ld detail_object_data=%ld ok=%d\n", render_engine.load_ordinal,
-		(unsigned long)DATUM_INDEX_TO_ABSOLUTE_INDEX(bsp_tag_index), structure_bsp->clusters.count,
+		render_engine.bsp_loads, global_structure_bsp_index, (unsigned long)DATUM_INDEX_TO_ABSOLUTE_INDEX(bsp_tag_index),
+		game_time_initialized() ? game_time_get() : -1L, structure_bsp->clusters.count,
 		structure_bsp->cluster_portals.count,
 		structure_bsp->surfaces.count, structure_bsp->lightmaps.count, material_total,
 		structure_bsp->weather_palette.count, structure_bsp->fog_palette.count, structure_bsp->lens_flares.count,
@@ -465,13 +483,13 @@ static boolean render_engine_map_current(
 		render_engine_map_unload();
 		if (render_engine.map_failed)
 			return FALSE;
+		render_engine.bsp_loads++;
 		if (!render_engine_map_load(bsp_tag_index))
 		{
 			render_engine.map_failed = TRUE;
 			return FALSE;
 		}
 		render_engine.bsp_tag_index = bsp_tag_index;
-		render_engine.next_run_pose = 0;
 	}
 
 	return wii_gx_map_ready();
@@ -521,6 +539,7 @@ static void render_engine_rasterizer_dispose(
 	void)
 {
 	render_engine_map_unload();
+	wii_gx_pool_release();
 	render_engine.initialized = FALSE;
 }
 
@@ -529,12 +548,16 @@ static void render_engine_new_map(
 {
 	render_engine.map_failed = FALSE;
 	render_engine.load_ordinal++;
+	render_engine.bsp_loads = 0;
+	render_engine.next_run_pose = 0;
 }
 
 static void render_engine_old_map(
 	void)
 {
 	render_engine_map_unload();
+	/* the map's render pool goes back to the heap (a BSP switch keeps it) */
+	wii_gx_pool_release();
 }
 
 static void render_engine_frame(
@@ -565,8 +588,8 @@ static void render_engine_frame(
 	render_engine_materials_drawn();
 	render_engine.view_valid = TRUE;
 	render_engine.view.visibility_us = (unsigned long)(wii_time_microseconds() - started);
-	if (render_engine.next_run_pose < RENDER_POSE_TICK_COUNT &&
-		game_time_get() >= render_pose_ticks[render_engine.next_run_pose])
+	if (render_engine.next_run_pose < render_engine.run_pose_count &&
+		game_time_get() >= render_engine.run_pose_ticks[render_engine.next_run_pose])
 	{
 		sample = TRUE;
 	}
@@ -574,9 +597,11 @@ static void render_engine_frame(
 	unlock_global_random_seed();
 	if (sample)
 	{
-		wii_log("RENDER_RUN_POSE load=%ld tick=%ld game_time=%ld crc=%08lx covered=%d leaf=%ld cluster=%ld "
-			"clusters=%ld surfaces=%ld eye=%.4f,%.4f,%.4f\n", render_engine.load_ordinal,
-			render_pose_ticks[render_engine.next_run_pose], game_time_get(), crc, covered, render_engine.view.leaf_index,
+		wii_log("RENDER_RUN_POSE load=%ld tick=%ld game_time=%ld bsp=%d bsp_tag=%lu crc=%08lx covered=%d leaf=%ld "
+			"cluster=%ld clusters=%ld surfaces=%ld eye=%.4f,%.4f,%.4f\n", render_engine.load_ordinal,
+			render_engine.run_pose_ticks[render_engine.next_run_pose], game_time_get(), global_structure_bsp_index,
+			(unsigned long)DATUM_INDEX_TO_ABSOLUTE_INDEX(render_engine.bsp_tag_index), crc, covered,
+			render_engine.view.leaf_index,
 			render_engine.view.cluster_index, render_engine.view.rendered_clusters,
 			render_engine.view.visible_surfaces, (double)render_engine.view.eye[0], (double)render_engine.view.eye[1],
 			(double)render_engine.view.eye[2]);
@@ -739,53 +764,60 @@ void wii_render_register_hooks(
 	}
 	render_engine.configured = TRUE;
 	render_engine.bsp_tag_index = NONE;
+	render_engine.run_pose_count = wii_render_run_pose_ticks(render_engine.run_pose_ticks,
+		RENDER_MAXIMUM_POSE_TICKS);
 	wii_engine_set_render_hooks(&hooks);
 }
 
-int wii_render_pose_phase(
-	const char *scenario_path)
+/* one pose phase: the map loaded once, the scripted player at 30 Hz with
+every frame drawn, the engine's own camera captured at the phase's ticks,
+then two labelled diagnostic overrides from the BSP's bounds */
+static int render_engine_pose_phase_map(
+	const char *scenario_path,
+	const long *ticks,
+	int tick_count)
 {
 	struct real_map_result result;
 	long frame = 0;
-	long next = 0;
+	long last_tick = REAL_MAP_TICKS;
+	int next = 0;
 	int failures = 0;
 	int captured = 0;
 	int pose;
 
-	if (!wii_render_enabled() || !render_engine.initialized)
-		return TRUE;
+	if (tick_count > 0 && ticks[tick_count - 1] > last_tick)
+		last_tick = ticks[tick_count - 1];
 	render_engine.pose_phase = TRUE;
-	wii_log("RENDER_POSES begin scenario=%s\n", scenario_path);
-	if (!real_map_load(scenario_path) || !real_map_begin(NULL, REAL_MAP_TICKS))
+	wii_log("RENDER_POSES begin scenario=%s ticks=%ld poses=%d\n", scenario_path, last_tick, tick_count);
+	if (!real_map_load(scenario_path) || !real_map_begin(NULL, last_tick))
 	{
 		wii_log("RENDER_FAIL pose_phase_load\n");
 		real_map_unload();
 		render_engine.pose_phase = FALSE;
 		return FALSE;
 	}
-	/* the scripted player at 30 Hz, every frame drawn; the engine's own
-	camera at three ticks */
-	while (frame < 100000 && real_map_frame(1.0f / 30.0f))
+	while (frame < 40L * REAL_MAP_MAXIMUM_TICKS && real_map_frame(1.0f / 30.0f))
 	{
 		frame++;
-		if (next < RENDER_POSE_TICK_COUNT && game_time_get() >= render_pose_ticks[next] && render_engine.view_valid)
+		if (next < tick_count && game_time_get() >= ticks[next] && render_engine.view_valid)
 		{
 			char name[32];
 
-			csprintf(name, "engine_tick_%ld", render_pose_ticks[next]);
+			csprintf(name, "engine_tick_%ld", ticks[next]);
 			failures += !render_engine_capture(name, FALSE);
 			captured++;
 			next++;
 		}
 	}
-	if (next < RENDER_POSE_TICK_COUNT && render_engine.view_valid)
+	if (next < tick_count && render_engine.view_valid)
 	{
 		/* the last tick ends the run inside its frame */
-		failures += !render_engine_capture("engine_tick_300", FALSE);
+		char name[32];
+
+		csprintf(name, "engine_tick_%ld", ticks[next]);
+		failures += !render_engine_capture(name, FALSE);
 		captured++;
 	}
-	/* two labelled diagnostic overrides of the camera, from the BSP's bounds;
-	the engine's visibility is computed from each */
 	for (pose = 0; pose < RENDER_OVERRIDE_POSES && render_engine.view_valid; pose++)
 	{
 		render_engine_override_camera(pose);
@@ -799,7 +831,27 @@ int wii_render_pose_phase(
 		captured, failures, result.ticks, result.simulation_digest, render_engine.camera_effect_skipped);
 	render_engine.pose_phase = FALSE;
 
-	return failures == 0 && captured == RENDER_POSE_TICK_COUNT + RENDER_OVERRIDE_POSES;
+	return failures == 0 && captured == tick_count + RENDER_OVERRIDE_POSES;
+}
+
+int wii_render_pose_phase(
+	const char *scenario_path)
+{
+	int phase;
+	int ok = TRUE;
+
+	if (!wii_render_enabled() || !render_engine.initialized)
+		return TRUE;
+	for (phase = 0; phase < wii_render_pose_phase_count(); phase++)
+	{
+		long ticks[RENDER_MAXIMUM_POSE_TICKS];
+		int count = 0;
+		const char *map = wii_render_pose_phase_map(phase, ticks, RENDER_MAXIMUM_POSE_TICKS, &count);
+
+		ok = render_engine_pose_phase_map(map ? map : scenario_path, ticks, count) && ok;
+	}
+
+	return ok;
 }
 
 /* ---------- HWI-016D: the boot mode (wii_render.h)
