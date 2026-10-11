@@ -1386,6 +1386,14 @@ static boolean hs_stack_push(
 	new_frame->previous = thread->stack;
 	thread->stack = new_frame;
 	new_frame->size = 0;
+	/* port (HWI-016C): what the frame allocates starts zeroed. A frame's
+	values are allocated where frames popped before held theirs, and some
+	are written only later, or in part (a short in a long's first half): the
+	rest held those frames' bytes, partly written over at other offsets, so
+	a different part of an old value in each byte order (measured: a10's
+	script threads, on the Wii against the i686 host). They reach the game
+	state's CRC and the saves */
+	csmemset(new_frame->data, 0, thread->stack_data+HS_THREAD_STACK_SIZE-new_frame->data);
 
 	return TRUE;
 }
@@ -2752,6 +2760,9 @@ static void hs_thread_main(
 		match_assert("c:\\halo\\SOURCE\\hs\\hs_runtime.c", 0x2c3, script);
 
 		thread->stack->size = 0;
+		/* port (HWI-016C): the emptied stack zeroed, as a pushed frame's
+		(hs_stack_push): a script run again finds its last run's bytes */
+		csmemset(thread->stack->data, 0, thread->stack_data+HS_THREAD_STACK_SIZE-thread->stack->data);
 		/* port: (the base frame, just emptied, has room) */
 		root_result = hs_stack_allocate(thread_index, sizeof(long));
 		if (root_result)
