@@ -81,6 +81,11 @@ struct real_map_result
 	long command_result;                         /* hs_compile_and_evaluate's */
 	short command_bsp_before, command_bsp_after; /* the structure bsp loaded as the command ran, and after it */
 	long requests_left;                          /* frames ending with a won map or a reset asked for */
+	/* (HWI-016F) effects and object looping sounds made by the frames
+	(game_frame: a particle's effect, a background sound), outside the
+	ticks, in arrays whose other datums the ticks make */
+	long frame_made_effects;
+	long frame_made_looping_sounds;
 };
 
 /* the game's state at a tick, for the log (engine_map_run.c's PROGRESS lines) */

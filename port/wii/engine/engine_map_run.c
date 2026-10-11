@@ -517,7 +517,7 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 		"seed=%08lx objects=%ld player_unit=%08lx spawn_tick=%ld position=%.6f,%.6f,%.6f tags_end=%08lx "
 		"bsp=%d bsp_switches=%ld command_tick=%ld command_result=%ld requests_left=%ld sim_raw=%08lx "
 		"sim_raw_chain=%08lx raw=%08lx raw_chain=%08lx sim_hwi015b=%08lx sim_hwi015b_raw=%08lx "
-		"sim_hwi015b_raw_chain=%08lx ms=%lu\n",
+		"sim_hwi015b_raw_chain=%08lx frame_effects=%ld frame_sounds=%ld ms=%lu\n",
 		line->name, cycle, cadence_names[cadence], result->ticks, result->frames, result->frames_without_ticks,
 		result->most_ticks_in_a_frame, result->digest, result->chain, result->digest_at[0], result->digest_at[1],
 		result->digest_at[2], result->digest_at[3], result->simulation_digest, result->simulation_chain,
@@ -528,7 +528,8 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 		result->tags_at_end, result->structure_bsp_index, result->bsp_switches, result->command_tick,
 		result->command_result, result->requests_left, result->simulation_raw_digest,
 		result->simulation_raw_chain, result->raw_digest, result->raw_chain, result->simulation_hwi015b_digest,
-		result->simulation_hwi015b_raw_digest, result->simulation_hwi015b_raw_chain, *milliseconds);
+		result->simulation_hwi015b_raw_digest, result->simulation_hwi015b_raw_chain, result->frame_made_effects,
+		result->frame_made_looping_sounds, *milliseconds);
 	if (cadence == _cadence_vsync)
 	{
 		/* the frame times, bit for bit, ten a line */

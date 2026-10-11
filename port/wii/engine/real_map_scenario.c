@@ -161,9 +161,17 @@ struct real_map_globals
 	short command_bsp_before, command_bsp_after;
 	long bsp_reads_at_begin;
 	long requests_left;                /* frames ending with a won map or a reset asked for */
+	/* (HWI-016F) effects and looping sounds made outside the ticks: their
+	arrays' identifier counters as the last tick (or the frame) began
+	game_frame, and what the frames added */
+	short frame_mark_effects, frame_mark_looping_sounds;
+	long frame_made_effects, frame_made_looping_sounds;
 };
 
 extern struct data_array *hs_thread_data;
+/* (effects.c's and game_sound.c's) */
+extern struct data_array *effect_data;
+extern struct data_array *game_looping_sound_data;
 
 static struct real_map_globals real_map_globals;
 static unsigned long digest_tables[2][256];
@@ -1144,6 +1152,37 @@ static long local_player_unit(
 	return player ? player->unit_index : NONE;
 }
 
+/* (HWI-016F) datums the frames make in arrays the ticks make datums in too:
+an array's identifier counter counts every datum made in it, so what it
+counts between a frame's last tick (or the frame's start) and the frame's
+end was made by the frame (game_frame: a particle's effect, a background
+sound) */
+static short identifier_counter(
+	struct data_array const *data)
+{
+	return data ? data->next_identifier : 0;
+}
+
+static void frame_made_mark(
+	void)
+{
+	real_map_globals.frame_mark_effects = identifier_counter(effect_data);
+	real_map_globals.frame_mark_looping_sounds = identifier_counter(game_looping_sound_data);
+
+	return;
+}
+
+static void frame_made_count(
+	void)
+{
+	real_map_globals.frame_made_effects +=
+		(unsigned short)(identifier_counter(effect_data) - real_map_globals.frame_mark_effects);
+	real_map_globals.frame_made_looping_sounds +=
+		(unsigned short)(identifier_counter(game_looping_sound_data) - real_map_globals.frame_mark_looping_sounds);
+
+	return;
+}
+
 void real_map_after_tick(
 	void)
 {
@@ -1158,6 +1197,7 @@ void real_map_after_tick(
 
 	if (!real_map_globals.armed || real_map_globals.tick >= real_map_globals.ticks)
 		return;
+	frame_made_mark();
 	tick = ++real_map_globals.tick;
 	if (tick == real_map_globals.ticks)
 		checkpoint = 3;
@@ -1354,6 +1394,8 @@ int real_map_begin(
 	wii_cache_load_report_get(&load);
 	real_map_globals.bsp_reads_at_begin = load.bsp_reads;
 	real_map_globals.requests_left = 0;
+	real_map_globals.frame_made_effects = 0;
+	real_map_globals.frame_made_looping_sounds = 0;
 	real_map_globals.ticks = ticks;
 	real_map_globals.command_ran_tick = NONE;
 	real_map_globals.command_result = 0;
@@ -1403,7 +1445,9 @@ int real_map_frame(
 	checkpoint save, a respawn ...), its time update with its ticks, then a
 	checkpoint save in progress */
 	main_port_game_requests(TRUE);
+	frame_made_mark();
 	game_time_update(dt);
+	frame_made_count();
 	main_port_game_requests(FALSE);
 	if (main_port_game_requests_left())
 		real_map_globals.requests_left++;
@@ -1469,6 +1513,8 @@ void real_map_end(
 	result->command_bsp_before = real_map_globals.command_bsp_before;
 	result->command_bsp_after = real_map_globals.command_bsp_after;
 	result->requests_left = real_map_globals.requests_left;
+	result->frame_made_effects = real_map_globals.frame_made_effects;
+	result->frame_made_looping_sounds = real_map_globals.frame_made_looping_sounds;
 	real_map_globals.armed = FALSE;
 	game_time_end();
 

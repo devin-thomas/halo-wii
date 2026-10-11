@@ -21,6 +21,13 @@ The host has no video: its "vsync_measured" run is paced at 1/60 s unless it
 replays the Wii's measured frame times, so that run's frame-coupled state is
 reported separately rather than hidden.
 
+Cadence invariance (HWI-016F): within each log, every run of a map, whatever
+its cadence and cycle, must have the simulation of the map's first run (the
+30 Hz run: engine_map_run.c runs a line's 30 Hz first). The RUN lines also
+carry the simulation as HWI-015B classified it (sim_hwi015b, compared
+between the Wii and the host like the rest) and the effects and looping
+sounds the frames made (frame_effects, frame_sounds).
+
     python tools/wii/compare_map_runs.py --wii <engine.log> --host <engine.log> [--json <out>]
 """
 import argparse
@@ -69,8 +76,34 @@ RAW_CHECKPOINTS = ("raw1", "raw30", "raw150", "rawend")
 RUN_KEYS_WHOLE = ("raw", "raw_chain")
 RUN_KEYS_WHOLE_CANONICAL = ("digest", "chain", "at1", "at30", "at150", "atend", "at300")
 RUN_KEYS_SIMULATION = ("sim_raw", "sim_raw_chain", "seed", "objects", "player_unit", "spawn_tick", "position",
-                       "ticks", "tags_end", "bsp", "bsp_switches")
-RUN_KEYS_CANONICAL = ("sim", "sim_chain", "sim_at1", "sim_at30", "sim_at150", "sim_atend", "sim_at300")
+                       "ticks", "tags_end", "bsp", "bsp_switches", "sim_hwi015b_raw", "sim_hwi015b_raw_chain",
+                       "frame_effects", "frame_sounds")
+RUN_KEYS_CANONICAL = ("sim", "sim_chain", "sim_at1", "sim_at30", "sim_at150", "sim_atend", "sim_at300", "sim_hwi015b")
+# (HWI-016F) what one map's runs must share whatever their cadence: the simulation (HWI-016F's classification)
+CADENCE_KEYS = ("sim_raw", "sim_raw_chain", "sim", "seed", "objects", "player_unit", "position", "tags_end", "bsp",
+                "bsp_switches", "first_divergent_tick")
+
+
+def cadence_invariance(log):
+    """(HWI-016F) per map of one log: whether every run (every cycle and cadence) has the simulation of the map's
+    first run, by the CADENCE_KEYS of the RUN lines; a run's first_divergent_tick is against its line's first run
+    (-1: none)"""
+    result = {}
+    for (name, cycle, cadence), run in sorted(log["runs"].items(), key=lambda item: (item[0][0], int(item[0][1]))):
+        entry = result.setdefault(name, {"runs": 0, "cadences": [], "different": [], "reference": None})
+        entry["runs"] += 1
+        if cadence not in entry["cadences"]:
+            entry["cadences"].append(cadence)
+        if entry["reference"] is None:
+            entry["reference"] = {key: run.get(key) for key in CADENCE_KEYS}
+            entry["reference"]["first_divergent_tick"] = "-1"
+            continue
+        different = [key for key in CADENCE_KEYS if run.get(key) != entry["reference"].get(key)]
+        if different:
+            entry["different"].append({"cycle": int(cycle), "cadence": cadence, "keys": different})
+    for entry in result.values():
+        entry["invariant"] = not entry["different"]
+    return result
 
 
 def compare(wii, host):
@@ -119,6 +152,8 @@ def compare(wii, host):
     report["allocations_all_same_unpaced"] = not [d for d in report["allocation_differences"]
                                                   if d["cadence"] != FRAME_PACED]
     report["ticks_all_same"] = all(tick is None for tick in report["first_divergent_tick"].values())
+    report["cadence_invariance_wii"] = cadence_invariance(wii)
+    report["cadence_invariance_host"] = cadence_invariance(host)
     return report
 
 
@@ -138,6 +173,9 @@ def main():
                                                    "allocations_all_same_unpaced", "allocations_compared",
                                                    "ticks_compared", "first_divergent_tick", "ticks_all_same",
                                                    "fixed_step_same", "failures_same")}))
+    for side in ("wii", "host"):
+        print(f"cadence invariance ({side}):", {name: (entry["invariant"], entry["runs"], entry["cadences"])
+                                                for name, entry in report[f"cadence_invariance_{side}"].items()})
     print("canonical-only differing ticks:", {k: len(v) for k, v in report["canonical_only_ticks"].items()},
           {k: v[:10] for k, v in report["canonical_only_ticks"].items()})
     for run in report["runs"]:
@@ -146,7 +184,10 @@ def main():
               f"canonical {run['canonical_differences']}")
     for difference in report["allocation_differences"][:60]:
         print("ALLOC_DIFF", difference)
-    return 0 if report["simulation_all_same"] and report["whole_all_same_unpaced"] and report["failures_same"] else 1
+    invariant = all(entry["invariant"] for side in ("wii", "host")
+                    for entry in report[f"cadence_invariance_{side}"].values())
+    return 0 if (report["simulation_all_same"] and report["whole_all_same_unpaced"] and report["failures_same"] and
+                 invariant) else 1
 
 
 if __name__ == "__main__":
