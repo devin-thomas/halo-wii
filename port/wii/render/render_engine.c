@@ -751,7 +751,7 @@ int wii_render_pose_phase(
 		return TRUE;
 	render_engine.pose_phase = TRUE;
 	wii_log("RENDER_POSES begin scenario=%s\n", scenario_path);
-	if (!real_map_load(scenario_path) || !real_map_begin(NULL))
+	if (!real_map_load(scenario_path) || !real_map_begin(NULL, REAL_MAP_TICKS))
 	{
 		wii_log("RENDER_FAIL pose_phase_load\n");
 		real_map_unload();

@@ -8,7 +8,8 @@
  * addresses. It writes the Wii's report lines to
  * sd:/halo-wii-engine/engine.log under its working directory.
  *
- * usage: engine_map_host <scenario path> <cycles> <arena2 low> <arena2 high> <placement offset> */
+ * usage: engine_map_host <plan file (map.txt)> <cycles> <arena2 low> <arena2 high> <placement offset>
+ *        [<vertical retrace frame times>] */
 #include <execinfo.h>
 #include <malloc.h>
 #include <signal.h>
@@ -73,8 +74,8 @@ static int replay_load(const char *path)
 
     if (!file)
         return 0;
-    replay_frames = malloc(sizeof(float) * 8192);
-    while (replay_frames && replay_count < 8192 && fscanf(file, "%lx", &bits) == 1) {
+    replay_frames = malloc(sizeof(float) * 262144);
+    while (replay_frames && replay_count < 262144 && fscanf(file, "%lx", &bits) == 1) {
         memcpy(&replay_frames[replay_count], &bits, sizeof(float));
         replay_count++;
     }
@@ -106,9 +107,10 @@ int __wrap_main(int argc, char **argv)
     struct engine_map_run_report report;
     unsigned long low, high, offset;
     int cycles;
+    static char plan[4096];
 
     if (argc != 6 && argc != 7) {
-        fprintf(stderr, "usage: engine_map_host <scenario path> <cycles> <arena2 low> <arena2 high> <offset> "
+        fprintf(stderr, "usage: engine_map_host <plan file> <cycles> <arena2 low> <arena2 high> <offset> "
                         "[<vertical retrace frame times>]\n");
         return 2;
     }
@@ -155,7 +157,15 @@ int __wrap_main(int argc, char **argv)
         engine_map_run_set_dump(getenv("HWI015B_DUMP"), ".");
     stage = "map_run";
     memset(&config, 0, sizeof(config));
-    config.scenario_path = argv[1];
+    {
+        FILE *file = fopen(argv[1], "rb");
+        size_t used = file ? fread(plan, 1, sizeof(plan) - 1, file) : 0;
+
+        if (file)
+            fclose(file);
+        plan[used] = 0;
+    }
+    config.plan = plan;
     config.cycles = cycles;
     config.heap_in_use = heap_in_use;
     if (argc == 7) {

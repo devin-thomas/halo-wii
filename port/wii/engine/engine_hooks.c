@@ -326,6 +326,19 @@ void __wrap__rasterizer_decals_dispose_from_old_map(
 	decals_unlock(TRUE);
 }
 
+/* (HWI-016C) a decal's vertices come from the rasterizer's decal vertex
+cache, which rasterizer_decals_initialize makes (above: not on the Wii). A
+campaign structure bsp's runtime decals (structure_runtime_decals.c), made
+as the game ticks, ask it for room: with no cache there is none, the answer
+a full cache gives (NONE), and decals.c does not make the decal. A measured
+gap in the game state's decals until the Wii's renderer has the cache. */
+long __wrap__rasterizer_decal_vertices_new(
+	long cache_size)
+{
+	wii_unsupported("render", "rasterizer_decal_vertices_new (no decal vertex cache: no decal made)");
+	return NONE;
+}
+
 /* ---------- the texture cache (HWI-015B)
 
 The Xbox texture cache (source/cache/xbox_texture_cache.c) is made by

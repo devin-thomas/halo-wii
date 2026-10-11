@@ -1,7 +1,7 @@
 {
  "generator": "tools/wii/map_layouts.py",
  "abi": "upstream i686 (Xbox cache layout)",
- "sources_sha256": "1d798ca7b03ffb31233301e7119d0627162d9058637f6425cf67f2ed6f28d400",
+ "sources_sha256": "ffad14347b0404f4559c3bab709879a25ed1b1a2a4980e7986e300cd24fef107",
  "compiler": "Debian clang version 19.1.7 (3+b1)",
  "definitions": [
   {
@@ -12184,6 +12184,201 @@
     ],
     "structure_bsp.index": [
      28,
+     4
+    ]
+   }
+  },
+  "struct recorded_animation_definition": {
+   "size": 64,
+   "swaps": [
+    [
+     36,
+     2,
+     2
+    ],
+    [
+     40,
+     4,
+     6
+    ]
+   ],
+   "conflicts": [],
+   "bitfields": [],
+   "members": {
+    "name[0]": [
+     0,
+     1
+    ],
+    "name[1]": [
+     1,
+     1
+    ],
+    "name[2]": [
+     2,
+     1
+    ],
+    "name[3]": [
+     3,
+     1
+    ],
+    "name[4]": [
+     4,
+     1
+    ],
+    "name[5]": [
+     5,
+     1
+    ],
+    "name[6]": [
+     6,
+     1
+    ],
+    "name[7]": [
+     7,
+     1
+    ],
+    "name[8]": [
+     8,
+     1
+    ],
+    "name[9]": [
+     9,
+     1
+    ],
+    "name[10]": [
+     10,
+     1
+    ],
+    "name[11]": [
+     11,
+     1
+    ],
+    "name[12]": [
+     12,
+     1
+    ],
+    "name[13]": [
+     13,
+     1
+    ],
+    "name[14]": [
+     14,
+     1
+    ],
+    "name[15]": [
+     15,
+     1
+    ],
+    "name[16]": [
+     16,
+     1
+    ],
+    "name[17]": [
+     17,
+     1
+    ],
+    "name[18]": [
+     18,
+     1
+    ],
+    "name[19]": [
+     19,
+     1
+    ],
+    "name[20]": [
+     20,
+     1
+    ],
+    "name[21]": [
+     21,
+     1
+    ],
+    "name[22]": [
+     22,
+     1
+    ],
+    "name[23]": [
+     23,
+     1
+    ],
+    "name[24]": [
+     24,
+     1
+    ],
+    "name[25]": [
+     25,
+     1
+    ],
+    "name[26]": [
+     26,
+     1
+    ],
+    "name[27]": [
+     27,
+     1
+    ],
+    "name[28]": [
+     28,
+     1
+    ],
+    "name[29]": [
+     29,
+     1
+    ],
+    "name[30]": [
+     30,
+     1
+    ],
+    "name[31]": [
+     31,
+     1
+    ],
+    "version": [
+     32,
+     1
+    ],
+    "raw_animation_data": [
+     33,
+     1
+    ],
+    "unit_control_data_version": [
+     34,
+     1
+    ],
+    "pad": [
+     35,
+     1
+    ],
+    "length_in_ticks": [
+     36,
+     2
+    ],
+    "pad2": [
+     38,
+     2
+    ],
+    "pad3": [
+     40,
+     4
+    ],
+    "event_stream.size": [
+     44,
+     4
+    ],
+    "event_stream.pad": [
+     48,
+     4
+    ],
+    "event_stream.file_offset": [
+     52,
+     4
+    ],
+    "event_stream.address": [
+     56,
+     4
+    ],
+    "event_stream.definition": [
+     60,
      4
     ]
    }

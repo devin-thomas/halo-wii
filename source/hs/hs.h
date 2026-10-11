@@ -112,6 +112,37 @@ enum hs_function_index
 #define HS_TYPE_IS_OBJECT_NAME(type) ((type)>=_hs_type_object_name && (type)<=_hs_type_scenery_name)
 #define HS_TYPE_IS_OBJECT(type) ((type)>=_hs_type_object && (type)<=_hs_type_scenery)
 
+/* port (HWI-016C): a script value is a long cell. A boolean is the cell's
+first byte, and a short (a short integer, an enum, a script, a scenario
+element's index, an object name: hs_global_reconcile_read's) its first two
+bytes, as the engine writes them (*(short *)&cell, union hs_short_result,
+hs_syntax_node short_value). On a little-endian port those are the long's
+low byte and low half, which a cast of the long reads too; on a big-endian
+one (the Wii) a cast reads the other end. These read and write a cell's
+value in place, the same on every port, and give the bytes a little-endian
+port leaves beside it the same values on a big-endian one (they reach the
+game state's CRC and the saves):
+- HS_CELL_BOOLEAN, HS_CELL_SHORT: the value, as an lvalue;
+- HS_CELL_SHORT_AS_LONG: a short cell read whole as a little-endian port
+  reads the long (its second half the high one);
+- HS_CELL_SET_BOOLEAN: the value, and bits 8-31 of rest in the other three
+  bytes, in a little-endian long's order;
+- HS_CELL_SET_SHORT: the value, and the high half of rest in the second
+  half. */
+#define HS_CELL_BOOLEAN(cell) (*(boolean *)&(cell))
+#define HS_CELL_SHORT(cell) (*(short *)&(cell))
+#define HS_CELL_SHORT_AS_LONG(cell) \
+	((long)(((unsigned long)(unsigned short)((short const *)&(cell))[1]<<16) | \
+		(unsigned long)(unsigned short)((short const *)&(cell))[0]))
+#define HS_CELL_SET_BOOLEAN(cell, value, rest) \
+	(((byte *)&(cell))[0] = (byte)(value), \
+	((byte *)&(cell))[1] = (byte)((unsigned long)(rest)>>8), \
+	((byte *)&(cell))[2] = (byte)((unsigned long)(rest)>>16), \
+	((byte *)&(cell))[3] = (byte)((unsigned long)(rest)>>24))
+#define HS_CELL_SET_SHORT(cell, value, rest) \
+	(((short *)&(cell))[0] = (short)(value), \
+	((short *)&(cell))[1] = (short)((unsigned long)(rest)>>16))
+
 /* ---------- structures */
 
 struct hs_enum_definition

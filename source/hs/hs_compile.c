@@ -1564,7 +1564,10 @@ static boolean hs_parse_scenario_datum(
 			element + offset,
 			hs_compile_globals.compiled_source + expression->source_offset) == 0)
 		{
-			expression->data = element_index;
+			/* port (HWI-016C): a scenario element's index is a short cell
+			(hs.h HS_CELL_SHORT), with the long's high half beside it as a
+			little-endian port has it (January stores the long) */
+			HS_CELL_SET_SHORT(expression->data, element_index, (long)element_index);
 			result = TRUE;
 			break;
 		}

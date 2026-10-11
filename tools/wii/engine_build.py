@@ -117,7 +117,9 @@ WRAPPED = ("main", "halt_and_catch_fire", "game_tick", "game_frame", "update_cli
            "predicted_resources_precache", "_rasterizer_decals_dispose_from_old_map",
            "_texture_cache_bitmap_get_hardware_format",
            # HWI-016B: the Wii rasterizer's per-map halves (engine_hooks.c)
-           "rasterizer_initialize_for_new_map", "rasterizer_dispose_from_old_map")
+           "rasterizer_initialize_for_new_map", "rasterizer_dispose_from_old_map",
+           # HWI-016C: the decal vertex cache rasterizer_decals_initialize would have made
+           "_rasterizer_decal_vertices_new")
 # Diagnostic storage (HWI-015D): "omit" (the default) compiles the engine
 # without the AI's debug records and the profiler's frame history; "keep"
 # compiles them as the other ports do, and then wraps ai_debug_initialize

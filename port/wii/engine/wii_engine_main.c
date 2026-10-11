@@ -16,18 +16,21 @@ One launch:
    shell_initialize (which reports the unsupported rasterizer and fails, as
    it must), game_initialize, and an engine warning through its error
    report into d:\debug.txt.
-4. The real-map run (engine_map_run.c, HWI-015B), shared with the i686 host
-   reference: the HWI-015A fixed-step scenario once (its digest must be
-   unchanged), a warm-up run, then three cycles of six runs of the map staged
-   on the card (sd:/halo-wii-engine/data/maps/<name>.wmap, named by
-   map.txt), each run loading it, running 300 of the engine's own ticks with
-   a player and scripted input at one render cadence (60, 30, 20 and 144 Hz,
-   an irregular cadence with a half-second hitch, frames paced by the video's
-   vertical retrace), and unloading it. Every run's simulation digests must
-   be the first run's; the heap must not grow across cycles.
+4. The real-map run (engine_map_run.c, HWI-015B, HWI-016C), shared with the
+   i686 host reference: the HWI-015A fixed-step scenario once (its digest
+   must be unchanged), then map.txt's plan (engine_map_run.h), a line at a
+   time: a map staged on the card (sd:/halo-wii-engine/data/maps/<name>.wmap,
+   beside manifest.txt), a warm-up run, then cycles of runs, each loading
+   it, running the engine's own ticks with a player and scripted input at
+   one render cadence (60, 30, 20 and 144 Hz, an irregular cadence with a
+   half-second hitch, frames paced by the video's vertical retrace), and
+   unloading it; or a load that must be refused with an actionable error
+   (HWI-016C). Every run's simulation digests must be its map's first run's;
+   the heap must not grow across cycles.
 4b. HWI-016B: every frame of those runs is drawn by the Wii rasterizer
    (port/wii/render, unless render.txt turns it off); then its fixed-pose
-   checks (render.txt mode=poses_only runs them alone).
+   checks (render.txt mode=poses_only runs them alone), on the plan's first
+   map.
 5. The engine's shut-down; the arena must be restored. The main stack's
    peak, the unsupported entry points called, and the result.
 6. A deliberate fatal engine assertion: its halt is reported and the
@@ -61,6 +64,7 @@ One launch:
 #define GENERAL_BYTES (1024u * 1024u)
 #define CYCLES 3
 #define MAP_PATH WII_ENGINE_ROOT "/map.txt"
+#define PLAN_BYTES 4096
 #define PAINT_BYTES (112u * 1024u)
 #define PAINT ((uint32_t)0x5a17c0deu)
 #define MAIN_STACK_BYTES 0x20000u
@@ -215,21 +219,41 @@ static int run_full_game(void)
 
 /* ---------- the map run's platform half */
 
-/* the scenario path of the staged map (map.txt: one line, levels\...\<name>),
-or empty when none is staged */
-static void read_scenario_path(char *path, size_t size)
+/* the run's plan (map.txt: engine_map_run.h's lines), or empty when there is
+none; and its first map line's scenario path, which the renderer's checks
+(HWI-016B) load */
+static char plan_text[PLAN_BYTES];
+
+static void read_plan(void)
 {
 	FILE *file = fopen(MAP_PATH, "rb");
 	size_t used = 0;
 
-	path[0] = 0;
+	plan_text[0] = 0;
 	if (!file)
 		return;
-	used = fread(path, 1, size - 1, file);
+	used = fread(plan_text, 1, sizeof(plan_text) - 1, file);
 	fclose(file);
-	path[used] = 0;
-	while (used && (path[used - 1] == '\n' || path[used - 1] == '\r' || path[used - 1] == ' '))
-		path[--used] = 0;
+	plan_text[used] = 0;
+}
+
+static void first_map_path(char *path, size_t size)
+{
+	const char *line = plan_text;
+
+	path[0] = 0;
+	while (line && *line)
+	{
+		size_t length = strcspn(line, " \t\r\n");
+
+		if (length && strncmp(line, "fail", length) && line[0] != '#')
+		{
+			snprintf(path, size, "%.*s", (int)(length < size ? length : size - 1), line);
+			return;
+		}
+		line = strchr(line, '\n');
+		line = line ? line + 1 : NULL;
+	}
 }
 
 static u64 vsync_last;
@@ -411,16 +435,14 @@ int __wrap_main(void)
 
 	/* ---------- the real map (engine_map_run.c) */
 	stage = "map_run";
-	read_scenario_path(scenario_path, sizeof(scenario_path));
+	read_plan();
+	first_map_path(scenario_path, sizeof(scenario_path));
 	wii_render_set_map(scenario_path);
 	{
 		struct stat information;
-		char staged[320];
-		const char *name = strrchr(scenario_path, '\\');
 
-		snprintf(staged, sizeof(staged), WII_ENGINE_DATA_ROOT "/maps/%s.wmap", name ? name + 1 : scenario_path);
-		wii_log("MAP staged=%s bytes=%ld scenario=%s\n", staged,
-			stat(staged, &information) == 0 ? (long)information.st_size : -1L, scenario_path);
+		wii_log("MAP plan_bytes=%lu manifest_bytes=%ld\n", (unsigned long)strlen(plan_text),
+			stat(WII_ENGINE_DATA_ROOT "/maps/manifest.txt", &information) == 0 ? (long)information.st_size : -1L);
 	}
 	{
 		/* (diagnosis: dump.txt, "<allocation index>[,...]:<tick>", engine_map_run_set_dump) */
@@ -437,7 +459,7 @@ int __wrap_main(void)
 		}
 	}
 	memset(&config, 0, sizeof(config));
-	config.scenario_path = scenario_path;
+	config.plan = plan_text;
 	config.cycles = CYCLES;
 	config.vsync_dt = vsync_dt;
 	config.vsync_begin = vsync_begin;
