@@ -8,7 +8,8 @@ engine's own game tick with a player (HWI-015B), and draws the map's
 environment through GX each frame ([the Wii rasterizer](../render/README.md),
 HWI-016B). Its scope and limits are below; see the evidence for
 [the platform runtime](../../../docs/wii/evidence/2026-10-10-platform-runtime.md) and
-[the real map's tick](../../../docs/wii/evidence/2026-10-10-real-map-tick.md).
+[the real map's tick](../../../docs/wii/evidence/2026-10-10-real-map-tick.md) and
+[a campaign map's tick and load failures](../../../docs/wii/evidence/2026-10-10-campaign-map-tick.md) (HWI-016C).
 
 ## What is compiled
 
