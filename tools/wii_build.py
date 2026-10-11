@@ -72,7 +72,9 @@ def source_inputs():
             *(Path("tools/wii") / name for name in (
                 "cache_arena_plan.h", "cache_stream_io.h", "cache_address_owned.h",
                 "cache_address_probe.h", "cache_bsp_probe.h", "cache_material_probe.h")),
-            Path("port/linux/include/halo_port_capacity.h"), *engine_inputs()]
+            Path("port/linux/include/halo_port_capacity.h"),
+            # the engine's startup header (port/wii/runtime/runtime_start.c is an engine platform unit)
+            *sorted(Path("port/wii/runtime").glob("*.h")), *engine_inputs()]
 
 
 def wii_configure_inputs(devkitpro=None):

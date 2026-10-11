@@ -1,7 +1,9 @@
 """Unit tests for the Wii build's identity (HWI-016G): source_dirty and the
 line-ending-independent build ID. Temporary git repositories, no toolchain."""
 
+import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -119,20 +121,43 @@ class ConsumedPathTests(unittest.TestCase):
              Path("tools/wii/build.py"), Path("port/wii/probe/main.c")], [Path("source"), Path(".")])
         self.assertEqual(paths, ["configure.py", "port/wii/probe", "source", "tools"])
 
+    @staticmethod
+    def checkout():
+        """(hashed inputs, source_dirty paths) of this checkout, computed from
+        its root: the build tools glob relative paths when they are imported"""
+        script = ("import json; from tools import wii_build as w; inputs = w.build_inputs(); "
+                  "print(json.dumps([[p.as_posix() for p in inputs], "
+                  "w.consumed_paths(inputs, w.searched_directories())]))")
+        output = subprocess.run([sys.executable, "-B", "-c", script], cwd=ROOT, check=True, capture_output=True,
+                                text=True).stdout
+        inputs, paths = json.loads(output)
+        return [Path(path) for path in inputs], paths
+
     def test_checkout_covers_every_engine_source_and_tool(self):
-        previous = os.getcwd()
-        os.chdir(ROOT)
-        try:
-            inputs = wii_build.build_inputs()
-            paths = wii_build.consumed_paths(inputs, wii_build.searched_directories())
-        finally:
-            os.chdir(previous)
+        inputs, paths = self.checkout()
         for required in ("configure.py", "source", "tools", "port/wii/engine", "port/linux"):
             self.assertIn(required, paths)
         covered = lambda path: any(path == entry or path.startswith(entry + "/") for entry in paths)  # noqa: E731
         uncovered = [path.as_posix() for path in inputs if not covered(path.as_posix())]
         self.assertEqual(uncovered, [])
         self.assertTrue(any(path.as_posix().startswith("source/hs/") for path in inputs))
+        self.assertIn("port/wii/engine/wii_engine_main.c", {path.as_posix() for path in inputs})
+
+    def test_quoted_includes_beside_an_input_are_hashed(self):
+        # a header an input includes from its own directory changes the build
+        # ID too (port/wii/runtime/runtime_start.h was missed before HWI-016G)
+        inputs, _ = self.checkout()
+        hashed = {path.as_posix().lower() for path in inputs}
+        missing = set()
+        for path in inputs:
+            if path.suffix not in (".c", ".h", ".inc"):
+                continue
+            text = (ROOT / path).read_text(encoding="utf-8", errors="replace")
+            for name in re.findall(r'^\s*#\s*include\s+"([^"]+)"', text, re.MULTILINE):
+                target = Path(os.path.normpath(path.parent / name))
+                if (ROOT / target).is_file() and target.as_posix().lower() not in hashed:
+                    missing.add(f"{target.as_posix()} (from {path.as_posix()})")
+        self.assertEqual(sorted(missing), [])
 
 
 class InputHashTests(unittest.TestCase):
