@@ -608,7 +608,13 @@ boolean actor_look_secondary(
 	actor->control.secondary_look_type = type;
 	actor->control.secondary_look_priority = priority;
 	actor->control.secondary_look_timer = (short)ticks;
-	actor->control.secondary_look_direction = *direction;
+	/* port (HWI-016C): the type and the union, not the two bytes of padding
+	between them: callers build the direction on the stack, and its padding,
+	copied whole into the game state, held stack bytes that differ between
+	targets (a10's actors, the Wii against the i686 host) */
+	csmemset(&actor->control.secondary_look_direction, 0, sizeof(actor->control.secondary_look_direction));
+	actor->control.secondary_look_direction.type = direction->type;
+	actor->control.secondary_look_direction.point = direction->point;
 
 	return TRUE;
 }
