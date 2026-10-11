@@ -70,6 +70,7 @@ symbols in this file:
 #include "cseries_windows.h"
 #include "real_math.h"
 #include "game.h"
+#include "main/main.h"
 #include "player_queues_new.h"
 #include "networking/network_client_manager.h"
 #include "networking/network_game_globals.h"
@@ -467,7 +468,14 @@ void game_time_update(
 
 					for (update_index = 0; update_index < server_updates; update_index++)
 					{
+						/* port (HWI-016F): what main_loop does for the game once a
+						frame, before each tick after a frame's first (main.c) */
+						if (update_index > 0)
+							main_port_game_requests_between_ticks();
+						/* port (HWI-016F): the tick's own local random numbers (random_math.c) */
+						local_random_tick_begin();
 						game_tick();
+						local_random_tick_end();
 						render_interpolation_tick();
 						game_time_globals->server_time++;
 						game_time_globals->local_time++;
