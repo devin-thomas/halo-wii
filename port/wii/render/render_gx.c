@@ -137,6 +137,9 @@ struct frame_stats {
     unsigned long visibility_max, submit_max, gp_max, copy_max, total_max;
     unsigned long long triangles, surfaces, clusters;
     unsigned long triangles_max, surfaces_max, clusters_max;
+    /* HWI-030: visible triangles of environment materials with a base map,
+    drawn textured or lightmap-only (the base map not resident) */
+    unsigned long long textured, base_missing;
 };
 
 /* the render pool: two parts, MEM1's then MEM2's, each filled from its start */
@@ -199,6 +202,8 @@ static struct {
     /* geometry checks against HWL1 */
     long checks, checks_equal, checks_missing;
     int placeholder_reported[NUMBER_OF_WII_GX_MATERIAL_KINDS];
+    /* the last full draw's textured and lightmap-only triangles (HWI-030) */
+    unsigned long drawn_textured, drawn_base_missing;
 } gx;
 
 /* ---------- helpers */
@@ -281,6 +286,8 @@ static void stats_add(struct frame_stats *s, unsigned long visibility, unsigned 
     s->triangles += triangles;
     s->surfaces += (unsigned long)surfaces;
     s->clusters += (unsigned long)clusters;
+    s->textured += gx.drawn_textured;
+    s->base_missing += gx.drawn_base_missing;
 #define MAXIMUM(field, value) if ((value) > s->field) s->field = (value)
     MAXIMUM(visibility_max, visibility);
     MAXIMUM(submit_max, submit);
@@ -299,12 +306,12 @@ static void stats_log(const char *what, long load, const struct frame_stats *s)
     wii_log("%s load=%ld frames=%lu visibility_us_mean=%lu visibility_us_max=%lu submit_us_mean=%lu submit_us_max=%lu "
             "gp_us_mean=%lu gp_us_max=%lu copy_us_mean=%lu copy_us_max=%lu total_us_mean=%lu total_us_max=%lu "
             "triangles_mean=%lu triangles_max=%lu surfaces_mean=%lu surfaces_max=%lu clusters_mean=%lu "
-            "clusters_max=%lu\n",
+            "clusters_max=%lu textured_triangles=%llu base_missing_triangles=%llu\n",
             what, load, s->frames, (unsigned long)(s->visibility_us / n), s->visibility_max,
             (unsigned long)(s->submit_us / n), s->submit_max, (unsigned long)(s->gp_us / n), s->gp_max,
             (unsigned long)(s->copy_us / n), s->copy_max, (unsigned long)(s->total_us / n), s->total_max,
             (unsigned long)(s->triangles / n), s->triangles_max, (unsigned long)(s->surfaces / n), s->surfaces_max,
-            (unsigned long)(s->clusters / n), s->clusters_max);
+            (unsigned long)(s->clusters / n), s->clusters_max, s->textured, s->base_missing);
 }
 
 static void stats_merge(struct frame_stats *into, const struct frame_stats *from)
@@ -318,6 +325,8 @@ static void stats_merge(struct frame_stats *into, const struct frame_stats *from
     into->triangles += from->triangles;
     into->surfaces += from->surfaces;
     into->clusters += from->clusters;
+    into->textured += from->textured;
+    into->base_missing += from->base_missing;
 #define MERGE(field) if (from->field > into->field) into->field = from->field
     MERGE(visibility_max);
     MERGE(submit_max);
@@ -1511,6 +1520,7 @@ static unsigned long draw_materials(const unsigned long *flags, const unsigned c
                                     u8 cull)
 {
     unsigned long triangles = 0;
+    gx.drawn_textured = gx.drawn_base_missing = 0;
     GX_SetCullMode(cull);
     GX_SetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
     GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
@@ -1545,7 +1555,14 @@ static unsigned long draw_materials(const unsigned long *flags, const unsigned c
                 tev_constant(transparent ? placeholder_transparent : placeholder_other);
             }
             set_arrays(m, lightmap);
-            triangles += emit_material(m, flags, lightmap);
+            unsigned long drawn = emit_material(m, flags, lightmap);
+            triangles += drawn;
+            if (mode == DRAW_FULL && m->engine.kind == _wii_gx_material_environment && m->engine.base_tag >= 0) {
+                if (m->base_texture >= 0)
+                    gx.drawn_textured += drawn;
+                else
+                    gx.drawn_base_missing += drawn;
+            }
         }
     }
     GX_SetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
@@ -1747,6 +1764,8 @@ void wii_gx_pose_capture(const struct wii_gx_view *view, const unsigned long *su
     draw_materials(surface_flags, material_drawn, DRAW_FULL, GX_CULL_BACK);
     GX_DrawDone();
     out->draw_us = elapsed_us(start);
+    out->textured_triangles = gx.drawn_textured;
+    out->base_missing_triangles = gx.drawn_base_missing;
     sample_grid(pose_full, GRID_X, GRID_Y);
     out->crc_full = samples_crc(pose_full, count, &out->covered);
     out->distinct = count_distinct(pose_full, count);

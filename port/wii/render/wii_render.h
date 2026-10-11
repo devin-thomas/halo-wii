@@ -198,6 +198,9 @@ struct wii_gx_pose_result
 	int samples, covered, distinct, differs_lightmap_only, differs_base_only;
 	int facing_front[3], facing_back[3]; /* classified, cull none/back/front */
 	unsigned long draw_us;
+	/* HWI-030: the full draw's visible triangles of environment materials
+	with a base map: drawn with it resident, or lightmap-only (not resident) */
+	unsigned long textured_triangles, base_missing_triangles;
 };
 
 void wii_gx_pose_capture(const struct wii_gx_view *view, const unsigned long *surface_flags,

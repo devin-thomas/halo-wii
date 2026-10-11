@@ -55,6 +55,8 @@ textures are loaded.
 #include "bitmaps/bitmap_group.h"
 #include "bitmaps/bitmap_group_lookup.h"
 #include "physics/breakable_surfaces.h"
+#include "physics/bsp3d.h"
+#include "physics/collision_bsp_definitions.h"
 #include "effects/player_effects.h"
 #include "tag_files/tag_files.h"
 
@@ -83,6 +85,9 @@ enum
 #define RENDER_MAXIMUM_POSE_TICKS WII_RENDER_MAXIMUM_POSE_TICKS
 #define RENDER_OVERRIDE_POSES 2
 #define RENDER_SNAPSHOT_BYTES 16384
+/* the floor poses (HWI-030): the largest upward-facing triangles considered */
+#define RENDER_FLOOR_CANDIDATES 256
+#define RENDER_FLOOR_EYE_HEIGHT 0.6f
 
 /* ---------- structures */
 
@@ -668,10 +673,13 @@ static int render_engine_camera_effect_writes(
 	return before != after;
 }
 
-/* one fixed pose. With drawn_required, the pose must show lit, textured
-pixels; without it (the engine's camera in a phase that switches BSPs: the
-player may stand outside the BSP switched to), an empty frame passes, and
-whatever is drawn is checked as always */
+/* one fixed pose. With drawn_required, the pose must show lit pixels;
+without it (the engine's camera in a phase that checks each BSP: the player
+may stand outside the BSP switched to, or in a cinematic), an empty frame
+passes, and whatever is drawn is checked as always. Where the drawn
+environment has a resident base map, it must show (HWI-030: a BSP's base
+maps are resident only as far as its render pool holds them, the rest are
+drawn lightmap-only and counted) */
 static int render_engine_capture(
 	char const *name,
 	boolean diagnostic_override,
@@ -694,14 +702,15 @@ static int render_engine_capture(
 	/* lit and textured pixels, and culling as qualified: under GX_CULL_BACK
 	no sample shows a back face, under GX_CULL_FRONT none a front face */
 	ok = before == after && ((!drawn_required && result.covered == 0) ||
-		(result.covered > 0 && result.differs_lightmap_only > 0 && result.differs_base_only > 0 &&
-		result.facing_back[1] == 0 && result.facing_front[1] > 0 && result.facing_front[2] == 0));
+		(result.covered > 0 && (result.differs_lightmap_only > 0 || result.textured_triangles == 0) &&
+		result.differs_base_only > 0 && result.facing_back[1] == 0 && result.facing_front[1] > 0 &&
+		result.facing_front[2] == 0));
 	wii_log("RENDER_POSE name=%s camera=%s eye=%.4f,%.4f,%.4f leaf=%ld cluster=%ld clusters=%ld surfaces=%ld "
 		"crc_full=%08lx crc_lightmap_only=%08lx crc_base_only=%08lx crc_base_alpha=%08lx base_alpha_below_255=%d "
 		"samples=%d covered=%d distinct=%d "
 		"differs_lightmap_only=%d differs_base_only=%d facing_none=%d/%d facing_back=%d/%d facing_front=%d/%d "
 		"draw_us=%lu state_before=%08lx state_after=%08lx state_unchanged=%d camera_effect_writes=%d "
-		"drawn_required=%d pass=%d\n",
+		"textured_triangles=%lu base_missing_triangles=%lu drawn_required=%d pass=%d\n",
 		name, diagnostic_override ? "diagnostic_override" : "engine_unit_deterministic",
 		(double)render_engine.view.eye[0], (double)render_engine.view.eye[1], (double)render_engine.view.eye[2],
 		render_engine.view.leaf_index, render_engine.view.cluster_index, render_engine.view.rendered_clusters,
@@ -709,7 +718,7 @@ static int render_engine_capture(
 		result.crc_base_alpha, result.base_alpha_below_255, result.samples, result.covered, result.distinct, result.differs_lightmap_only, result.differs_base_only,
 		result.facing_front[0], result.facing_back[0], result.facing_front[1], result.facing_back[1],
 		result.facing_front[2], result.facing_back[2], result.draw_us, before, after, before == after,
-		camera_effect_writes, drawn_required ? 1 : 0, ok);
+		camera_effect_writes, result.textured_triangles, result.base_missing_triangles, drawn_required ? 1 : 0, ok);
 
 	return ok;
 }
@@ -752,6 +761,156 @@ static void render_engine_override_camera(
 	render_engine_camera_from(&render_engine.camera, &eye, &forward, &up, DEGREES_TO_RADIANS(70.0f));
 }
 
+/* HWI-030: a labelled diagnostic pose inside the loaded BSP, for BSPs whose
+bounds-based overrides stand in solid space (a campaign BSP's bounds hold
+mostly rock): the eye stands RENDER_FLOOR_EYE_HEIGHT above the centroid of
+one of the BSP's largest upward-facing triangles (its vertices as the tag
+slot holds them), where the collision BSP finds an open leaf, and looks
+level toward the BSP's centre. Pose 0 takes the largest such triangle; pose
+1 the largest whose leaf lies in another cluster (or else the next one).
+Reads the tag data only. FALSE if no candidate stands in open space. */
+struct render_floor_candidate
+{
+	real area;
+	real_point3d eye;
+	long leaf_index;
+	long cluster_index;
+};
+
+static boolean render_engine_floor_camera(
+	int pose,
+	long *leaf_out,
+	long *cluster_out)
+{
+	struct structure_bsp *structure_bsp = global_structure_bsp_get();
+	static struct render_floor_candidate best[RENDER_FLOOR_CANDIDATES];
+	struct render_floor_candidate const *chosen = NULL;
+	real_rectangle3d const *bounds;
+	real_vector3d forward, left, up;
+	long best_count = 0;
+	long candidate;
+	short lightmap_index;
+
+	if (!structure_bsp || structure_bsp->collision_bsp.count < 1)
+		return FALSE;
+	for (lightmap_index = 0; lightmap_index < structure_bsp->lightmaps.count; lightmap_index++)
+	{
+		struct structure_lightmap *lightmap = TAG_BLOCK_GET_ELEMENT(&structure_bsp->lightmaps, lightmap_index,
+			struct structure_lightmap);
+		short index;
+
+		for (index = 0; index < lightmap->materials.count; index++)
+		{
+			struct structure_material *material = TAG_BLOCK_GET_ELEMENT(&lightmap->materials, index,
+				struct structure_material);
+			unsigned char const *vertices = (unsigned char const *)material->compressed_vertex_data.address;
+			long surface_index;
+
+			if (!vertices || material->vertices.count <= 0)
+				continue;
+			for (surface_index = material->first_surface_index;
+				surface_index < material->first_surface_index + material->surface_count; surface_index++)
+			{
+				struct structure_surface const *surface = TAG_BLOCK_GET_ELEMENT(&structure_bsp->surfaces,
+					surface_index, struct structure_surface);
+				real p[3][3];
+				real u[3], v[3], n[3];
+				real length, area;
+				long slot;
+				int k;
+
+				for (k = 0; k < 3; k++)
+				{
+					if ((long)surface->vertex_indices[k] >= material->vertices.count)
+						break;
+					csmemcpy(p[k], vertices + 32 * surface->vertex_indices[k], sizeof(p[k]));
+				}
+				if (k < 3)
+					continue;
+				for (k = 0; k < 3; k++)
+				{
+					u[k] = p[1][k] - p[0][k];
+					v[k] = p[2][k] - p[0][k];
+				}
+				n[0] = u[1] * v[2] - u[2] * v[1];
+				n[1] = u[2] * v[0] - u[0] * v[2];
+				n[2] = u[0] * v[1] - u[1] * v[0];
+				length = square_root(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+				if (!(length > 0.0f) || n[2] < 0.9f * length)
+					continue;
+				area = 0.5f * length;
+				/* kept largest first; ties keep the earlier triangle */
+				if (best_count == RENDER_FLOOR_CANDIDATES && !(area > best[best_count - 1].area))
+					continue;
+				slot = best_count < RENDER_FLOOR_CANDIDATES ? best_count++ : best_count - 1;
+				for (; slot > 0 && best[slot - 1].area < area; slot--)
+					best[slot] = best[slot - 1];
+				best[slot].area = area;
+				best[slot].eye.x = (p[0][0] + p[1][0] + p[2][0]) / 3.0f;
+				best[slot].eye.y = (p[0][1] + p[1][1] + p[2][1]) / 3.0f;
+				best[slot].eye.z = (p[0][2] + p[1][2] + p[2][2]) / 3.0f + RENDER_FLOOR_EYE_HEIGHT;
+				best[slot].leaf_index = NONE;
+				best[slot].cluster_index = NONE;
+			}
+		}
+	}
+	for (candidate = 0; candidate < best_count && !chosen; candidate++)
+	{
+		struct render_floor_candidate *c = &best[candidate];
+
+		c->leaf_index = bsp3d_test_point(&TAG_BLOCK_GET_ELEMENT(&structure_bsp->collision_bsp, 0,
+			struct collision_bsp)->bsp3d, 0, &c->eye);
+		if (c->leaf_index == NONE || c->leaf_index >= structure_bsp->leaves.count)
+		{
+			c->leaf_index = NONE;
+			continue;
+		}
+		c->cluster_index = TAG_BLOCK_GET_ELEMENT(&structure_bsp->leaves, c->leaf_index,
+			struct structure_leaf)->cluster_index;
+		if (pose == 0)
+			chosen = c;
+	}
+	if (pose == 1)
+	{
+		struct render_floor_candidate const *first = NULL;
+		struct render_floor_candidate const *second = NULL;
+
+		for (candidate = 0; candidate < best_count && !chosen; candidate++)
+		{
+			struct render_floor_candidate const *c = &best[candidate];
+
+			if (c->leaf_index == NONE)
+				continue;
+			if (!first)
+				first = c;
+			else if (c->cluster_index != first->cluster_index)
+				chosen = c;
+			else if (!second)
+				second = c;
+		}
+		if (!chosen)
+			chosen = second;
+	}
+	if (!chosen)
+		return FALSE;
+	bounds = &structure_bsp->world_bounds;
+	forward.i = (bounds->x0 + bounds->x1) * 0.5f - chosen->eye.x;
+	forward.j = (bounds->y0 + bounds->y1) * 0.5f - chosen->eye.y;
+	forward.k = 0.0f;
+	if (normalize3d(&forward) == 0.0f)
+		forward = *global_forward3d;
+	up = *global_up3d;
+	cross_product3d(&up, &forward, &left);
+	normalize3d(&left);
+	cross_product3d(&forward, &left, &up);
+	normalize3d(&up);
+	render_engine_camera_from(&render_engine.camera, &chosen->eye, &forward, &up, DEGREES_TO_RADIANS(70.0f));
+	*leaf_out = chosen->leaf_index;
+	*cluster_out = chosen->cluster_index;
+
+	return TRUE;
+}
+
 /* ---------- public code */
 
 void wii_render_register_hooks(
@@ -775,10 +934,12 @@ void wii_render_register_hooks(
 	wii_engine_set_render_hooks(&hooks);
 }
 
-/* the two labelled diagnostic overrides of the camera, from the loaded
-BSP's bounds; the engine's visibility is computed from each */
+/* the two labelled diagnostic overrides of the camera: from the loaded
+BSP's bounds, or (floor) inside it (render_engine_floor_camera); the
+engine's visibility is computed from each */
 static int render_engine_override_captures(
 	char const *prefix,
+	boolean floor,
 	int *captured)
 {
 	int failures = 0;
@@ -788,8 +949,27 @@ static int render_engine_override_captures(
 	{
 		char name[48];
 
-		render_engine_override_camera(pose);
-		csprintf(name, "%s%s", prefix, pose == 0 ? "diagnostic_override_high" : "diagnostic_override_mid");
+		if (floor)
+		{
+			long leaf = NONE;
+			long cluster = NONE;
+
+			if (!render_engine_floor_camera(pose, &leaf, &cluster))
+			{
+				wii_log("RENDER_FAIL floor_pose bsp=%d pose=%d (no open floor)\n", global_structure_bsp_index, pose);
+				failures++;
+				(*captured)++;
+				continue;
+			}
+			wii_log("RENDER_FLOOR_POSE bsp=%d pose=%d leaf=%ld cluster=%ld\n", global_structure_bsp_index, pose,
+				leaf, cluster);
+			csprintf(name, "%s%s", prefix, pose == 0 ? "diagnostic_floor_a" : "diagnostic_floor_b");
+		}
+		else
+		{
+			render_engine_override_camera(pose);
+			csprintf(name, "%s%s", prefix, pose == 0 ? "diagnostic_override_high" : "diagnostic_override_mid");
+		}
 		failures += !render_engine_capture(name, TRUE, TRUE);
 		(*captured)++;
 	}
@@ -811,12 +991,12 @@ static int render_engine_pose_tick(
 		csprintf(name, "bsp%d_engine_tick_%ld", global_structure_bsp_index, tick);
 	else
 		csprintf(name, "engine_tick_%ld", tick);
-	failures += !render_engine_capture(name, FALSE, plan->switch_count == 0);
+	failures += !render_engine_capture(name, FALSE, plan->switch_count == 0 && !plan->overrides_each);
 	(*captured)++;
 	if (plan->overrides_each)
 	{
 		csprintf(name, "bsp%d_", global_structure_bsp_index);
-		failures += render_engine_override_captures(name, captured);
+		failures += render_engine_override_captures(name, TRUE, captured);
 	}
 
 	return failures;
@@ -882,7 +1062,7 @@ static int render_engine_pose_phase_map(
 		next++;
 	}
 	if (!plan->overrides_each)
-		failures += render_engine_override_captures("", &captured);
+		failures += render_engine_override_captures("", FALSE, &captured);
 	real_map_end(&result);
 	real_map_set_command(0, NULL);
 	real_map_unload();
