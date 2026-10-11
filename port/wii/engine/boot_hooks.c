@@ -619,3 +619,20 @@ time_t __wrap_time(
 		*result = now;
 	return now;
 }
+
+/* A map the menus select is asked whether it is precached first (a staged
+map always is); a refused one answers no, so the selection goes on to
+cache_files_precache_map_begin, which refuses it (above) before any game
+starts: a damaged or out-of-date file is never loaded. Quiet: it is asked
+every frame while a network game waits. */
+boolean __real_cache_files_precache_map_loaded(char const *map_name);
+
+boolean __wrap_cache_files_precache_map_loaded(
+	char const *map_name)
+{
+	char reason[256];
+
+	if (boot_map_check && map_name && map_name[0] && boot_map_check(map_name, reason, sizeof(reason)))
+		return FALSE;
+	return __real_cache_files_precache_map_loaded(map_name);
+}

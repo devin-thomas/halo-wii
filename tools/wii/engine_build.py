@@ -141,7 +141,8 @@ WRAPPED = ("main", "halt_and_catch_fire", "game_tick", "game_frame", "update_cli
            "main_menu_switch_to_single_player", "system_milliseconds", "Sleep", "sound_initialize",
            "bink_playback_start", "sound_cache_idle", "game_precache_new_map", "cache_file_open",
            "cache_files_precache_map_begin", "thread_has_exited",
-           "rand", "srand", "system_seconds", "time")
+           "rand", "srand", "system_seconds", "time",
+           "cache_files_precache_map_loaded")
 # Diagnostic storage (HWI-015D): "omit" (the default) compiles the engine
 # without the AI's debug records and the profiler's frame history; "keep"
 # compiles them as the other ports do, and then wraps ai_debug_initialize

@@ -252,7 +252,35 @@ static void verify_manifest(void)
 
 /* 0 if the map is on the card, is a staged map, and matches the manifest
 when the manifest names it */
+static int map_check_uncached(const char *map_name, char *reason, unsigned long reason_size);
+
+/* the answers so far, by map name: the files do not change while the game
+runs, and the precache asks every frame while a network game waits */
+static struct {
+    char name[64];
+    int code;
+    char reason[256];
+} map_answers[16];
+static int map_answer_count;
+
 static int map_check(const char *map_name, char *reason, unsigned long reason_size)
+{
+    for (int i = 0; i < map_answer_count; ++i)
+        if (!strcmp(map_answers[i].name, map_name)) {
+            snprintf(reason, reason_size, "%s", map_answers[i].reason);
+            return map_answers[i].code;
+        }
+    int code = map_check_uncached(map_name, reason, reason_size);
+    if (map_answer_count < (int)(sizeof(map_answers) / sizeof(map_answers[0]))) {
+        snprintf(map_answers[map_answer_count].name, sizeof(map_answers[0].name), "%s", map_name);
+        map_answers[map_answer_count].code = code;
+        snprintf(map_answers[map_answer_count].reason, sizeof(map_answers[0].reason), "%s", code ? reason : "");
+        map_answer_count++;
+    }
+    return code;
+}
+
+static int map_check_uncached(const char *map_name, char *reason, unsigned long reason_size)
 {
     const char *name = strrchr(map_name, '\\');
     char path[160];
