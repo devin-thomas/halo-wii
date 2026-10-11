@@ -17,6 +17,10 @@ i686 host reference (tools/wii/run_engine_map_host.py).
 #include "cache/physical_memory_map.h"
 #include "objects/objects.h"
 #include "units/units.h"
+#include "ai/actors.h"
+#include "hs/hs.h"
+#include "cutscene/cinematics.h"
+#include "scenario/scenario.h"
 
 #include "real_map_scenario.h"
 #include "cache_files_wii.h"
@@ -36,6 +40,9 @@ void input_flush(void);
 void game_connection_set(short connection);
 unsigned long *get_global_random_seed_address(void);
 unsigned long *get_global_local_random_seed_address(void);
+/* (main.c's, HWI-016C: the main loop's handling of the game's requests) */
+void main_port_game_requests(boolean before_update);
+boolean main_port_game_requests_left(void);
 
 /* (game.c's, private there) */
 struct real_map_game_options
@@ -58,6 +65,9 @@ struct real_map_lights_globals_prefix
 };
 
 extern struct real_map_lights_globals_prefix lights_globals_prefix __asm__("lights_globals");
+
+/* (unit_dialogue.c's: the next dialogue variant a unit gets) */
+extern long sequential_counter;
 
 /* (player_queues_new.c's struct server_update, private there: its action
 count, then an action per player; room for the ports' players) */
@@ -93,11 +103,14 @@ struct real_map_allocation
 	unsigned long size;
 	unsigned long digest_at[REAL_MAP_CHECKPOINTS];
 	boolean frame_coupled;
+	short initial_identifier;          /* a data array's next identifier as the first map loaded */
+	unsigned long raw_at[REAL_MAP_CHECKPOINTS];
 };
 
 struct real_map_globals
 {
 	boolean recording;
+	boolean identifiers_taken;
 	boolean loaded;
 	boolean armed;
 	long allocation_count;
@@ -112,7 +125,13 @@ struct real_map_globals
 	unsigned long chain;
 	unsigned long digest_at[REAL_MAP_CHECKPOINTS];
 	unsigned long tags_at_start;
-	unsigned long tick_digests[REAL_MAP_TICKS];   /* the simulation's */
+	long ticks;                                   /* the run's */
+	unsigned long tick_digests[REAL_MAP_MAXIMUM_TICKS]; /* the simulation's */
+	unsigned long tick_digests_raw[REAL_MAP_MAXIMUM_TICKS]; /* the raw simulation's */
+	unsigned long simulation_raw_chain;
+	unsigned long raw_chain;
+	boolean canonical_every_tick;
+	unsigned long last_raw_digest;
 	unsigned long simulation_chain;
 	unsigned long simulation_at[REAL_MAP_CHECKPOINTS];
 	const unsigned long *reference;
@@ -125,7 +144,18 @@ struct real_map_globals
 	long final_player_unit;
 	real_point3d final_player_position;
 	unsigned long final_tags;
+	short final_structure_bsp_index;
+	/* the harness's script command */
+	long command_tick;
+	char command[128];
+	long command_ran_tick;
+	long command_result;
+	short command_bsp_before, command_bsp_after;
+	long bsp_reads_at_begin;
+	long requests_left;                /* frames ending with a won map or a reset asked for */
 };
+
+extern struct data_array *hs_thread_data;
 
 static struct real_map_globals real_map_globals;
 static unsigned long digest_tables[2][256];
@@ -176,6 +206,16 @@ struct digest_state
 	unsigned long group;
 };
 
+/* (HWI-016C) the raw digest: words as they are, no pointer made canonical.
+The canonical digest reads a word that lies in a region as a pointer; four
+bytes that are not one (a byte flag beside zeros, two shorts: measured in
+a10's objects) can read as one in one byte order only, and the same state
+then digests differently on the Wii and the host. The raw digest compares
+the Wii and the host of one launch, whose regions lie at the same addresses
+(the host maps the Wii's); the canonical one stays for comparing launches
+placed apart (their persistence check) and keeps HWI-015B's values. */
+static boolean digest_words_raw;
+
 static void digest_group_end(
 	struct digest_state *state)
 {
@@ -202,7 +242,8 @@ static void digest_add_at(
 
 	for (offset = 0; offset + 4 <= size; offset += 4)
 	{
-		unsigned long word = digest_canonical_word(*(unsigned long const *)(data + offset));
+		unsigned long word = digest_words_raw ? *(unsigned long const *)(data + offset) :
+			digest_canonical_word(*(unsigned long const *)(data + offset));
 		byte bytes[4];
 		unsigned long group = ((unsigned long)(address + offset) - base) >> 3;
 		short index;
@@ -333,6 +374,120 @@ unsigned long real_map_digest_bytes(
 	return digest_finish(&state);
 }
 
+/* (HWI-016C) a script thread as one group of its live bytes. A thread's
+stack (hs_runtime.c hs_stack_allocate) packs its frames and their values at
+2-byte offsets, so its words straddle any fixed 8-byte grouping and land in
+other groups in the other byte order: each thread is compared by the
+multiset of its live bytes (weaker, as the tag slot's: it misses bytes only
+moved inside a thread). Live: the thread's fields and each frame on its
+stack, its header and its values, found from the top frame down. Between
+frames lie two bytes of alignment, and above the top frame popped frames'
+bytes, which nothing reads, partly written over at other offsets: what is
+left of a scalar written over in part is a different part of it in each
+byte order. The pointers the thread holds to itself (its top frame, each
+frame's previous frame and result) are offsets in the thread. */
+struct real_map_hs_stack_frame
+{
+	struct real_map_hs_stack_frame *previous;
+	long expression_index;
+	void *result;
+	short size;
+	byte data[2];
+};
+
+struct real_map_hs_thread
+{
+	short identifier;
+	byte type;
+	byte flags;
+	long script_index;
+	long sleep_until;
+	long previous_sleep_until;
+	struct real_map_hs_stack_frame *stack;
+	long result;
+	byte stack_data[0x200];
+};
+
+typedef char verify_real_map_hs_thread_size[sizeof(struct real_map_hs_thread) == 0x218 ? 1 : -1];
+
+enum
+{
+	HS_FRAME_HEADER_BYTES = 14,
+	HS_THREAD_MAXIMUM_FRAMES = 64,
+};
+
+static void digest_group_bytes(
+	struct digest_state *state,
+	void const *data,
+	unsigned long size)
+{
+	byte const *bytes = data;
+	unsigned long offset;
+
+	for (offset = 0; offset < size; offset++)
+	{
+		state->group_low += digest_tables[0][bytes[offset]];
+		state->group_high += digest_tables[1][bytes[offset]];
+	}
+
+	return;
+}
+
+/* a pointer a thread holds: inside the thread, its offset there; else the
+digest's word */
+static void digest_group_thread_pointer(
+	struct digest_state *state,
+	byte const *datum,
+	void const *pointer)
+{
+	unsigned long word = (unsigned long)pointer;
+
+	if (word - (unsigned long)datum < sizeof(struct real_map_hs_thread))
+		word = 0x20000000UL | (word - (unsigned long)datum);
+	else if (!digest_words_raw)
+		word = digest_canonical_word(word);
+	digest_group_bytes(state, &word, sizeof(word));
+
+	return;
+}
+
+static void digest_add_hs_thread(
+	struct digest_state *state,
+	byte const *datum,
+	unsigned long group)
+{
+	struct real_map_hs_thread const *thread = (struct real_map_hs_thread const *)datum;
+	struct real_map_hs_stack_frame const *frame = thread->stack;
+	short frames = 0;
+
+	if (state->group_low || state->group_high)
+		digest_group_end(state);
+	state->group = group;
+	digest_group_bytes(state, datum, 16); /* identifier, type, flags, script, the sleep times */
+	digest_group_thread_pointer(state, datum, thread->stack);
+	digest_group_bytes(state, &thread->result, sizeof(thread->result));
+	if (!thread->identifier)
+		return;
+	while (frame && frames++ < HS_THREAD_MAXIMUM_FRAMES)
+	{
+		unsigned long at = (unsigned long)((byte const *)frame - thread->stack_data);
+
+		if ((byte const *)frame < thread->stack_data || at > sizeof(thread->stack_data) - HS_FRAME_HEADER_BYTES ||
+			frame->size < 0 || (unsigned long)frame->size > sizeof(thread->stack_data) - HS_FRAME_HEADER_BYTES - at)
+		{
+			break;
+		}
+		digest_group_thread_pointer(state, datum, frame->previous);
+		digest_group_bytes(state, &frame->expression_index, sizeof(frame->expression_index));
+		digest_group_thread_pointer(state, datum, frame->result);
+		digest_group_bytes(state, &frame->size, sizeof(frame->size));
+		digest_group_bytes(state, frame->data, (unsigned long)frame->size);
+		frame = frame->previous;
+	}
+
+	return;
+}
+
 static unsigned long allocation_digest(
 	struct real_map_allocation const *allocation)
 {
@@ -346,6 +501,24 @@ static unsigned long allocation_digest(
 		struct data_array const *data = (struct data_array const *)allocation->address;
 		unsigned long live = sizeof(struct data_array) + (unsigned long)MAX(data->count, 0) * data->size;
 
+		if (!csstrcmp(allocation->name, "hs thread"))
+		{
+			long index;
+
+			digest_add(&state, allocation->address, sizeof(struct data_array));
+			for (index = 0; index < data->count && sizeof(struct data_array) + (unsigned long)(index + 1) * data->size <= allocation->size; index++)
+			{
+				byte const *datum = (byte const *)data->data + index * data->size;
+
+				if (data->size != sizeof(struct real_map_hs_thread))
+				{
+					digest_add(&state, datum, data->size);
+					continue;
+				}
+				digest_add_hs_thread(&state, datum, 0x80000000UL | (unsigned long)index);
+			}
+			break;
+		}
 		digest_add(&state, allocation->address, MIN(live, allocation->size));
 		break;
 	}
@@ -441,23 +614,42 @@ static void crc_add_word(
 frame-coupled allocations) in simulation */
 static unsigned long game_state_digest(
 	int checkpoint,
-	unsigned long *simulation)
+	unsigned long *simulation,
+	unsigned long *simulation_raw,
+	unsigned long *whole_raw)
 {
 	unsigned long crc;
 	long index;
 
+	/* (the canonical digest every tick, or at the checkpoints only:
+	real_map_set_canonical_every_tick) */
+	boolean canonical = real_map_globals.canonical_every_tick || checkpoint >= 0;
+
 	crc_new(&crc);
 	crc_new(simulation);
+	crc_new(simulation_raw);
+	crc_new(whole_raw);
 	for (index = 0; index < real_map_globals.allocation_count; index++)
 	{
 		struct real_map_allocation *allocation = &real_map_globals.allocations[index];
-		unsigned long digest = allocation_digest(allocation);
+		unsigned long digest = canonical ? allocation_digest(allocation) : 0;
+		unsigned long raw;
 
+		digest_words_raw = TRUE;
+		raw = allocation_digest(allocation);
+		digest_words_raw = FALSE;
 		crc_add_word(&crc, digest);
+		crc_add_word(whole_raw, raw);
 		if (!allocation->frame_coupled)
+		{
 			crc_add_word(simulation, digest);
+			crc_add_word(simulation_raw, raw);
+		}
 		if (checkpoint >= 0)
+		{
 			allocation->digest_at[checkpoint] = digest;
+			allocation->raw_at[checkpoint] = raw;
+		}
 	}
 
 	return crc;
@@ -626,6 +818,8 @@ void real_map_record_allocations(
 {
 	if (on && !real_map_globals.recording)
 		real_map_globals.allocation_count = 0;
+	if (on)
+		real_map_globals.identifiers_taken = FALSE;
 	real_map_globals.recording = on ? TRUE : FALSE;
 
 	return;
@@ -654,6 +848,25 @@ unsigned long real_map_allocation_digest(
 	int checkpoint)
 {
 	return real_map_globals.allocations[index].digest_at[checkpoint];
+}
+
+unsigned long real_map_allocation_raw_digest(
+	long index,
+	int checkpoint)
+{
+	return real_map_globals.allocations[index].raw_at[checkpoint];
+}
+
+unsigned long real_map_allocation_digest_now(
+	long index)
+{
+	unsigned long digest;
+
+	digest_words_raw = TRUE;
+	digest = allocation_digest(&real_map_globals.allocations[index]);
+	digest_words_raw = FALSE;
+
+	return digest;
 }
 
 /* ---------- the scripted input */
@@ -764,20 +977,27 @@ void real_map_after_tick(
 	long tick;
 	unsigned long digest;
 	unsigned long simulation;
+	unsigned long simulation_raw;
+	unsigned long whole_raw;
 	int checkpoint = -1;
 
-	if (!real_map_globals.armed || real_map_globals.tick >= REAL_MAP_TICKS)
+	if (!real_map_globals.armed || real_map_globals.tick >= real_map_globals.ticks)
 		return;
 	tick = ++real_map_globals.tick;
-	switch (tick)
-	{
-	case 1: checkpoint = 0; break;
-	case 30: checkpoint = 1; break;
-	case 150: checkpoint = 2; break;
-	case REAL_MAP_TICKS: checkpoint = 3; break;
-	}
-	digest = game_state_digest(checkpoint, &simulation);
+	if (tick == real_map_globals.ticks)
+		checkpoint = 3;
+	else if (tick == 1)
+		checkpoint = 0;
+	else if (tick == 30)
+		checkpoint = 1;
+	else if (tick == 150)
+		checkpoint = 2;
+	digest = game_state_digest(checkpoint, &simulation, &simulation_raw, &whole_raw);
+	real_map_globals.last_raw_digest = whole_raw;
+	crc_add_word(&real_map_globals.raw_chain, whole_raw);
 	real_map_globals.tick_digests[tick - 1] = simulation;
+	real_map_globals.tick_digests_raw[tick - 1] = simulation_raw;
+	crc_add_word(&real_map_globals.simulation_raw_chain, simulation_raw);
 	real_map_globals.last_digest = digest;
 	crc_add_word(&real_map_globals.chain, digest);
 	crc_add_word(&real_map_globals.simulation_chain, simulation);
@@ -786,17 +1006,19 @@ void real_map_after_tick(
 		real_map_globals.digest_at[checkpoint] = digest;
 		real_map_globals.simulation_at[checkpoint] = simulation;
 	}
+	/* (against the reference run's raw digests) */
 	if (real_map_globals.reference && real_map_globals.first_divergent_tick == NONE &&
-		real_map_globals.reference[tick - 1] != simulation)
+		real_map_globals.reference[tick - 1] != simulation_raw)
 	{
 		real_map_globals.first_divergent_tick = tick;
 	}
 	if (real_map_globals.player_spawn_tick == NONE && local_player_unit() != NONE)
 		real_map_globals.player_spawn_tick = tick;
-	if (tick == REAL_MAP_TICKS)
+	if (tick == real_map_globals.ticks)
 	{
 		long unit = local_player_unit();
 
+		real_map_globals.final_structure_bsp_index = global_structure_bsp_index;
 		real_map_globals.final_random_seed = *get_global_random_seed_address();
 		real_map_globals.final_objects = object_header_data ? object_header_data->actual_count : 0;
 		real_map_globals.final_player_unit = unit;
@@ -806,6 +1028,56 @@ void real_map_after_tick(
 	}
 	if (real_map_globals.observer)
 		real_map_globals.observer(tick);
+	/* the harness's script command, through the engine's own compiler and
+	runtime (as a console command), between this tick and the next */
+	if (real_map_globals.command_tick == tick && real_map_globals.command[0])
+	{
+		real_map_globals.command_ran_tick = tick;
+		real_map_globals.command_bsp_before = global_structure_bsp_index;
+		real_map_globals.command_result = hs_compile_and_evaluate(real_map_globals.command);
+		real_map_globals.command_bsp_after = global_structure_bsp_index;
+	}
+
+	return;
+}
+
+void real_map_set_command(
+	long tick,
+	const char *command)
+{
+	real_map_globals.command_tick = tick;
+	real_map_globals.command[0] = 0;
+	if (command)
+	{
+		csstrncpy(real_map_globals.command, command, sizeof(real_map_globals.command) - 1);
+		real_map_globals.command[sizeof(real_map_globals.command) - 1] = 0;
+	}
+
+	return;
+}
+
+void real_map_progress_get(
+	struct real_map_progress *progress)
+{
+	long unit = local_player_unit();
+
+	csmemset(progress, 0, sizeof(*progress));
+	progress->tick = real_map_globals.tick;
+	progress->structure_bsp_index = global_structure_bsp_index;
+	progress->cinematic = cinematic_in_progress() ? 1 : 0;
+	progress->objects = object_header_data ? object_header_data->actual_count : 0;
+	progress->actors = actor_data ? actor_data->actual_count : 0;
+	progress->script_threads = hs_thread_data ? hs_thread_data->actual_count : 0;
+	progress->player_unit = unit;
+	if (unit != NONE)
+	{
+		real_point3d position;
+
+		object_get_origin(unit, &position);
+		progress->player_position[0] = position.x;
+		progress->player_position[1] = position.y;
+		progress->player_position[2] = position.z;
+	}
 
 	return;
 }
@@ -834,6 +1106,38 @@ int real_map_load(
 	makes copies: each load starts it at 0, so a load's lights are the same
 	whatever ran before (only its equality with a light's matters) */
 	lights_globals_prefix.marker = 0;
+	/* (HWI-016C) likewise the units' dialogue variants (unit_dialogue.c
+	unit_dialogue_determine_variant: each new unit takes the next of its
+	variants, by a counter that also counts on across maps): each load
+	starts it at 0, as a fresh start has it */
+	sequential_counter = 0;
+	/* (HWI-016C) and every data array's identifier counter, which gives
+	each new datum its identifier and counts on across maps for as long as
+	the program runs (data_make_valid keeps it): each load starts it where
+	it was as the first map loaded, so a load's identifiers (a campaign
+	map's script globals, objects, effects) are the same whatever ran
+	before */
+	{
+		long index;
+
+		for (index = 0; index < real_map_globals.allocation_count; index++)
+		{
+			struct real_map_allocation *allocation = &real_map_globals.allocations[index];
+			struct data_array *data = (struct data_array *)allocation->address;
+
+			if (allocation->kind != _allocation_data)
+				continue;
+			if (!real_map_globals.identifiers_taken)
+				allocation->initial_identifier = data->next_identifier;
+			else
+				data->next_identifier = allocation->initial_identifier;
+		}
+		real_map_globals.identifiers_taken = TRUE;
+	}
+	/* (HWI-016C) and the engine's local random numbers, which a campaign
+	map's effects made as it loads draw on (as real_map_begin does for a
+	run) */
+	*get_global_local_random_seed_address() = REAL_MAP_LOCAL_RANDOM_SEED;
 	if (!game_load((struct game_options *)&options))
 		return FALSE;
 	game_initialize_for_new_map();
@@ -861,10 +1165,20 @@ int real_map_reset(
 }
 
 int real_map_begin(
-	const unsigned long *reference_digests)
+	const unsigned long *reference_digests,
+	long ticks)
 {
-	if (!real_map_globals.loaded || real_map_globals.armed)
+	struct wii_cache_load_report load;
+
+	if (!real_map_globals.loaded || real_map_globals.armed || ticks < 1 || ticks > REAL_MAP_MAXIMUM_TICKS)
 		return FALSE;
+	wii_cache_load_report_get(&load);
+	real_map_globals.bsp_reads_at_begin = load.bsp_reads;
+	real_map_globals.requests_left = 0;
+	real_map_globals.ticks = ticks;
+	real_map_globals.command_ran_tick = NONE;
+	real_map_globals.command_result = 0;
+	real_map_globals.final_structure_bsp_index = NONE;
 	real_map_globals.tick = 0;
 	real_map_globals.frames = 0;
 	real_map_globals.frames_without_ticks = 0;
@@ -876,6 +1190,9 @@ int real_map_begin(
 	csmemset(real_map_globals.tick_digests, 0, sizeof(real_map_globals.tick_digests));
 	crc_new(&real_map_globals.chain);
 	crc_new(&real_map_globals.simulation_chain);
+	crc_new(&real_map_globals.simulation_raw_chain);
+	crc_new(&real_map_globals.raw_chain);
+	real_map_globals.last_raw_digest = 0;
 	real_map_globals.updates_built = 0;
 	real_map_globals.final_player_unit = NONE;
 	real_map_globals.final_tags = 0;
@@ -898,7 +1215,15 @@ int real_map_frame(
 {
 	short elapsed;
 
+	/* the frame as main_loop runs it for the game: what the game asked of
+	the main loop (a structure bsp switch a trigger volume asked for, a
+	checkpoint save, a respawn ...), its time update with its ticks, then a
+	checkpoint save in progress */
+	main_port_game_requests(TRUE);
 	game_time_update(dt);
+	main_port_game_requests(FALSE);
+	if (main_port_game_requests_left())
+		real_map_globals.requests_left++;
 	elapsed = game_time_get_elapsed();
 	real_map_globals.frames++;
 	if (!elapsed)
@@ -906,7 +1231,7 @@ int real_map_frame(
 	if (elapsed > real_map_globals.most_ticks_in_a_frame)
 		real_map_globals.most_ticks_in_a_frame = elapsed;
 
-	return real_map_globals.tick < REAL_MAP_TICKS;
+	return real_map_globals.tick < real_map_globals.ticks;
 }
 
 void real_map_end(
@@ -924,6 +1249,10 @@ void real_map_end(
 	result->chain = real_map_globals.chain;
 	result->simulation_digest = real_map_globals.tick ? real_map_globals.tick_digests[real_map_globals.tick - 1] : 0;
 	result->simulation_chain = real_map_globals.simulation_chain;
+	result->simulation_raw_digest = real_map_globals.tick ? real_map_globals.tick_digests_raw[real_map_globals.tick - 1] : 0;
+	result->simulation_raw_chain = real_map_globals.simulation_raw_chain;
+	result->raw_digest = real_map_globals.last_raw_digest;
+	result->raw_chain = real_map_globals.raw_chain;
 	for (index = 0; index < REAL_MAP_CHECKPOINTS; index++)
 	{
 		result->digest_at[index] = real_map_globals.digest_at[index];
@@ -942,6 +1271,18 @@ void real_map_end(
 	}
 	result->player_spawn_tick = real_map_globals.player_spawn_tick;
 	result->first_divergent_tick = real_map_globals.first_divergent_tick;
+	result->structure_bsp_index = real_map_globals.final_structure_bsp_index;
+	{
+		struct wii_cache_load_report load;
+
+		wii_cache_load_report_get(&load);
+		result->bsp_switches = load.bsp_reads - real_map_globals.bsp_reads_at_begin;
+	}
+	result->command_tick = real_map_globals.command_ran_tick;
+	result->command_result = real_map_globals.command_result;
+	result->command_bsp_before = real_map_globals.command_bsp_before;
+	result->command_bsp_after = real_map_globals.command_bsp_after;
+	result->requests_left = real_map_globals.requests_left;
 	real_map_globals.armed = FALSE;
 	game_time_end();
 
@@ -952,6 +1293,20 @@ const unsigned long *real_map_tick_digests(
 	void)
 {
 	return real_map_globals.tick_digests;
+}
+
+const unsigned long *real_map_tick_digests_raw(
+	void)
+{
+	return real_map_globals.tick_digests_raw;
+}
+
+void real_map_set_canonical_every_tick(
+	int every)
+{
+	real_map_globals.canonical_every_tick = every ? TRUE : FALSE;
+
+	return;
 }
 
 void real_map_unload(

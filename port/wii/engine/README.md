@@ -8,7 +8,8 @@ engine's own game tick with a player (HWI-015B), and draws the map's
 environment through GX each frame ([the Wii rasterizer](../render/README.md),
 HWI-016B). Its scope and limits are below; see the evidence for
 [the platform runtime](../../../docs/wii/evidence/2026-10-10-platform-runtime.md) and
-[the real map's tick](../../../docs/wii/evidence/2026-10-10-real-map-tick.md).
+[the real map's tick](../../../docs/wii/evidence/2026-10-10-real-map-tick.md) and
+[a campaign map's tick and load failures](../../../docs/wii/evidence/2026-10-10-campaign-map-tick.md) (HWI-016C).
 
 ## What is compiled
 
@@ -94,9 +95,19 @@ owner's Xbox map, into `sd:/halo-wii-engine/data/maps/<name>.wmap`:
 
 `cache_files_wii.c` serves the engine's own `scenario_tags_load` and
 `scenario_structure_bsp_load`: a staged map counts as precached, its tag
-data and BSP are read at once into the tag slot, and each listed field gets
-the slot's run-time base. The engine's own validator then checks the
-result, as it checks every map. Bitmap pixels and sound samples are not
+data and the BSP asked for are read at once into the tag slot, and each
+listed field gets the slot's run-time base. The engine's own validator then
+checks the result, as it checks every map. A campaign map stages every
+structure BSP (HWI-016C); a BSP switch reads the new one into the slot.
+
+Before it uses a staging it checks it (HWI-016C): the card's `manifest.txt`
+must list the map with this build's format, the file's size, staging digest
+and header CRC must match, and each segment's CRC is checked before any
+relocation is applied. A missing staging, a wrong data root, a stale format,
+a truncated or damaged file and a manifest that lists another staging are
+each refused with `MAP_ERROR kind=... text="..."` in the log, saying what to
+copy again; the engine's error is a silent one, so the game does not halt,
+and the next load works. A refused BSP switch keeps the BSP loaded before. Bitmap pixels and sound samples are not
 staged: their reads fail and report `UNSUPPORTED content`.
 
 The texture and sound caches (made by the rasterizer's and sound's
@@ -122,17 +133,23 @@ decals' per-map vertex-cache flush (the decals' own unlocking is kept).
    runs too (`tools/wii/run_engine_map_host.py`):
    - the HWI-015A fixed-step scenario once at 30 Hz: its digest must still be
      `c1ad6ae6`;
-   - an unmeasured warm-up run, then three cycles of six runs. Each run loads
-     the map named by `map.txt` through the engine's own `game_load` and
+   - the plan in `map.txt` (map runs and refused loads, one a line:
+     [engine_map_run.h](engine_map_run.h)). By default a map line is an
+     unmeasured warm-up run, then three cycles of six runs. Each run loads
+     the map named by the line through the engine's own `game_load` and
      `game_initialize_for_new_map`, makes a local player, runs 300 of the
      engine's own ticks through its scheduler at one render cadence (60, 30,
      20 and 144 Hz, an irregular cadence with a 0.5 s hitch, frames paced by
      the vertical retrace) with input scripted per tick, and unloads the map.
    - After every tick it digests the whole game state, allocation by
      allocation, in a byte-order-independent form, and the simulation (the
-     same without the three allocations the render frames reach). Every run's
-     simulation digests must be the first run's; the heap must be flat
-     across cycles.
+     same without the three allocations the render frames reach), and both
+     again over the words as they are (the raw digests: the Wii and the host
+     place their regions at the same addresses). Every run's simulation
+     digests must be the first run's; the heap must be flat across cycles.
+     The main loop's deferred game requests (BSP switches, checkpoint saves,
+     reverts) run between ticks as the main loop runs them
+     (`main_port_game_requests`), so map scripts work (HWI-016C).
 5. Shuts the engine down; the arena's bound must be restored. Reports the
    main stack's peak, the engine threads' stack peak and every unsupported
    entry point called.

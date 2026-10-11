@@ -130,6 +130,8 @@ WRAPPED = ("main", "halt_and_catch_fire", "game_tick", "game_frame", "update_cli
            "_texture_cache_bitmap_get_hardware_format",
            # HWI-016B: the Wii rasterizer's per-map halves (engine_hooks.c)
            "rasterizer_initialize_for_new_map", "rasterizer_dispose_from_old_map",
+           # HWI-016C: the decal vertex cache rasterizer_decals_initialize would have made
+           "_rasterizer_decal_vertices_new",
            # HWI-016D: the boot mode (boot_hooks.c): the rasterizer backend the
            # menus and main_loop's frame reach, the menus' map selection, and
            # the frame clock; each passes through unless the boot mode registered

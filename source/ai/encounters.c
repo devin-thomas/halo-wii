@@ -1073,6 +1073,11 @@ void encounter_update_status(
 			0.0f,
 			encounter->current_strength_fraction/encounter->original_count - STRENGTH_FRACTION_EPSILON);
 	}
+	/* port (HWI-016C): a squad or platoon with no original count gets 0/0, a
+	NaN whose sign IEEE leaves to the target: the Xbox and x86 make it
+	0xFFC00000, PowerPC (the Wii) and ARM 0x7FC00000. A NaN here is the
+	Xbox's on every port, the same value in the game state, its saves and
+	what machines compare; it compares as any NaN does, so play is unchanged */
 	for (i = 0; i < encounter->squad_count; ++i)
 	{
 		struct squad_datum *squad = encounter_get_squad(encounter, i);
@@ -1080,6 +1085,8 @@ void encounter_update_status(
 		squad->current_strength_fraction = MAX(
 			0.0f,
 			squad->current_strength_fraction/squad->original_count - STRENGTH_FRACTION_EPSILON);
+		if (squad->current_strength_fraction != squad->current_strength_fraction)
+			*(unsigned long *)&squad->current_strength_fraction = 0xFFC00000UL;
 	}
 	for (i = 0; i < encounter->platoon_count; ++i)
 	{
@@ -1088,6 +1095,8 @@ void encounter_update_status(
 		platoon->current_strength_fraction = MAX(
 			0.0f,
 			platoon->current_strength_fraction/platoon->original_count - STRENGTH_FRACTION_EPSILON);
+		if (platoon->current_strength_fraction != platoon->current_strength_fraction)
+			*(unsigned long *)&platoon->current_strength_fraction = 0xFFC00000UL;
 	}
 	encounter->status_dirty = FALSE;
 

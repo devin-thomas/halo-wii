@@ -57,11 +57,12 @@ python3 tools/wii/engine_layout_host.py --work <scratch> --output <i686 listing>
 A real map (HWI-015B) is staged from your own Xbox map at import time and the
 real tick's host reference runs the same code for i686
 ([tools/wii/README.md](../../tools/wii/README.md#real-map-staging-and-the-engines-tick-hwi-015b),
-[evidence](evidence/2026-10-10-real-map-tick.md)):
+[evidence](evidence/2026-10-10-real-map-tick.md); campaign maps, refused loads:
+[evidence](evidence/2026-10-10-campaign-map-tick.md)):
 
 ```powershell
 python -B tools/wii/map_stage.py --map <your .map> --output <private directory>
-python -B tools/wii/run_engine_map_host.py --build <dir> --map <private .le.wmap> --scenario <levels\...\name> --run <new dir> --vsync-from <Wii engine.log>
+python -B tools/wii/run_engine_map_host.py --build <dir> --maps <private stagings> --plan <map.txt> --run <new dir> --vsync-from <Wii engine.log>
 python -B tools/wii/compare_map_runs.py --wii <Wii engine.log> --host <host engine.log>
 python -B tools/wii/map_layouts.py --check                              # generated layouts current
 ```

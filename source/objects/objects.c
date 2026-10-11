@@ -548,6 +548,10 @@ void object_pvs_set_camera_point(
 		else
 		{
 			object_globals->pvs_activation_type = _pvs_activation_cluster;
+			/* port (HWI-016C): the union's other half held an earlier
+			object index's bytes, a different half in each byte order (a10,
+			the Wii against the i686 host); only the cluster index is read */
+			object_globals->pvs_activation.object_index = 0;
 			object_globals->pvs_activation.cluster_index = location.cluster_index;
 		}
 	}
@@ -564,6 +568,7 @@ void objects_port_set_activating_cluster(
 		return;
 	}
 	object_globals->pvs_activation_type = _pvs_activation_cluster;
+	object_globals->pvs_activation.object_index = 0; /* port (HWI-016C): as object_pvs_set_camera_point */
 	object_globals->pvs_activation.cluster_index = cluster_index;
 }
 

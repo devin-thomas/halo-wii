@@ -1,0 +1,6416 @@
+{
+ "ticket": "HWI-016C",
+ "date": "2026-10-11",
+ "build": {
+  "source_commit": "bedbaaf384005f6d2887d971b5e92b2c396600ff",
+  "source_dirty": false,
+  "build_id": "a0fb01de7eb68432",
+  "compiler": "powerpc-eabi-gcc.exe (devkitPPC) 16.1.0",
+  "artifacts": {
+   "engine.elf": {
+    "sha256": "479e019ead2b54c82c8f579eddbd7265eeaffdc2472a644da6ced73b3bd89358",
+    "bytes": 37405776
+   },
+   "engine.dol": {
+    "sha256": "3dcb71b3278f30117dd922ca0e03044de8e50bd0bf9a846ec17e7fde2a0036ef",
+    "bytes": 4111584
+   },
+   "engine.map": {
+    "sha256": "23386f64f6d963e578809fac07116026bc2c71e7ead14eae0628eec49ed7863c",
+    "bytes": 9011845
+   }
+  }
+ },
+ "staging": {
+  "a10": {
+   "format": "HWIMAP02",
+   "format_version": 2,
+   "map": {
+    "name": "a10",
+    "build": "01.10.12.2276",
+    "category": "campaign",
+    "declared_bytes": 274734080,
+    "tag_bytes": 14158000,
+    "tags": 3357,
+    "bsps": [
+     {
+      "bytes": 6230016,
+      "slot_offset": 16838656
+     },
+     {
+      "bytes": 8255488,
+      "slot_offset": 14813184
+     },
+     {
+      "bytes": 6057984,
+      "slot_offset": 17010688
+     },
+     {
+      "bytes": 5472256,
+      "slot_offset": 17596416
+     },
+     {
+      "bytes": 7753728,
+      "slot_offset": 15314944
+     },
+     {
+      "bytes": 8531968,
+      "slot_offset": 14536704
+     },
+     {
+      "bytes": 8568832,
+      "slot_offset": 14499840
+     },
+     {
+      "bytes": 1529856,
+      "slot_offset": 21538816
+     },
+     {
+      "bytes": 2760704,
+      "slot_offset": 20307968
+     }
+    ]
+   },
+   "elements": 2986997,
+   "data_fields": 8927,
+   "model_indices": 215054,
+   "data_rules": {
+    "animation.0:rule_words32": 474,
+    "animation.1:rule_animation_default": 761,
+    "animation.2:rule_animation_data": 814,
+    "font.0:rule_bytes": 4,
+    "hud_message_text.0:rule_words16": 2,
+    "recorded_animation.0:rule_recorded_animation": 99,
+    "scenario.0:rule_syntax_data": 1,
+    "scenario.1:rule_bytes": 1,
+    "sound_permutation.0:rule_bytes": 4659,
+    "string_list_entry.0:rule_bytes": 15,
+    "structure_bsp.0:rule_words32": 9,
+    "structure_bsp.1:rule_bytes": 8,
+    "structure_material.1:rule_material_compressed": 1866,
+    "unicode_string_list_entry.0:rule_words16": 214
+   },
+   "relocations": 53457,
+   "nulled": 84589,
+   "planned_bytes": {
+    "bsp_header": 216,
+    "buffers": 59736,
+    "data_animation": 4117876,
+    "data_bsp_vertices": 24109776,
+    "data_bytes": 340748,
+    "data_recorded_animation": 44865,
+    "data_script": 380076,
+    "data_text16": 22254,
+    "data_words32": 176508,
+    "elements": 35206021,
+    "header": 36,
+    "model_indices": 430108,
+    "tag_table": 107424
+   },
+   "unplanned_loaded_bytes": 4323188,
+   "unplanned_by_kind": {
+    "tag_names": 164216,
+    "buffer_payloads": 4100446,
+    "nulled_targets": 0,
+    "roots_without_schema": 12408,
+    "unwalked_targets": 22963,
+    "zero": 9524,
+    "alignment": 13627,
+    "other": 4,
+    "other_runs": 1
+   },
+   "byte_multisets_equal": true,
+   "unconverted_groups": {
+    "metr": 2
+   },
+   "outputs": {
+    "be": {
+     "bytes": 69535208,
+     "sha256": "810be90c6fa0c70dba61fee5fc38279712d2a97d7391cac02421201769c4eb38",
+     "staging_digest": "7dc74a74"
+    },
+    "le": {
+     "bytes": 69535208,
+     "sha256": "d0f9ec7cef776eeac2c0ec6bdec12d1831109811d8fc8a0c9264029cc793b541",
+     "staging_digest": "4ecdcfb5"
+    }
+   },
+   "walks": 9,
+   "segments": [
+    {
+     "kind": "tags",
+     "bytes": 14158000,
+     "elements": 96736,
+     "data_fields": 7044,
+     "relocations": 34154,
+     "nulled": 65962,
+     "unplanned": {
+      "tag_names": 164216,
+      "buffer_payloads": 4090670,
+      "nulled_targets": 0,
+      "roots_without_schema": 12408,
+      "unwalked_targets": 9694,
+      "zero": 9431,
+      "alignment": 5852,
+      "other": 4,
+      "other_runs": 1
+     }
+    },
+    {
+     "kind": "bsp",
+     "bytes": 6230016,
+     "slot_offset": 16838656,
+     "elements": 330701,
+     "data_fields": 183,
+     "relocations": 1984,
+     "nulled": 1926,
+     "unplanned": {
+      "buffer_payloads": 1112,
+      "nulled_targets": 0,
+      "unwalked_targets": 1800,
+      "zero": 0,
+      "alignment": 160,
+      "other": 0,
+      "other_runs": 0
+     }
+    },
+    {
+     "kind": "bsp",
+     "bytes": 8255488,
+     "slot_offset": 14813184,
+     "elements": 434808,
+     "data_fields": 245,
+     "relocations": 2590,
+     "nulled": 2482,
+     "unplanned": {
+      "buffer_payloads": 1336,
+      "nulled_targets": 0,
+      "unwalked_targets": 2341,
+      "zero": 0,
+      "alignment": 1438,
+      "other": 0,
+      "other_runs": 0
+     }
+    },
+    {
+     "kind": "bsp",
+     "bytes": 6057984,
+     "slot_offset": 17010688,
+     "elements": 316350,
+     "data_fields": 242,
+     "relocations": 2332,
+     "nulled": 2230,
+     "unplanned": {
+      "buffer_payloads": 1448,
+      "nulled_targets": 0,
+      "unwalked_targets": 961,
+      "zero": 18,
+      "alignment": 1451,
+      "other": 0,
+      "other_runs": 0
+     }
+    },
+    {
+     "kind": "bsp",
+     "bytes": 5472256,
+     "slot_offset": 17596416,
+     "elements": 284085,
+     "data_fields": 246,
+     "relocations": 2307,
+     "nulled": 2213,
+     "unplanned": {
+      "buffer_payloads": 1424,
+      "nulled_targets": 0,
+      "unwalked_targets": 1021,
+      "zero": 19,
+      "alignment": 1004,
+      "other": 0,
+      "other_runs": 0
+     }
+    },
+    {
+     "kind": "bsp",
+     "bytes": 7753728,
+     "slot_offset": 15314944,
+     "elements": 398758,
+     "data_fields": 278,
+     "relocations": 2820,
+     "nulled": 2738,
+     "unplanned": {
+      "buffer_payloads": 1416,
+      "nulled_targets": 0,
+      "unwalked_targets": 2940,
+      "zero": 12,
+      "alignment": 1354,
+      "other": 0,
+      "other_runs": 0
+     }
+    },
+    {
+     "kind": "bsp",
+     "bytes": 8531968,
+     "slot_offset": 14536704,
+     "elements": 442476,
+     "data_fields": 286,
+     "relocations": 2924,
+     "nulled": 2825,
+     "unplanned": {
+      "buffer_payloads": 1272,
+      "nulled_targets": 0,
+      "unwalked_targets": 1383,
+      "zero": 10,
+      "alignment": 437,
+      "other": 0,
+      "other_runs": 0
+     }
+    },
+    {
+     "kind": "bsp",
+     "bytes": 8568832,
+     "slot_offset": 14499840,
+     "elements": 435968,
+     "data_fields": 319,
+     "relocations": 3165,
+     "nulled": 3081,
+     "unplanned": {
+      "buffer_payloads": 1352,
+      "nulled_targets": 0,
+      "unwalked_targets": 2223,
+      "zero": 34,
+      "alignment": 1330,
+      "other": 0,
+      "other_runs": 0
+     }
+    },
+    {
+     "kind": "bsp",
+     "bytes": 1529856,
+     "slot_offset": 21538816,
+     "elements": 96142,
+     "data_fields": 56,
+     "relocations": 619,
+     "nulled": 580,
+     "unplanned": {
+      "buffer_payloads": 248,
+      "nulled_targets": 0,
+      "unwalked_targets": 600,
+      "zero": 0,
+      "alignment": 210,
+      "other": 0,
+      "other_runs": 0
+     }
+    },
+    {
+     "kind": "bsp",
+     "bytes": 2760704,
+     "slot_offset": 20307968,
+     "elements": 150973,
+     "data_fields": 28,
+     "relocations": 562,
+     "nulled": 552,
+     "unplanned": {
+      "buffer_payloads": 168,
+      "nulled_targets": 0,
+      "unwalked_targets": 0,
+      "zero": 0,
+      "alignment": 391,
+      "other": 0,
+      "other_runs": 0
+     }
+    }
+   ]
+  },
+  "prisoner": {
+   "format": "HWIMAP02",
+   "format_version": 2,
+   "map": {
+    "name": "prisoner",
+    "build": "01.10.12.2276",
+    "category": "multiplayer",
+    "declared_bytes": 43974656,
+    "tag_bytes": 7034316,
+    "tags": 1685,
+    "bsps": [
+     {
+      "bytes": 884736,
+      "slot_offset": 22183936
+     }
+    ]
+   },
+   "elements": 84607,
+   "data_fields": 1152,
+   "model_indices": 130456,
+   "data_rules": {
+    "animation.0:rule_words32": 123,
+    "animation.1:rule_animation_default": 345,
+    "animation.2:rule_animation_data": 342,
+    "font.0:rule_bytes": 4,
+    "hud_message_text.0:rule_words16": 1,
+    "scenario.0:rule_syntax_data": 1,
+    "scenario.1:rule_bytes": 1,
+    "sound_permutation.0:rule_bytes": 59,
+    "string_list_entry.0:rule_bytes": 15,
+    "structure_bsp.0:rule_words32": 1,
+    "structure_material.1:rule_material_compressed": 79,
+    "unicode_string_list_entry.0:rule_words16": 181
+   },
+   "relocations": 16934,
+   "nulled": 23669,
+   "planned_bytes": {
+    "bsp_header": 24,
+    "buffers": 9624,
+    "data_animation": 1619084,
+    "data_bsp_vertices": 368288,
+    "data_bytes": 120329,
+    "data_script": 380076,
+    "data_text16": 10936,
+    "data_words32": 33780,
+    "elements": 2451176,
+    "header": 36,
+    "model_indices": 260912,
+    "tag_table": 53920
+   },
+   "unplanned_loaded_bytes": 2610867,
+   "unplanned_by_kind": {
+    "tag_names": 68052,
+    "buffer_payloads": 2524680,
+    "nulled_targets": 0,
+    "roots_without_schema": 12408,
+    "unwalked_targets": 380,
+    "zero": 2784,
+    "alignment": 2559,
+    "other": 4,
+    "other_runs": 1
+   },
+   "byte_multisets_equal": true,
+   "unconverted_groups": {
+    "metr": 2
+   },
+   "outputs": {
+    "be": {
+     "bytes": 7988984,
+     "sha256": "fecad67a622a7dbc3b41bee7ed91c73087c6e03d76907902702a4b107d395282",
+     "staging_digest": "3189bf32"
+    },
+    "le": {
+     "bytes": 7988984,
+     "sha256": "d130acf0c7ca86b9da79b7cbc6150edc4025d58370f28badf0a775f0458aa616",
+     "staging_digest": "af3ced28"
+    }
+   },
+   "walks": 1,
+   "segments": [
+    {
+     "kind": "tags",
+     "bytes": 7034316,
+     "elements": 37194,
+     "data_fields": 1072,
+     "relocations": 16320,
+     "nulled": 23114,
+     "unplanned": {
+      "tag_names": 68052,
+      "buffer_payloads": 2524584,
+      "nulled_targets": 0,
+      "roots_without_schema": 12408,
+      "unwalked_targets": 380,
+      "zero": 2784,
+      "alignment": 537,
+      "other": 4,
+      "other_runs": 1
+     }
+    },
+    {
+     "kind": "bsp",
+     "bytes": 884736,
+     "slot_offset": 22183936,
+     "elements": 47413,
+     "data_fields": 80,
+     "relocations": 614,
+     "nulled": 555,
+     "unplanned": {
+      "buffer_payloads": 96,
+      "nulled_targets": 0,
+      "unwalked_targets": 0,
+      "zero": 0,
+      "alignment": 2022,
+      "other": 0,
+      "other_runs": 0
+     }
+    }
+   ]
+  }
+ },
+ "hosts": {
+  "titan": {
+   "host": {
+    "os": "Windows",
+    "version": "10.0.26200",
+    "machine": "AMD64",
+    "python": "3.14.0"
+   },
+   "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+   "backend": "D3D",
+   "stock_limits": {
+    "Core.EnableCheats": "False",
+    "Core.OverclockEnable": "False",
+    "Core.Overclock": "1.0",
+    "Core.VIOverclockEnable": "False",
+    "Core.RAMOverrideEnable": "False",
+    "Core.EmulationSpeed": "1.0"
+   },
+   "os_stability": {
+    "observation": "no_instability_events_observed",
+    "instability_events": [],
+    "system_events_matched": [],
+    "dolphin_application_events": [],
+    "last_boot_utc": "2026-10-11T17:29:13.5000000Z",
+    "limits": "Event-log query over the batch window only; absence of events is not a guarantee of stability.",
+    "window_utc": [
+     "2026-10-11T19:44:54+00:00",
+     "2026-10-11T20:22:16+00:00"
+    ]
+   },
+   "physical_wii": "untested",
+   "staged_files": [
+    {
+     "sd_path": "data/maps/a10.wmap",
+     "sha256": "810be90c6fa0c70dba61fee5fc38279712d2a97d7391cac02421201769c4eb38",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/a10bsp.wmap",
+     "sha256": "cfbd0944621b6088518f4605b47168362da0e429f4ed69ef3a4c0b46802dfb37",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/a10sw.wmap",
+     "sha256": "810be90c6fa0c70dba61fee5fc38279712d2a97d7391cac02421201769c4eb38",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/manifest.txt",
+     "sha256": "069a7591fe1085a13a68a03fba5e3a2d9a8367d5cf0c653c92d0171f2417b8de",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/prisoner.wmap",
+     "sha256": "fecad67a622a7dbc3b41bee7ed91c73087c6e03d76907902702a4b107d395282",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/prisonerflip.wmap",
+     "sha256": "58217dc998ee461d53764917f7c4aceabf7c299641a2492e75d952e3653c1c0f",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/prisonermm.wmap",
+     "sha256": "fecad67a622a7dbc3b41bee7ed91c73087c6e03d76907902702a4b107d395282",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/prisonerold.wmap",
+     "sha256": "017dea1f6b632a901b63421a38b16faec40f8e88666708066454260c2f5af2a7",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/prisonertrunc.wmap",
+     "sha256": "9df242f0afebd65e1358592d6e8228b64fed6782008d90d8da00372baee53ed0",
+     "verified": true
+    },
+    {
+     "sd_path": "render.txt",
+     "sha256": "5b2e7862ffa6fbee9e7eb29d2b3b7af551a8f0bc5a263fd655f13a54e53de2b6",
+     "verified": true
+    },
+    {
+     "sd_path": "map.txt",
+     "sha256": "8431d72e87a1a61597a1bcf90eab955a24446b5eb8ab2240182e03bd4cfabf0f",
+     "verified": true
+    }
+   ],
+   "launches": [
+    {
+     "build": "a0fb01de7eb68432",
+     "previous_runs": 0,
+     "fpscr": {
+      "entry": "00000004",
+      "engine": "00000000",
+      "ieee": "1"
+     },
+     "persist": {
+      "previous_result": "0",
+      "digest": "00000000",
+      "chain": "00000000"
+     },
+     "fixed_step": {
+      "cadence": "30hz",
+      "ticks": "300",
+      "digest": "c1ad6ae6",
+      "chain": "58ce9719",
+      "pass": "1"
+     },
+     "arena_open": {
+      "offset": "0",
+      "required": "51380224",
+      "spare": "2985984"
+     },
+     "arena_close": {
+      "restored": "1",
+      "general_peak": "65536",
+      "failed_allocations": "0",
+      "heap_in_use": "2126048",
+      "low_before": "0x90002000",
+      "low_after": "0x90002000"
+     },
+     "memory": {
+      "entry": {
+       "bytes": "54386688",
+       "main_stack": "131072"
+      },
+      "after_gx": {
+       "bytes": "1671168",
+       "heap_in_use": "1795392",
+       "xfb_bytes_each": "614400"
+      },
+      "after_engine_start": {
+       "arena1_lo": "0x81770000",
+       "arena2_lo": "0x90002000"
+      },
+      "game_initialize": {
+       "game_state_used": "17986420",
+       "heap_in_use": "2880840"
+      }
+     },
+     "stack": {
+      "painted": "114688",
+      "peak_below_entry": "104088",
+      "window_exhausted": "0"
+     },
+     "threads": {
+      "created": "1",
+      "measured": "1",
+      "stack_bytes": "65536",
+      "stack_peak": "256"
+     },
+     "map_plan": {
+      "lines": "11",
+      "maps": "5",
+      "runs": "24",
+      "simulation_identical": "0",
+      "whole_identical_per_cadence": "0",
+      "heap_flat": "1",
+      "expectations": "9",
+      "met": "9",
+      "map_errors": "7",
+      "failures": "0"
+     },
+     "map_times": {
+      "load_ms": "401",
+      "run_ms": "6459"
+     },
+     "end": {
+      "cycles": "3",
+      "cadences": "6",
+      "failures": "0",
+      "elapsed_ms": "1110037",
+      "result": "pass"
+     },
+     "expect": [
+      {
+       "map": "prisoner",
+       "simulation": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      }
+     ],
+     "map_errors": [
+      {
+       "kind": "not_staged",
+       "map": "nomap"
+      },
+      {
+       "kind": "data_root",
+       "map": "a10"
+      },
+      {
+       "kind": "damaged",
+       "map": "prisonertrunc"
+      },
+      {
+       "kind": "damaged",
+       "map": "prisonerflip"
+      },
+      {
+       "kind": "stale",
+       "map": "prisonerold"
+      },
+      {
+       "kind": "manifest_mismatch",
+       "map": "prisonermm"
+      },
+      {
+       "kind": "damaged",
+       "map": "a10bsp"
+      }
+     ],
+     "load_failures": [
+      {
+       "map": "nomap",
+       "expected": "not_staged",
+       "kind": "not_staged",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      },
+      {
+       "map": "a10",
+       "expected": "data_root",
+       "kind": "data_root",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      },
+      {
+       "map": "prisonertrunc",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "ms": "2",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerflip",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "ms": "156",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerold",
+       "expected": "stale",
+       "kind": "stale",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      },
+      {
+       "map": "prisonermm",
+       "expected": "manifest_mismatch",
+       "kind": "manifest_mismatch",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      }
+     ],
+     "bsp_failures": [
+      {
+       "map": "a10bsp",
+       "expected": "damaged",
+       "kind": "damaged",
+       "asked": "1",
+       "bsp_before": "7",
+       "bsp_after": "7",
+       "bsp_at_end": "7",
+       "pass": "1"
+      }
+     ],
+     "map_runs": [
+      {
+       "map": "prisoner",
+       "runs": "18",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "0",
+       "heap_flat": "1",
+       "digest": "6d88af44",
+       "chain": "fb5dcbf2",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "tags_start": "00c29f29"
+      },
+      {
+       "map": "prisoner",
+       "runs": "1",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "tags_start": "00c29f29"
+      },
+      {
+       "map": "a10bsp",
+       "runs": "1",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "f03226e8",
+       "chain": "29ee0898",
+       "sim": "0e3af237",
+       "sim_chain": "5645a9f0",
+       "tags_start": "231685d8"
+      },
+      {
+       "map": "a10sw",
+       "runs": "1",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "cb74ca2c",
+       "chain": "21c980fb",
+       "sim": "3f7044de",
+       "sim_chain": "e0fdf2db",
+       "tags_start": "231685d8"
+      },
+      {
+       "map": "a10",
+       "runs": "3",
+       "simulation_identical": "0",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "73150638",
+       "chain": "422ca68f",
+       "sim": "cb3f9925",
+       "sim_chain": "7a51c099",
+       "tags_start": "231685d8"
+      }
+     ],
+     "cycles": [
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "heap_in_use": "2500912"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "heap_in_use": "2500912"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "heap_in_use": "2500912"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "heap_in_use": "2500912"
+      },
+      {
+       "map": "a10bsp",
+       "cycle": "0",
+       "heap_in_use": "2501008"
+      },
+      {
+       "map": "a10sw",
+       "cycle": "0",
+       "heap_in_use": "2501008"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "heap_in_use": "2501008"
+      }
+     ],
+     "loads": [
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "20hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "158",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "144hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "irregular",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "60hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "30hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "20hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "144hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "irregular",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "158",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "vsync_measured",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "158",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "60hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "30hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "20hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "144hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "158",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "irregular",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "vsync_measured",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "a10bsp",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "1234",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "410",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10sw",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "1234",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "409",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ms": "1230",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "405",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "1230",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "405",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ms": "1230",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "405",
+       "staging": "7dc74a74"
+      }
+     ],
+     "runs": [
+      {
+       "map": "prisoner",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ff0f3809",
+       "raw_chain": "1c9e81bb",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6265"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "6d88af44",
+       "chain": "fb5dcbf2",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "1634c4f6",
+       "raw_chain": "2340ad84",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6459"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ff0f3809",
+       "raw_chain": "1c9e81bb",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6264"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "most_ticks_in_a_frame": "2",
+       "digest": "cca5226c",
+       "chain": "c2bdd1c6",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "46ac81af",
+       "raw_chain": "2b4e317e",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6278"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a2881831",
+       "chain": "4f61d931",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "c22168cf",
+       "raw_chain": "6a0e6d5b",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6987"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "most_ticks_in_a_frame": "7",
+       "digest": "996db3dc",
+       "chain": "17bf93a1",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "e7b0ebed",
+       "raw_chain": "5210b693",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6306"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a85305ba",
+       "chain": "c2b7c34c",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ecc5cb1d",
+       "raw_chain": "eafe992a",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "30a37788",
+       "chain": "49ffad62",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "7a3ea0f3",
+       "raw_chain": "691f3e72",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6449"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ff0f3809",
+       "raw_chain": "1c9e81bb",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6264"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "most_ticks_in_a_frame": "2",
+       "digest": "649a805a",
+       "chain": "2878f0ad",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "cce56478",
+       "raw_chain": "6df7ad36",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6319"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "most_ticks_in_a_frame": "1",
+       "digest": "2bfc4008",
+       "chain": "385825a1",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "3eca8f72",
+       "raw_chain": "993740b4",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6987"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "most_ticks_in_a_frame": "7",
+       "digest": "4ed106d1",
+       "chain": "638b2eaa",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "09796166",
+       "raw_chain": "3b5e0cb3",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6300"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a85305ba",
+       "chain": "c2b7c34c",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ecc5cb1d",
+       "raw_chain": "eafe992a",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "30a37788",
+       "chain": "49ffad62",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "7a3ea0f3",
+       "raw_chain": "691f3e72",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6449"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ff0f3809",
+       "raw_chain": "1c9e81bb",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6264"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "most_ticks_in_a_frame": "2",
+       "digest": "649a805a",
+       "chain": "2878f0ad",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "cce56478",
+       "raw_chain": "6df7ad36",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6319"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "most_ticks_in_a_frame": "1",
+       "digest": "5d827af1",
+       "chain": "136c8b68",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "8d5e9e77",
+       "raw_chain": "550c1487",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6887"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "most_ticks_in_a_frame": "7",
+       "digest": "e13e71c4",
+       "chain": "6c9ab670",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "68d1b843",
+       "raw_chain": "eb67c97b",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6282"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a85305ba",
+       "chain": "c2b7c34c",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ecc5cb1d",
+       "raw_chain": "eafe992a",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ff0f3809",
+       "raw_chain": "1c9e81bb",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6267"
+      },
+      {
+       "map": "a10bsp",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "10",
+       "frames": "10",
+       "most_ticks_in_a_frame": "1",
+       "digest": "f03226e8",
+       "chain": "29ee0898",
+       "sim": "0e3af237",
+       "sim_chain": "5645a9f0",
+       "sim_raw": "72c2dac6",
+       "sim_raw_chain": "f6544d00",
+       "raw": "1cb6caa4",
+       "raw_chain": "9dac4147",
+       "objects": "344",
+       "bsp": "7",
+       "bsp_switches": "2",
+       "command_tick": "5",
+       "command_result": "1",
+       "requests_left": "0",
+       "ms": "1378"
+      },
+      {
+       "map": "a10sw",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "600",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cb74ca2c",
+       "chain": "21c980fb",
+       "sim": "3f7044de",
+       "sim_chain": "e0fdf2db",
+       "sim_raw": "07747a10",
+       "sim_raw_chain": "7c51d3de",
+       "raw": "93b02aaa",
+       "raw_chain": "d9bf98a9",
+       "objects": "355",
+       "bsp": "2",
+       "bsp_switches": "2",
+       "command_tick": "300",
+       "command_result": "1",
+       "requests_left": "0",
+       "ms": "18577"
+      },
+      {
+       "map": "a10",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "30",
+       "frames": "30",
+       "most_ticks_in_a_frame": "1",
+       "digest": "783f693a",
+       "chain": "8f68fd24",
+       "sim": "77749370",
+       "sim_chain": "28b8feed",
+       "sim_raw": "5cd461ec",
+       "sim_raw_chain": "041ed72f",
+       "raw": "8be34804",
+       "raw_chain": "d325c602",
+       "objects": "344",
+       "bsp": "7",
+       "bsp_switches": "1",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "1653"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "9000",
+       "frames": "18000",
+       "most_ticks_in_a_frame": "1",
+       "digest": "73150638",
+       "chain": "422ca68f",
+       "sim": "cb3f9925",
+       "sim_chain": "7a51c099",
+       "sim_raw": "80bedd07",
+       "sim_raw_chain": "3a512819",
+       "raw": "35f19a4c",
+       "raw_chain": "0caf863e",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "309229"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "9000",
+       "frames": "9000",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a91bb256",
+       "chain": "cb7ff8fa",
+       "sim": "f58bd4b1",
+       "sim_chain": "979a0191",
+       "sim_raw": "9e91d8f2",
+       "sim_raw_chain": "7788160a",
+       "raw": "fae3ddf5",
+       "raw_chain": "d342fa9a",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "303876"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "9000",
+       "frames": "1795",
+       "most_ticks_in_a_frame": "7",
+       "digest": "b0165975",
+       "chain": "614c5d24",
+       "sim": "d35dbff2",
+       "sim_chain": "9e4148cb",
+       "sim_raw": "7948ac8c",
+       "sim_raw_chain": "f6900104",
+       "raw": "ecb7d9af",
+       "raw_chain": "48a5a228",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "317644"
+      }
+     ],
+     "progress_a10_first_run_changes": [
+      {
+       "tick": "1",
+       "bsp": "0",
+       "cinematic": "0",
+       "objects": "358",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "150",
+       "bsp": "7",
+       "cinematic": "1",
+       "objects": "351",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "1350",
+       "bsp": "1",
+       "cinematic": "1",
+       "objects": "373",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "3750",
+       "bsp": "8",
+       "cinematic": "1",
+       "objects": "362",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "7050",
+       "bsp": "0",
+       "cinematic": "1",
+       "objects": "362",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "8100",
+       "bsp": "0",
+       "cinematic": "0",
+       "objects": "405",
+       "actors": "4",
+       "script_threads": "105"
+      },
+      {
+       "tick": "9000",
+       "bsp": "0",
+       "cinematic": "0",
+       "objects": "404",
+       "actors": "4",
+       "script_threads": "105"
+      }
+     ],
+     "unsupported_names": [
+      "bink:RADSetMemory",
+      "d3d8:D3DResource_BlockUntilNotBusy",
+      "d3d8:D3DResource_Register",
+      "dsound:sound_cache_close",
+      "dsound:sound_cache_open",
+      "hires_assets:hud_hires_asset_count",
+      "menus:halo_menus_load",
+      "network:XNetGetEthernetLinkStatus",
+      "network:XNetStartup",
+      "render:halo_interpolation_enabled",
+      "render:predicted_resources_precache",
+      "render:rasterizer_decal_vertices_new",
+      "render:rasterizer_decals_dispose",
+      "render:rasterizer_decals_dispose_from_old_map",
+      "render:rasterizer_decals_initialize",
+      "render:rasterizer_initialize",
+      "render:texture_cache_bitmap_get_hardware_format",
+      "render:texture_cache_close",
+      "render:texture_cache_open"
+     ],
+     "host": {
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 1114.401,
+      "outcome": "exit_zero"
+     },
+     "persistence": "passed",
+     "guest_runner_result": "not_evaluated",
+     "host_reference": {
+      "simulation_all_same": true,
+      "whole_all_same_unpaced": true,
+      "allocations_all_same_unpaced": true,
+      "allocations_compared": 1794,
+      "ticks_compared": {
+       "a10": 9000,
+       "a10bsp": 10,
+       "a10sw": 600,
+       "prisoner": 600
+      },
+      "first_divergent_tick": {
+       "a10": null,
+       "a10bsp": null,
+       "a10sw": null,
+       "prisoner": null
+      },
+      "ticks_all_same": true,
+      "fixed_step_same": true,
+      "failures_same": true,
+      "runs": 23,
+      "runs_simulation_same": 23,
+      "runs_whole_same": 23,
+      "runs_whole_differing": []
+     }
+    },
+    {
+     "build": "a0fb01de7eb68432",
+     "previous_runs": 1,
+     "fpscr": {
+      "entry": "00000004",
+      "engine": "00000000",
+      "ieee": "1"
+     },
+     "persist": {
+      "previous_result": "1",
+      "digest": "127656ef",
+      "chain": "73904c7f"
+     },
+     "fixed_step": {
+      "cadence": "30hz",
+      "ticks": "300",
+      "digest": "c1ad6ae6",
+      "chain": "58ce9719",
+      "pass": "1"
+     },
+     "arena_open": {
+      "offset": "4096",
+      "required": "51380224",
+      "spare": "2981888"
+     },
+     "arena_close": {
+      "restored": "1",
+      "general_peak": "65536",
+      "failed_allocations": "0",
+      "heap_in_use": "2126072",
+      "low_before": "0x90002000",
+      "low_after": "0x90002000"
+     },
+     "memory": {
+      "entry": {
+       "bytes": "54386688",
+       "main_stack": "131072"
+      },
+      "after_gx": {
+       "bytes": "1671168",
+       "heap_in_use": "1795392",
+       "xfb_bytes_each": "614400"
+      },
+      "after_engine_start": {
+       "arena1_lo": "0x81770000",
+       "arena2_lo": "0x90002000"
+      },
+      "game_initialize": {
+       "game_state_used": "17986420",
+       "heap_in_use": "2880880"
+      }
+     },
+     "stack": {
+      "painted": "114688",
+      "peak_below_entry": "104088",
+      "window_exhausted": "0"
+     },
+     "threads": {
+      "created": "1",
+      "measured": "1",
+      "stack_bytes": "65536",
+      "stack_peak": "256"
+     },
+     "map_plan": {
+      "lines": "11",
+      "maps": "5",
+      "runs": "24",
+      "simulation_identical": "0",
+      "whole_identical_per_cadence": "0",
+      "heap_flat": "1",
+      "expectations": "9",
+      "met": "9",
+      "map_errors": "7",
+      "failures": "0"
+     },
+     "map_times": {
+      "load_ms": "400",
+      "run_ms": "6459"
+     },
+     "end": {
+      "cycles": "3",
+      "cadences": "6",
+      "failures": "0",
+      "elapsed_ms": "1109985",
+      "result": "pass"
+     },
+     "expect": [
+      {
+       "map": "prisoner",
+       "simulation": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      }
+     ],
+     "map_errors": [
+      {
+       "kind": "not_staged",
+       "map": "nomap"
+      },
+      {
+       "kind": "data_root",
+       "map": "a10"
+      },
+      {
+       "kind": "damaged",
+       "map": "prisonertrunc"
+      },
+      {
+       "kind": "damaged",
+       "map": "prisonerflip"
+      },
+      {
+       "kind": "stale",
+       "map": "prisonerold"
+      },
+      {
+       "kind": "manifest_mismatch",
+       "map": "prisonermm"
+      },
+      {
+       "kind": "damaged",
+       "map": "a10bsp"
+      }
+     ],
+     "load_failures": [
+      {
+       "map": "nomap",
+       "expected": "not_staged",
+       "kind": "not_staged",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      },
+      {
+       "map": "a10",
+       "expected": "data_root",
+       "kind": "data_root",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      },
+      {
+       "map": "prisonertrunc",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerflip",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "ms": "153",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerold",
+       "expected": "stale",
+       "kind": "stale",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      },
+      {
+       "map": "prisonermm",
+       "expected": "manifest_mismatch",
+       "kind": "manifest_mismatch",
+       "loaded": "0",
+       "ms": "3",
+       "pass": "1"
+      }
+     ],
+     "bsp_failures": [
+      {
+       "map": "a10bsp",
+       "expected": "damaged",
+       "kind": "damaged",
+       "asked": "1",
+       "bsp_before": "7",
+       "bsp_after": "7",
+       "bsp_at_end": "7",
+       "pass": "1"
+      }
+     ],
+     "map_runs": [
+      {
+       "map": "prisoner",
+       "runs": "18",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "0",
+       "heap_flat": "1",
+       "digest": "6d88af44",
+       "chain": "fb5dcbf2",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "tags_start": "2469014f"
+      },
+      {
+       "map": "prisoner",
+       "runs": "1",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "tags_start": "2469014f"
+      },
+      {
+       "map": "a10bsp",
+       "runs": "1",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "f03226e8",
+       "chain": "bd7b68e6",
+       "sim": "0e3af237",
+       "sim_chain": "e04f56d3",
+       "tags_start": "5e7d74fb"
+      },
+      {
+       "map": "a10sw",
+       "runs": "1",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "cb74ca2c",
+       "chain": "c890dcda",
+       "sim": "3f7044de",
+       "sim_chain": "639dd677",
+       "tags_start": "5e7d74fb"
+      },
+      {
+       "map": "a10",
+       "runs": "3",
+       "simulation_identical": "0",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "afa11b25",
+       "chain": "b8af5be8",
+       "sim": "cd5e35d5",
+       "sim_chain": "23fd6c5e",
+       "tags_start": "5e7d74fb"
+      }
+     ],
+     "cycles": [
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "heap_in_use": "2500944"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "heap_in_use": "2500944"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "heap_in_use": "2500944"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "heap_in_use": "2500944"
+      },
+      {
+       "map": "a10bsp",
+       "cycle": "0",
+       "heap_in_use": "2501040"
+      },
+      {
+       "map": "a10sw",
+       "cycle": "0",
+       "heap_in_use": "2501040"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "heap_in_use": "2501040"
+      }
+     ],
+     "loads": [
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "20hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "144hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "irregular",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "60hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "30hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "20hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "144hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "irregular",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "vsync_measured",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "60hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "30hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "20hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "144hz",
+       "ms": "402",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "158",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "irregular",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "vsync_measured",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "158",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "a10bsp",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "1234",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "409",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10sw",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "1234",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "409",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ms": "1230",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "405",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "1230",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "405",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ms": "1230",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "405",
+       "staging": "7dc74a74"
+      }
+     ],
+     "runs": [
+      {
+       "map": "prisoner",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "5edebc10",
+       "raw_chain": "0f11c208",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6265"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "6d88af44",
+       "chain": "fb5dcbf2",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "084deff9",
+       "raw_chain": "13fe6a13",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6459"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "5edebc10",
+       "raw_chain": "0f11c208",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6264"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "most_ticks_in_a_frame": "2",
+       "digest": "cca5226c",
+       "chain": "c2bdd1c6",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "f7d12b03",
+       "raw_chain": "5735f162",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6278"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a2881831",
+       "chain": "4f61d931",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "83925f56",
+       "raw_chain": "17a610b2",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6987"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "most_ticks_in_a_frame": "7",
+       "digest": "996db3dc",
+       "chain": "17bf93a1",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "4b501392",
+       "raw_chain": "08f67069",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6306"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a85305ba",
+       "chain": "c2b7c34c",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "f21c517a",
+       "raw_chain": "b3642554",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "30a37788",
+       "chain": "49ffad62",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "f5a11dac",
+       "raw_chain": "c3a30361",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6449"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "5edebc10",
+       "raw_chain": "0f11c208",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6264"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "most_ticks_in_a_frame": "2",
+       "digest": "649a805a",
+       "chain": "2878f0ad",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "a8bd58ee",
+       "raw_chain": "b9122f70",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6319"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "most_ticks_in_a_frame": "1",
+       "digest": "2bfc4008",
+       "chain": "385825a1",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "be6fff82",
+       "raw_chain": "41bc34cf",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6987"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "most_ticks_in_a_frame": "7",
+       "digest": "4ed106d1",
+       "chain": "638b2eaa",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "beedbf15",
+       "raw_chain": "b2c2f791",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6300"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a85305ba",
+       "chain": "c2b7c34c",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "f21c517a",
+       "raw_chain": "b3642554",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "30a37788",
+       "chain": "49ffad62",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "f5a11dac",
+       "raw_chain": "c3a30361",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6449"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "5edebc10",
+       "raw_chain": "0f11c208",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6264"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "most_ticks_in_a_frame": "2",
+       "digest": "649a805a",
+       "chain": "2878f0ad",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "a8bd58ee",
+       "raw_chain": "b9122f70",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6319"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "most_ticks_in_a_frame": "1",
+       "digest": "5d827af1",
+       "chain": "136c8b68",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "b498cd99",
+       "raw_chain": "5852ea14",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6887"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "most_ticks_in_a_frame": "7",
+       "digest": "e13e71c4",
+       "chain": "6c9ab670",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "1c534681",
+       "raw_chain": "2d0eaa48",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6282"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a85305ba",
+       "chain": "c2b7c34c",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "f21c517a",
+       "raw_chain": "b3642554",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "5edebc10",
+       "raw_chain": "0f11c208",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6265"
+      },
+      {
+       "map": "a10bsp",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "10",
+       "frames": "10",
+       "most_ticks_in_a_frame": "1",
+       "digest": "f03226e8",
+       "chain": "bd7b68e6",
+       "sim": "0e3af237",
+       "sim_chain": "e04f56d3",
+       "sim_raw": "12b471b6",
+       "sim_raw_chain": "6beb6326",
+       "raw": "139fa372",
+       "raw_chain": "dc81c57f",
+       "objects": "344",
+       "bsp": "7",
+       "bsp_switches": "2",
+       "command_tick": "5",
+       "command_result": "1",
+       "requests_left": "0",
+       "ms": "1378"
+      },
+      {
+       "map": "a10sw",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "600",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cb74ca2c",
+       "chain": "c890dcda",
+       "sim": "3f7044de",
+       "sim_chain": "639dd677",
+       "sim_raw": "874d3dd8",
+       "sim_raw_chain": "64d6d906",
+       "raw": "015924d4",
+       "raw_chain": "7b12b28e",
+       "objects": "355",
+       "bsp": "2",
+       "bsp_switches": "2",
+       "command_tick": "300",
+       "command_result": "1",
+       "requests_left": "0",
+       "ms": "18577"
+      },
+      {
+       "map": "a10",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "30",
+       "frames": "30",
+       "most_ticks_in_a_frame": "1",
+       "digest": "783f693a",
+       "chain": "b00ae709",
+       "sim": "77749370",
+       "sim_chain": "7f70c807",
+       "sim_raw": "9ac95248",
+       "sim_raw_chain": "a646a4dd",
+       "raw": "119965d0",
+       "raw_chain": "5ce26a39",
+       "objects": "344",
+       "bsp": "7",
+       "bsp_switches": "1",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "1653"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "9000",
+       "frames": "18000",
+       "most_ticks_in_a_frame": "1",
+       "digest": "afa11b25",
+       "chain": "b8af5be8",
+       "sim": "cd5e35d5",
+       "sim_chain": "23fd6c5e",
+       "sim_raw": "8871d195",
+       "sim_raw_chain": "3ee48b98",
+       "raw": "a93298c3",
+       "raw_chain": "087768c8",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "309229"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "9000",
+       "frames": "9000",
+       "most_ticks_in_a_frame": "1",
+       "digest": "75afaf4b",
+       "chain": "e52a006d",
+       "sim": "f3ea7841",
+       "sim_chain": "7d263393",
+       "sim_raw": "89ef148a",
+       "sim_raw_chain": "671a32cf",
+       "raw": "ad68a27e",
+       "raw_chain": "9c94ebab",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "303876"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "9000",
+       "frames": "1795",
+       "most_ticks_in_a_frame": "7",
+       "digest": "c64b00ea",
+       "chain": "bc726d50",
+       "sim": "d53c1302",
+       "sim_chain": "74fd7ac9",
+       "sim_raw": "d6be3629",
+       "sim_raw_chain": "c9e9393a",
+       "raw": "8a417184",
+       "raw_chain": "25852030",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "317644"
+      }
+     ],
+     "progress_a10_first_run_changes": [
+      {
+       "tick": "1",
+       "bsp": "0",
+       "cinematic": "0",
+       "objects": "358",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "150",
+       "bsp": "7",
+       "cinematic": "1",
+       "objects": "351",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "1350",
+       "bsp": "1",
+       "cinematic": "1",
+       "objects": "373",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "3750",
+       "bsp": "8",
+       "cinematic": "1",
+       "objects": "362",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "7050",
+       "bsp": "0",
+       "cinematic": "1",
+       "objects": "362",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "8100",
+       "bsp": "0",
+       "cinematic": "0",
+       "objects": "405",
+       "actors": "4",
+       "script_threads": "105"
+      },
+      {
+       "tick": "9000",
+       "bsp": "0",
+       "cinematic": "0",
+       "objects": "404",
+       "actors": "4",
+       "script_threads": "105"
+      }
+     ],
+     "unsupported_names": [
+      "bink:RADSetMemory",
+      "d3d8:D3DResource_BlockUntilNotBusy",
+      "d3d8:D3DResource_Register",
+      "dsound:sound_cache_close",
+      "dsound:sound_cache_open",
+      "hires_assets:hud_hires_asset_count",
+      "menus:halo_menus_load",
+      "network:XNetGetEthernetLinkStatus",
+      "network:XNetStartup",
+      "render:halo_interpolation_enabled",
+      "render:predicted_resources_precache",
+      "render:rasterizer_decal_vertices_new",
+      "render:rasterizer_decals_dispose",
+      "render:rasterizer_decals_dispose_from_old_map",
+      "render:rasterizer_decals_initialize",
+      "render:rasterizer_initialize",
+      "render:texture_cache_bitmap_get_hardware_format",
+      "render:texture_cache_close",
+      "render:texture_cache_open"
+     ],
+     "host": {
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 1114.016,
+      "outcome": "exit_zero"
+     },
+     "persistence": "passed",
+     "guest_runner_result": "not_evaluated",
+     "host_reference": {
+      "simulation_all_same": true,
+      "whole_all_same_unpaced": true,
+      "allocations_all_same_unpaced": true,
+      "allocations_compared": 1794,
+      "ticks_compared": {
+       "a10": 9000,
+       "a10bsp": 10,
+       "a10sw": 600,
+       "prisoner": 600
+      },
+      "first_divergent_tick": {
+       "a10": null,
+       "a10bsp": null,
+       "a10sw": null,
+       "prisoner": null
+      },
+      "ticks_all_same": true,
+      "fixed_step_same": true,
+      "failures_same": true,
+      "runs": 23,
+      "runs_simulation_same": 23,
+      "runs_whole_same": 23,
+      "runs_whole_differing": []
+     }
+    }
+   ]
+  },
+  "research": {
+   "host": {
+    "os": "macOS",
+    "version": "27.0",
+    "machine": "arm64",
+    "python": "3.12.15"
+   },
+   "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+   "backend": "Vulkan",
+   "stock_limits": {
+    "Core.EnableCheats": "False",
+    "Core.OverclockEnable": "False",
+    "Core.Overclock": "1.0",
+    "Core.VIOverclockEnable": "False",
+    "Core.RAMOverrideEnable": "False",
+    "Core.EmulationSpeed": "1.0"
+   },
+   "os_stability": {
+    "observation": "no_instability_events_observed",
+    "source": "macos",
+    "instability_events": [],
+    "kernel_log_matched": [
+     {
+      "time": "2026-10-11 14:45:14.997284-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 14:45:14.997293-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 14:47:24.994612-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 14:47:24.994620-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 14:48:19.996019-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 14:48:19.996034-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 14:51:39.994639-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 14:51:39.994646-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 14:52:09.993681-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 14:52:09.993688-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 14:52:39.994291-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 14:52:39.994298-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 14:53:09.994476-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 14:53:09.994483-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 14:54:24.992914-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 14:54:24.992926-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 14:57:49.992797-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 14:57:49.992805-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 14:58:19.991646-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 14:58:19.991654-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 15:00:34.991082-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 15:00:34.991090-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 15:01:49.989902-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 15:01:49.989912-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 15:01:54.990250-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 15:01:54.990258-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 15:02:44.990040-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 15:02:44.990053-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 15:06:04.989871-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 15:06:04.989879-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 15:08:19.988553-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 15:08:19.988560-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     },
+     {
+      "time": "2026-10-11 15:14:49.986882-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, because no Boot-arg nor MegaWiFi profile"
+     },
+     {
+      "time": "2026-10-11 15:14:49.986893-0500",
+      "process": "kernel",
+      "message": "wlan0:com.apple.p2p.en1: Disabling shouldCapture and willWatchdog, due to disableDPSCaptureDueToRateLimit()"
+     }
+    ],
+    "dolphin_application_events": [],
+    "dolphin_application_event_count": 0,
+    "last_boot_utc": "2026-10-11T17:29:07+00:00",
+    "limits": "Read-only, batch window only: kern.boottime; names and modification times of files in the system and user DiagnosticReports folders (only their kind is kept); `log show` over the window for kernel panic/GPU-restart/watchdog messages, ReportCrash naming Dolphin and fault-level Dolphin messages. A kernel panic restarts the host and ends this runner, so it would appear as a later boot time or panic report, not in this record. Absence of events is not a guarantee of stability.",
+    "report_folders_unreadable": [],
+    "window_utc": [
+     "2026-10-11T19:42:26+00:00",
+     "2026-10-11T20:19:39+00:00"
+    ]
+   },
+   "physical_wii": "untested",
+   "staged_files": [
+    {
+     "sd_path": "data/maps/a10.wmap",
+     "sha256": "810be90c6fa0c70dba61fee5fc38279712d2a97d7391cac02421201769c4eb38",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/a10bsp.wmap",
+     "sha256": "cfbd0944621b6088518f4605b47168362da0e429f4ed69ef3a4c0b46802dfb37",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/a10sw.wmap",
+     "sha256": "810be90c6fa0c70dba61fee5fc38279712d2a97d7391cac02421201769c4eb38",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/manifest.txt",
+     "sha256": "069a7591fe1085a13a68a03fba5e3a2d9a8367d5cf0c653c92d0171f2417b8de",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/prisoner.wmap",
+     "sha256": "fecad67a622a7dbc3b41bee7ed91c73087c6e03d76907902702a4b107d395282",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/prisonerflip.wmap",
+     "sha256": "58217dc998ee461d53764917f7c4aceabf7c299641a2492e75d952e3653c1c0f",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/prisonermm.wmap",
+     "sha256": "fecad67a622a7dbc3b41bee7ed91c73087c6e03d76907902702a4b107d395282",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/prisonerold.wmap",
+     "sha256": "017dea1f6b632a901b63421a38b16faec40f8e88666708066454260c2f5af2a7",
+     "verified": true
+    },
+    {
+     "sd_path": "data/maps/prisonertrunc.wmap",
+     "sha256": "9df242f0afebd65e1358592d6e8228b64fed6782008d90d8da00372baee53ed0",
+     "verified": true
+    },
+    {
+     "sd_path": "render.txt",
+     "sha256": "5b2e7862ffa6fbee9e7eb29d2b3b7af551a8f0bc5a263fd655f13a54e53de2b6",
+     "verified": true
+    },
+    {
+     "sd_path": "map.txt",
+     "sha256": "8431d72e87a1a61597a1bcf90eab955a24446b5eb8ab2240182e03bd4cfabf0f",
+     "verified": true
+    }
+   ],
+   "launches": [
+    {
+     "build": "a0fb01de7eb68432",
+     "previous_runs": 0,
+     "fpscr": {
+      "entry": "00000004",
+      "engine": "00000000",
+      "ieee": "1"
+     },
+     "persist": {
+      "previous_result": "0",
+      "digest": "00000000",
+      "chain": "00000000"
+     },
+     "fixed_step": {
+      "cadence": "30hz",
+      "ticks": "300",
+      "digest": "c1ad6ae6",
+      "chain": "58ce9719",
+      "pass": "1"
+     },
+     "arena_open": {
+      "offset": "0",
+      "required": "51380224",
+      "spare": "2985984"
+     },
+     "arena_close": {
+      "restored": "1",
+      "general_peak": "65536",
+      "failed_allocations": "0",
+      "heap_in_use": "2126048",
+      "low_before": "0x90002000",
+      "low_after": "0x90002000"
+     },
+     "memory": {
+      "entry": {
+       "bytes": "54386688",
+       "main_stack": "131072"
+      },
+      "after_gx": {
+       "bytes": "1671168",
+       "heap_in_use": "1795392",
+       "xfb_bytes_each": "614400"
+      },
+      "after_engine_start": {
+       "arena1_lo": "0x81770000",
+       "arena2_lo": "0x90002000"
+      },
+      "game_initialize": {
+       "game_state_used": "17986420",
+       "heap_in_use": "2880840"
+      }
+     },
+     "stack": {
+      "painted": "114688",
+      "peak_below_entry": "104088",
+      "window_exhausted": "0"
+     },
+     "threads": {
+      "created": "1",
+      "measured": "1",
+      "stack_bytes": "65536",
+      "stack_peak": "256"
+     },
+     "map_plan": {
+      "lines": "11",
+      "maps": "5",
+      "runs": "24",
+      "simulation_identical": "0",
+      "whole_identical_per_cadence": "0",
+      "heap_flat": "1",
+      "expectations": "9",
+      "met": "9",
+      "map_errors": "7",
+      "failures": "0"
+     },
+     "map_times": {
+      "load_ms": "401",
+      "run_ms": "6459"
+     },
+     "end": {
+      "cycles": "3",
+      "cadences": "6",
+      "failures": "0",
+      "elapsed_ms": "1110037",
+      "result": "pass"
+     },
+     "expect": [
+      {
+       "map": "prisoner",
+       "simulation": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      }
+     ],
+     "map_errors": [
+      {
+       "kind": "not_staged",
+       "map": "nomap"
+      },
+      {
+       "kind": "data_root",
+       "map": "a10"
+      },
+      {
+       "kind": "damaged",
+       "map": "prisonertrunc"
+      },
+      {
+       "kind": "damaged",
+       "map": "prisonerflip"
+      },
+      {
+       "kind": "stale",
+       "map": "prisonerold"
+      },
+      {
+       "kind": "manifest_mismatch",
+       "map": "prisonermm"
+      },
+      {
+       "kind": "damaged",
+       "map": "a10bsp"
+      }
+     ],
+     "load_failures": [
+      {
+       "map": "nomap",
+       "expected": "not_staged",
+       "kind": "not_staged",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      },
+      {
+       "map": "a10",
+       "expected": "data_root",
+       "kind": "data_root",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      },
+      {
+       "map": "prisonertrunc",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "ms": "2",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerflip",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "ms": "156",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerold",
+       "expected": "stale",
+       "kind": "stale",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      },
+      {
+       "map": "prisonermm",
+       "expected": "manifest_mismatch",
+       "kind": "manifest_mismatch",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      }
+     ],
+     "bsp_failures": [
+      {
+       "map": "a10bsp",
+       "expected": "damaged",
+       "kind": "damaged",
+       "asked": "1",
+       "bsp_before": "7",
+       "bsp_after": "7",
+       "bsp_at_end": "7",
+       "pass": "1"
+      }
+     ],
+     "map_runs": [
+      {
+       "map": "prisoner",
+       "runs": "18",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "0",
+       "heap_flat": "1",
+       "digest": "6d88af44",
+       "chain": "fb5dcbf2",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "tags_start": "00c29f29"
+      },
+      {
+       "map": "prisoner",
+       "runs": "1",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "tags_start": "00c29f29"
+      },
+      {
+       "map": "a10bsp",
+       "runs": "1",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "f03226e8",
+       "chain": "29ee0898",
+       "sim": "0e3af237",
+       "sim_chain": "5645a9f0",
+       "tags_start": "231685d8"
+      },
+      {
+       "map": "a10sw",
+       "runs": "1",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "cb74ca2c",
+       "chain": "21c980fb",
+       "sim": "3f7044de",
+       "sim_chain": "e0fdf2db",
+       "tags_start": "231685d8"
+      },
+      {
+       "map": "a10",
+       "runs": "3",
+       "simulation_identical": "0",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "73150638",
+       "chain": "422ca68f",
+       "sim": "cb3f9925",
+       "sim_chain": "7a51c099",
+       "tags_start": "231685d8"
+      }
+     ],
+     "cycles": [
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "heap_in_use": "2500912"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "heap_in_use": "2500912"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "heap_in_use": "2500912"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "heap_in_use": "2500912"
+      },
+      {
+       "map": "a10bsp",
+       "cycle": "0",
+       "heap_in_use": "2501008"
+      },
+      {
+       "map": "a10sw",
+       "cycle": "0",
+       "heap_in_use": "2501008"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "heap_in_use": "2501008"
+      }
+     ],
+     "loads": [
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "20hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "158",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "144hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "irregular",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "60hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "30hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "20hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "144hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "irregular",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "158",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "vsync_measured",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "158",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "60hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "30hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "20hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "144hz",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "158",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "irregular",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "vsync_measured",
+       "ms": "401",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "a10bsp",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "1234",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "410",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10sw",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "1234",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "409",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ms": "1230",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "405",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "1230",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "405",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ms": "1230",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "405",
+       "staging": "7dc74a74"
+      }
+     ],
+     "runs": [
+      {
+       "map": "prisoner",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ff0f3809",
+       "raw_chain": "1c9e81bb",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6265"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "6d88af44",
+       "chain": "fb5dcbf2",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "1634c4f6",
+       "raw_chain": "2340ad84",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6459"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ff0f3809",
+       "raw_chain": "1c9e81bb",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6264"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "most_ticks_in_a_frame": "2",
+       "digest": "cca5226c",
+       "chain": "c2bdd1c6",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "46ac81af",
+       "raw_chain": "2b4e317e",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6278"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a2881831",
+       "chain": "4f61d931",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "c22168cf",
+       "raw_chain": "6a0e6d5b",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6987"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "most_ticks_in_a_frame": "7",
+       "digest": "996db3dc",
+       "chain": "17bf93a1",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "e7b0ebed",
+       "raw_chain": "5210b693",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6306"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a85305ba",
+       "chain": "c2b7c34c",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ecc5cb1d",
+       "raw_chain": "eafe992a",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "30a37788",
+       "chain": "49ffad62",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "7a3ea0f3",
+       "raw_chain": "691f3e72",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6449"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ff0f3809",
+       "raw_chain": "1c9e81bb",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6264"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "most_ticks_in_a_frame": "2",
+       "digest": "649a805a",
+       "chain": "2878f0ad",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "cce56478",
+       "raw_chain": "6df7ad36",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6319"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "most_ticks_in_a_frame": "1",
+       "digest": "2bfc4008",
+       "chain": "385825a1",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "3eca8f72",
+       "raw_chain": "993740b4",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6987"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "most_ticks_in_a_frame": "7",
+       "digest": "4ed106d1",
+       "chain": "638b2eaa",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "09796166",
+       "raw_chain": "3b5e0cb3",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6300"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a85305ba",
+       "chain": "c2b7c34c",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ecc5cb1d",
+       "raw_chain": "eafe992a",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "30a37788",
+       "chain": "49ffad62",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "7a3ea0f3",
+       "raw_chain": "691f3e72",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6449"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ff0f3809",
+       "raw_chain": "1c9e81bb",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6264"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "most_ticks_in_a_frame": "2",
+       "digest": "649a805a",
+       "chain": "2878f0ad",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "cce56478",
+       "raw_chain": "6df7ad36",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6319"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "most_ticks_in_a_frame": "1",
+       "digest": "5d827af1",
+       "chain": "136c8b68",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "8d5e9e77",
+       "raw_chain": "550c1487",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6887"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "most_ticks_in_a_frame": "7",
+       "digest": "e13e71c4",
+       "chain": "6c9ab670",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "68d1b843",
+       "raw_chain": "eb67c97b",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6282"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a85305ba",
+       "chain": "c2b7c34c",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ecc5cb1d",
+       "raw_chain": "eafe992a",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "15db0308",
+       "sim_raw_chain": "3a74cc6b",
+       "raw": "ff0f3809",
+       "raw_chain": "1c9e81bb",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6267"
+      },
+      {
+       "map": "a10bsp",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "10",
+       "frames": "10",
+       "most_ticks_in_a_frame": "1",
+       "digest": "f03226e8",
+       "chain": "29ee0898",
+       "sim": "0e3af237",
+       "sim_chain": "5645a9f0",
+       "sim_raw": "72c2dac6",
+       "sim_raw_chain": "f6544d00",
+       "raw": "1cb6caa4",
+       "raw_chain": "9dac4147",
+       "objects": "344",
+       "bsp": "7",
+       "bsp_switches": "2",
+       "command_tick": "5",
+       "command_result": "1",
+       "requests_left": "0",
+       "ms": "1378"
+      },
+      {
+       "map": "a10sw",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "600",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cb74ca2c",
+       "chain": "21c980fb",
+       "sim": "3f7044de",
+       "sim_chain": "e0fdf2db",
+       "sim_raw": "07747a10",
+       "sim_raw_chain": "7c51d3de",
+       "raw": "93b02aaa",
+       "raw_chain": "d9bf98a9",
+       "objects": "355",
+       "bsp": "2",
+       "bsp_switches": "2",
+       "command_tick": "300",
+       "command_result": "1",
+       "requests_left": "0",
+       "ms": "18577"
+      },
+      {
+       "map": "a10",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "30",
+       "frames": "30",
+       "most_ticks_in_a_frame": "1",
+       "digest": "783f693a",
+       "chain": "8f68fd24",
+       "sim": "77749370",
+       "sim_chain": "28b8feed",
+       "sim_raw": "5cd461ec",
+       "sim_raw_chain": "041ed72f",
+       "raw": "8be34804",
+       "raw_chain": "d325c602",
+       "objects": "344",
+       "bsp": "7",
+       "bsp_switches": "1",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "1653"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "9000",
+       "frames": "18000",
+       "most_ticks_in_a_frame": "1",
+       "digest": "73150638",
+       "chain": "422ca68f",
+       "sim": "cb3f9925",
+       "sim_chain": "7a51c099",
+       "sim_raw": "80bedd07",
+       "sim_raw_chain": "3a512819",
+       "raw": "35f19a4c",
+       "raw_chain": "0caf863e",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "309229"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "9000",
+       "frames": "9000",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a91bb256",
+       "chain": "cb7ff8fa",
+       "sim": "f58bd4b1",
+       "sim_chain": "979a0191",
+       "sim_raw": "9e91d8f2",
+       "sim_raw_chain": "7788160a",
+       "raw": "fae3ddf5",
+       "raw_chain": "d342fa9a",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "303876"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "9000",
+       "frames": "1795",
+       "most_ticks_in_a_frame": "7",
+       "digest": "b0165975",
+       "chain": "614c5d24",
+       "sim": "d35dbff2",
+       "sim_chain": "9e4148cb",
+       "sim_raw": "7948ac8c",
+       "sim_raw_chain": "f6900104",
+       "raw": "ecb7d9af",
+       "raw_chain": "48a5a228",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "317644"
+      }
+     ],
+     "progress_a10_first_run_changes": [
+      {
+       "tick": "1",
+       "bsp": "0",
+       "cinematic": "0",
+       "objects": "358",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "150",
+       "bsp": "7",
+       "cinematic": "1",
+       "objects": "351",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "1350",
+       "bsp": "1",
+       "cinematic": "1",
+       "objects": "373",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "3750",
+       "bsp": "8",
+       "cinematic": "1",
+       "objects": "362",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "7050",
+       "bsp": "0",
+       "cinematic": "1",
+       "objects": "362",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "8100",
+       "bsp": "0",
+       "cinematic": "0",
+       "objects": "405",
+       "actors": "4",
+       "script_threads": "105"
+      },
+      {
+       "tick": "9000",
+       "bsp": "0",
+       "cinematic": "0",
+       "objects": "404",
+       "actors": "4",
+       "script_threads": "105"
+      }
+     ],
+     "unsupported_names": [
+      "bink:RADSetMemory",
+      "d3d8:D3DResource_BlockUntilNotBusy",
+      "d3d8:D3DResource_Register",
+      "dsound:sound_cache_close",
+      "dsound:sound_cache_open",
+      "hires_assets:hud_hires_asset_count",
+      "menus:halo_menus_load",
+      "network:XNetGetEthernetLinkStatus",
+      "network:XNetStartup",
+      "render:halo_interpolation_enabled",
+      "render:predicted_resources_precache",
+      "render:rasterizer_decal_vertices_new",
+      "render:rasterizer_decals_dispose",
+      "render:rasterizer_decals_dispose_from_old_map",
+      "render:rasterizer_decals_initialize",
+      "render:rasterizer_initialize",
+      "render:texture_cache_bitmap_get_hardware_format",
+      "render:texture_cache_close",
+      "render:texture_cache_open"
+     ],
+     "host": {
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 1110.869,
+      "outcome": "exit_zero"
+     },
+     "persistence": "passed",
+     "guest_runner_result": "not_evaluated",
+     "host_reference": {
+      "simulation_all_same": true,
+      "whole_all_same_unpaced": true,
+      "allocations_all_same_unpaced": true,
+      "allocations_compared": 1794,
+      "ticks_compared": {
+       "a10": 9000,
+       "a10bsp": 10,
+       "a10sw": 600,
+       "prisoner": 600
+      },
+      "first_divergent_tick": {
+       "a10": null,
+       "a10bsp": null,
+       "a10sw": null,
+       "prisoner": null
+      },
+      "ticks_all_same": true,
+      "fixed_step_same": true,
+      "failures_same": true,
+      "runs": 23,
+      "runs_simulation_same": 23,
+      "runs_whole_same": 23,
+      "runs_whole_differing": []
+     }
+    },
+    {
+     "build": "a0fb01de7eb68432",
+     "previous_runs": 1,
+     "fpscr": {
+      "entry": "00000004",
+      "engine": "00000000",
+      "ieee": "1"
+     },
+     "persist": {
+      "previous_result": "1",
+      "digest": "127656ef",
+      "chain": "73904c7f"
+     },
+     "fixed_step": {
+      "cadence": "30hz",
+      "ticks": "300",
+      "digest": "c1ad6ae6",
+      "chain": "58ce9719",
+      "pass": "1"
+     },
+     "arena_open": {
+      "offset": "4096",
+      "required": "51380224",
+      "spare": "2981888"
+     },
+     "arena_close": {
+      "restored": "1",
+      "general_peak": "65536",
+      "failed_allocations": "0",
+      "heap_in_use": "2126072",
+      "low_before": "0x90002000",
+      "low_after": "0x90002000"
+     },
+     "memory": {
+      "entry": {
+       "bytes": "54386688",
+       "main_stack": "131072"
+      },
+      "after_gx": {
+       "bytes": "1671168",
+       "heap_in_use": "1795392",
+       "xfb_bytes_each": "614400"
+      },
+      "after_engine_start": {
+       "arena1_lo": "0x81770000",
+       "arena2_lo": "0x90002000"
+      },
+      "game_initialize": {
+       "game_state_used": "17986420",
+       "heap_in_use": "2880880"
+      }
+     },
+     "stack": {
+      "painted": "114688",
+      "peak_below_entry": "104088",
+      "window_exhausted": "0"
+     },
+     "threads": {
+      "created": "1",
+      "measured": "1",
+      "stack_bytes": "65536",
+      "stack_peak": "256"
+     },
+     "map_plan": {
+      "lines": "11",
+      "maps": "5",
+      "runs": "24",
+      "simulation_identical": "0",
+      "whole_identical_per_cadence": "0",
+      "heap_flat": "1",
+      "expectations": "9",
+      "met": "9",
+      "map_errors": "7",
+      "failures": "0"
+     },
+     "map_times": {
+      "load_ms": "400",
+      "run_ms": "6459"
+     },
+     "end": {
+      "cycles": "3",
+      "cadences": "6",
+      "failures": "0",
+      "elapsed_ms": "1109985",
+      "result": "pass"
+     },
+     "expect": [
+      {
+       "map": "prisoner",
+       "simulation": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      },
+      {
+       "map": "prisoner",
+       "simulation": "127656ef",
+       "expected": "127656ef",
+       "pass": "1"
+      }
+     ],
+     "map_errors": [
+      {
+       "kind": "not_staged",
+       "map": "nomap"
+      },
+      {
+       "kind": "data_root",
+       "map": "a10"
+      },
+      {
+       "kind": "damaged",
+       "map": "prisonertrunc"
+      },
+      {
+       "kind": "damaged",
+       "map": "prisonerflip"
+      },
+      {
+       "kind": "stale",
+       "map": "prisonerold"
+      },
+      {
+       "kind": "manifest_mismatch",
+       "map": "prisonermm"
+      },
+      {
+       "kind": "damaged",
+       "map": "a10bsp"
+      }
+     ],
+     "load_failures": [
+      {
+       "map": "nomap",
+       "expected": "not_staged",
+       "kind": "not_staged",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      },
+      {
+       "map": "a10",
+       "expected": "data_root",
+       "kind": "data_root",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      },
+      {
+       "map": "prisonertrunc",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerflip",
+       "expected": "damaged",
+       "kind": "damaged",
+       "loaded": "0",
+       "ms": "153",
+       "pass": "1"
+      },
+      {
+       "map": "prisonerold",
+       "expected": "stale",
+       "kind": "stale",
+       "loaded": "0",
+       "ms": "1",
+       "pass": "1"
+      },
+      {
+       "map": "prisonermm",
+       "expected": "manifest_mismatch",
+       "kind": "manifest_mismatch",
+       "loaded": "0",
+       "ms": "3",
+       "pass": "1"
+      }
+     ],
+     "bsp_failures": [
+      {
+       "map": "a10bsp",
+       "expected": "damaged",
+       "kind": "damaged",
+       "asked": "1",
+       "bsp_before": "7",
+       "bsp_after": "7",
+       "bsp_at_end": "7",
+       "pass": "1"
+      }
+     ],
+     "map_runs": [
+      {
+       "map": "prisoner",
+       "runs": "18",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "0",
+       "heap_flat": "1",
+       "digest": "6d88af44",
+       "chain": "fb5dcbf2",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "tags_start": "2469014f"
+      },
+      {
+       "map": "prisoner",
+       "runs": "1",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "tags_start": "2469014f"
+      },
+      {
+       "map": "a10bsp",
+       "runs": "1",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "f03226e8",
+       "chain": "bd7b68e6",
+       "sim": "0e3af237",
+       "sim_chain": "e04f56d3",
+       "tags_start": "5e7d74fb"
+      },
+      {
+       "map": "a10sw",
+       "runs": "1",
+       "simulation_identical": "1",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "cb74ca2c",
+       "chain": "c890dcda",
+       "sim": "3f7044de",
+       "sim_chain": "639dd677",
+       "tags_start": "5e7d74fb"
+      },
+      {
+       "map": "a10",
+       "runs": "3",
+       "simulation_identical": "0",
+       "whole_identical_per_cadence": "1",
+       "heap_flat": "1",
+       "digest": "afa11b25",
+       "chain": "b8af5be8",
+       "sim": "cd5e35d5",
+       "sim_chain": "23fd6c5e",
+       "tags_start": "5e7d74fb"
+      }
+     ],
+     "cycles": [
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "heap_in_use": "2500944"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "heap_in_use": "2500944"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "heap_in_use": "2500944"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "heap_in_use": "2500944"
+      },
+      {
+       "map": "a10bsp",
+       "cycle": "0",
+       "heap_in_use": "2501040"
+      },
+      {
+       "map": "a10sw",
+       "cycle": "0",
+       "heap_in_use": "2501040"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "heap_in_use": "2501040"
+      }
+     ],
+     "loads": [
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "20hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "144hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "irregular",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "60hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "30hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "20hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "144hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "irregular",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "vsync_measured",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "60hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "30hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "20hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "144hz",
+       "ms": "402",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "158",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "irregular",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "157",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "vsync_measured",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "158",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "400",
+       "segments": "2",
+       "reads": "2",
+       "bytes": "7919052",
+       "relocations": "16934",
+       "unstaged_reads": "0",
+       "cache_ms": "156",
+       "staging": "3189bf32"
+      },
+      {
+       "map": "a10bsp",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "1234",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "409",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10sw",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "1234",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "409",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ms": "1230",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "406",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ms": "1230",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "405",
+       "staging": "7dc74a74"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ms": "1230",
+       "segments": "10",
+       "reads": "2",
+       "bytes": "20388016",
+       "relocations": "36138",
+       "unstaged_reads": "0",
+       "cache_ms": "405",
+       "staging": "7dc74a74"
+      }
+     ],
+     "runs": [
+      {
+       "map": "prisoner",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "5edebc10",
+       "raw_chain": "0f11c208",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6265"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "6d88af44",
+       "chain": "fb5dcbf2",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "084deff9",
+       "raw_chain": "13fe6a13",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6459"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "5edebc10",
+       "raw_chain": "0f11c208",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6264"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "most_ticks_in_a_frame": "2",
+       "digest": "cca5226c",
+       "chain": "c2bdd1c6",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "f7d12b03",
+       "raw_chain": "5735f162",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6278"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a2881831",
+       "chain": "4f61d931",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "83925f56",
+       "raw_chain": "17a610b2",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6987"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "most_ticks_in_a_frame": "7",
+       "digest": "996db3dc",
+       "chain": "17bf93a1",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "4b501392",
+       "raw_chain": "08f67069",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6306"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a85305ba",
+       "chain": "c2b7c34c",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "f21c517a",
+       "raw_chain": "b3642554",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "30a37788",
+       "chain": "49ffad62",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "f5a11dac",
+       "raw_chain": "c3a30361",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6449"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "5edebc10",
+       "raw_chain": "0f11c208",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6264"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "most_ticks_in_a_frame": "2",
+       "digest": "649a805a",
+       "chain": "2878f0ad",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "a8bd58ee",
+       "raw_chain": "b9122f70",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6319"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "most_ticks_in_a_frame": "1",
+       "digest": "2bfc4008",
+       "chain": "385825a1",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "be6fff82",
+       "raw_chain": "41bc34cf",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6987"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "most_ticks_in_a_frame": "7",
+       "digest": "4ed106d1",
+       "chain": "638b2eaa",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "beedbf15",
+       "raw_chain": "b2c2f791",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6300"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "1",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a85305ba",
+       "chain": "c2b7c34c",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "f21c517a",
+       "raw_chain": "b3642554",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "60hz",
+       "ticks": "300",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "30a37788",
+       "chain": "49ffad62",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "f5a11dac",
+       "raw_chain": "c3a30361",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6449"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "5edebc10",
+       "raw_chain": "0f11c208",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6264"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "20hz",
+       "ticks": "300",
+       "frames": "201",
+       "most_ticks_in_a_frame": "2",
+       "digest": "649a805a",
+       "chain": "2878f0ad",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "a8bd58ee",
+       "raw_chain": "b9122f70",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6319"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "144hz",
+       "ticks": "300",
+       "frames": "1441",
+       "most_ticks_in_a_frame": "1",
+       "digest": "5d827af1",
+       "chain": "136c8b68",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "b498cd99",
+       "raw_chain": "5852ea14",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6887"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "irregular",
+       "ticks": "300",
+       "frames": "224",
+       "most_ticks_in_a_frame": "7",
+       "digest": "e13e71c4",
+       "chain": "6c9ab670",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "1c534681",
+       "raw_chain": "2d0eaa48",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6282"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "2",
+       "cadence": "vsync_measured",
+       "ticks": "300",
+       "frames": "301",
+       "most_ticks_in_a_frame": "1",
+       "digest": "a85305ba",
+       "chain": "c2b7c34c",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "f21c517a",
+       "raw_chain": "b3642554",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "10165"
+      },
+      {
+       "map": "prisoner",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "300",
+       "frames": "300",
+       "most_ticks_in_a_frame": "1",
+       "digest": "4246b8f6",
+       "chain": "3a7c6cfc",
+       "sim": "127656ef",
+       "sim_chain": "73904c7f",
+       "sim_raw": "ff256356",
+       "sim_raw_chain": "9dd50085",
+       "raw": "5edebc10",
+       "raw_chain": "0f11c208",
+       "objects": "5",
+       "bsp": "0",
+       "bsp_switches": "0",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "6265"
+      },
+      {
+       "map": "a10bsp",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "10",
+       "frames": "10",
+       "most_ticks_in_a_frame": "1",
+       "digest": "f03226e8",
+       "chain": "bd7b68e6",
+       "sim": "0e3af237",
+       "sim_chain": "e04f56d3",
+       "sim_raw": "12b471b6",
+       "sim_raw_chain": "6beb6326",
+       "raw": "139fa372",
+       "raw_chain": "dc81c57f",
+       "objects": "344",
+       "bsp": "7",
+       "bsp_switches": "2",
+       "command_tick": "5",
+       "command_result": "1",
+       "requests_left": "0",
+       "ms": "1378"
+      },
+      {
+       "map": "a10sw",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "600",
+       "frames": "600",
+       "most_ticks_in_a_frame": "1",
+       "digest": "cb74ca2c",
+       "chain": "c890dcda",
+       "sim": "3f7044de",
+       "sim_chain": "639dd677",
+       "sim_raw": "874d3dd8",
+       "sim_raw_chain": "64d6d906",
+       "raw": "015924d4",
+       "raw_chain": "7b12b28e",
+       "objects": "355",
+       "bsp": "2",
+       "bsp_switches": "2",
+       "command_tick": "300",
+       "command_result": "1",
+       "requests_left": "0",
+       "ms": "18577"
+      },
+      {
+       "map": "a10",
+       "cycle": "-1",
+       "cadence": "30hz",
+       "ticks": "30",
+       "frames": "30",
+       "most_ticks_in_a_frame": "1",
+       "digest": "783f693a",
+       "chain": "b00ae709",
+       "sim": "77749370",
+       "sim_chain": "7f70c807",
+       "sim_raw": "9ac95248",
+       "sim_raw_chain": "a646a4dd",
+       "raw": "119965d0",
+       "raw_chain": "5ce26a39",
+       "objects": "344",
+       "bsp": "7",
+       "bsp_switches": "1",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "1653"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "60hz",
+       "ticks": "9000",
+       "frames": "18000",
+       "most_ticks_in_a_frame": "1",
+       "digest": "afa11b25",
+       "chain": "b8af5be8",
+       "sim": "cd5e35d5",
+       "sim_chain": "23fd6c5e",
+       "sim_raw": "8871d195",
+       "sim_raw_chain": "3ee48b98",
+       "raw": "a93298c3",
+       "raw_chain": "087768c8",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "309229"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "30hz",
+       "ticks": "9000",
+       "frames": "9000",
+       "most_ticks_in_a_frame": "1",
+       "digest": "75afaf4b",
+       "chain": "e52a006d",
+       "sim": "f3ea7841",
+       "sim_chain": "7d263393",
+       "sim_raw": "89ef148a",
+       "sim_raw_chain": "671a32cf",
+       "raw": "ad68a27e",
+       "raw_chain": "9c94ebab",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "303876"
+      },
+      {
+       "map": "a10",
+       "cycle": "0",
+       "cadence": "vsync_measured",
+       "ticks": "9000",
+       "frames": "1795",
+       "most_ticks_in_a_frame": "7",
+       "digest": "c64b00ea",
+       "chain": "bc726d50",
+       "sim": "d53c1302",
+       "sim_chain": "74fd7ac9",
+       "sim_raw": "d6be3629",
+       "sim_raw_chain": "c9e9393a",
+       "raw": "8a417184",
+       "raw_chain": "25852030",
+       "objects": "404",
+       "bsp": "0",
+       "bsp_switches": "4",
+       "command_tick": "-1",
+       "command_result": "0",
+       "requests_left": "0",
+       "ms": "317644"
+      }
+     ],
+     "progress_a10_first_run_changes": [
+      {
+       "tick": "1",
+       "bsp": "0",
+       "cinematic": "0",
+       "objects": "358",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "150",
+       "bsp": "7",
+       "cinematic": "1",
+       "objects": "351",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "1350",
+       "bsp": "1",
+       "cinematic": "1",
+       "objects": "373",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "3750",
+       "bsp": "8",
+       "cinematic": "1",
+       "objects": "362",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "7050",
+       "bsp": "0",
+       "cinematic": "1",
+       "objects": "362",
+       "actors": "2",
+       "script_threads": "105"
+      },
+      {
+       "tick": "8100",
+       "bsp": "0",
+       "cinematic": "0",
+       "objects": "405",
+       "actors": "4",
+       "script_threads": "105"
+      },
+      {
+       "tick": "9000",
+       "bsp": "0",
+       "cinematic": "0",
+       "objects": "404",
+       "actors": "4",
+       "script_threads": "105"
+      }
+     ],
+     "unsupported_names": [
+      "bink:RADSetMemory",
+      "d3d8:D3DResource_BlockUntilNotBusy",
+      "d3d8:D3DResource_Register",
+      "dsound:sound_cache_close",
+      "dsound:sound_cache_open",
+      "hires_assets:hud_hires_asset_count",
+      "menus:halo_menus_load",
+      "network:XNetGetEthernetLinkStatus",
+      "network:XNetStartup",
+      "render:halo_interpolation_enabled",
+      "render:predicted_resources_precache",
+      "render:rasterizer_decal_vertices_new",
+      "render:rasterizer_decals_dispose",
+      "render:rasterizer_decals_dispose_from_old_map",
+      "render:rasterizer_decals_initialize",
+      "render:rasterizer_initialize",
+      "render:texture_cache_bitmap_get_hardware_format",
+      "render:texture_cache_close",
+      "render:texture_cache_open"
+     ],
+     "host": {
+      "exit_code_hex": "0x00000000",
+      "forced_stop": false,
+      "elapsed_seconds": 1110.871,
+      "outcome": "exit_zero"
+     },
+     "persistence": "passed",
+     "guest_runner_result": "not_evaluated",
+     "host_reference": {
+      "simulation_all_same": true,
+      "whole_all_same_unpaced": true,
+      "allocations_all_same_unpaced": true,
+      "allocations_compared": 1794,
+      "ticks_compared": {
+       "a10": 9000,
+       "a10bsp": 10,
+       "a10sw": 600,
+       "prisoner": 600
+      },
+      "first_divergent_tick": {
+       "a10": null,
+       "a10bsp": null,
+       "a10sw": null,
+       "prisoner": null
+      },
+      "ticks_all_same": true,
+      "fixed_step_same": true,
+      "failures_same": true,
+      "runs": 23,
+      "runs_simulation_same": 23,
+      "runs_whole_same": 23,
+      "runs_whole_differing": []
+     }
+    }
+   ]
+  }
+ },
+ "plan": [
+  "prisoner: 18 runs (3 cycles x 6 cadences), expect simulation 127656ef",
+  "fail not_staged (nomap)",
+  "fail data_root (a10 from a wrong maps directory)",
+  "fail damaged (prisonertrunc: first half of the staging)",
+  "fail damaged (prisonerflip: one tag data byte changed)",
+  "fail stale (prisonerold: a format-1 staging)",
+  "fail manifest_mismatch (prisonermm: the manifest lists another staging's digest)",
+  "prisoner: 1 run at 30hz, expect simulation 127656ef",
+  "a10bsp: 10 ticks, switch_bsp 1 after tick 5 into a damaged second bsp, expect_error damaged",
+  "a10sw: a10 under another name, 600 ticks, switch_bsp 2 after tick 300 (labelled script command)",
+  "a10: 9000 ticks at 30hz, 60hz and vsync_measured after a 30-tick warm-up, invariance reported"
+ ],
+ "render": {
+  "wii": "render=off",
+  "observer_camera": "omitted on both sides",
+  "rasterizer_initialize": "unmade on both sides"
+ },
+ "load_failure_files": {
+  "a10bsp.wmap": "cfbd0944621b6088518f4605b47168362da0e429f4ed69ef3a4c0b46802dfb37",
+  "a10bsp.le.wmap": "a082a1a2dbfef6332bbec0549acd080bde58235554963d8b5e459e39c395e887",
+  "prisonerflip.wmap": "58217dc998ee461d53764917f7c4aceabf7c299641a2492e75d952e3653c1c0f",
+  "prisonerflip.le.wmap": "d27cdba7fcd4fbd1d79419d46599ed1570dbc005897ea827771022bd1a62ee9c",
+  "prisonermm.wmap": "fecad67a622a7dbc3b41bee7ed91c73087c6e03d76907902702a4b107d395282",
+  "prisonermm.le.wmap": "d130acf0c7ca86b9da79b7cbc6150edc4025d58370f28badf0a775f0458aa616",
+  "prisonerold.wmap": "017dea1f6b632a901b63421a38b16faec40f8e88666708066454260c2f5af2a7",
+  "prisonerold.le.wmap": "a22e1580d63070ede43eaab585875803e40bceb9cfd75ee0361a75f8327f9b1f",
+  "prisonertrunc.wmap": "9df242f0afebd65e1358592d6e8228b64fed6782008d90d8da00372baee53ed0",
+  "prisonertrunc.le.wmap": "917525693bb6db9baddcef8b3512a006f87f071eb13d459cf9366490568650d7",
+  "manifest.txt": "8eb2c75187c49de976bdab5fe760b8c0f9e47fc56550a224980bd3995fc340af",
+  "manifest.le.txt": "9c61a788dbec15c6e9abc961a3ec426e4af2aaf5aebfcefc9f6bff79bdc256a5",
+  "identical_on_titan_and_research": true
+ },
+ "divergences": [
+  {
+   "found": "a10 scripts stalled on both sides",
+   "cause": "the main loop's deferred game requests were not run",
+   "resolution": "run: main_port_game_requests (main.c)"
+  },
+  {
+   "found": "Wii only: mission script never woke",
+   "cause": "script value cells read by casts of the long",
+   "resolution": "engine fix: HS_CELL accessors (hs.h, hs_runtime.c, hs_compile.c)"
+  },
+  {
+   "found": "object constants staged wrong",
+   "cause": "a constant's cell is its constant type's",
+   "resolution": "stager fix with tests"
+  },
+  {
+   "found": "Wii crash at the first decal",
+   "cause": "no decal vertex cache without a rasterizer",
+   "resolution": "unsupported, reported: rasterizer_decal_vertices_new answers none"
+  },
+  {
+   "found": "runs differing within one process",
+   "cause": "identifiers, local random seed, dialogue variant counter carried over",
+   "resolution": "run: each load starts them as the first load had them"
+  },
+  {
+   "found": "canonical digest differing with equal bytes",
+   "cause": "non-pointer bytes read as a pointer in one byte order",
+   "resolution": "digest: raw every tick"
+  },
+  {
+   "found": "script thread stacks differing",
+   "cause": "unaligned frames and dead residue",
+   "resolution": "digest: frame by frame"
+  },
+  {
+   "found": "damaged bsp halted the game",
+   "cause": "_error_immediate on a failed bsp load",
+   "resolution": "engine fix: silent error, bsp before kept (scenario.c)"
+  },
+  {
+   "found": "Research only: squads and platoons",
+   "cause": "0/0 NaN sign differs by target (x86/Xbox 0xFFC00000, PowerPC/ARM 0x7FC00000); Titan's x86 JIT matched by accident",
+   "resolution": "engine fix: the Xbox's bits (encounters.c)"
+  },
+  {
+   "found": "tick 3634 script threads",
+   "cause": "pushed frames held popped frames' bytes",
+   "resolution": "engine fix: frame values zeroed on push (hs_runtime.c)"
+  },
+  {
+   "found": "tick 7963 actors",
+   "cause": "look direction copied with its stack padding",
+   "resolution": "engine fix: fields copied (actor_looking.c)"
+  },
+  {
+   "found": "tick 7987 actors",
+   "cause": "unset union bytes of a look direction",
+   "resolution": "engine fix: the type's member only (actor_looking.c)"
+  },
+  {
+   "found": "tick 150 of a10's second and third runs in a launch, object globals",
+   "cause": "a cluster activation wrote only the union's short; the other half held an earlier object index's bytes, a different half in each byte order",
+   "resolution": "engine fix: the union cleared first (objects.c)"
+  },
+  {
+   "found": "tick 8082 script threads",
+   "cause": "this ticket's earlier change read sleep_until's long timeout as a short cell",
+   "resolution": "engine fix: read as a long; audit test"
+  },
+  {
+   "found": "a10 simulation differs between cadences",
+   "cause": "frame-coupled presentation",
+   "resolution": "classified, measured, reported per run (invariance=0)"
+  }
+ ],
+ "staging_determinism": {
+  "files_compared": 18,
+  "identical_titan_research": true,
+  "titan_commit": "bedbaaf3 (tools unchanged since 68d3b155)",
+  "research_commit": "bedbaaf3"
+ },
+ "timings": {
+  "titan": {
+   "a10_staging_seconds_with_wsl_walker_build": 135.6,
+   "prisoner_staging_seconds": 12.3,
+   "load_failure_files_seconds": 1.02,
+   "note_staging": "while the a10 render-on launch ran",
+   "wii_engine_build_incremental_seconds": 59.3,
+   "ci_targets_incremental_seconds": 12.0,
+   "host_reference_build_incremental_seconds": 33,
+   "host_reference_evidence_plan_seconds": [
+    50,
+    47,
+    55,
+    49
+   ],
+   "dolphin_launch_elapsed_seconds": [
+    1114.401,
+    1114.016
+   ],
+   "dolphin_batch_wall_seconds": 2269
+  },
+  "research": {
+   "a10_staging_seconds": 13.13,
+   "prisoner_staging_seconds": 1.43,
+   "load_failure_files_seconds": 0.13,
+   "load_during_staging": [
+    3.41,
+    3.1
+   ],
+   "dolphin_launch_elapsed_seconds": [
+    1110.869,
+    1110.871
+   ],
+   "dolphin_batch_wall_seconds": 2236,
+   "load_before": 1.71,
+   "load_after": 2.34,
+   "control_launch_elapsed_seconds": 31.671
+  },
+  "guest_ms": {
+   "a10_load": 1230,
+   "a10_cache_read": 405,
+   "prisoner_load": [
+    400,
+    401
+   ],
+   "a10_9000_ticks": {
+    "30hz": 303876,
+    "60hz": 309229,
+    "vsync_measured": 317644
+   },
+   "refused_loads": {
+    "not_staged": 1,
+    "data_root": 1,
+    "damaged_truncated": 2,
+    "damaged_crc": 156,
+    "stale": 1,
+    "manifest_mismatch": 1
+   }
+  }
+ },
+ "control": {
+  "build": "68d3b155 with source/hs from e8bc0e6d (pre-fix script runtime), build 7e5a208a243e8bda, private",
+  "plan": "a10, 900 ticks at 30hz",
+  "host": "research",
+  "wii": {
+   "bsp_at_end": 0,
+   "bsp_switches": 0,
+   "cinematic_by_tick_900": false
+  },
+  "host_fixed_runtime": {
+   "bsp_at_end": 7,
+   "bsp_switches": 1,
+   "cinematic_by_tick_150": true
+  },
+  "host_prefix_runtime": {
+   "bsp_at_end": 7,
+   "bsp_switches": 1,
+   "cinematic_by_tick_150": true
+  },
+  "first_divergent_tick_against_either_host": 1
+ },
+ "render_on": {
+  "host": "titan",
+  "build": "a0fb01de7eb68432",
+  "plan": "a10, 9000 ticks at 30hz",
+  "content_generation": "17189aa32aa83526",
+  "staged_files": 348,
+  "bytes": {
+   "geometry": 26654976,
+   "lightmap": 11162944,
+   "base_rgba8": 103822464
+  },
+  "result": "RENDER_FAIL geometry_decode error=memory for the first BSP at load and at the pose check; nothing drawn; END fail (1 failure); the game ran its 9000 ticks",
+  "owned_peak": 2973280,
+  "mem1_free_at_end": 516096,
+  "mem2_heap_growth": 4096,
+  "geometry_per_bsp": [
+   {
+    "bsp_tag": 3263,
+    "file": 2973280,
+    "decoded": 5127456,
+    "vertices": 67329,
+    "surfaces": 40946,
+    "materials": 181
+   },
+   {
+    "bsp_tag": 3285,
+    "file": 3955648,
+    "decoded": 6818976,
+    "vertices": 89541,
+    "surfaces": 54908,
+    "materials": 243
+   },
+   {
+    "bsp_tag": 3298,
+    "file": 2937728,
+    "decoded": 5056096,
+    "vertices": 66203,
+    "surfaces": 40642,
+    "materials": 240
+   },
+   {
+    "bsp_tag": 3307,
+    "file": 2665888,
+    "decoded": 4585792,
+    "vertices": 60002,
+    "surfaces": 36544,
+    "materials": 244
+   },
+   {
+    "bsp_tag": 3309,
+    "file": 3815520,
+    "decoded": 6575328,
+    "vertices": 86263,
+    "surfaces": 52128,
+    "materials": 276
+   },
+   {
+    "bsp_tag": 3313,
+    "file": 4189440,
+    "decoded": 7225408,
+    "vertices": 94889,
+    "surfaces": 56668,
+    "materials": 284
+   },
+   {
+    "bsp_tag": 3323,
+    "file": 4281792,
+    "decoded": 7382560,
+    "vertices": 96903,
+    "surfaces": 57532,
+    "materials": 317
+   },
+   {
+    "bsp_tag": 3325,
+    "file": 581536,
+    "decoded": 997280,
+    "vertices": 13231,
+    "surfaces": 8190,
+    "materials": 55
+   },
+   {
+    "bsp_tag": 3351,
+    "file": 1254144,
+    "decoded": 2170464,
+    "vertices": 28651,
+    "surfaces": 17216,
+    "materials": 26
+   }
+  ],
+  "free_above_reserve_after_start": {
+   "mem1": 589824,
+   "mem2_spare": 2985984,
+   "total": 3575808
+  },
+  "shortage": {
+   "first_bsp_load_peak": 8100736,
+   "first_bsp_short": 4524928,
+   "largest_bsp_load_peak": 11664352,
+   "largest_bsp_short": 8088544
+  }
+ },
+ "memory": {
+  "image_bytes": 21598912,
+  "image_range": "0x80003f00..0x8149d1c0",
+  "mem1_after_gx": 1671168,
+  "mem1_after_engine_start": 589824,
+  "hwi016b": {
+   "image_bytes": 21349792,
+   "mem1_after_gx": 1921024,
+   "mem1_after_engine_start": 839680
+  },
+  "harness_per_tick_arrays_growth": 205600,
+  "harness_static_bytes": {
+   "engine_map_run.o": 150648,
+   "real_map_scenario.o": 87401
+  },
+  "mem2_plan": 51380224,
+  "mem2_spare": 2985984,
+  "mem2_heap_growth_render_off": 0,
+  "game_state_used": 17986420,
+  "game_state_bytes": 20971520,
+  "tag_slot_a10_max": 22726832,
+  "tag_slot_bytes": 23068672,
+  "tag_slot_free_at_largest_bsp": 341840,
+  "heap_after_cycles": {
+   "prisoner": 2500912,
+   "a10": 2501008
+  },
+  "general_peak": 65536,
+  "main_stack_peak": 104088,
+  "main_stack_painted": 114688,
+  "main_stack_bytes": 131072,
+  "engine_thread_stack_peak": 256,
+  "engine_thread_stack_bytes": 65536
+ },
+ "checks": {
+  "package_artifacts": {
+   "staged_files": 33,
+   "inspect": "pass, 0 problems, 0 findings"
+  },
+  "engine_unsupported_check": "pass",
+  "tests": {
+   "count": 457,
+   "python_3_14": "OK",
+   "python_3_11": "OK"
+  },
+  "dol_identical_on_both_hosts": true
+ }
+}

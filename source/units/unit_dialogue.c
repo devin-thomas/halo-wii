@@ -222,7 +222,11 @@ real const global_speech_queue_times[NUMBER_OF_UNIT_SPEECH_PRIORITIES] =
 	3.0f,
 };
 
-static long sequential_counter;
+/* port (HWI-016C): external, unchanged otherwise: it counts on across maps
+for as long as the program runs, and the Wii build's real-map run
+(port/wii/engine/real_map_scenario.c) starts each load's units from the
+same variant, as it does the engine's other such counters */
+long sequential_counter;
 
 /* ---------- public code */
 

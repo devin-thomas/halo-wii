@@ -52,6 +52,8 @@ EXTRA_TYPES = [
     ("source/models/model_animations.c", "struct compressed_animation_header"),
     ("source/structures/structures.c", "struct structure_material"),
     ("port/linux/game/tag_schema_scenario.c", "struct scenario_structure_bsp_reference"),
+    # HWI-016C: a recorded animation's versions, which say how its event stream is laid out
+    ("source/cutscene/recorded_animations.c", "struct recorded_animation_definition"),
 ]
 
 SCALARS = {
