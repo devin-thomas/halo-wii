@@ -23,8 +23,17 @@
  * they fit the base map budget (wii_render.h); a base map left out is
  * reported with its bytes, and its materials draw lightmap-only, labelled.
  *
+ * Textures are HWT1 version 1, or version 2 (gx-splitalpha-v1, HWI-008F):
+ * CMPR colour with an alpha plane (I4 or I8) loaded as a second texture
+ * object, or none when the alpha is 255 everywhere.
+ *
  * Materials: an environment material is the lightmap page times the base map
- * (two TEV stages: lightmap colour, then times the base map's). Every other
+ * (two TEV stages: lightmap colour, then times the base map's). Where the
+ * shader reads the base map's alpha (environment types blended and blended
+ * base specular), the TEV output alpha is the base map's: RGBA8's own, or a
+ * split texture's plane in a third stage (TEXMAP2, the base texcoord); other
+ * materials output alpha 1. The detail maps and the specular that consume it
+ * are not drawn yet (HWI-032). Every other
  * shader type is a labelled placeholder: transparent ones a 50% magenta
  * blend without depth writes, drawn after the opaque ones; others flat
  * yellow. Culling is GX_CULL_BACK with the stored corner order (qualified in
@@ -56,10 +65,13 @@ static const GXColor clear_colour = {18, 22, 30, 255};
 static const GXColor placeholder_transparent = {255, 0, 255, 128};
 static const GXColor placeholder_other = {255, 220, 0, 255};
 static const GXColor flat_grey = {128, 128, 128, 255};
+static const GXColor opaque_white = {255, 255, 255, 255};
 static const GXColor front_colour = {0, 255, 0, 255};
 static const GXColor back_colour = {255, 0, 0, 255};
 
-enum draw_mode { DRAW_FULL, DRAW_LIGHTMAP_ONLY, DRAW_BASE_ONLY };
+/* DRAW_BASE_ALPHA: each environment material's base map alpha, as TEV
+combines it, shown as grey (255 where no base map is resident) */
+enum draw_mode { DRAW_FULL, DRAW_LIGHTMAP_ONLY, DRAW_BASE_ONLY, DRAW_BASE_ALPHA };
 
 struct texture {
     long tag;
@@ -67,6 +79,8 @@ struct texture {
     struct content_blob blob;
     struct hwt_header header;
     GXTexObj object;
+    GXTexObj alpha_object;   /* a version 2 texture's alpha plane */
+    int alpha_plane;
     int resident;
     uint32_t bytes;
     long coverage;
@@ -90,6 +104,7 @@ struct frame_stats {
 static struct {
     int configured, enabled, poses_only;
     unsigned long base_budget;
+    long base_limit;
     GXRModeObj *mode;
     void *xfb[2];
     int fb;
@@ -231,6 +246,7 @@ static void read_config(void)
     gx.enabled = 1;
     gx.poses_only = 0;
     gx.base_budget = WII_RENDER_DEFAULT_BASE_BUDGET;
+    gx.base_limit = -1;
     if (!file)
         return;
     size_t used = fread(text, 1, sizeof(text) - 1, file);
@@ -243,6 +259,8 @@ static void read_config(void)
             gx.poses_only = 1;
         else if (!strncmp(line, "base_budget=", 12))
             gx.base_budget = strtoul(line + 12, NULL, 10);
+        else if (!strncmp(line, "base_limit=", 11))
+            gx.base_limit = strtol(line + 11, NULL, 10);
     }
 }
 
@@ -288,9 +306,9 @@ int wii_render_configure(const struct wii_render_video *video)
         GX_CopyDisp(gx.xfb[gx.fb], GX_TRUE);
         GX_DrawDone();
     }
-    wii_log("RENDER_CONFIG enabled=%d poses_only=%d base_budget=%lu efb=%ux%u xfb=%ux%u\n", gx.enabled,
-            gx.poses_only, gx.base_budget, gx.mode->fbWidth, gx.mode->efbHeight, gx.mode->fbWidth,
-            gx.mode->xfbHeight);
+    wii_log("RENDER_CONFIG enabled=%d poses_only=%d base_budget=%lu base_limit=%ld efb=%ux%u xfb=%ux%u\n",
+            gx.enabled, gx.poses_only, gx.base_budget, gx.base_limit, gx.mode->fbWidth, gx.mode->efbHeight,
+            gx.mode->fbWidth, gx.mode->xfbHeight);
     return gx.enabled;
 }
 
@@ -564,6 +582,14 @@ static int texture_load(struct texture *t, int lightmap, int width, int height)
         error = hwt_image_at(&t->header, 0, &image);
     if (error == CONTENT_OK && (!image.gx_loadable || (image.offset & 31u)))
         error = CONTENT_DIMENSIONS;
+    /* the alpha plane: the same chain in I4 or I8, after the colour images */
+    struct hwt_image alpha_image;
+    t->alpha_plane = error == CONTENT_OK && t->header.alpha_kind == HWT_ALPHA_PLANE;
+    if (t->alpha_plane) {
+        error = hwt_alpha_image_at(&t->header, 0, &alpha_image);
+        if (error == CONTENT_OK && (alpha_image.offset & 31u))
+            error = CONTENT_DIMENSIONS;
+    }
     if (error != CONTENT_OK) {
         wii_log("RENDER_TEXTURE_FAIL tag=%ld bitmap=%ld kind=%s error=%s\n", t->tag, t->bitmap,
                 lightmap ? "lightmap" : "base", content_error_name(error));
@@ -579,6 +605,17 @@ static int texture_load(struct texture *t, int lightmap, int width, int height)
                          GX_ANISO_1);
     else
         GX_InitTexObjFilterMode(&t->object, GX_LINEAR, GX_LINEAR);
+    if (t->alpha_plane) {
+        /* sampled with the colour's texcoord, wrap and filter: the same texel
+        footprint, so colour and alpha stay one RGBA texel */
+        GX_InitTexObj(&t->alpha_object, t->blob.data + alpha_image.offset, (u16)image.width, (u16)image.height,
+                      (u8)t->header.alpha_gx_format, wrap, wrap, levels > 1 ? GX_TRUE : GX_FALSE);
+        if (levels > 1)
+            GX_InitTexObjLOD(&t->alpha_object, GX_LIN_MIP_LIN, GX_LINEAR, 0.0f, (f32)(levels - 1), 0.0f, GX_FALSE,
+                             GX_FALSE, GX_ANISO_1);
+        else
+            GX_InitTexObjFilterMode(&t->alpha_object, GX_LINEAR, GX_LINEAR);
+    }
     DCFlushRange(t->blob.data, t->blob.capacity);
     t->bytes = t->blob.bytes;
     t->resident = 1;
@@ -602,6 +639,8 @@ int wii_gx_textures_load(long lightmap_tag_index)
     int lightmap_pages = 0, lightmap_failed = 0, base_total = 0, base_resident = 0, base_failed = 0;
     long kinds[NUMBER_OF_WII_GX_MATERIAL_KINDS] = {0}, kind_surfaces[NUMBER_OF_WII_GX_MATERIAL_KINDS] = {0};
     long detail = 0, bump = 0, no_base = 0, no_lightmap = 0;
+    long alpha_used = 0, alpha_used_split = 0, environment_types[4] = {0};
+    int base_split = 0, base_planes = 0, base_alpha_omitted = 0, base_limited = 0;
 
     gx.lightmap_tag = lightmap_tag_index;
     release_textures();
@@ -614,6 +653,7 @@ int wii_gx_textures_load(long lightmap_tag_index)
             continue;
         detail += m->detail_maps > 0;
         bump += m->bump_map;
+        environment_types[m->environment_type >= 0 && m->environment_type < 3 ? m->environment_type : 3]++;
         if (m->base_tag < 0) {
             no_base++;
             continue;
@@ -669,6 +709,13 @@ int wii_gx_textures_load(long lightmap_tag_index)
             continue;
         }
         unsigned long size = (unsigned long)information.st_size;
+        if (gx.base_limit >= 0 && base_resident >= gx.base_limit) {
+            missing_bytes += size;
+            base_limited++;
+            wii_log("RENDER_BASE_NOT_RESIDENT tag=%ld bitmap=%ld bytes=%lu surfaces=%ld reason=base_limit\n", t->tag,
+                    t->bitmap, size, t->coverage);
+            continue;
+        }
         if (base_bytes + size > gx.base_budget) {
             missing_bytes += size;
             wii_log("RENDER_BASE_NOT_RESIDENT tag=%ld bitmap=%ld bytes=%lu surfaces=%ld budget_left=%lu\n", t->tag,
@@ -678,6 +725,14 @@ int wii_gx_textures_load(long lightmap_tag_index)
         if (texture_load(t, 0, width, height)) {
             base_bytes += t->bytes;
             base_resident++;
+            base_split += t->header.version == 2;
+            base_planes += t->alpha_plane;
+            base_alpha_omitted += t->header.alpha_kind == HWT_ALPHA_OMITTED;
+            wii_log("RENDER_BASE_RESIDENT tag=%ld bitmap=%ld bytes=%lu surfaces=%ld gx=%lu version=%lu alpha=%s\n",
+                    t->tag, t->bitmap, (unsigned long)t->bytes, t->coverage, (unsigned long)t->header.gx_format,
+                    (unsigned long)t->header.version,
+                    t->alpha_plane ? (t->header.alpha_gx_format == HWT_GX_I4 ? "I4" : "I8")
+                                   : t->header.alpha_kind == HWT_ALPHA_OMITTED ? "omitted_255" : "own");
         } else {
             base_failed++;
         }
@@ -695,6 +750,10 @@ int wii_gx_textures_load(long lightmap_tag_index)
             m->base_texture = t;
         if (m->engine.kind == _wii_gx_material_environment && m->lightmap_texture < 0)
             no_lightmap++;
+        if (m->engine.kind == _wii_gx_material_environment && m->engine.base_alpha_used) {
+            alpha_used++;
+            alpha_used_split += m->base_texture >= 0 && gx.textures[m->base_texture].header.version == 2;
+        }
     }
     GX_InvalidateTexAll();
     free(gx.hwl_materials);
@@ -704,19 +763,23 @@ int wii_gx_textures_load(long lightmap_tag_index)
         gx.load_ms_max = load_ms;
     wii_log("RENDER_MAP_LOAD load=%ld map=%s bsp_tag=%lu lightmap_tag=%ld geometry_bytes=%lu lightmap_pages=%d "
             "lightmap_failed=%d lightmap_bytes=%lu base_maps=%d base_resident=%d base_failed=%d base_bytes=%lu "
-            "base_not_resident_bytes=%lu base_budget=%lu resident_total=%lu owned=%lu owned_peak=%lu "
+            "base_not_resident_bytes=%lu base_budget=%lu base_limited=%d base_split=%d base_alpha_planes=%d "
+            "base_alpha_omitted=%d resident_total=%lu owned=%lu owned_peak=%lu "
             "arena1_lo=%p->%p arena1_free=%lu arena2_lo=%p->%p ms=%lu\n",
             gx.loads, gx.map, gx.bsp_tag, lightmap_tag_index,
             (unsigned long)(gx.arrays_bytes + gx.surfaces_bytes), lightmap_pages, lightmap_failed, lightmap_bytes,
-            base_total, base_resident, base_failed, base_bytes, missing_bytes, gx.base_budget,
+            base_total, base_resident, base_failed, base_bytes, missing_bytes, gx.base_budget, base_limited,
+            base_split, base_planes, base_alpha_omitted,
             (unsigned long)(gx.arrays_bytes + gx.surfaces_bytes) + lightmap_bytes + base_bytes, gx.owned,
             gx.owned_peak, (void *)load_arena1_before, SYS_GetArena1Lo(), arena1_free(), (void *)load_arena2_before,
             SYS_GetArena2Lo(), load_ms);
     wii_log("RENDER_MATERIALS load=%ld environment=%ld environment_surfaces=%ld transparent_placeholder=%ld "
             "transparent_surfaces=%ld other_placeholder=%ld other_surfaces=%ld detail_maps_not_drawn=%ld "
-            "bump_maps_not_drawn=%ld environment_without_base=%ld environment_without_lightmap=%ld\n",
+            "bump_maps_not_drawn=%ld environment_without_base=%ld environment_without_lightmap=%ld "
+            "environment_types=%ld/%ld/%ld/%ld base_alpha_used=%ld base_alpha_used_split=%ld\n",
             gx.loads, kinds[0], kind_surfaces[0], kinds[1], kind_surfaces[1], kinds[2], kind_surfaces[2], detail, bump,
-            no_base, no_lightmap);
+            no_base, no_lightmap, environment_types[0], environment_types[1], environment_types[2],
+            environment_types[3], alpha_used, alpha_used_split);
     gx.ready = lightmap_failed == 0;
     return gx.ready;
 }
@@ -743,8 +806,30 @@ static void tev_constant(GXColor colour)
     GX_SetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
 }
 
-/* the lightmap (TEXMAP1, TEXCOORD1) and/or the base map (TEXMAP0, TEXCOORD0) */
-static void tev_textures(const struct texture *lightmap, const struct texture *base)
+/* the base map's alpha into APREV from stage tev on (the base map's own
+alpha, or a split texture's plane in the next stage); returns the stages used */
+static int tev_base_alpha(u8 tev, const struct texture *base)
+{
+    if (!base->alpha_plane) {
+        /* RGBA8's alpha, or 255: a version 2 texture without a plane decodes
+        CMPR's four-colour blocks as opaque */
+        GX_SetTevAlphaIn(tev, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_TEXA);
+        GX_SetTevAlphaOp(tev, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        return 0;
+    }
+    u8 next = (u8)(tev + 1);
+    GX_LoadTexObj((GXTexObj *)&base->alpha_object, GX_TEXMAP2);
+    GX_SetTevOrder(next, GX_TEXCOORD0, GX_TEXMAP2, GX_COLORNULL);
+    GX_SetTevColorIn(next, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_CPREV);
+    GX_SetTevColorOp(next, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GX_SetTevAlphaIn(next, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_TEXA);   /* I4/I8: alpha = intensity */
+    GX_SetTevAlphaOp(next, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    return 1;
+}
+
+/* the lightmap (TEXMAP1, TEXCOORD1) and/or the base map (TEXMAP0, TEXCOORD0);
+with base_alpha, the output alpha is the base map's (tev_base_alpha) */
+static void tev_textures(const struct texture *lightmap, const struct texture *base, int base_alpha)
 {
     int stage = 0;
     GX_SetNumChans(0);
@@ -772,8 +857,33 @@ static void tev_textures(const struct texture *lightmap, const struct texture *b
         GX_SetTevKAlphaSel(tev, GX_TEV_KASEL_1);
         GX_SetTevAlphaOp(tev, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
         stage++;
+        if (base_alpha)
+            stage += tev_base_alpha(tev, base);
     }
     GX_SetNumTevStages((u8)stage);
+}
+
+/* DRAW_BASE_ALPHA: the base map's alpha as tev_textures combines it, shown as
+grey through a last stage (APREV) */
+static void tev_alpha_view(const struct texture *base)
+{
+    GX_SetNumChans(0);
+    GX_SetNumTexGens(1);
+    GX_SetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
+    GX_LoadTexObj((GXTexObj *)&base->object, GX_TEXMAP0);
+    GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLORNULL);
+    GX_SetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_TEXC);
+    GX_SetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GX_SetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_KONST);
+    GX_SetTevKAlphaSel(GX_TEVSTAGE0, GX_TEV_KASEL_1);
+    GX_SetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    u8 last = (u8)(GX_TEVSTAGE1 + tev_base_alpha(GX_TEVSTAGE0, base));
+    GX_SetTevOrder(last, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLORNULL);
+    GX_SetTevColorIn(last, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_APREV);
+    GX_SetTevColorOp(last, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GX_SetTevAlphaIn(last, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
+    GX_SetTevAlphaOp(last, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GX_SetNumTevStages((u8)(last + 1));
 }
 
 static void set_arrays(const struct material *m, int lightmap)
@@ -840,13 +950,18 @@ static unsigned long draw_materials(const unsigned long *flags, const unsigned c
             if (!drawn[i] || transparent != pass || !m->vertex_count)
                 continue;
             int lightmap = 0;
-            if (m->engine.kind == _wii_gx_material_environment) {
+            if (m->engine.kind == _wii_gx_material_environment && mode == DRAW_BASE_ALPHA) {
+                if (m->base_texture >= 0)
+                    tev_alpha_view(&gx.textures[m->base_texture]);
+                else
+                    tev_constant(opaque_white);
+            } else if (m->engine.kind == _wii_gx_material_environment) {
                 const struct texture *l = m->lightmap_texture >= 0 && mode != DRAW_BASE_ONLY
                                               ? &gx.textures[m->lightmap_texture] : NULL;
                 const struct texture *b = m->base_texture >= 0 && mode != DRAW_LIGHTMAP_ONLY
                                               ? &gx.textures[m->base_texture] : NULL;
                 if (l || b)
-                    tev_textures(l, b);
+                    tev_textures(l, b, m->engine.base_alpha_used);
                 else
                     tev_constant(flat_grey);
                 lightmap = l != NULL;
@@ -1052,6 +1167,15 @@ void wii_gx_pose_capture(const struct wii_gx_view *view, const unsigned long *su
     sample_grid(pose_other, GRID_X, GRID_Y);
     out->crc_base_only = samples_crc(pose_other, count, &ignored);
     out->differs_base_only = count_differs(pose_full, pose_other, count);
+    clear_efb();
+    draw_materials(surface_flags, material_drawn, DRAW_BASE_ALPHA, GX_CULL_BACK);
+    GX_DrawDone();
+    sample_grid(pose_other, GRID_X, GRID_Y);
+    out->crc_base_alpha = samples_crc(pose_other, count, &ignored);
+    for (int i = 0; i < count; ++i) {
+        uint32_t c = pose_other[i], r = c >> 16, g = (c >> 8) & 255u, b = c & 255u;
+        out->base_alpha_below_255 += r == g && g == b && r < 255u;
+    }
     for (int k = 0; k < 3; ++k) {
         clear_efb();
         draw_classified(view, surface_flags, material_drawn, frontfacing, culls[k]);

@@ -103,13 +103,12 @@ static void texture_case(const struct content_blob *blob, content_texture_hook h
             o->error = CONTENT_COUNT;
             return;
         }
-        const unsigned char *data = blob->data + image.offset;
         unsigned char row[4 * 64];
         for (uint32_t y = 0; y < image.height; ++y)
             for (uint32_t x = 0; x < image.width; x += 64) {
                 uint32_t run = image.width - x < 64 ? image.width - x : 64;
                 for (uint32_t k = 0; k < run; ++k)
-                    hwt_decode_texel(h.gx_format, data, image.width, x + k, y, row + 4 * k);
+                    hwt_decode_rgba(&h, blob->data, i, x + k, y, row + 4 * k);
                 content_sha256_update(&sha, row, 4 * run);
             }
     }

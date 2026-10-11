@@ -53,8 +53,53 @@ def dxt1_blocks(blocks, seed, three_colour_every=4):
     return bytes(raw)
 
 
-def source_pixels(format_name, width, height, depth=1, type_name="2d", mipmap_count=0, seed=1, linear=False):
-    """Authored hardware-layout pixels for a bitmap plus its bitmap_data fields."""
+# Authored DXT3/DXT5 variants (HWI-008F split alpha); None keeps the plain pattern.
+ALPHA_MODES = ("opaque", "steps17", "edges")
+
+
+def dxt_alpha_blocks(format_name, data, mode, uniform_every=5):
+    """DXT3/DXT5 blocks of data rewritten for an alpha mode, with every Nth
+    colour block uniform (c0 == c1) and the others alternating c0 > c1 and
+    c0 < c1:
+      opaque   alpha 255 at every texel (DXT3 all nibbles 15; DXT5 a0 = a1 = 255,
+               indices 0)
+      steps17  DXT5 in the six-value mode with a0 = 0, a1 = 255: every value
+               (0, 51, 102, 153, 204, 255) is a multiple of 17
+      edges    the extremes: DXT3 nibbles 0, 15 and 1; DXT5 eight-value mode
+               (255, 0) and six-value mode (0, 255, indices 6 and 7 for 0 and 255),
+               and a0 == a1 blocks
+    """
+    out = bytearray(data)
+    for b in range(len(out) // 16):
+        at = 16 * b
+        c0, c1 = struct.unpack_from("<HH", out, at + 8)
+        if b % uniform_every == uniform_every - 1:
+            c1 = c0
+        else:
+            if c0 == c1:
+                c1 ^= 0x8410
+            if (b % 2 == 0) != (c0 > c1):
+                c0, c1 = c1, c0
+        struct.pack_into("<HH", out, at + 8, c0, c1)
+        if mode == "opaque":
+            out[at:at + 8] = b"\xff" * 8 if format_name == "dxt3" else bytes([255, 255]) + bytes(6)
+        elif mode == "steps17" and format_name == "dxt5":
+            out[at:at + 2] = bytes([0, 255])
+        elif mode == "edges":
+            if format_name == "dxt3":
+                out[at:at + 8] = [bytes(8), b"\xff" * 8, b"\x10\x01" * 4, out[at:at + 8]][b % 4]
+            else:
+                out[at:at + 2] = [bytes([255, 0]), bytes([0, 255]), bytes([128, 128]), out[at:at + 2]][b % 4]
+                if b % 4 == 1:  # indices 6, 7 alternate: the six-value mode's explicit 0 and 255
+                    out[at + 2:at + 8] = sum((6 + (i & 1)) << (3 * i) for i in range(16)).to_bytes(6, "little")
+    return bytes(out)
+
+
+def source_pixels(format_name, width, height, depth=1, type_name="2d", mipmap_count=0, seed=1, linear=False,
+                  alpha=None):
+    """Authored hardware-layout pixels for a bitmap plus its bitmap_data fields.
+
+    alpha: one of ALPHA_MODES for DXT3/DXT5 (dxt_alpha_blocks), or None."""
     fid = gt.FORMAT_IDS[format_name]
     tid = {"2d": 0, "3d": 1, "cube": 2}[type_name]
     flags = gt.FLAG_COMPRESSED if format_name in gt.COMPRESSED else 0
@@ -74,6 +119,8 @@ def source_pixels(format_name, width, height, depth=1, type_name="2d", mipmap_co
                 data = dxt1_blocks(level["bytes"] // 8, seed_here)
             elif format_name in gt.COMPRESSED:
                 data = pattern(level["bytes"], seed_here)
+                if alpha is not None:
+                    data = dxt_alpha_blocks(format_name, data, alpha)
             elif linear:
                 data = pattern(level["bytes"], seed_here)
             else:
@@ -156,7 +203,7 @@ def build_map(name="fixture", category=0, bitmaps=None, animation_streams=None, 
               categories=None):
     """Return stored map bytes for an authored minimal Xbox v5 cache.
 
-    bitmaps: list of (format, width, height, depth, type, mipmap_count, linear)
+    bitmaps: list of (format, width, height, depth, type, mipmap_count, linear[, alpha mode])
     animation_streams: list of (version, unit_control_version, ticks, stream bytes)
     sounds: list of (rate_id, encoding, compression, payload bytes)
     mutate: optional callable(state dict) applied before compression to author malformed cases.
@@ -174,8 +221,9 @@ def build_map(name="fixture", category=0, bitmaps=None, animation_streams=None, 
     # pixel region after the header
     body = bytearray(0x800)
     pixel_records = []
-    for i, (fmt, w, h, d, kind, mips, linear) in enumerate(bitmaps):
-        fields, pixels, _ = source_pixels(fmt, w, h, d, kind, mips, seed=i + 1, linear=linear)
+    for i, (fmt, w, h, d, kind, mips, linear, *alpha) in enumerate(bitmaps):
+        fields, pixels, _ = source_pixels(fmt, w, h, d, kind, mips, seed=i + 1, linear=linear,
+                                          alpha=alpha[0] if alpha else None)
         while len(body) % 512:
             body.append(0)
         pixel_records.append((fields, len(body), len(pixels)))

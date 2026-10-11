@@ -22,6 +22,7 @@ import content_inventory as ci  # noqa: E402
 import content_publish as cp  # noqa: E402
 import halo_cache as hc  # noqa: E402
 import media_formats as mf  # noqa: E402
+import verify_textures as vt  # noqa: E402
 
 
 def open_bytes(blob):
@@ -273,6 +274,98 @@ class ConverterTests(unittest.TestCase):
         self.assertEqual(status, 4)
         self.assertEqual(cc.main(["--staging", str(self.staging), "--output-root", str(self.out), "--record",
                                   str(record)]), 1)  # existing run record is never overwritten
+
+
+SPLIT_BITMAPS = [("dxt3", 16, 16, 1, "2d", 2, False, "edges"), ("dxt5", 16, 16, 1, "2d", 2, False, "edges"),
+                 ("dxt5", 8, 8, 1, "2d", 1, False, "steps17"), ("dxt3", 8, 8, 1, "cube", 1, False, "opaque"),
+                 ("dxt5", 8, 8, 4, "3d", 1, False), ("dxt1", 16, 16, 1, "2d", 2, False),
+                 ("a8r8g8b8", 8, 8, 1, "2d", 3, False), ("dxt3", 2048, 4, 1, "2d", 0, False)]
+
+
+class SplitAlphaConverterTests(unittest.TestCase):
+    """gx-splitalpha-v1 end to end (HWI-008F): manifest, determinism, safety,
+    and every other output byte-identical to gx-baseline-v1."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        root = Path(self.temp.name)
+        self.staging = fx.write_staging(root / "staging", {"alpha": fx.build_map("alpha", bitmaps=SPLIT_BITMAPS)})
+        self.root = root
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def convert(self, profile, out, **kwargs):
+        return cc.run(self.staging, None, list(cc.CATEGORIES), profile, self.root / out, **kwargs)
+
+    def test_split_generation(self):
+        split = self.convert("gx-splitalpha-v1", "split", verify_per_kind=10)
+        base = self.convert("gx-baseline-v1", "base")
+        manifest = cp.read_current(self.root / "split", cc.verify_output)["manifest"]
+        self.assertEqual(manifest["profile"]["textures"]["name"], "gx-splitalpha-v1")
+        baseline = {o["path"]: o for o in cp.read_current(self.root / "base")["manifest"]["outputs"]}
+        textures = [o for o in manifest["outputs"] if o["kind"] == "texture"]
+        alphas = {}
+        for entry in manifest["outputs"]:
+            if entry["kind"] != "texture" or entry["source"]["format"] not in ("dxt3", "dxt5"):
+                self.assertEqual(entry["sha256"], baseline[entry["path"]]["sha256"], entry["path"])
+                continue
+            self.assertEqual((entry["gx"]["format"], entry["gx"]["version"]), ("CMPR", 2))
+            self.assertLess(entry["bytes"], baseline[entry["path"]]["bytes"] * 0.51)   # GX tile padding aside, 1/4 to 3/8
+            alphas[(entry["source"]["format"], entry["source"]["type"], entry["source"]["width"])] = \
+                (entry["gx"]["alpha"]["kind"], entry["gx"]["alpha"]["format"])
+        self.assertEqual(alphas, {("dxt3", "2d", 16): ("plane", "I4"), ("dxt5", "2d", 16): ("plane", "I8"),
+                                  ("dxt5", "2d", 8): ("plane", "I4"), ("dxt3", "cube", 8): ("omitted", "none"),
+                                  ("dxt5", "3d", 8): ("plane", "I8"), ("dxt3", "2d", 2048): ("plane", "I4")})
+        self.assertEqual(len(textures), len(SPLIT_BITMAPS))
+        self.assertLess(split["totals"]["texture"]["bytes"], base["totals"]["texture"]["bytes"])
+        for key in ("texture:dxt3:2d:split-I4", "texture:dxt5:2d:split-I8", "texture:dxt5:2d:split-I4",
+                    "texture:dxt3:cube:split-none", "texture:dxt5:3d:split-I8"):
+            summary = split["verification"][key]
+            self.assertEqual(summary["alpha_exact"], summary["texels_checked"], key)
+            self.assertLessEqual(max(summary["max_channel_error"]), 11, key)
+        oversize = next(o for o in textures if o["source"]["width"] == 2048)
+        self.assertFalse(oversize["gx"]["loadable_dimensions"])
+        # deterministic: a fresh root gives the same manifest
+        again = self.convert("gx-splitalpha-v1", "split-again", verify_per_kind=10)
+        self.assertEqual(again["manifest_sha256"], split["manifest_sha256"])
+        self.assertEqual(tree_hashes(self.root / "split" / "generations"),
+                         tree_hashes(self.root / "split-again" / "generations"))
+
+    def test_whole_generation_texel_verification(self):
+        self.convert("gx-splitalpha-v1", "split")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            status = vt.main(["--staging", str(self.staging), "--root", str(self.root / "split"), "--jobs", "2",
+                              "--json", str(self.root / "verify.json")])
+        self.assertEqual(status, 0)
+        report = json.loads((self.root / "verify.json").read_text(encoding="ascii"))
+        expected = sum(vt.texel_count(o["source"]) for o in cp.read_current(self.root / "split")["manifest"]["outputs"]
+                       if o["kind"] == "texture" and o["source"]["format"] in ("dxt3", "dxt5"))
+        self.assertEqual((report["textures"], report["texels_checked"], report["alpha_exact"]),
+                         (6, expected, expected))
+        self.assertLessEqual(max(report["max_channel_error"]), 11)
+        self.assertEqual(report["max_channel_error"][3], 0)
+        self.assertEqual(set(report["by_kind"]), {"dxt3:split-I4", "dxt5:split-I8", "dxt5:split-I4",
+                                                  "dxt3:split-omitted"})
+        self.assertGreater(report["colour_blocks"]["uniform"], 0)
+        self.assertNotIn(self.temp.name, json.dumps(report))
+
+    def test_split_publication_survives_faults_and_detects_tampering(self):
+        first = self.convert("gx-baseline-v1", "out")
+        for fault in (cp.FaultInjector(after_bytes=5000), cp.FaultInjector(stage="before-current")):
+            with self.subTest(fault=fault.stage), self.assertRaises((OSError, InterruptedError)):
+                self.convert("gx-splitalpha-v1", "out", fault=fault)
+            self.assertEqual(cp.read_current(self.root / "out", cc.verify_output)["generation"], first["generation"])
+        split = self.convert("gx-splitalpha-v1", "out")
+        gen = self.root / "out" / "generations" / split["generation"]
+        entry = next(o for o in cp.read_current(self.root / "out")["manifest"]["outputs"]
+                     if o["kind"] == "texture" and o["gx"].get("alpha", {}).get("kind") == "plane")
+        target = gen / entry["path"]
+        blob = bytearray(target.read_bytes())
+        struct.pack_into(">H", blob, 34, 1)   # claims "no plane" while the plane bytes remain
+        with self.assertRaises(Exception):
+            cc.verify_output(entry, bytes(blob))
 
 
 class InventoryTests(unittest.TestCase):

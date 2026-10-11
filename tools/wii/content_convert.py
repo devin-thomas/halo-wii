@@ -4,7 +4,8 @@ Reads the private staged maps named by a staging manifest (staging.json:
 file name, size and SHA-256 for each map), never modifies them, and publishes
 one validated content generation under an output root (content_publish.py):
 
-  textures/<map>/<tag>-<bitmap>.hwt   GX textures, every hardware mip level
+  textures/<map>/<tag>-<bitmap>.hwt   GX textures, every hardware mip level (profile gx-baseline-v1,
+                                      or gx-splitalpha-v1: DXT3/DXT5 as CMPR plus an alpha plane)
   animations/<map>/<index>.hra        canonical big-endian recorded animations
   sounds/<map>/<tag>-<range>-<perm>.hws  sound permutations, codec retained
   models/<map>/<tag>.hwm              model render geometry (content_geometry.py)
@@ -52,7 +53,7 @@ import media_formats as mf  # noqa: E402
 import recorded_animation as ra  # noqa: E402
 
 CONVERTER = "halo-wii-content-convert"
-CONVERTER_VERSION = "1.0.0"
+CONVERTER_VERSION = "1.1.0"
 CHECKOUT = Path(__file__).resolve().parents[2]
 MODULES = ("content_convert.py", "content_publish.py", "gx_texture.py", "halo_cache.py", "media_formats.py",
            "recorded_animation.py", "be_records.py", "content_geometry.py", "content_animation.py", "content_text.py")
@@ -89,6 +90,11 @@ PROFILES = {
                     "tag-data or file payload; census only"},
     },
 }
+# HWI-008F: DXT3/DXT5 as CMPR colour plus an exact alpha plane; every other
+# category and format as gx-baseline-v1 (byte-identical outputs).
+PROFILES["gx-splitalpha-v1"] = dict(
+    PROFILES["gx-baseline-v1"], name="gx-splitalpha-v1",
+    textures=dict(gt.PROFILE_GX_SPLITALPHA, fidelity=gt.FIDELITY_SPLIT, container="HWT1"))
 HWS_MAGIC = b"HWS1"
 HWS_CODECS = {"xbox_adpcm": 1, "pcm16be": 2}
 
@@ -157,6 +163,9 @@ def plan_textures(cache, map_name, profile):
             gx = gt.gx_target(layout["format"], profile["textures"])
             estimate = gt.HWT_HEADER_BYTES + sum(
                 gt.gx_level_bytes(gx, lv["w"], lv["h"]) * lv["d"] for lv in layout["levels"]) * layout["faces"]
+            if gt.split_alpha(layout["format"], profile["textures"]):   # the I8 plane bounds the alpha
+                estimate += sum(gt.gx_level_bytes(gt.GX_I8, lv["w"], lv["h"]) * lv["d"]
+                                for lv in layout["levels"]) * layout["faces"]
             items.append({"kind": "texture", "path": "textures/%s/%05d-%03d.hwt" % (map_name, instance["ordinal"], index),
                           "tag": instance["ordinal"], "index": index, "fields": fields, "pixels_offset": pixels_offset,
                           "layout_bytes": layout["bytes"], "estimate": estimate})
@@ -304,10 +313,13 @@ def convert_map(cache, map_name, categories, profile, generation, verify_per_kin
         if item["kind"] == "texture":
             pixels = cache.file_span(item["pixels_offset"], item["layout_bytes"])
             header, data, images, layout = gt.convert(item["fields"], pixels, profile["textures"])
+            alpha = header["alpha"]
             key = "texture:%s:%s" % (layout["format"], layout["type"])
+            if alpha is not None:
+                key += ":split-%s" % alpha["gx_format_name"]
             if verified.setdefault(key, 0) < verify_per_kind:
                 verified[key] += 1
-                result = gt.verify(item["fields"], pixels, data, images, layout)
+                result = gt.verify(item["fields"], pixels, data, images, layout, alpha=alpha)
                 summary = record["verification"].setdefault(key, {"textures": 0, "texels_checked": 0,
                                                                   "texels_exact": 0, "max_channel_error": [0] * 4})
                 summary["textures"] += 1
@@ -315,6 +327,8 @@ def convert_map(cache, map_name, categories, profile, generation, verify_per_kin
                 summary["texels_exact"] += result["texels_exact"]
                 summary["max_channel_error"] = [max(a, b) for a, b in zip(summary["max_channel_error"],
                                                                          result["max_channel_error"])]
+                if alpha is not None:
+                    summary["alpha_exact"] = summary.get("alpha_exact", 0) + result["alpha_exact"]
             blob = gt.pack_hwt(header, data)
             entry = generation.write(item["path"], blob)
             entry.update(kind="texture", source={"map": map_name, "tag": item["tag"], "bitmap": item["index"],
@@ -325,6 +339,10 @@ def convert_map(cache, map_name, categories, profile, generation, verify_per_kin
                                                  "source_sha256": hashlib.sha256(pixels).hexdigest()},
                          gx={"format": header["gx_format_name"], "images": header["images"],
                              "loadable_dimensions": header["gx_loadable_dimensions"]})
+            if alpha is not None:
+                entry["gx"].update(version=2, colour_bytes=header["colour_bytes"], alpha={
+                    "kind": alpha["kind"], "format": alpha["gx_format_name"], "bytes": alpha["bytes"],
+                    "distinct_values": alpha["distinct_values"], "colour_blocks": alpha["colour_blocks"]})
         elif item["kind"] == "animation":
             entry = generation.write(item["path"], item["data"])
             entry.update(kind="animation", source=dict(item["source"], map=map_name, index=item["index"]),
@@ -367,6 +385,11 @@ def verify_output(entry, data):
         header, body = gt.unpack_hwt(data)
         if gt.GX_NAMES[header["gx_format"]] != entry["gx"]["format"] or header["images"] != entry["gx"]["images"]:
             raise publish.PublishError("texture header disagrees with its manifest entry")
+        alpha, recorded = header["alpha"], entry["gx"].get("alpha")
+        if (alpha is None) != (recorded is None) or alpha is not None and (
+                alpha["kind"] != recorded["kind"] or alpha["bytes"] != recorded["bytes"] or
+                gt.ALPHA_GX_NAMES.get(alpha["gx_format"], "none") != recorded["format"]):
+            raise publish.PublishError("texture alpha section disagrees with its manifest entry")
     elif kind == "animation":
         ra.unpack_canonical(data)
     elif kind == "sound":
