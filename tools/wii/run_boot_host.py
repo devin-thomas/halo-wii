@@ -114,6 +114,23 @@ def arena_of(log_text):
     raise SystemExit("the Wii log has no ARENA line")
 
 
+def maps_manifest(maps):
+    """the card's maps manifest for the host: each map's line of the manifest.le.txt beside it (map_stage.py)"""
+    header, lines = None, {}
+    for path in maps:
+        listed = path.parent / "manifest.le.txt"
+        if not listed.is_file():
+            raise SystemExit(f"no manifest.le.txt beside {path.name} (map_stage.py writes it)")
+        rows = listed.read_text(encoding="ascii").splitlines()
+        header = header or rows[0]
+        name = path.name[:-len(".le.wmap")] if path.name.endswith(".le.wmap") else path.stem
+        row = next((row for row in rows[1:] if row.split()[:1] == [name]), None)
+        if row is None:
+            raise SystemExit(f"manifest.le.txt does not list {name}")
+        lines[name] = row
+    return header + "\n" + "".join(lines[key] + "\n" for key in sorted(lines))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--build", type=Path, required=True)
@@ -138,10 +155,14 @@ def main() -> int:
     run_dir = args.run.resolve()
     run_dir.mkdir(parents=True, exist_ok=False)
     (run_dir / "pad.txt").write_text("\n".join(pad_lines(log_text)) + "\n", encoding="ascii", newline="\n")
-    copies = " && ".join(
-        f"cp {map_host.sh(map_host.wsl(path.resolve()))} "
-        f"{map_host.sh(map_host.wsl(run_dir) + '/sd:/halo-wii-engine/data/maps/' + path.name.replace('.le.wmap', '.wmap'))}"
-        for path in args.map)
+    # (the maps' little-endian manifest lines, from manifest.le.txt beside each, as the card's manifest.txt)
+    (run_dir / "manifest.txt").write_text(maps_manifest(args.map), encoding="ascii", newline="\n")
+    copies = " && ".join([
+        *(f"cp {map_host.sh(map_host.wsl(path.resolve()))} "
+          f"{map_host.sh(map_host.wsl(run_dir) + '/sd:/halo-wii-engine/data/maps/' + path.name.replace('.le.wmap', '.wmap'))}"
+          for path in args.map),
+        f"mv {map_host.sh(map_host.wsl(run_dir / 'manifest.txt'))} "
+        f"{map_host.sh(map_host.wsl(run_dir) + '/sd:/halo-wii-engine/data/maps/')}"])
     run = subprocess.run(["wsl", "-d", "Debian", "--", "sh", "-c",
                           f"mkdir -p {map_host.sh(map_host.wsl(run_dir) + '/sd:/halo-wii-engine/data/maps')} && {copies}"],
                          capture_output=True, text=True)

@@ -168,7 +168,7 @@ changes maps as the menus ask ([evidence](../../../docs/wii/evidence/2026-10-10-
 
 | Part | File | What |
 |---|---|---|
-| Driver | `boot_main.c` | `boot.txt`; `manifest.txt` (each staged map's SHA-256, checked); the UI map's load-failure screens; the GameCube pad; the end of the launch |
+| Driver | `boot_main.c` | `boot.txt`; `manifest.txt` (the source and converter identities, on screen) and `data/maps/manifest.txt` (each listed map's SHA-256, checked); a map the menus choose is checked first and refused with the cache layer's kinds (HWI-016C: `data_root`, `not_staged`, `stale`, `damaged`, `manifest_mismatch`) in the engine's own error dialog; the UI map's load-failure screens; the GameCube pad; the end of the launch |
 | Wrapped entry points | `boot_hooks.c` | pass-through unless the boot mode registered: the rasterizer backend main_loop's frame reaches, the menus' map selection checked before the engine commits, the frame clock, sound and movie start-up |
 | Input | `wii_xinput.c` | XInput on the GameCube pad (minimum menu mapping: A/B/X/Y, Start, Z as Back, D-pad, sticks, triggers) |
 | Sockets | `wii_loopback_net.c` | an in-process loopback under the Linux port's `xnet.c`: a split-screen game's host and client |

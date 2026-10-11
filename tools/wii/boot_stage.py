@@ -5,22 +5,27 @@ The boot mode (port/wii/engine/boot_main.c) runs the engine's own main
 through the original menus. It reads, below sd:/halo-wii-engine/:
 
     data/maps/<name>.wmap                       maps staged by map_stage.py
+    data/maps/manifest.txt                      map_stage.py's manifest of them
     data/render/<name>/textures/<tag>-<bm>.hwt  the menus' bitmaps (the UI map's)
     data/render/<name>/...                      an environment's files (render_stage.py)
-    manifest.txt                                what was staged, for the guest to check
+    manifest.txt                                the content's identity
     boot.txt                                    the boot configuration (not written here)
 
 This tool copies them from private inputs into a new private directory laid
 out as the card's sd:/halo-wii-engine/ folder:
 
-- every map named, from a directory of map_stage.py outputs (<name>.wmap);
+- every map named, from a directory of map_stage.py outputs (<name>.wmap),
+  and that directory's manifest.txt, which must list each: every map's
+  staging format, bytes, staging digest and SHA-256 (HWI-016C). The cache
+  layer refuses a map it does not list or whose table differs; the boot mode
+  hashes each listed map at boot and refuses a mismatch, on screen;
 - every converted texture of the UI map, from one content pipeline
   generation, each checked against the generation's manifest;
 - for each environment map named, render_stage.py's selection (its lightmap
   geometry and textures);
 - manifest.txt: the source image's identity (the generation's source chain),
-  the generation, the stager, and each map's bytes and SHA-256, which the
-  guest hashes and compares at boot (a mismatch is refused, on screen).
+  the converter generation, the stager and the UI textures staged, shown on
+  screen and in the log.
 
 Everything it writes is private (converted game data): never commit or
 publish it. boot-stage.json records counts and hashes only.
@@ -74,19 +79,28 @@ def ui_textures(manifest, name):
                   key=lambda item: item[0])
 
 
-def manifest_text(source, generation, stager, maps, textures):
+def manifest_text(source, generation, stager, textures):
     """manifest.txt: one fact a line (boot_main.c reads it)"""
     lines = [f"# {MANIFEST_FORMAT}", f"source {source}", f"generation {generation}", f"stager {stager}"]
-    for name, size, digest in maps:
-        if not name.isidentifier() and not name.replace("_", "").isalnum():
-            raise StageError("map names are letters, digits and underscores")
-        lines.append(f"map {name} {size} {digest}")
     for name, count, size in textures:
         lines.append(f"textures {name} {count} {size}")
     return "\n".join(lines) + "\n"
 
 
+def maps_manifest_names(stage_dir):
+    """the maps map_stage.py's manifest.txt lists (HWIMAP-MANIFEST <format>, then a line a map)"""
+    listed = stage_dir / "manifest.txt"
+    if not listed.is_file():
+        raise StageError("the stage directory has no manifest.txt (map_stage.py writes it beside the maps)")
+    rows = listed.read_text(encoding="ascii").splitlines()
+    if not rows or not rows[0].startswith("HWIMAP-MANIFEST "):
+        raise StageError("the stage directory's manifest.txt is not map_stage.py's")
+    return {row.split()[0] for row in rows[1:] if row.split()}
+
+
 def copy_map(stage_dir, out, name):
+    if not name.replace("_", "").isalnum():
+        raise StageError("map names are letters, digits and underscores")
     source = stage_dir / f"{name}.wmap"
     if not source.is_file():
         raise StageError(f"no staged map {name}.wmap in the stage directory")
@@ -103,8 +117,16 @@ def stage(generation, stage_dir, ui, names, environments, out):
     if manifest.get("format") != "halo-wii-content-manifest":
         raise StageError("not a content pipeline manifest")
     source = source_identity(manifest)
+    wanted = list(dict.fromkeys([ui, *names, *environments]))
+    unlisted = [name for name in wanted if name not in maps_manifest_names(stage_dir)]
+    if unlisted:
+        raise StageError(f"the stage directory's manifest.txt does not list {', '.join(unlisted)}")
     out.mkdir(parents=True, exist_ok=False)
-    maps = [copy_map(stage_dir, out, name) for name in dict.fromkeys([ui, *names, *environments])]
+    maps = [copy_map(stage_dir, out, name) for name in wanted]
+    # (the manifest's lines for the maps copied, unchanged)
+    rows = (stage_dir / "manifest.txt").read_text(encoding="ascii").splitlines()
+    kept = [rows[0]] + [row for row in rows[1:] if row.split()[:1] and row.split()[0] in wanted]
+    (out / "data/maps/manifest.txt").write_text("\n".join(kept) + "\n", encoding="ascii", newline="\n")
     copied = total = 0
     for relative, entry in ui_textures(manifest, ui):
         path = generation / relative
@@ -128,7 +150,7 @@ def stage(generation, stage_dir, ui, names, environments, out):
                 shutil.move(str(scratch / item["path"]), target)
             shutil.rmtree(scratch)
             environment_records[name] = {"files": len(result["files"]), "totals": result["totals"]}
-    (out / "manifest.txt").write_text(manifest_text(source, generation.name, stager_identity(), maps,
+    (out / "manifest.txt").write_text(manifest_text(source, generation.name, stager_identity(),
                                                     [(ui, copied, total)]), encoding="ascii", newline="\n")
     record = {"schema": "halo-wii-boot-stage-1", "generation": generation.name, "source_image_sha256": source,
               "maps": [{"name": n, "bytes": b, "sha256": d} for n, b, d in maps],

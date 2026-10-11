@@ -105,10 +105,11 @@ the selection with authored fixtures.
 
 `boot_stage.py` lays out the card's `sd:/halo-wii-engine/` folder for the
 boot mode (`port/wii/engine/README.md`): the staged maps (`map_stage.py`
-outputs), every converted texture of the UI map, an environment map's
-render files (`render_stage.py`), and `manifest.txt` (the source image's
-identity, the generation, the stager, each map's bytes and SHA-256, which
-the guest checks). Private output: never commit it.
+outputs, with `map_stage.py`'s `manifest.txt` lines for them as
+`data/maps/manifest.txt`, whose SHA-256 the guest checks), every converted
+texture of the UI map, an environment map's render files
+(`render_stage.py`), and `manifest.txt` (the source image's identity, the
+generation, the stager). Private output: never commit it.
 
 ```powershell
 python -B tools/wii/boot_stage.py --generation <generation dir> --stage-dir <map_stage outputs> --ui ui --environment prisoner=<your prisoner.map> --out <new private dir>
@@ -121,7 +122,8 @@ showing a stale glyph cache.
 
 `run_boot_host.py` builds the i686 host reference of the boot mode and
 replays a Wii launch (its pad, scan by scan, and its arena placement) with
-the little-endian staged maps; its `BOOT_SCREEN` and `BOOT_ENVIRONMENT`
+the little-endian staged maps (and their lines of the `manifest.le.txt`
+beside them); its `BOOT_SCREEN` and `BOOT_ENVIRONMENT`
 digests compare with the Wii's.
 
 ```powershell

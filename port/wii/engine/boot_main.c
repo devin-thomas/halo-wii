@@ -19,9 +19,11 @@
  *      expect=refusal            a load-failure test: max_frames passes when a map
  *                                was refused and the menus' map is loaded again
  * 2. manifest.txt (written by tools/wii/boot_stage.py on the host): the
- *    source identity, the converter generation, and every staged map with its
- *    bytes and SHA-256. Each map file on the card is hashed and compared; the
- *    results go to the log and an on-screen line names the identities.
+ *    source identity and the converter generation; data/maps/manifest.txt
+ *    (map_stage.py's, HWI-016C): every staged map with its staging format,
+ *    bytes, staging digest and SHA-256. Each listed map on the card is hashed
+ *    and compared; the results go to the log and an on-screen line names the
+ *    identities.
  * 3. The UI map must be on the card and match the manifest: otherwise an
  *    actionable error screen (what is missing or damaged, how to stage it),
  *    drawn with the built-in font, and the launch ends without starting the
@@ -53,16 +55,22 @@
 #include "wii_render.h"
 #include "wii_render_ui.h"
 #include "content_common.h"
+#include "cache_files_wii.h"
 
 #define BOOT_TXT WII_ENGINE_ROOT "/boot.txt"
 #define BOOT_MANIFEST WII_ENGINE_ROOT "/manifest.txt"
 #define BOOT_RESULT WII_ENGINE_ROOT "/boot_result.txt"
 #define BOOT_MAPS WII_ENGINE_DATA_ROOT "/maps"
+#define BOOT_MAPS_MANIFEST BOOT_MAPS "/manifest.txt"
+/* map_stage.py's staging format (HWI-016C; cache_files_wii.c) */
+#define BOOT_MAP_MAGIC "HWIMAP02"
+#define BOOT_MAP_FORMAT 2
 #define BOOT_MAX_MANIFEST_FILES 16
 #define BOOT_MANIFEST_BYTES 4096
 
 struct boot_manifest_file {
     char name[32];        /* the map's name (<name>.wmap) */
+    long format;          /* its staging format */
     unsigned long bytes;
     char sha256[65];
     int present, verified;
@@ -82,6 +90,9 @@ static struct {
     struct boot_manifest_file files[BOOT_MAX_MANIFEST_FILES];
     int file_count;
     int manifest_read;
+    /* data/maps/manifest.txt: 1 read, 0 none; its staging format */
+    int maps_manifest;
+    long maps_manifest_format;
     char overlay[160];
     /* the run */
     const struct wii_boot_driver *driver;
@@ -141,7 +152,7 @@ static void read_config(void)
     }
 }
 
-/* ---------- the manifest */
+/* ---------- the manifests */
 
 static void hex_of(const unsigned char digest[32], char out[65])
 {
@@ -173,37 +184,61 @@ static int file_sha256(const char *path, unsigned long *bytes, char out[65])
     return ok;
 }
 
+/* a manifest's text, whole (NUL terminated); 0: there is none */
+static int read_text(const char *path, char *text, size_t size)
+{
+    FILE *file = fopen(path, "rb");
+    if (!file)
+        return 0;
+    size_t used = fread(text, 1, size - 1, file);
+    fclose(file);
+    text[used] = 0;
+    return 1;
+}
+
+/* manifest.txt (boot_stage.py): the content's identity */
 static void read_manifest(void)
 {
-    char text[BOOT_MANIFEST_BYTES] = "";
-    FILE *file = fopen(BOOT_MANIFEST, "rb");
-    if (!file) {
+    char text[BOOT_MANIFEST_BYTES];
+    if (!read_text(BOOT_MANIFEST, text, sizeof(text))) {
         wii_log("BOOT_MANIFEST present=0 (no manifest.txt: the content is not identified)\n");
         return;
     }
-    size_t used = fread(text, 1, sizeof(text) - 1, file);
-    fclose(file);
-    text[used] = 0;
     boot.manifest_read = 1;
     for (char *line = strtok(text, "\r\n"); line; line = strtok(NULL, "\r\n")) {
-        char name[32], sha[65];
-        unsigned long bytes;
-        if (!strncmp(line, "source ", 7)) {
+        if (!strncmp(line, "source ", 7))
             sscanf(line + 7, "%39s", boot.source);
-            continue;
-        }
-        if (!strncmp(line, "generation ", 11)) {
+        else if (!strncmp(line, "generation ", 11))
             sscanf(line + 11, "%39s", boot.generation);
-            continue;
-        }
-        if (!strncmp(line, "stager ", 7)) {
+        else if (!strncmp(line, "stager ", 7))
             sscanf(line + 7, "%39s", boot.stager);
+    }
+}
+
+/* data/maps/manifest.txt (map_stage.py, HWI-016C): "HWIMAP-MANIFEST <format>",
+then "<name> <format> <bytes> <staging digest> <sha256>" a map */
+static void read_maps_manifest(void)
+{
+    char text[BOOT_MANIFEST_BYTES];
+    if (!read_text(BOOT_MAPS_MANIFEST, text, sizeof(text)))
+        return;
+    boot.maps_manifest = 1;
+    int first = 1;
+    for (char *line = strtok(text, "\r\n"); line; line = strtok(NULL, "\r\n")) {
+        char name[32], digest[16], sha[65];
+        long format;
+        unsigned long bytes;
+        if (first) {
+            first = 0;
+            if (sscanf(line, "HWIMAP-MANIFEST %ld", &boot.maps_manifest_format) != 1)
+                boot.maps_manifest_format = 0;
             continue;
         }
-        if (sscanf(line, "map %31s %lu %64s", name, &bytes, sha) == 3 && boot.file_count < BOOT_MAX_MANIFEST_FILES &&
-            strlen(sha) == 64) {
+        if (sscanf(line, "%31s %ld %lu %15s %64s", name, &format, &bytes, digest, sha) == 5 &&
+            boot.file_count < BOOT_MAX_MANIFEST_FILES && strlen(sha) == 64) {
             struct boot_manifest_file *f = &boot.files[boot.file_count++];
             snprintf(f->name, sizeof(f->name), "%s", name);
+            f->format = format;
             f->bytes = bytes;
             snprintf(f->sha256, sizeof(f->sha256), "%s", sha);
         }
@@ -221,6 +256,7 @@ static struct boot_manifest_file *manifest_file(const char *name)
 static void verify_manifest(void)
 {
     u64 started = gettime();
+    read_maps_manifest();
     for (int i = 0; i < boot.file_count; ++i) {
         struct boot_manifest_file *f = &boot.files[i];
         char path[160];
@@ -228,13 +264,14 @@ static void verify_manifest(void)
         snprintf(path, sizeof(path), BOOT_MAPS "/%s.wmap", f->name);
         f->present = file_sha256(path, &bytes, f->found_sha256);
         f->verified = f->present && bytes == f->bytes && !strcmp(f->found_sha256, f->sha256);
-        wii_log("BOOT_MANIFEST map=%s present=%d bytes=%lu expected_bytes=%lu sha256=%.16s expected=%.16s "
+        wii_log("BOOT_MANIFEST map=%s present=%d format=%ld bytes=%lu expected_bytes=%lu sha256=%.16s expected=%.16s "
                 "verified=%d\n",
-                f->name, f->present, f->present ? bytes : 0ul, f->bytes, f->present ? f->found_sha256 : "-",
+                f->name, f->present, f->format, f->present ? bytes : 0ul, f->bytes, f->present ? f->found_sha256 : "-",
                 f->sha256, f->verified);
     }
-    wii_log("BOOT_MANIFEST source=%s generation=%s stager=%s maps=%d hash_ms=%lu\n", boot.source[0] ? boot.source : "-",
-            boot.generation[0] ? boot.generation : "-", boot.stager[0] ? boot.stager : "-", boot.file_count,
+    wii_log("BOOT_MANIFEST source=%s generation=%s stager=%s maps_manifest=%d maps_format=%ld maps=%d hash_ms=%lu\n",
+            boot.source[0] ? boot.source : "-", boot.generation[0] ? boot.generation : "-",
+            boot.stager[0] ? boot.stager : "-", boot.maps_manifest, boot.maps_manifest_format, boot.file_count,
             (unsigned long)ticks_to_millisecs(gettime() - started));
     /* the on-screen line: the build, the source and converter identities and
     each map's staged hash */
@@ -250,8 +287,10 @@ static void verify_manifest(void)
 
 /* ---------- the maps the menus ask for (boot_hooks.h) */
 
-/* 0 if the map is on the card, is a staged map, and matches the manifest
-when the manifest names it */
+/* _wii_map_error_none if the map is on the card, is a staged map of this
+build's format, and matches its line of the maps manifest; otherwise the
+cache layer's refusal kind (cache_files_wii.h), which the same file would
+get from cache_file_open, with a short actionable reason */
 static int map_check_uncached(const char *map_name, char *reason, unsigned long reason_size);
 
 /* the answers so far, by map name: the files do not change while the game
@@ -271,6 +310,7 @@ static int map_check(const char *map_name, char *reason, unsigned long reason_si
             return map_answers[i].code;
         }
     int code = map_check_uncached(map_name, reason, reason_size);
+    wii_log("BOOT_MAP_CHECK map=%s kind=%s ok=%d\n", map_name, wii_cache_error_name((short)code), !code);
     if (map_answer_count < (int)(sizeof(map_answers) / sizeof(map_answers[0]))) {
         snprintf(map_answers[map_answer_count].name, sizeof(map_answers[0].name), "%s", map_name);
         map_answers[map_answer_count].code = code;
@@ -280,36 +320,59 @@ static int map_check(const char *map_name, char *reason, unsigned long reason_si
     return code;
 }
 
+/* (short: the engine's error dialog holds about five lines; each names the
+kind, the map and what to do) */
 static int map_check_uncached(const char *map_name, char *reason, unsigned long reason_size)
 {
     const char *name = strrchr(map_name, '\\');
     char path[160];
     unsigned char table[16];
     name = name ? name + 1 : map_name;
+    if (!boot.maps_manifest) {
+        snprintf(reason, reason_size, "No staged maps on the SD card (data/maps/manifest.txt is missing) [data_root]. "
+                 "Copy map_stage.py's output there.");
+        return _wii_map_error_data_root;
+    }
+    if (boot.maps_manifest_format != BOOT_MAP_FORMAT) {
+        snprintf(reason, reason_size, "The maps on the SD card were staged in another format [stale]. "
+                 "Stage them again with this build's tools.");
+        return _wii_map_error_stale;
+    }
+    struct boot_manifest_file *f = manifest_file(name);
     snprintf(path, sizeof(path), BOOT_MAPS "/%s.wmap", name);
     FILE *file = fopen(path, "rb");
     if (!file) {
-        /* (short: the engine's error dialog holds about five lines) */
-        snprintf(reason, reason_size, "The map %s is not on the SD card. Stage it with tools/wii/map_stage.py.",
-                 name);
-        return 1;
+        snprintf(reason, reason_size, "The map %s is not on the SD card [not_staged]. Stage it with "
+                 "tools/wii/map_stage.py.", name);
+        return _wii_map_error_not_staged;
     }
     size_t got = fread(table, 1, sizeof(table), file);
     fclose(file);
-    if (got != sizeof(table) || memcmp(table, "HWIMAP01", 8) ||
-        !(table[8] == 1 && table[9] == 2 && table[10] == 3 && table[11] == 4)) {
-        snprintf(reason, reason_size, "The map %s on the SD card is not one this build reads. Stage it again.",
-                 name);
-        return 2;
+    if (got != sizeof(table) || memcmp(table, BOOT_MAP_MAGIC, 6)) {
+        snprintf(reason, reason_size, "The map %s on the SD card is damaged [damaged]. Stage it again.", name);
+        return _wii_map_error_damaged;
     }
-    struct boot_manifest_file *f = manifest_file(name);
-    if (f && !f->verified) {
-        snprintf(reason, reason_size, "The map %s on the SD card does not match its manifest. Stage it again.",
-                 name);
-        return 3;
+    if (memcmp(table, BOOT_MAP_MAGIC, 8) || (f && f->format != BOOT_MAP_FORMAT)) {
+        snprintf(reason, reason_size, "The map %s on the SD card was staged in another format [stale]. "
+                 "Stage it again.", name);
+        return _wii_map_error_stale;
     }
-    wii_log("BOOT_MAP_CHECK map=%s ok=1 manifest=%s\n", name, f ? "verified" : "not_listed");
-    return 0;
+    if (!(table[8] == 1 && table[9] == 2 && table[10] == 3 && table[11] == 4)) {
+        snprintf(reason, reason_size, "The map %s on the SD card is staged for the other byte order [damaged]. "
+                 "Stage it again.", name);
+        return _wii_map_error_damaged;
+    }
+    if (!f) {
+        snprintf(reason, reason_size, "The map %s is not in the SD card's manifest [manifest_mismatch]. "
+                 "Copy it with its manifest.txt.", name);
+        return _wii_map_error_manifest_mismatch;
+    }
+    if (!f->verified) {
+        snprintf(reason, reason_size, "The map %s on the SD card does not match its manifest [damaged]. "
+                 "Stage it again.", name);
+        return _wii_map_error_damaged;
+    }
+    return _wii_map_error_none;
 }
 
 /* ---------- the pad (wii_input.h) */
@@ -459,32 +522,43 @@ static void boot_error_screen(const char *title, const char *lines[], int line_c
 
 static int check_ui_map(void)
 {
-    char reason[256];
-    int code = map_check("levels\\ui\\ui", reason, sizeof(reason));
+    char reason[256], result[48], kind_line[80];
+    int code = map_check("levels\\ui\\ui",reason, sizeof(reason));
     if (!code)
         return 1;
-    wii_log("BOOT_UI_MAP check=%d reason=\"%s\"\n", code, reason);
-    if (code == 1) {
+    /* the cache layer's refusal kind (HWI-016C), on screen and as the result */
+    const char *kind = wii_cache_error_name((short)code);
+    snprintf(result, sizeof(result), "ui_map_%s", kind);
+    snprintf(kind_line, sizeof(kind_line), "  REFUSED: %s", kind);
+    for (char *p = kind_line; *p; ++p)
+        if (*p >= 'a' && *p <= 'z')
+            *p = (char)(*p - 'a' + 'A');
+    wii_log("BOOT_UI_MAP check=%d kind=%s reason=\"%s\"\n", code, kind, reason);
+    if (code == _wii_map_error_not_staged || code == _wii_map_error_data_root) {
         const char *lines[] = {
-            "THE MENUS NEED THE UI MAP, WHICH IS NOT ON THE SD CARD:",
-            "  SD:/HALO-WII-ENGINE/DATA/MAPS/UI.WMAP",
+            code == _wii_map_error_data_root ? "THE SD CARD HAS NO STAGED MAPS (DATA/MAPS/MANIFEST.TXT):" :
+                                               "THE MENUS NEED THE UI MAP, WHICH IS NOT ON THE SD CARD:",
+            "  SD:/HALO-WII-ENGINE/DATA/MAPS/UI.WMAP AND MANIFEST.TXT",
+            kind_line,
             "STAGE IT FROM YOUR OWN COPY OF THE GAME ON A PC:",
-            "  PYTHON TOOLS/WII/MAP_STAGE.PY --MAP <YOUR UI.MAP> --OUTPUT <DIR>",
-            "  (OR TOOLS/WII/BOOT_STAGE.PY), THEN COPY UI.WMAP THERE.",
+            "  PYTHON TOOLS/WII/MAP_STAGE.PY (OR TOOLS/WII/BOOT_STAGE.PY),",
+            "  THEN COPY UI.WMAP AND MANIFEST.TXT THERE.",
             "NOTHING ON THE CARD WAS CHANGED. THE GAME DID NOT START.",
         };
-        boot_error_screen("UI MAP MISSING", lines, 6, "ui_map_missing");
+        boot_error_screen("UI MAP MISSING", lines, 7, result);
     } else {
         const char *lines[] = {
             "THE UI MAP ON THE SD CARD IS DAMAGED OR OUT OF DATE:",
             "  SD:/HALO-WII-ENGINE/DATA/MAPS/UI.WMAP",
-            code == 2 ? "  IT IS NOT A STAGED MAP THIS BUILD READS." :
-                        "  ITS SHA-256 DIFFERS FROM MANIFEST.TXT.",
+            kind_line,
+            code == _wii_map_error_stale ? "  IT WAS STAGED IN A FORMAT THIS BUILD DOES NOT READ." :
+            code == _wii_map_error_manifest_mismatch ? "  MANIFEST.TXT DOES NOT LIST IT." :
+                                                       "  ITS BYTES DIFFER FROM MANIFEST.TXT.",
             "STAGE IT AGAIN FROM YOUR OWN COPY ON A PC:",
             "  PYTHON TOOLS/WII/BOOT_STAGE.PY ... AND COPY IT AND MANIFEST.TXT.",
             "NOTHING WAS LOADED; THE CARD WAS NOT CHANGED.",
         };
-        boot_error_screen("UI MAP DAMAGED", lines, 6, code == 2 ? "ui_map_not_staged_format" : "ui_map_corrupt");
+        boot_error_screen("UI MAP DAMAGED", lines, 7, result);
     }
     return 0;
 }

@@ -25,6 +25,7 @@
 #include "../../port/wii/engine/wii_input.h"
 #include "../../port/wii/engine/boot_hooks.h"
 #include "../../port/wii/engine/real_map_scenario.h"
+#include "../../port/wii/engine/cache_files_wii.h"
 #include "../../port/wii/render/wii_render_ui.h"
 #include "../../port/wii/runtime/runtime_start.h"
 #include "engine_host_shim.h"
@@ -117,8 +118,9 @@ static void pad_read(int port, struct wii_pad_state *state)
         *state = pad_now[port];
 }
 
-/* the Wii's check without its manifest: the staged file is there and is one
-this build reads (the manifest's hashes are the Wii driver's) */
+/* the Wii's check without its hashes: the staged file is there and is one
+this build reads; the refusal kinds are the cache layer's (cache_files_wii.h),
+whose own check (the maps manifest's line) follows at cache_file_open */
 static int map_check(const char *map_name, char *reason, unsigned long reason_size)
 {
     const char *name = strrchr(map_name, '\\');
@@ -131,16 +133,16 @@ static int map_check(const char *map_name, char *reason, unsigned long reason_si
     snprintf(path, sizeof path, WII_ENGINE_DATA_ROOT "/maps/%s.wmap", name);
     file = fopen(path, "rb");
     if (!file) {
-        snprintf(reason, reason_size, "The map %s is not on the SD card.", name);
-        return 1;
+        snprintf(reason, reason_size, "The map %s is not on the SD card [not_staged].", name);
+        return _wii_map_error_not_staged;
     }
     got = fread(table, 1, sizeof table, file);
     fclose(file);
-    if (got != sizeof table || memcmp(table, "HWIMAP01", 8)) {
-        snprintf(reason, reason_size, "The map %s is not a staged map this build reads.", name);
-        return 2;
+    if (got != sizeof table || memcmp(table, "HWIMAP02", 8)) {
+        snprintf(reason, reason_size, "The map %s is not a staged map this build reads [stale].", name);
+        return _wii_map_error_stale;
     }
-    return 0;
+    return _wii_map_error_none;
 }
 
 static void finish(int result, const char *reason)
