@@ -63,6 +63,7 @@ the EFB on a 32x24 grid and the game state's digest.
 #include "wii_render.h"
 #include "wii_render_ui.h"
 #include "../engine/boot_hooks.h"
+#include "../engine/engine_hooks.h"
 #include "../engine/wii_platform.h"
 #include "../engine/real_map_scenario.h"
 
@@ -332,6 +333,18 @@ static uint32_t boot_ui_modulate(
 		(uint32_t)(b + 0.5f);
 }
 
+/* the texture cache's question for a bitmap (engine_hooks.h): the menus'
+button icons, drawn inline in their text, are answered while the menus' map
+is loaded and the icon's texture is on the card; nothing else (a game
+map's decals keep the answer the map run has: none) */
+static void *boot_ui_bitmap_hardware_format(
+	struct bitmap_data *bitmap)
+{
+	if (!bitmap || !boot_ui.initialized || !boot_ui_in_menu_map())
+		return NULL;
+	return boot_ui_texture(bitmap) >= 0 ? (void *)bitmap : NULL;
+}
+
 /* ---------- the screens */
 
 static void boot_ui_screen_check(
@@ -568,8 +581,20 @@ static void boot_ui_present(
 	}
 	else if (boot_ui.config.max_frames > 0 && boot_ui.frame >= boot_ui.config.max_frames)
 	{
-		boot_ui_finish(boot_ui.config.environment_frames > 0 ? 0 : 1,
-			boot_ui.config.environment_frames > 0 ? "max_frames_before_environment" : "max_frames");
+		if (boot_ui.config.expect_refusal)
+		{
+			/* the load-failure test: a map was refused and the menus are back */
+			boolean recovered = wii_boot_map_refusals(NULL, NULL) > 0 && boot_ui_in_menu_map();
+
+			wii_log("BOOT_LOAD_FAILURE refusals=%ld map=%s recovered=%d\n", wii_boot_map_refusals(NULL, NULL),
+				boot_ui.map_name, recovered);
+			boot_ui_finish(recovered, recovered ? "load_failure_recovered" : "load_failure_not_recovered");
+		}
+		else
+		{
+			boot_ui_finish(boot_ui.config.environment_frames > 0 ? 0 : 1,
+				boot_ui.config.environment_frames > 0 ? "max_frames_before_environment" : "max_frames");
+		}
 	}
 }
 
@@ -781,6 +806,7 @@ void wii_render_ui_register(
 	hooks.bitmap_delete = boot_ui_bitmap_delete;
 	wii_boot_set_render_hooks(&hooks);
 	wii_boot_set_map_check(config->map_check);
+	wii_engine_set_bitmap_hardware_format(boot_ui_bitmap_hardware_format);
 }
 
 void wii_render_ui_report(

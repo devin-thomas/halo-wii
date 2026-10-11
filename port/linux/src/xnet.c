@@ -1067,26 +1067,38 @@ int PASCAL __WSAFDIsSet(SOCKET socket, halo_ws_fd_set *set)
 	return 0;
 }
 
-/* ---------- byte order and addresses */
+/* ---------- byte order and addresses
+
+(network order is big-endian: the little-endian ports swap, and a
+big-endian target, the Wii's PowerPC (HWI-016D, which reuses this file), is
+in network order already) */
+
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define HALO_WS_SWAP32(value) (value)
+#define HALO_WS_SWAP16(value) (value)
+#else
+#define HALO_WS_SWAP32(value) __builtin_bswap32(value)
+#define HALO_WS_SWAP16(value) (u_short)(((value) << 8) | ((value) >> 8))
+#endif
 
 u_long WSAAPI halo_ws_htonl(u_long value)
 {
-	return __builtin_bswap32(value);
+	return HALO_WS_SWAP32(value);
 }
 
 u_long WSAAPI halo_ws_ntohl(u_long value)
 {
-	return __builtin_bswap32(value);
+	return HALO_WS_SWAP32(value);
 }
 
 u_short WSAAPI halo_ws_htons(u_short value)
 {
-	return (u_short)((value << 8) | (value >> 8));
+	return HALO_WS_SWAP16(value);
 }
 
 u_short WSAAPI halo_ws_ntohs(u_short value)
 {
-	return (u_short)((value << 8) | (value >> 8));
+	return HALO_WS_SWAP16(value);
 }
 
 unsigned long WSAAPI halo_ws_inet_addr(const char *text)
@@ -1113,8 +1125,8 @@ unsigned long WSAAPI halo_ws_inet_addr(const char *text)
 	}
 	if (count != 4 || *text)
 		return INADDR_NONE;
-	/* network byte order on a little-endian host */
-	return parts[0] | (parts[1] << 8) | (parts[2] << 16) | (parts[3] << 24);
+	/* network byte order (the same bytes on a little-endian host as before) */
+	return halo_ws_htonl((parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3]);
 }
 
 /* ---------- XNet */

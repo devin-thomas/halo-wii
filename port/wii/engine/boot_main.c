@@ -16,6 +16,8 @@
  *      texture_budget=<bytes>    the interface's resident HWT1 bytes (3 MiB)
  *      clock=frame|real          the frame clock (boot_hooks.h; default frame)
  *      error_frames=<n>          a boot error screen stays n frames (240)
+ *      expect=refusal            a load-failure test: max_frames passes when a map
+ *                                was refused and the menus' map is loaded again
  * 2. manifest.txt (written by tools/wii/boot_stage.py on the host): the
  *    source identity, the converter generation, and every staged map with its
  *    bytes and SHA-256. Each map file on the card is hashed and compared; the
@@ -73,6 +75,7 @@ static struct {
     long max_frames, environment_frames, settle_frames, error_frames;
     unsigned long texture_budget;
     int frame_clock;
+    int expect_refusal;
     /* manifest.txt */
     char source[40], generation[40], stager[40];
     struct boot_manifest_file files[BOOT_MAX_MANIFEST_FILES];
@@ -125,6 +128,8 @@ static void read_config(void)
             boot.error_frames = strtol(line + 13, NULL, 10);
         else if (!strncmp(line, "texture_budget=", 15))
             boot.texture_budget = strtoul(line + 15, NULL, 10);
+        else if (!strcmp(line, "expect=refusal"))
+            boot.expect_refusal = 1;
         else if (!strcmp(line, "clock=real"))
             boot.frame_clock = 0;
         else if (!strcmp(line, "clock=frame"))
@@ -341,6 +346,9 @@ static void read_previous_result(void)
     boot.have_previous = 1;
 }
 
+/* (the launch's start, apart from the boot state) */
+static unsigned long long boot_started_us;
+
 static void boot_end(int result, const char *reason) __attribute__((noreturn));
 
 static void boot_end(int result, const char *reason)
@@ -358,8 +366,8 @@ static void boot_end(int result, const char *reason)
             boot.have_previous ? boot.previous_result : "", boot.have_previous &&
             !strncmp(boot.previous_result, line, strlen(line)));
     write_result(line);
-    wii_log("END target=engine mode=boot build=%s reason=%s elapsed_ms=%" PRIu64 " result=%s\n", WII_BUILD_ID, reason,
-            ticks_to_millisecs(gettime() - boot.started), result && wii_log_healthy() ? "pass" : "fail");
+    wii_log("END target=engine mode=boot build=%s reason=%s elapsed_ms=%llu result=%s\n", WII_BUILD_ID, reason,
+            (wii_time_microseconds() - boot_started_us) / 1000ull, result && wii_log_healthy() ? "pass" : "fail");
     wii_log_close();
     exit(result ? 0 : 1);
 }
@@ -439,6 +447,7 @@ int wii_boot_run(const struct wii_boot_driver *driver)
     memset(&boot, 0, sizeof(boot));
     boot.driver = driver;
     boot.started = gettime();
+    boot_started_us = wii_time_microseconds();
     read_config();
     read_previous_result();
     wii_log("BOOT begin mode=%s max_frames=%ld environment_frames=%ld settle_frames=%ld texture_budget=%lu clock=%s "
@@ -462,6 +471,7 @@ int wii_boot_run(const struct wii_boot_driver *driver)
     config.max_frames = boot.max_frames;
     config.environment_frames = boot.environment_frames;
     config.screen_settle_frames = boot.settle_frames;
+    config.expect_refusal = boot.expect_refusal;
     config.overlay = boot.overlay;
     config.finish = engine_finish;
     config.map_check = map_check;

@@ -39,6 +39,8 @@ struct wii_boot_ui_config
 	long max_frames;            /* the launch ends (fail) after this many presented frames */
 	long environment_frames;    /* ends (pass) this many frames after a map other than the menu's draws */
 	long screen_settle_frames;  /* a screen is sampled once it has stood this many frames */
+	int expect_refusal;         /* a load-failure test: max_frames passes if a map was refused and the
+	                               menus' map is loaded again (the menus recovered) */
 	const char *overlay;        /* the manifest line drawn at the bottom of every frame */
 	/* the driver ends the launch: result 1 pass, 0 fail, with the reason */
 	void (*finish)(int result, const char *reason);
