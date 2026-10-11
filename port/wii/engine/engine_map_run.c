@@ -53,10 +53,13 @@ struct map_line
 	int switch_index;
 	short expected_error;        /* a fail line's, or a map line's expect_error= */
 	char directory[96];          /* a fail line's maps directory */
+	int canonical_every_tick;    /* canonical=every (the default) or canonical=checkpoints */
+	int invariance;              /* invariance=1 (the default): a run whose simulation differs is a failure */
 };
 
 static struct map_line plan_lines[ENGINE_MAP_RUN_MAXIMUM_LINES];
 static unsigned long reference_digests[REAL_MAP_MAXIMUM_TICKS];
+static unsigned long reference_raw_digests[REAL_MAP_MAXIMUM_TICKS];
 static const char *current_map = "";
 static int progress_logging;
 
@@ -82,6 +85,12 @@ static void dump_allocations(long tick)
 		dump_run++;
 	if (tick != dump_tick)
 		return;
+	/* every allocation's digest at that tick, to name what differs */
+	for (long index = 0; index < real_map_allocation_count(); index++)
+	{
+		wii_log("ALLOC_AT run=%ld tick=%ld index=%ld name=\"%s\" digest=%08lx\n", dump_run, tick, index,
+			real_map_allocation_name(index), real_map_allocation_digest_now(index));
+	}
 	for (int item = 0; item < dump_count; item++)
 	{
 		long index = dump_indices[item];
@@ -228,6 +237,8 @@ static int parse_line(char *text, int default_cycles, struct map_line *line)
 	line->cadences = (1u << ENGINE_MAP_RUN_CADENCES) - 1;
 	line->warmup = 1;
 	line->expected_error = -1;
+	line->canonical_every_tick = 1;
+	line->invariance = 1;
 	if (!strcmp(words[0], "fail"))
 	{
 		if (count < 3)
@@ -283,6 +294,14 @@ static int parse_line(char *text, int default_cycles, struct map_line *line)
 			if (line->expected_error <= 0)
 				return 0;
 		}
+		else if (!strcmp(word, "canonical"))
+		{
+			if (strcmp(value, "every") && strcmp(value, "checkpoints"))
+				return 0;
+			line->canonical_every_tick = !strcmp(value, "every");
+		}
+		else if (!strcmp(word, "invariance"))
+			line->invariance = (int)strtol(value, NULL, 10);
 		else if (!strcmp(word, "directory"))
 			snprintf(line->directory, sizeof(line->directory), "%s", value);
 		else
@@ -387,7 +406,8 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 		real_map_set_command(line->switch_tick, command);
 	}
 	progress_logging = reference;
-	if (!real_map_begin(reference ? NULL : reference_digests, line->ticks))
+	real_map_set_canonical_every_tick(line->canonical_every_tick);
+	if (!real_map_begin(reference ? NULL : reference_raw_digests, line->ticks))
 		return 0;
 	vsync_frame_count = 0;
 	if (cadence == _cadence_vsync && config->vsync_begin)
@@ -399,12 +419,16 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 	real_map_end(result);
 	progress_logging = 0;
 	if (reference)
+	{
 		memcpy(reference_digests, real_map_tick_digests(), sizeof(unsigned long) * (size_t)line->ticks);
+		memcpy(reference_raw_digests, real_map_tick_digests_raw(), sizeof(unsigned long) * (size_t)line->ticks);
+	}
 	wii_log("RUN map=%s cycle=%d cadence=%s ticks=%ld frames=%ld frames_without_ticks=%ld most_ticks_in_a_frame=%ld "
 		"digest=%08lx chain=%08lx at1=%08lx at30=%08lx at150=%08lx atend=%08lx "
 		"sim=%08lx sim_chain=%08lx sim_at1=%08lx sim_at30=%08lx sim_at150=%08lx sim_atend=%08lx first_divergent_tick=%ld "
 		"seed=%08lx objects=%ld player_unit=%08lx spawn_tick=%ld position=%.6f,%.6f,%.6f tags_end=%08lx "
-		"bsp=%d bsp_switches=%ld command_tick=%ld command_result=%ld requests_left=%ld ms=%lu\n",
+		"bsp=%d bsp_switches=%ld command_tick=%ld command_result=%ld requests_left=%ld sim_raw=%08lx "
+		"sim_raw_chain=%08lx raw=%08lx raw_chain=%08lx ms=%lu\n",
 		line->name, cycle, cadence_names[cadence], result->ticks, result->frames, result->frames_without_ticks,
 		result->most_ticks_in_a_frame, result->digest, result->chain, result->digest_at[0], result->digest_at[1],
 		result->digest_at[2], result->digest_at[3], result->simulation_digest, result->simulation_chain,
@@ -413,7 +437,8 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 		result->objects, (unsigned long)result->player_unit, result->player_spawn_tick,
 		(double)result->player_position[0], (double)result->player_position[1], (double)result->player_position[2],
 		result->tags_at_end, result->structure_bsp_index, result->bsp_switches, result->command_tick,
-		result->command_result, result->requests_left, *milliseconds);
+		result->command_result, result->requests_left, result->simulation_raw_digest,
+		result->simulation_raw_chain, result->raw_digest, result->raw_chain, *milliseconds);
 	if (cadence == _cadence_vsync)
 	{
 		/* the frame times, bit for bit, ten a line */
@@ -485,8 +510,16 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 	{
 		struct real_map_result warm;
 		unsigned long milliseconds = 0;
-		int ran = real_map_load(line->scenario_path) &&
-			run_cadence(config, line, -1, _cadence_30, 0, &warm, &milliseconds);
+		/* (warmup=1: the line's ticks; warmup=N, N>1: N ticks, where the
+		map's own state, not the run's length, is what the next run follows) */
+		struct map_line warm_line = *line;
+		int ran;
+
+		if (line->warmup > 1)
+			warm_line.ticks = line->warmup < REAL_MAP_MAXIMUM_TICKS ? line->warmup : REAL_MAP_MAXIMUM_TICKS;
+		warm_line.switch_tick = 0;
+		ran = real_map_load(line->scenario_path) &&
+			run_cadence(config, &warm_line, -1, _cadence_30, 0, &warm, &milliseconds);
 
 		real_map_unload();
 		wii_log("WARMUP map=%s ran=%d\n", line->name, ran);
@@ -543,11 +576,14 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 			{
 				for (long index = 0; index < real_map_allocation_count(); index++)
 				{
-					wii_log("ALLOC map=%s cycle=%d cadence=%s index=%ld name=\"%s\" offset=%lu bytes=%lu at1=%08lx at30=%08lx at150=%08lx atend=%08lx\n",
+					wii_log("ALLOC map=%s cycle=%d cadence=%s index=%ld name=\"%s\" offset=%lu bytes=%lu at1=%08lx at30=%08lx at150=%08lx atend=%08lx "
+						"raw1=%08lx raw30=%08lx raw150=%08lx rawend=%08lx\n",
 						line->name, cycle, cadence_names[cadence], index, real_map_allocation_name(index),
 						real_map_allocation_offset(index), real_map_allocation_bytes(index),
 						real_map_allocation_digest(index, 0), real_map_allocation_digest(index, 1),
-						real_map_allocation_digest(index, 2), real_map_allocation_digest(index, 3));
+						real_map_allocation_digest(index, 2), real_map_allocation_digest(index, 3),
+						real_map_allocation_raw_digest(index, 0), real_map_allocation_raw_digest(index, 1),
+						real_map_allocation_raw_digest(index, 2), real_map_allocation_raw_digest(index, 3));
 				}
 			}
 			if (reference && ran)
@@ -564,8 +600,9 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 					report->player_spawn_tick = result.player_spawn_tick;
 					report->run_milliseconds = milliseconds;
 				}
-				/* every tick's simulation digest, ten a line */
-				for (long tick = 0; tick < line->ticks; tick += 10)
+				/* every tick's simulation digest, ten a line (the canonical
+				one when it was taken every tick) */
+				for (long tick = 0; line->canonical_every_tick && tick < line->ticks; tick += 10)
 				{
 					char text[16 + 10 * 9];
 					int used = 0;
@@ -574,23 +611,34 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 						used += snprintf(text + used, sizeof(text) - (size_t)used, " %08lx", reference_digests[index]);
 					wii_log("TICKS map=%s from=%ld%s\n", line->name, tick + 1, text);
 				}
+				for (long tick = 0; tick < line->ticks; tick += 10)
+				{
+					char text[16 + 10 * 9];
+					int used = 0;
+
+					for (long index = tick; index < tick + 10 && index < line->ticks; index++)
+						used += snprintf(text + used, sizeof(text) - (size_t)used, " %08lx", reference_raw_digests[index]);
+					wii_log("TICKS_RAW map=%s from=%ld%s\n", line->name, tick + 1, text);
+				}
 			}
 			/* the simulation the same at every cadence and in every cycle; the
 			whole state the same as this cadence's in the first cycle */
 			if (cycle == 0 && ran)
 				cadence_first[cadence] = result;
-			same = ran && have_first && result.simulation_digest == first.simulation_digest &&
-				result.simulation_chain == first.simulation_chain && result.first_divergent_tick == -1 &&
+			same = ran && have_first && result.simulation_raw_digest == first.simulation_raw_digest &&
+				result.simulation_raw_chain == first.simulation_raw_chain && result.first_divergent_tick == -1 &&
 				result.random_seed == first.random_seed && result.objects == first.objects &&
 				result.tags_at_start == first.tags_at_start && result.tags_at_end == first.tags_at_end &&
 				result.structure_bsp_index == first.structure_bsp_index;
-			whole_same = ran && result.digest == cadence_first[cadence].digest &&
-				result.chain == cadence_first[cadence].chain;
+			whole_same = ran && result.raw_digest == cadence_first[cadence].raw_digest &&
+				result.raw_chain == cadence_first[cadence].raw_chain;
+			/* (invariance=0: an observation, reported, not a failure) */
 			if (!same)
 			{
 				identical = 0;
 				report->identical = 0;
-				report->failures++;
+				if (line->invariance)
+					report->failures++;
 			}
 			/* (an observation, not a failure: the first-person view model's idle
 			pose timer draws on the local random numbers, which per-frame
@@ -606,15 +654,18 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 			{
 				char text[384];
 				short kind = wii_cache_last_error(text, sizeof(text));
-				int pass = kind == line->expected_error && result.structure_bsp_index == 0 && ran;
+				int pass = kind == line->expected_error && ran && result.command_tick == line->switch_tick &&
+					result.command_bsp_after == result.command_bsp_before &&
+					result.command_bsp_after != line->switch_index;
 
 				report->expectations++;
 				report->expectations_met += pass;
 				if (!pass)
 					report->failures++;
-				wii_log("BSP_FAILURE map=%s cycle=%d cadence=%s expected=%s kind=%s bsp=%d pass=%d text=\"%s\"\n",
-					line->name, cycle, cadence_names[cadence], wii_cache_error_name(line->expected_error),
-					wii_cache_error_name(kind), result.structure_bsp_index, pass, text);
+				wii_log("BSP_FAILURE map=%s cycle=%d cadence=%s expected=%s kind=%s asked=%d bsp_before=%d bsp_after=%d "
+					"bsp_at_end=%d pass=%d text=\"%s\"\n", line->name, cycle, cadence_names[cadence],
+					wii_cache_error_name(line->expected_error), wii_cache_error_name(kind), line->switch_index,
+					result.command_bsp_before, result.command_bsp_after, result.structure_bsp_index, pass, text);
 			}
 			wii_log("RUN_SAME map=%s cycle=%d cadence=%s simulation_same=%d whole_same_as_cycle0=%d\n", line->name,
 				cycle, cadence_names[cadence], same, whole_same);

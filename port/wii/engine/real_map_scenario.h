@@ -55,6 +55,12 @@ struct real_map_result
 	unsigned long simulation_digest;
 	unsigned long simulation_chain;
 	unsigned long simulation_at[REAL_MAP_CHECKPOINTS];
+	/* the simulation's raw digest (no pointer made canonical: real_map_scenario.c),
+	for the Wii and the host of one launch */
+	unsigned long simulation_raw_digest;
+	unsigned long simulation_raw_chain;
+	unsigned long raw_digest;                    /* the whole state's, raw */
+	unsigned long raw_chain;
 	unsigned long tags_at_start, tags_at_end;    /* the tag slot */
 	unsigned long random_seed;
 	long objects;                                /* live objects after the last tick */
@@ -66,6 +72,7 @@ struct real_map_result
 	long bsp_switches;                           /* structure bsps loaded during the run */
 	long command_tick;                           /* when the run's script command ran, or -1 */
 	long command_result;                         /* hs_compile_and_evaluate's */
+	short command_bsp_before, command_bsp_after; /* the structure bsp loaded as the command ran, and after it */
 	long requests_left;                          /* frames ending with a won map or a reset asked for */
 };
 
@@ -90,6 +97,9 @@ const char *real_map_allocation_name(long index);
 unsigned long real_map_allocation_bytes(long index);
 /* the allocation's digest at a checkpoint of the last run */
 unsigned long real_map_allocation_digest(long index, int checkpoint);
+unsigned long real_map_allocation_raw_digest(long index, int checkpoint);
+/* (diagnosis) its raw digest as the game state is now */
+unsigned long real_map_allocation_digest_now(long index);
 
 /* load the staged map named by its scenario's path (levels\...\name), with
 a local player; 0 on failure (the engine's error text says why) */
@@ -97,8 +107,8 @@ int real_map_load(const char *scenario_path);
 /* the engine's map reset (a new run from the same start) */
 int real_map_reset(void);
 /* arm a run of ticks ticks (at most REAL_MAP_MAXIMUM_TICKS): the clock from
-game time 0; the reference run's digests (NULL for none) are compared tick
-by tick */
+game time 0; the reference run's raw simulation digests (NULL for none) are
+compared tick by tick */
 int real_map_begin(const unsigned long *reference_digests, long ticks);
 /* one rendered frame of dt seconds through the engine's scheduler; 0 once
 the run's ticks have run */
@@ -106,6 +116,11 @@ int real_map_frame(float dt);
 void real_map_end(struct real_map_result *result);
 /* every tick's simulation digest of the last run (its ticks) */
 const unsigned long *real_map_tick_digests(void);
+const unsigned long *real_map_tick_digests_raw(void);
+/* the canonical digests every tick (HWI-015B's), or only at the checkpoints
+(1, 30, 150 and the last tick: a long run's raw digest every tick is the
+comparison); each run's first divergent tick is the raw digests' */
+void real_map_set_canonical_every_tick(int every);
 /* a script command (script source, such as "(switch_bsp 1)") the harness
 runs through the engine's own script compiler and runtime after the given
 tick of every run armed from now on (0: none) */

@@ -10,15 +10,21 @@ print the same report lines (through wii_log):
    digest must still be c1ad6ae6 (chain 58ce9719).
 2. The plan (map.txt on the card), a line at a time, in order:
 
-   <scenario path> [ticks=N] [cycles=N] [cadences=<name>,...] [warmup=0|1]
+   <scenario path> [ticks=N] [cycles=N] [cadences=<name>,...] [warmup=0|1|N]
        [expect=<simulation digest, 8 hex digits>] [switch_bsp=<tick>:<index>]
-     A map's runs: an unmeasured warm-up run (unless warmup=0), then cycles
+       [canonical=every|checkpoints] [invariance=1|0]
+     A map's runs: an unmeasured warm-up run (unless warmup=0; of N ticks
+     with warmup=N, N>1), then cycles
      x (load the staged map; run it at each cadence for ticks of the
      engine's own ticks; unload). Every run's every tick's simulation digest
      must equal the line's first run's; with expect=, its last must be that
      (a regression check: HWI-015B's Prisoner is 127656ef). switch_bsp= has
      the engine's script runtime compile and run "(switch_bsp <index>)"
-     after that tick of every run, as a console command would. Defaults:
+     after that tick of every run, as a console command would.
+     canonical=checkpoints digests the canonical state only at the
+     checkpoints (the raw one every tick: real_map_scenario.h);
+     invariance=0 reports a run whose simulation differs from the first's
+     rather than failing it. Defaults:
      300 ticks, the driver's cycles, all six cadences (60hz, 30hz, 20hz,
      144hz, irregular, vsync_measured), a warm-up.
 

@@ -421,5 +421,58 @@ class FileFormatTest(unittest.TestCase):
                              ["HWIMAP-MANIFEST", "map"])
 
 
+class LoadFailureFixtureTest(unittest.TestCase):
+    """tools/wii/map_load_failures.py on authored stagings"""
+
+    def staging(self, directory, name, bsps, fill):
+        header = bytearray(0x800)
+        struct.pack_into("<6I", header, 0, 0x68656164, 5, 0x3000, 0, 0x800, 0x100)
+        segments = [{"kind": map_stage.SEGMENT_TAGS, "file_offset": 0x800, "bytes": 256, "slot_offset": 0,
+                     "little": bytes([fill]) * 256, "big": bytes([fill]) * 256, "relocations": [4]}]
+        for index in range(bsps):
+            segments.append({"kind": map_stage.SEGMENT_BSP, "file_offset": 0x1000 * (index + 1), "bytes": 64,
+                             "slot_offset": 0x8000, "little": bytes([index]) * 64, "big": bytes([index]) * 64,
+                             "relocations": []})
+        for big, suffix, manifest in ((True, "", "manifest.txt"), (False, ".le", "manifest.le.txt")):
+            data = map_stage.write_wmap(bytes(header), segments, 0x3000, big)
+            (directory / f"{name}{suffix}.wmap").write_bytes(data)
+            map_stage.manifest_update(directory / manifest, name, data)
+
+    def test_fixtures(self):
+        import map_load_failures
+        with tempfile.TemporaryDirectory() as root:
+            staged, old, out = Path(root) / "staged", Path(root) / "old", Path(root) / "out"
+            staged.mkdir()
+            old.mkdir()
+            self.staging(staged, "small", 1, 0x11)
+            self.staging(staged, "multi", 3, 0x22)
+            for suffix in ("", ".le"):
+                (old / f"small{suffix}.wmap").write_bytes(b"HWIMAP01" + bytes(56))
+            map_load_failures.make(staged, "small", old, "multi", out)
+            for suffix, manifest in (("", "manifest.txt"), (".le", "manifest.le.txt")):
+                rows = {row.split()[0]: row.split() for row in
+                        (out / manifest).read_text(encoding="ascii").splitlines()[1:]}
+                source = {row.split()[0]: row.split() for row in
+                          (staged / manifest).read_text(encoding="ascii").splitlines()[1:]}
+                self.assertEqual(sorted(rows), ["multi", "multibsp", "small", "smallflip", "smallmm", "smallold",
+                                                "smalltrunc"])
+                data = (staged / f"small{suffix}.wmap").read_bytes()
+                trunc = (out / f"smalltrunc{suffix}.wmap").read_bytes()
+                self.assertEqual((len(trunc), int(rows["smalltrunc"][2])), (len(data) // 2, len(data)))
+                flipped = (out / f"smallflip{suffix}.wmap").read_bytes()
+                self.assertEqual(sum(a != b for a, b in zip(flipped, data)), 1)
+                self.assertEqual(rows["smallflip"][1:4], source["small"][1:4])   # the staging's own line
+                self.assertEqual((out / f"smallold{suffix}.wmap").read_bytes()[:8], b"HWIMAP01")
+                self.assertEqual((out / f"smallmm{suffix}.wmap").read_bytes(), data)
+                self.assertEqual(rows["smallmm"][3], source["multi"][3])         # another staging's digest
+                self.assertNotEqual(rows["smallmm"][3], source["small"][3])
+                bsp = (out / f"multibsp{suffix}.wmap").read_bytes()
+                multi = (staged / f"multi{suffix}.wmap").read_bytes()
+                changed = [index for index, (a, b) in enumerate(zip(bsp, multi)) if a != b]
+                second = map_load_failures.segments(multi)[2]
+                self.assertEqual(len(changed), 1)
+                self.assertTrue(second[2] <= changed[0] < second[2] + second[1])
+
+
 if __name__ == "__main__":
     unittest.main()

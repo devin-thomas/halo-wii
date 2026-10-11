@@ -104,6 +104,7 @@ struct real_map_allocation
 	unsigned long digest_at[REAL_MAP_CHECKPOINTS];
 	boolean frame_coupled;
 	short initial_identifier;          /* a data array's next identifier as the first map loaded */
+	unsigned long raw_at[REAL_MAP_CHECKPOINTS];
 };
 
 struct real_map_globals
@@ -126,6 +127,11 @@ struct real_map_globals
 	unsigned long tags_at_start;
 	long ticks;                                   /* the run's */
 	unsigned long tick_digests[REAL_MAP_MAXIMUM_TICKS]; /* the simulation's */
+	unsigned long tick_digests_raw[REAL_MAP_MAXIMUM_TICKS]; /* the raw simulation's */
+	unsigned long simulation_raw_chain;
+	unsigned long raw_chain;
+	boolean canonical_every_tick;
+	unsigned long last_raw_digest;
 	unsigned long simulation_chain;
 	unsigned long simulation_at[REAL_MAP_CHECKPOINTS];
 	const unsigned long *reference;
@@ -144,6 +150,7 @@ struct real_map_globals
 	char command[128];
 	long command_ran_tick;
 	long command_result;
+	short command_bsp_before, command_bsp_after;
 	long bsp_reads_at_begin;
 	long requests_left;                /* frames ending with a won map or a reset asked for */
 };
@@ -199,6 +206,16 @@ struct digest_state
 	unsigned long group;
 };
 
+/* (HWI-016C) the raw digest: words as they are, no pointer made canonical.
+The canonical digest reads a word that lies in a region as a pointer; four
+bytes that are not one (a byte flag beside zeros, two shorts: measured in
+a10's objects) can read as one in one byte order only, and the same state
+then digests differently on the Wii and the host. The raw digest compares
+the Wii and the host of one launch, whose regions lie at the same addresses
+(the host maps the Wii's); the canonical one stays for comparing launches
+placed apart (their persistence check) and keeps HWI-015B's values. */
+static boolean digest_words_raw;
+
 static void digest_group_end(
 	struct digest_state *state)
 {
@@ -225,7 +242,8 @@ static void digest_add_at(
 
 	for (offset = 0; offset + 4 <= size; offset += 4)
 	{
-		unsigned long word = digest_canonical_word(*(unsigned long const *)(data + offset));
+		unsigned long word = digest_words_raw ? *(unsigned long const *)(data + offset) :
+			digest_canonical_word(*(unsigned long const *)(data + offset));
 		byte bytes[4];
 		unsigned long group = ((unsigned long)(address + offset) - base) >> 3;
 		short index;
@@ -356,15 +374,18 @@ unsigned long real_map_digest_bytes(
 	return digest_finish(&state);
 }
 
-/* (HWI-016C) the bytes of one datum as one group: a script thread's stack
-(hs_runtime.c hs_stack_allocate) packs its frames and their values at 2-byte
-offsets, so its words straddle any fixed 8-byte grouping and land in other
-groups in the other byte order; each thread is compared by the multiset of
-its live bytes (weaker, as the tag slot's: it misses bytes only moved inside
-a thread). Live: the thread's fields and its stack up to its top frame's
-end. Above it lie popped frames' bytes, which nothing reads, partly written
-over by later frames at other offsets: what is left of a scalar written over
-in part is a different part of it in each byte order. */
+/* (HWI-016C) a script thread as one group of its live bytes. A thread's
+stack (hs_runtime.c hs_stack_allocate) packs its frames and their values at
+2-byte offsets, so its words straddle any fixed 8-byte grouping and land in
+other groups in the other byte order: each thread is compared by the
+multiset of its live bytes (weaker, as the tag slot's: it misses bytes only
+moved inside a thread). Live: the thread's fields and each frame on its
+stack, its header and its values, found from the top frame down. Between
+frames lie two bytes of alignment, and above the top frame popped frames'
+bytes, which nothing reads, partly written over at other offsets: what is
+left of a scalar written over in part is a different part of it in each
+byte order. The pointers the thread holds to itself (its top frame, each
+frame's previous frame and result) are offsets in the thread. */
 struct real_map_hs_stack_frame
 {
 	struct real_map_hs_stack_frame *previous;
@@ -389,35 +410,79 @@ struct real_map_hs_thread
 
 typedef char verify_real_map_hs_thread_size[sizeof(struct real_map_hs_thread) == 0x218 ? 1 : -1];
 
-static unsigned long hs_thread_live_bytes(
-	byte const *datum)
+enum
 {
-	struct real_map_hs_thread const *thread = (struct real_map_hs_thread const *)datum;
-	unsigned long top = (unsigned long)((byte const *)thread->stack - thread->stack_data);
-	unsigned long end;
+	HS_FRAME_HEADER_BYTES = 14,
+	HS_THREAD_MAXIMUM_FRAMES = 64,
+};
 
-	if (!thread->identifier || top > sizeof(thread->stack_data) - 14)
-		return sizeof(*thread);
-	end = top + 14 + (unsigned long)MAX(thread->stack->size, 0);
+static void digest_group_bytes(
+	struct digest_state *state,
+	void const *data,
+	unsigned long size)
+{
+	byte const *bytes = data;
+	unsigned long offset;
 
-	return (unsigned long)(thread->stack_data - datum) + MIN(end, sizeof(thread->stack_data));
+	for (offset = 0; offset < size; offset++)
+	{
+		state->group_low += digest_tables[0][bytes[offset]];
+		state->group_high += digest_tables[1][bytes[offset]];
+	}
+
+	return;
 }
 
-static void digest_add_as_one_group(
+/* a pointer a thread holds: inside the thread, its offset there; else the
+digest's word */
+static void digest_group_thread_pointer(
 	struct digest_state *state,
-	byte const *data,
-	unsigned long size,
+	byte const *datum,
+	void const *pointer)
+{
+	unsigned long word = (unsigned long)pointer;
+
+	if (word - (unsigned long)datum < sizeof(struct real_map_hs_thread))
+		word = 0x20000000UL | (word - (unsigned long)datum);
+	else if (!digest_words_raw)
+		word = digest_canonical_word(word);
+	digest_group_bytes(state, &word, sizeof(word));
+
+	return;
+}
+
+static void digest_add_hs_thread(
+	struct digest_state *state,
+	byte const *datum,
 	unsigned long group)
 {
-	unsigned long offset;
+	struct real_map_hs_thread const *thread = (struct real_map_hs_thread const *)datum;
+	struct real_map_hs_stack_frame const *frame = thread->stack;
+	short frames = 0;
 
 	if (state->group_low || state->group_high)
 		digest_group_end(state);
 	state->group = group;
-	for (offset = 0; offset < size; offset++)
+	digest_group_bytes(state, datum, 16); /* identifier, type, flags, script, the sleep times */
+	digest_group_thread_pointer(state, datum, thread->stack);
+	digest_group_bytes(state, &thread->result, sizeof(thread->result));
+	if (!thread->identifier)
+		return;
+	while (frame && frames++ < HS_THREAD_MAXIMUM_FRAMES)
 	{
-		state->group_low += digest_tables[0][data[offset]];
-		state->group_high += digest_tables[1][data[offset]];
+		unsigned long at = (unsigned long)((byte const *)frame - thread->stack_data);
+
+		if ((byte const *)frame < thread->stack_data || at > sizeof(thread->stack_data) - HS_FRAME_HEADER_BYTES ||
+			frame->size < 0 || (unsigned long)frame->size > sizeof(thread->stack_data) - HS_FRAME_HEADER_BYTES - at)
+		{
+			break;
+		}
+		digest_group_thread_pointer(state, datum, frame->previous);
+		digest_group_bytes(state, &frame->expression_index, sizeof(frame->expression_index));
+		digest_group_thread_pointer(state, datum, frame->result);
+		digest_group_bytes(state, &frame->size, sizeof(frame->size));
+		digest_group_bytes(state, frame->data, (unsigned long)frame->size);
+		frame = frame->previous;
 	}
 
 	return;
@@ -445,8 +510,12 @@ static unsigned long allocation_digest(
 			{
 				byte const *datum = (byte const *)data->data + index * data->size;
 
-				digest_add_as_one_group(&state, datum, data->size == sizeof(struct real_map_hs_thread) ?
-					hs_thread_live_bytes(datum) : (unsigned long)data->size, 0x80000000UL | (unsigned long)index);
+				if (data->size != sizeof(struct real_map_hs_thread))
+				{
+					digest_add(&state, datum, data->size);
+					continue;
+				}
+				digest_add_hs_thread(&state, datum, 0x80000000UL | (unsigned long)index);
 			}
 			break;
 		}
@@ -545,23 +614,42 @@ static void crc_add_word(
 frame-coupled allocations) in simulation */
 static unsigned long game_state_digest(
 	int checkpoint,
-	unsigned long *simulation)
+	unsigned long *simulation,
+	unsigned long *simulation_raw,
+	unsigned long *whole_raw)
 {
 	unsigned long crc;
 	long index;
 
+	/* (the canonical digest every tick, or at the checkpoints only:
+	real_map_set_canonical_every_tick) */
+	boolean canonical = real_map_globals.canonical_every_tick || checkpoint >= 0;
+
 	crc_new(&crc);
 	crc_new(simulation);
+	crc_new(simulation_raw);
+	crc_new(whole_raw);
 	for (index = 0; index < real_map_globals.allocation_count; index++)
 	{
 		struct real_map_allocation *allocation = &real_map_globals.allocations[index];
-		unsigned long digest = allocation_digest(allocation);
+		unsigned long digest = canonical ? allocation_digest(allocation) : 0;
+		unsigned long raw;
 
+		digest_words_raw = TRUE;
+		raw = allocation_digest(allocation);
+		digest_words_raw = FALSE;
 		crc_add_word(&crc, digest);
+		crc_add_word(whole_raw, raw);
 		if (!allocation->frame_coupled)
+		{
 			crc_add_word(simulation, digest);
+			crc_add_word(simulation_raw, raw);
+		}
 		if (checkpoint >= 0)
+		{
 			allocation->digest_at[checkpoint] = digest;
+			allocation->raw_at[checkpoint] = raw;
+		}
 	}
 
 	return crc;
@@ -762,6 +850,25 @@ unsigned long real_map_allocation_digest(
 	return real_map_globals.allocations[index].digest_at[checkpoint];
 }
 
+unsigned long real_map_allocation_raw_digest(
+	long index,
+	int checkpoint)
+{
+	return real_map_globals.allocations[index].raw_at[checkpoint];
+}
+
+unsigned long real_map_allocation_digest_now(
+	long index)
+{
+	unsigned long digest;
+
+	digest_words_raw = TRUE;
+	digest = allocation_digest(&real_map_globals.allocations[index]);
+	digest_words_raw = FALSE;
+
+	return digest;
+}
+
 /* ---------- the scripted input */
 
 /* a triangle wave from -1 to 1 over period ticks */
@@ -870,6 +977,8 @@ void real_map_after_tick(
 	long tick;
 	unsigned long digest;
 	unsigned long simulation;
+	unsigned long simulation_raw;
+	unsigned long whole_raw;
 	int checkpoint = -1;
 
 	if (!real_map_globals.armed || real_map_globals.tick >= real_map_globals.ticks)
@@ -883,8 +992,12 @@ void real_map_after_tick(
 		checkpoint = 1;
 	else if (tick == 150)
 		checkpoint = 2;
-	digest = game_state_digest(checkpoint, &simulation);
+	digest = game_state_digest(checkpoint, &simulation, &simulation_raw, &whole_raw);
+	real_map_globals.last_raw_digest = whole_raw;
+	crc_add_word(&real_map_globals.raw_chain, whole_raw);
 	real_map_globals.tick_digests[tick - 1] = simulation;
+	real_map_globals.tick_digests_raw[tick - 1] = simulation_raw;
+	crc_add_word(&real_map_globals.simulation_raw_chain, simulation_raw);
 	real_map_globals.last_digest = digest;
 	crc_add_word(&real_map_globals.chain, digest);
 	crc_add_word(&real_map_globals.simulation_chain, simulation);
@@ -893,8 +1006,9 @@ void real_map_after_tick(
 		real_map_globals.digest_at[checkpoint] = digest;
 		real_map_globals.simulation_at[checkpoint] = simulation;
 	}
+	/* (against the reference run's raw digests) */
 	if (real_map_globals.reference && real_map_globals.first_divergent_tick == NONE &&
-		real_map_globals.reference[tick - 1] != simulation)
+		real_map_globals.reference[tick - 1] != simulation_raw)
 	{
 		real_map_globals.first_divergent_tick = tick;
 	}
@@ -919,7 +1033,9 @@ void real_map_after_tick(
 	if (real_map_globals.command_tick == tick && real_map_globals.command[0])
 	{
 		real_map_globals.command_ran_tick = tick;
+		real_map_globals.command_bsp_before = global_structure_bsp_index;
 		real_map_globals.command_result = hs_compile_and_evaluate(real_map_globals.command);
+		real_map_globals.command_bsp_after = global_structure_bsp_index;
 	}
 
 	return;
@@ -1074,6 +1190,9 @@ int real_map_begin(
 	csmemset(real_map_globals.tick_digests, 0, sizeof(real_map_globals.tick_digests));
 	crc_new(&real_map_globals.chain);
 	crc_new(&real_map_globals.simulation_chain);
+	crc_new(&real_map_globals.simulation_raw_chain);
+	crc_new(&real_map_globals.raw_chain);
+	real_map_globals.last_raw_digest = 0;
 	real_map_globals.updates_built = 0;
 	real_map_globals.final_player_unit = NONE;
 	real_map_globals.final_tags = 0;
@@ -1130,6 +1249,10 @@ void real_map_end(
 	result->chain = real_map_globals.chain;
 	result->simulation_digest = real_map_globals.tick ? real_map_globals.tick_digests[real_map_globals.tick - 1] : 0;
 	result->simulation_chain = real_map_globals.simulation_chain;
+	result->simulation_raw_digest = real_map_globals.tick ? real_map_globals.tick_digests_raw[real_map_globals.tick - 1] : 0;
+	result->simulation_raw_chain = real_map_globals.simulation_raw_chain;
+	result->raw_digest = real_map_globals.last_raw_digest;
+	result->raw_chain = real_map_globals.raw_chain;
 	for (index = 0; index < REAL_MAP_CHECKPOINTS; index++)
 	{
 		result->digest_at[index] = real_map_globals.digest_at[index];
@@ -1157,6 +1280,8 @@ void real_map_end(
 	}
 	result->command_tick = real_map_globals.command_ran_tick;
 	result->command_result = real_map_globals.command_result;
+	result->command_bsp_before = real_map_globals.command_bsp_before;
+	result->command_bsp_after = real_map_globals.command_bsp_after;
 	result->requests_left = real_map_globals.requests_left;
 	real_map_globals.armed = FALSE;
 	game_time_end();
@@ -1168,6 +1293,20 @@ const unsigned long *real_map_tick_digests(
 	void)
 {
 	return real_map_globals.tick_digests;
+}
+
+const unsigned long *real_map_tick_digests_raw(
+	void)
+{
+	return real_map_globals.tick_digests_raw;
+}
+
+void real_map_set_canonical_every_tick(
+	int every)
+{
+	real_map_globals.canonical_every_tick = every ? TRUE : FALSE;
+
+	return;
 }
 
 void real_map_unload(
