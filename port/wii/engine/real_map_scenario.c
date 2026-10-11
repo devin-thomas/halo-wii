@@ -40,6 +40,7 @@ void input_flush(void);
 void game_connection_set(short connection);
 unsigned long *get_global_random_seed_address(void);
 unsigned long *get_global_local_random_seed_address(void);
+unsigned long *get_tick_local_random_seed_address(void);
 /* (main.c's, HWI-016C: the main loop's handling of the game's requests) */
 void main_port_game_requests(boolean before_update);
 boolean main_port_game_requests_left(void);
@@ -92,6 +93,7 @@ enum
 
 	TAG_SLOT_BYTES = 0x01600000,
 	REAL_MAP_LOCAL_RANDOM_SEED = 0x4C4F4341, /* "LOCA" */
+	REAL_MAP_TICK_LOCAL_RANDOM_SEED = 0x5449434B, /* "TICK" (random_math.c, HWI-016F) */
 	GAME_STATE_REGION_BYTES = 0x01600000,
 };
 
@@ -103,6 +105,8 @@ struct real_map_allocation
 	unsigned long size;
 	unsigned long digest_at[REAL_MAP_CHECKPOINTS];
 	boolean frame_coupled;
+	boolean has_frame_coupled_fields;    /* (HWI-016F) frame_coupled_fields */
+	boolean frame_coupled_hwi015b;       /* as HWI-015B classified it */
 	short initial_identifier;          /* a data array's next identifier as the first map loaded */
 	unsigned long raw_at[REAL_MAP_CHECKPOINTS];
 };
@@ -134,6 +138,10 @@ struct real_map_globals
 	unsigned long last_raw_digest;
 	unsigned long simulation_chain;
 	unsigned long simulation_at[REAL_MAP_CHECKPOINTS];
+	/* (HWI-016F) the simulation's digests as HWI-015B classified it */
+	unsigned long legacy_digest;
+	unsigned long legacy_raw_digest;
+	unsigned long legacy_raw_chain;
 	const unsigned long *reference;
 	void (*observer)(long tick);
 	unsigned long last_digest;
@@ -560,7 +568,19 @@ ticks. The simulation's digest leaves them out; the whole state's has them.
   flashes and damage indicators count down by the ticks of the frame,
   game_time_get_elapsed, and draw on the engine's local random numbers); and
   the first-person view model (its idle pose timer draws on those local
-  random numbers, which the per-frame presentation draws on too). */
+  random numbers, which the per-frame presentation draws on too).
+- (HWI-016F) The object looping sounds. Only the game's sound reads them:
+  game_sound_update (game_frame) services each once a frame by its frame
+  count (state, last_audible_frame_index), starts and stops the background
+  sound of the camera's cluster there, and deletes there the unattached
+  ones that have played out (game_sound.c). Objects and scripts make and
+  delete sounds in the ticks, but keep of one only its index, which only the
+  game's sound reads back (objects.c's attachments, a looping sound
+  definition's runtime_scripting_sound_index). The indices themselves come
+  from the one array, so a background sound started a frame later takes
+  its index a tick later (measured: a10 at 20 Hz, tick 1513); an object made
+  in such a tick would keep a different index (not measured in a10; the
+  objects stay the simulation's). */
 static char const *const frame_coupled_allocations[] =
 {
 	"game time globals",
@@ -581,8 +601,17 @@ static char const *const frame_coupled_allocations[] =
 	"lightnings",
 };
 
+/* (HWI-016F's, beyond HWI-015B's above) */
+static char const *const frame_coupled_allocations_hwi016f[] =
+{
+	"object looping sounds",
+};
+
+/* whether the simulation's digest leaves the allocation out: as HWI-015B
+classified them (only), or as HWI-016F does */
 static boolean allocation_frame_coupled(
-	struct real_map_allocation const *allocation)
+	struct real_map_allocation const *allocation,
+	boolean hwi015b_only)
 {
 	short index;
 
@@ -591,8 +620,130 @@ static boolean allocation_frame_coupled(
 		if (!csstrcmp(allocation->name, frame_coupled_allocations[index]))
 			return TRUE;
 	}
+	for (index = 0; !hwi015b_only && index < NUMBEROF(frame_coupled_allocations_hwi016f); index++)
+	{
+		if (!csstrcmp(allocation->name, frame_coupled_allocations_hwi016f[index]))
+			return TRUE;
+	}
 
 	return FALSE;
+}
+
+/* (HWI-016F) fields that follow the render frames inside allocations the
+simulation otherwise owns. The simulation's digest reads them as zeros; the
+whole state's has them. Each is read only by the game's sound or the
+renderer (HWI-016F's evidence traces every reader):
+- scenario globals: the four local players' atmospheric fog and the sound
+  environment, from the first fog state to the end (scenario.h). The sound
+  environment steps toward the camera's cluster's once a frame
+  (scenario_get_sound_environment, from game_sound_update) and only
+  sound_manager_set_sound_environment reads it; the fog steps once a drawn
+  view (scenario_get_atmospheric_fog, from the renderer). The structure bsp
+  index before them is the simulation's.
+element_size: the data array's element size it applies to, 0 for an
+allocation's bytes. */
+struct frame_coupled_field
+{
+	char const *allocation;
+	unsigned short element_size;
+	unsigned short offset;
+	unsigned short size;
+};
+
+enum
+{
+	FRAME_COUPLED_FIELD_COPY_BYTES = 0x400,
+};
+
+static struct frame_coupled_field const frame_coupled_fields[] =
+{
+	{ "scenario globals", 0, offsetof(struct scenario_globals, atmospheric_fog),
+		sizeof(struct scenario_globals) - offsetof(struct scenario_globals, atmospheric_fog) },
+};
+
+typedef char verify_scenario_globals_bytes[sizeof(struct scenario_globals) <= FRAME_COUPLED_FIELD_COPY_BYTES ? 1 : -1];
+
+static boolean allocation_has_frame_coupled_fields(
+	struct real_map_allocation const *allocation)
+{
+	short index;
+
+	for (index = 0; index < NUMBEROF(frame_coupled_fields); index++)
+	{
+		if (!csstrcmp(allocation->name, frame_coupled_fields[index].allocation))
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+/* zero the frame-coupled fields of an element (or an allocation's bytes) */
+static void frame_coupled_fields_clear(
+	char const *name,
+	unsigned long element_size,
+	byte *copy,
+	unsigned long size)
+{
+	short index;
+
+	for (index = 0; index < NUMBEROF(frame_coupled_fields); index++)
+	{
+		struct frame_coupled_field const *field = &frame_coupled_fields[index];
+
+		if (!csstrcmp(name, field->allocation) && field->element_size == element_size &&
+			(unsigned long)field->offset + field->size <= size)
+		{
+			csmemset(copy + field->offset, 0, field->size);
+		}
+	}
+
+	return;
+}
+
+/* the allocation's digest with its frame-coupled fields read as zeros: the
+same groups of the same words as allocation_digest's, from a copy */
+static unsigned long allocation_simulation_digest(
+	struct real_map_allocation const *allocation)
+{
+	static byte copy[FRAME_COUPLED_FIELD_COPY_BYTES];
+	struct digest_state state;
+
+	if (!allocation->has_frame_coupled_fields)
+		return allocation_digest(allocation);
+	csmemset(&state, 0, sizeof(state));
+	if (allocation->kind == _allocation_data)
+	{
+		struct data_array const *data = (struct data_array const *)allocation->address;
+		unsigned long size = (unsigned long)MAX(data->size, 0);
+		long index;
+
+		digest_add(&state, allocation->address, sizeof(struct data_array));
+		for (index = 0; index < data->count && sizeof(struct data_array) + (unsigned long)(index + 1) * size <= allocation->size; index++)
+		{
+			byte const *datum = (byte const *)data->data + index * size;
+
+			if (size > sizeof(copy))
+			{
+				digest_add(&state, datum, size);
+				continue;
+			}
+			csmemcpy(copy, datum, size);
+			frame_coupled_fields_clear(allocation->name, size, copy, size);
+			digest_add_at(&state, copy, datum, size);
+		}
+	}
+	else if (allocation->kind == _allocation_bytes && allocation->size <= sizeof(copy))
+	{
+		csmemcpy(copy, allocation->address, allocation->size);
+		frame_coupled_fields_clear(allocation->name, 0, copy, allocation->size);
+		digest_add_at(&state, copy, allocation->address, allocation->size);
+	}
+	else
+	{
+		return allocation_digest(allocation);
+	}
+
+	return digest_finish(&state);
 }
 
 static void crc_add_word(
@@ -611,12 +762,15 @@ static void crc_add_word(
 }
 
 /* the whole game state's digest; the simulation's (without the
-frame-coupled allocations) in simulation */
+frame-coupled allocations and fields) in simulation; HWI-015B's (without
+the frame-coupled allocations only, HWI-016F's fields kept) in legacy */
 static unsigned long game_state_digest(
 	int checkpoint,
 	unsigned long *simulation,
 	unsigned long *simulation_raw,
-	unsigned long *whole_raw)
+	unsigned long *whole_raw,
+	unsigned long *legacy,
+	unsigned long *legacy_raw)
 {
 	unsigned long crc;
 	long index;
@@ -629,6 +783,8 @@ static unsigned long game_state_digest(
 	crc_new(simulation);
 	crc_new(simulation_raw);
 	crc_new(whole_raw);
+	crc_new(legacy);
+	crc_new(legacy_raw);
 	for (index = 0; index < real_map_globals.allocation_count; index++)
 	{
 		struct real_map_allocation *allocation = &real_map_globals.allocations[index];
@@ -640,10 +796,25 @@ static unsigned long game_state_digest(
 		digest_words_raw = FALSE;
 		crc_add_word(&crc, digest);
 		crc_add_word(whole_raw, raw);
+		if (!allocation->frame_coupled_hwi015b)
+		{
+			crc_add_word(legacy, digest);
+			crc_add_word(legacy_raw, raw);
+		}
 		if (!allocation->frame_coupled)
 		{
-			crc_add_word(simulation, digest);
-			crc_add_word(simulation_raw, raw);
+			unsigned long simulation_digest = digest;
+			unsigned long simulation_digest_raw = raw;
+
+			if (allocation->has_frame_coupled_fields)
+			{
+				simulation_digest = canonical ? allocation_simulation_digest(allocation) : 0;
+				digest_words_raw = TRUE;
+				simulation_digest_raw = allocation_simulation_digest(allocation);
+				digest_words_raw = FALSE;
+			}
+			crc_add_word(simulation, simulation_digest);
+			crc_add_word(simulation_raw, simulation_digest_raw);
 		}
 		if (checkpoint >= 0)
 		{
@@ -738,7 +909,9 @@ static void allocation_record(
 	csmemset(allocation, 0, sizeof(*allocation));
 	csstrncpy(allocation->name, name ? name : "", sizeof(allocation->name) - 1);
 	allocation->name[sizeof(allocation->name) - 1] = 0;
-	allocation->frame_coupled = allocation_frame_coupled(allocation);
+	allocation->frame_coupled = allocation_frame_coupled(allocation, FALSE);
+	allocation->frame_coupled_hwi015b = allocation_frame_coupled(allocation, TRUE);
+	allocation->has_frame_coupled_fields = allocation_has_frame_coupled_fields(allocation);
 	allocation->kind = kind;
 	allocation->address = address;
 	allocation->size = size;
@@ -979,6 +1152,8 @@ void real_map_after_tick(
 	unsigned long simulation;
 	unsigned long simulation_raw;
 	unsigned long whole_raw;
+	unsigned long legacy;
+	unsigned long legacy_raw;
 	int checkpoint = -1;
 
 	if (!real_map_globals.armed || real_map_globals.tick >= real_map_globals.ticks)
@@ -992,7 +1167,10 @@ void real_map_after_tick(
 		checkpoint = 1;
 	else if (tick == 150)
 		checkpoint = 2;
-	digest = game_state_digest(checkpoint, &simulation, &simulation_raw, &whole_raw);
+	digest = game_state_digest(checkpoint, &simulation, &simulation_raw, &whole_raw, &legacy, &legacy_raw);
+	real_map_globals.legacy_digest = legacy;
+	real_map_globals.legacy_raw_digest = legacy_raw;
+	crc_add_word(&real_map_globals.legacy_raw_chain, legacy_raw);
 	real_map_globals.last_raw_digest = whole_raw;
 	crc_add_word(&real_map_globals.raw_chain, whole_raw);
 	real_map_globals.tick_digests[tick - 1] = simulation;
@@ -1138,6 +1316,7 @@ int real_map_load(
 	map's effects made as it loads draw on (as real_map_begin does for a
 	run) */
 	*get_global_local_random_seed_address() = REAL_MAP_LOCAL_RANDOM_SEED;
+	*get_tick_local_random_seed_address() = REAL_MAP_TICK_LOCAL_RANDOM_SEED;
 	if (!game_load((struct game_options *)&options))
 		return FALSE;
 	game_initialize_for_new_map();
@@ -1191,6 +1370,9 @@ int real_map_begin(
 	crc_new(&real_map_globals.chain);
 	crc_new(&real_map_globals.simulation_chain);
 	crc_new(&real_map_globals.simulation_raw_chain);
+	crc_new(&real_map_globals.legacy_raw_chain);
+	real_map_globals.legacy_digest = 0;
+	real_map_globals.legacy_raw_digest = 0;
 	crc_new(&real_map_globals.raw_chain);
 	real_map_globals.last_raw_digest = 0;
 	real_map_globals.updates_built = 0;
@@ -1203,6 +1385,7 @@ int real_map_begin(
 	the clock, as every machine draws its own: each run starts them from
 	the same seed, as it gives the same input */
 	*get_global_local_random_seed_address() = REAL_MAP_LOCAL_RANDOM_SEED;
+	*get_tick_local_random_seed_address() = REAL_MAP_TICK_LOCAL_RANDOM_SEED;
 	real_map_globals.armed = TRUE;
 	game_time_start();
 	game_initial_pulse();
@@ -1251,6 +1434,9 @@ void real_map_end(
 	result->simulation_chain = real_map_globals.simulation_chain;
 	result->simulation_raw_digest = real_map_globals.tick ? real_map_globals.tick_digests_raw[real_map_globals.tick - 1] : 0;
 	result->simulation_raw_chain = real_map_globals.simulation_raw_chain;
+	result->simulation_hwi015b_digest = real_map_globals.legacy_digest;
+	result->simulation_hwi015b_raw_digest = real_map_globals.legacy_raw_digest;
+	result->simulation_hwi015b_raw_chain = real_map_globals.legacy_raw_chain;
 	result->raw_digest = real_map_globals.last_raw_digest;
 	result->raw_chain = real_map_globals.raw_chain;
 	for (index = 0; index < REAL_MAP_CHECKPOINTS; index++)
