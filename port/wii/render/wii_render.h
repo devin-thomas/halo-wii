@@ -201,6 +201,8 @@ struct wii_gx_pose_result
 	/* HWI-030: the full draw's visible triangles of environment materials
 	with a base map: drawn with it resident, or lightmap-only (not resident) */
 	unsigned long textured_triangles, base_missing_triangles;
+	/* the samples that show an environment material with a resident base map */
+	int textured_samples;
 };
 
 void wii_gx_pose_capture(const struct wii_gx_view *view, const unsigned long *surface_flags,

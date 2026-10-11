@@ -676,8 +676,8 @@ static int render_engine_camera_effect_writes(
 /* one fixed pose. With drawn_required, the pose must show lit pixels;
 without it (the engine's camera in a phase that checks each BSP: the player
 may stand outside the BSP switched to, or in a cinematic), an empty frame
-passes, and whatever is drawn is checked as always. Where the drawn
-environment has a resident base map, it must show (HWI-030: a BSP's base
+passes, and whatever is drawn is checked as always. Where a resident base
+map shows in a sample, the base map must change the frame (HWI-030: a BSP's base
 maps are resident only as far as its render pool holds them, the rest are
 drawn lightmap-only and counted) */
 static int render_engine_capture(
@@ -702,7 +702,7 @@ static int render_engine_capture(
 	/* lit and textured pixels, and culling as qualified: under GX_CULL_BACK
 	no sample shows a back face, under GX_CULL_FRONT none a front face */
 	ok = before == after && ((!drawn_required && result.covered == 0) ||
-		(result.covered > 0 && (result.differs_lightmap_only > 0 || result.textured_triangles == 0) &&
+		(result.covered > 0 && (result.differs_lightmap_only > 0 || result.textured_samples == 0) &&
 		result.differs_base_only > 0 && result.facing_back[1] == 0 && result.facing_front[1] > 0 &&
 		result.facing_front[2] == 0));
 	wii_log("RENDER_POSE name=%s camera=%s eye=%.4f,%.4f,%.4f leaf=%ld cluster=%ld clusters=%ld surfaces=%ld "
@@ -710,7 +710,7 @@ static int render_engine_capture(
 		"samples=%d covered=%d distinct=%d "
 		"differs_lightmap_only=%d differs_base_only=%d facing_none=%d/%d facing_back=%d/%d facing_front=%d/%d "
 		"draw_us=%lu state_before=%08lx state_after=%08lx state_unchanged=%d camera_effect_writes=%d "
-		"textured_triangles=%lu base_missing_triangles=%lu drawn_required=%d pass=%d\n",
+		"textured_triangles=%lu base_missing_triangles=%lu textured_samples=%d drawn_required=%d pass=%d\n",
 		name, diagnostic_override ? "diagnostic_override" : "engine_unit_deterministic",
 		(double)render_engine.view.eye[0], (double)render_engine.view.eye[1], (double)render_engine.view.eye[2],
 		render_engine.view.leaf_index, render_engine.view.cluster_index, render_engine.view.rendered_clusters,
@@ -718,7 +718,8 @@ static int render_engine_capture(
 		result.crc_base_alpha, result.base_alpha_below_255, result.samples, result.covered, result.distinct, result.differs_lightmap_only, result.differs_base_only,
 		result.facing_front[0], result.facing_back[0], result.facing_front[1], result.facing_back[1],
 		result.facing_front[2], result.facing_back[2], result.draw_us, before, after, before == after,
-		camera_effect_writes, result.textured_triangles, result.base_missing_triangles, drawn_required ? 1 : 0, ok);
+		camera_effect_writes, result.textured_triangles, result.base_missing_triangles, result.textured_samples,
+		drawn_required ? 1 : 0, ok);
 
 	return ok;
 }

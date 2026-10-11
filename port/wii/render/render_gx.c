@@ -103,11 +103,14 @@ static const GXColor flat_grey = {128, 128, 128, 255};
 static const GXColor opaque_white = {255, 255, 255, 255};
 static const GXColor front_colour = {0, 255, 0, 255};
 static const GXColor back_colour = {255, 0, 0, 255};
+static const GXColor opaque_black = {0, 0, 0, 255};
 static const long default_pose_ticks[3] = {30, 150, 300};
 
 /* DRAW_BASE_ALPHA: each environment material's base map alpha, as TEV
-combines it, shown as grey (255 where no base map is resident) */
-enum draw_mode { DRAW_FULL, DRAW_LIGHTMAP_ONLY, DRAW_BASE_ONLY, DRAW_BASE_ALPHA };
+combines it, shown as grey (255 where no base map is resident).
+DRAW_TEXTURED_MASK (HWI-030): white where an environment material with a
+resident base map shows, black elsewhere: which samples are textured */
+enum draw_mode { DRAW_FULL, DRAW_LIGHTMAP_ONLY, DRAW_BASE_ONLY, DRAW_BASE_ALPHA, DRAW_TEXTURED_MASK };
 
 struct texture {
     long tag;
@@ -1536,7 +1539,10 @@ static unsigned long draw_materials(const unsigned long *flags, const unsigned c
             if (!drawn[i] || transparent != pass || !m->vertex_count)
                 continue;
             int lightmap = 0;
-            if (m->engine.kind == _wii_gx_material_environment && mode == DRAW_BASE_ALPHA) {
+            if (mode == DRAW_TEXTURED_MASK) {
+                tev_constant(m->engine.kind == _wii_gx_material_environment && m->base_texture >= 0
+                                 ? opaque_white : opaque_black);
+            } else if (m->engine.kind == _wii_gx_material_environment && mode == DRAW_BASE_ALPHA) {
                 if (m->base_texture >= 0)
                     tev_alpha_view(&gx.textures[m->base_texture]);
                 else
@@ -1790,6 +1796,13 @@ void wii_gx_pose_capture(const struct wii_gx_view *view, const unsigned long *su
         uint32_t c = pose_other[i], r = c >> 16, g = (c >> 8) & 255u, b = c & 255u;
         out->base_alpha_below_255 += r == g && g == b && r < 255u;
     }
+    /* the samples a resident base map shows in (HWI-030) */
+    clear_efb();
+    draw_materials(surface_flags, material_drawn, DRAW_TEXTURED_MASK, GX_CULL_BACK);
+    GX_DrawDone();
+    sample_grid(pose_other, GRID_X, GRID_Y);
+    for (int i = 0; i < count; ++i)
+        out->textured_samples += pose_other[i] == 0xFFFFFFu;
     for (int k = 0; k < 3; ++k) {
         clear_efb();
         draw_classified(view, surface_flags, material_drawn, frontfacing, culls[k]);
