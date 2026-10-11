@@ -175,7 +175,10 @@ static void boot_ui_finish(
 static void boot_ui_map_current(
 	void)
 {
-	if (global_scenario_index == boot_ui.scenario_index)
+	char const *name = global_scenario_index != NONE ? tag_name_strip_path(tag_get_name(global_scenario_index)) : "";
+
+	/* (every map's scenario can be its first tag: the same datum; the name tells) */
+	if (global_scenario_index == boot_ui.scenario_index && !csstrcmp(name, boot_ui.map_name))
 		return;
 	if (boot_ui.scenario_index != NONE || global_scenario_index != NONE)
 	{

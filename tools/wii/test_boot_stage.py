@@ -130,5 +130,22 @@ class HostReplayTests(unittest.TestCase):
         self.assertEqual(run_boot_host.arena_of(log), ("0x90002000", "0x933db7e0", "4096"))
 
 
+class TwoPortTests(unittest.TestCase):
+    def test_two_ports_interleave_per_poll(self):
+        script = {"port": 1, "ports": 2, "steps": [{"polls": 2, "buttons": ["A"], "buttons2": ["START"]}]}
+        body = run_dolphin.pad_entries(script)
+        self.assertEqual(len(body), 4 * 8)
+        one, two = body[0:8], body[8:16]
+        self.assertEqual(one[0:2], (run_dolphin.PAD_CONNECTED | run_dolphin.PAD_BUTTONS["A"]).to_bytes(2, "little"))
+        self.assertEqual(two[0:2], (run_dolphin.PAD_CONNECTED | run_dolphin.PAD_BUTTONS["START"]).to_bytes(2, "little"))
+        self.assertEqual(body[16:32], body[0:16])
+        movie = run_dolphin.author_dtm(b"ID-eng", body, ports=2)
+        self.assertEqual(movie[run_dolphin.DTM_CONTROLLERS], 0x03)
+        self.assertIn("SIDevice1 = 6", run_dolphin.profile_files("D3D", gc_ports=2)["Dolphin.ini"])
+        self.assertIn("SIDevice1 = 0", run_dolphin.profile_files("D3D")["Dolphin.ini"])
+        with self.assertRaises(ValueError):
+            run_dolphin.pad_entries({"ports": 3, "steps": [{"polls": 1}]})
+
+
 if __name__ == "__main__":
     unittest.main()

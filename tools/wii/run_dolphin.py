@@ -81,25 +81,41 @@ def game_id_for_executable(name):
     return ("ID-" + stem).encode("utf-8")[:6]
 
 
+def script_ports(script):
+    """GC ports a script drives: 1 (port 1), or 2 (ports 1 and 2: "ports": 2)"""
+    ports = script.get("ports", 1) if isinstance(script, dict) else 1
+    if ports not in (1, 2):
+        raise ValueError("input script ports must be 1 or 2")
+    return ports
+
+
+def pad_state(step, suffix=""):
+    """one controller's 8-byte state for a step; suffix "2" reads port 2's keys (buttons2, stick2 ...)"""
+    bits = PAD_CONNECTED
+    for button in step.get("buttons" + suffix, []):
+        if button not in PAD_BUTTONS:
+            raise ValueError(f"step {step.get('label')!r}: unknown button {button!r}")
+        bits |= PAD_BUTTONS[button]
+    values = [step.get("trigger_l" + suffix, 0), step.get("trigger_r" + suffix, 0),
+              *step.get("stick" + suffix, (0x80, 0x80)), *step.get("cstick" + suffix, (0x80, 0x80))]
+    if len(values) != 6 or any(not isinstance(v, int) or not 0 <= v <= 255 for v in values):
+        raise ValueError(f"step {step.get('label')!r}: analog values must be six bytes")
+    return struct.pack("<H6B", bits, *values)
+
+
 def pad_entries(script):
-    """Expand an input script into 8-byte GC pad states, one per controller poll."""
+    """Expand an input script into 8-byte GC pad states, one per controller poll (with two
+    ports, port 1's and port 2's state for each poll, in that order, as Dolphin reads them)."""
     if not isinstance(script, dict) or script.get("port", 1) != 1:
         raise ValueError("input script must be an object driving GC port 1")
+    ports = script_ports(script)
     entries = []
     for step in script.get("steps", []):
         polls = step.get("polls")
         if not isinstance(polls, int) or polls <= 0:
             raise ValueError(f"step {step.get('label')!r}: polls must be a positive integer")
-        bits = PAD_CONNECTED
-        for button in step.get("buttons", []):
-            if button not in PAD_BUTTONS:
-                raise ValueError(f"step {step.get('label')!r}: unknown button {button!r}")
-            bits |= PAD_BUTTONS[button]
-        values = [step.get("trigger_l", 0), step.get("trigger_r", 0),
-                  *step.get("stick", (0x80, 0x80)), *step.get("cstick", (0x80, 0x80))]
-        if len(values) != 6 or any(not isinstance(v, int) or not 0 <= v <= 255 for v in values):
-            raise ValueError(f"step {step.get('label')!r}: analog values must be six bytes")
-        entries.append(struct.pack("<H6B", bits, *values) * polls)
+        state = pad_state(step) + (pad_state(step, "2") if ports == 2 else b"")
+        entries.append(state * polls)
     if not entries:
         raise ValueError("input script has no steps")
     repeat = script.get("repeat", 1)
@@ -108,15 +124,15 @@ def pad_entries(script):
     return b"".join(entries) * repeat
 
 
-def author_dtm(game_id, body, tick_count=DEFAULT_TICK_COUNT):
-    """A Wii-mode, boot-start DTM with one standard GC controller on port 1."""
+def author_dtm(game_id, body, tick_count=DEFAULT_TICK_COUNT, ports=1):
+    """A Wii-mode, boot-start DTM with standard GC controllers on port 1 (and port 2)."""
     if len(body) % 8:
         raise ValueError("pad body must be whole 8-byte states")
     header = bytearray(DTM_HEADER_BYTES)
     header[0:4] = DTM_MAGIC
     header[DTM_GAME_ID:DTM_GAME_ID + 6] = game_id[:6].ljust(6, b"\0")
     header[DTM_IS_WII] = 1
-    header[DTM_CONTROLLERS] = 0x01
+    header[DTM_CONTROLLERS] = 0x01 if ports == 1 else 0x03
     struct.pack_into("<Q", header, DTM_FRAME_COUNT, len(body) // 8)
     struct.pack_into("<Q", header, DTM_INPUT_COUNT, len(body) // 8)
     struct.pack_into("<Q", header, DTM_TICK_COUNT, tick_count)
@@ -148,13 +164,13 @@ STOCK_REQUIRED = {("Core", "EnableCheats"): "False", ("Core", "OverclockEnable")
                   ("Core", "RAMOverrideEnable"): "False", ("Core", "EmulationSpeed"): "1.0"}
 
 
-def profile_files(backend="D3D", efb_access=False, dump_frames=False, safe_texture_cache=False):
+def profile_files(backend="D3D", efb_access=False, dump_frames=False, safe_texture_cache=False, gc_ports=1):
     """Config files for a new Wii-mode profile: stock clock/memory, no cheats."""
     dolphin = {
         "Core": [("CPUThread", "False"), ("EnableCheats", "False"), ("OverclockEnable", "False"),
                  ("Overclock", "1.0"), ("VIOverclockEnable", "False"), ("RAMOverrideEnable", "False"),
                  ("EmulationSpeed", "1.0"), ("GFXBackend", backend), ("SIDevice0", "6"),
-                 ("SIDevice1", "0"), ("SIDevice2", "0"), ("SIDevice3", "0"), ("WiiSDCard", "True"),
+                 ("SIDevice1", "6" if gc_ports == 2 else "0"), ("SIDevice2", "0"), ("SIDevice3", "0"), ("WiiSDCard", "True"),
                  ("WiiSDCardAllowWrites", "True"), ("WiiSDCardEnableFolderSync", "False")],
         "Interface": [("ConfirmStop", "False"), ("UsePanicHandlers", "False")],
         "Movie": [("DumpFrames", str(dump_frames)), ("DumpFramesSilent", "True")],
@@ -1251,7 +1267,9 @@ def main(argv=None):
         identity.update(build_id=build_id, source_commit=info.get("source_commit"),
                         source_dirty=info.get("source_dirty"), scope=info.get("scope"),
                         compiler=info.get("compiler"), auto_exit_frames=info.get("probe_auto_exit_frames"))
-    files = profile_files(backend, args.efb_access, args.dump_frames, args.safe_texture_cache)
+    script = json.loads(args.input_script.read_text(encoding="utf-8")) if args.input_script else None
+    gc_ports = script_ports(script) if script else 1
+    files = profile_files(backend, args.efb_access, args.dump_frames, args.safe_texture_cache, gc_ports)
     check_stock_limits(files)
     if running_count(exe.name, host):
         print("another Dolphin process is running; exclusive ownership required", file=sys.stderr)
@@ -1264,11 +1282,11 @@ def main(argv=None):
         (profile / "Config" / name).write_text(text, encoding="ascii")
     movie_path, input_record = None, {"kind": "none"}
     if args.input_script:
-        script = json.loads(args.input_script.read_text(encoding="utf-8"))
-        data = author_dtm(game_id_for_executable(dol.name), pad_entries(script))
+        data = author_dtm(game_id_for_executable(dol.name), pad_entries(script), ports=gc_ports)
         movie_path = out / "input.dtm"
         movie_path.write_bytes(data)
-        input_record = {"kind": "authored DTM, standard GC pad port 1; virtual input",
+        input_record = {"kind": "authored DTM, standard GC pad port 1" + (" and port 2" if gc_ports == 2 else "") +
+                                "; virtual input",
                         "script": args.input_script.name, "script_sha256": sha256(args.input_script),
                         "steps": [[s.get("label"), s["polls"]] for s in script["steps"]]}
     elif args.movie:

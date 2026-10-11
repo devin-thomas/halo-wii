@@ -87,7 +87,7 @@ static struct {
     u64 started;
     unsigned long pad_scans;
     struct wii_pad_state pads[WII_PAD_PORTS];
-    struct wii_pad_state last_logged;
+    struct wii_pad_state last_logged, last_logged2;
     char previous_result[96];
     int have_previous;
 } boot;
@@ -289,27 +289,52 @@ static int map_check(const char *map_name, char *reason, unsigned long reason_si
 
 static unsigned int pad_scan(void)
 {
-    unsigned int connected = PAD_ScanPads();
+    PADStatus status[PAD_CHANMAX];
+    unsigned int connected = 0;
+    unsigned int reset = 0;
+    PAD_Read(status);
     for (int port = 0; port < WII_PAD_PORTS; ++port) {
         struct wii_pad_state *pad = &boot.pads[port];
-        memset(pad, 0, sizeof(*pad));
-        if (!(connected & (1u << port)))
+        if (status[port].err == PAD_ERR_NO_CONTROLLER) {
+            /* gone: looked for again (PAD_Reset), reported removed */
+            memset(pad, 0, sizeof(*pad));
+            reset |= PAD_CHAN0_BIT >> port;
             continue;
+        }
+        if (status[port].err != PAD_ERR_NONE) {
+            /* a transfer not finished this time: the port stays as it was
+            (PAD_ScanPads reported it gone, and the engine saw an unplug) */
+            if (pad->connected)
+                connected |= 1u << port;
+            continue;
+        }
+        connected |= 1u << port;
         pad->connected = 1;
-        pad->buttons = PAD_ButtonsHeld(port);
-        pad->stick_x = PAD_StickX(port);
-        pad->stick_y = PAD_StickY(port);
-        pad->cstick_x = PAD_SubStickX(port);
-        pad->cstick_y = PAD_SubStickY(port);
-        pad->trigger_l = PAD_TriggerL(port);
-        pad->trigger_r = PAD_TriggerR(port);
+        pad->buttons = status[port].button;
+        pad->stick_x = status[port].stickX;
+        pad->stick_y = status[port].stickY;
+        pad->cstick_x = status[port].substickX;
+        pad->cstick_y = status[port].substickY;
+        pad->trigger_l = status[port].triggerL;
+        pad->trigger_r = status[port].triggerR;
     }
+    if (reset)
+        PAD_Reset(reset);
     if (memcmp(&boot.pads[0], &boot.last_logged, sizeof(boot.last_logged))) {
         wii_log("BOOT_PAD scan=%lu clock_ms=%lu connected=%x buttons=%04x stick=%d,%d cstick=%d,%d triggers=%u,%u\n",
                 boot.pad_scans, wii_boot_clock_milliseconds(), connected, boot.pads[0].buttons, boot.pads[0].stick_x,
                 boot.pads[0].stick_y, boot.pads[0].cstick_x, boot.pads[0].cstick_y, boot.pads[0].trigger_l,
                 boot.pads[0].trigger_r);
         boot.last_logged = boot.pads[0];
+    }
+    /* (port 2: a second player, split screen) */
+    if (memcmp(&boot.pads[1], &boot.last_logged2, sizeof(boot.last_logged2))) {
+        wii_log("BOOT_PAD2 scan=%lu clock_ms=%lu connected=%x buttons=%04x stick=%d,%d cstick=%d,%d "
+                "triggers=%u,%u\n",
+                boot.pad_scans, wii_boot_clock_milliseconds(), connected, boot.pads[1].buttons, boot.pads[1].stick_x,
+                boot.pads[1].stick_y, boot.pads[1].cstick_x, boot.pads[1].cstick_y, boot.pads[1].trigger_l,
+                boot.pads[1].trigger_r);
+        boot.last_logged2 = boot.pads[1];
     }
     boot.pad_scans++;
     return connected;
