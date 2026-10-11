@@ -89,14 +89,7 @@ SUBSYSTEMS: Dict[str, List[str]] = {
         "IDirectSound_SetVelocity",
     ],
     # (input: XInput is implemented on the GameCube pad, port/wii/engine/wii_xinput.c, HWI-016D)
-    "network": [
-        "WSACleanup", "WSAGetLastError", "WSAStartup", "XNetCleanup", "XNetCreateKey",
-        "XNetGetEthernetLinkStatus", "XNetGetTitleXnAddr", "XNetRandom", "XNetRegisterKey", "XNetStartup",
-        "XNetUnregisterKey", "XNetXnAddrToInAddr", "__WSAFDIsSet",
-        *(f"halo_ws_{name}" for name in (
-            "accept", "bind", "closesocket", "connect", "getpeername", "getsockname", "getsockopt",
-            "ioctlsocket", "listen", "recv", "recvfrom", "select", "send", "sendto", "setsockopt", "socket")),
-    ],
+    # (network: Winsock and XNet are port/linux/src/xnet.c over port/wii/engine/wii_loopback_net.c, HWI-016D)
     "xbdm": ["DmCloseModuleSections", "DmWalkLoadedModules", "DmWalkModuleSections"],
 }
 

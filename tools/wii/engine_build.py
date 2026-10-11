@@ -64,14 +64,16 @@ ENGINE_AUTHORED = (ENGINE_DIR / "engine_hooks.c", ENGINE_DIR / "fixed_step_scena
 
 # Linux platform files whose code only needs a C library: reused unchanged.
 REUSED_PLATFORM = tuple(LINUX_PLATFORM / name for name in (
-    "xbox_files.c", "xbox_xapi.c", "msvc_crt.c", "msvc_wide.c", "halo_linker_common.c", "port_config.c"))
+    "xbox_files.c", "xbox_xapi.c", "msvc_crt.c", "msvc_wide.c", "halo_linker_common.c", "port_config.c",
+    # HWI-016D: Xbox Winsock and XNet over the sockets below (wii_loopback_net.c)
+    "xnet.c"))
 # The Wii's own services.
 WII_PLATFORM = tuple(ENGINE_DIR / name for name in (
     "wii_log.c", "wii_kernel.c", "wii_memory.c", "wii_posix_files.c", "wii_sdl_files.c",
     "wii_platform_checks.c", "unsupported_sdk.c", "unsupported_port.c", "engine_map_run.c",
     "wii_engine_main.c",
-    # HWI-016D: XInput on the GameCube pad
-    "wii_xinput.c")) + (
+    # HWI-016D: XInput on the GameCube pad; the in-process loopback sockets
+    "wii_xinput.c", "wii_loopback_net.c")) + (
     Path("port/wii/runtime/runtime_start.c"), Path("tools/wii/cache_arena_plan.c"))
 WII_HEADERS = tuple(sorted(ENGINE_DIR.glob("*.h"))) + (PREFIX, ENGINE_DIR / "sdl/SDL3/SDL.h")
 # HWI-016B: the Wii rasterizer's environment path, in engine.dol only (the
@@ -137,7 +139,8 @@ WRAPPED = ("main", "halt_and_catch_fire", "game_tick", "game_frame", "update_cli
            "rasterizer_text_draw_character", "rasterizer_text_end", "rasterizer_bitmap_new",
            "rasterizer_bitmap_changed", "rasterizer_bitmap_delete", "main_set_map_name",
            "main_menu_switch_to_single_player", "system_milliseconds", "Sleep", "sound_initialize",
-           "bink_playback_start", "sound_cache_idle")
+           "bink_playback_start", "sound_cache_idle", "game_precache_new_map", "cache_file_open",
+           "cache_files_precache_map_begin")
 # Diagnostic storage (HWI-015D): "omit" (the default) compiles the engine
 # without the AI's debug records and the profiler's frame history; "keep"
 # compiles them as the other ports do, and then wraps ai_debug_initialize

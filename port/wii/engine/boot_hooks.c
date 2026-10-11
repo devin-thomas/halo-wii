@@ -401,3 +401,92 @@ void __wrap_sound_cache_idle(
 		return;
 	__real_sound_cache_idle();
 }
+
+/* ---------- a map the engine loads without the menus' main_set_map_name
+
+A multiplayer game (the split-screen host's network game) loads its map in
+network_game_create_game_objects: game_precache_new_map, which asserts when
+the map is not there (fatal on the Xbox: the damaged disc), then game_load.
+With a check registered, a map it refuses is neither precached nor opened
+(cache_file_open fails before reading a byte, so a damaged or out-of-date
+file is never loaded): the engine's own failure path follows (the game data
+did not load; the network game ends and the main menu loads again), and the
+main menu shows the reason with the port's error text. */
+
+struct cache_file_header;
+
+void __real_game_precache_new_map(char *map_name, boolean blocking);
+boolean __real_cache_file_open(char const *scenario_name, struct cache_file_header *header);
+
+static boolean boot_map_refuse(
+	char const *map_name,
+	char const *where)
+{
+	long index;
+
+	if (!boot_map_check || !map_name || !map_name[0] ||
+		!boot_map_check(map_name, boot_map_refused_reason, sizeof(boot_map_refused_reason)))
+	{
+		return FALSE;
+	}
+	boot_map_refusal_count++;
+	csstrncpy(boot_map_refused_name, tag_name_strip_path(map_name), sizeof(boot_map_refused_name) - 1);
+	boot_map_refused_name[sizeof(boot_map_refused_name) - 1] = 0;
+	for (index = 0; boot_map_refused_reason[index] && index < NUMBEROF(boot_map_refused_text) - 1; index++)
+		boot_map_refused_text[index] = (wchar_t)(unsigned char)boot_map_refused_reason[index];
+	boot_map_refused_text[index] = 0;
+	wii_log("BOOT_MAP_REFUSED map=%s at=%s count=%ld reason=\"%s\"\n", boot_map_refused_name, where,
+		boot_map_refusal_count, boot_map_refused_reason);
+	error(_error_silent, "the map '%s' was not loaded: %s", map_name, boot_map_refused_reason);
+
+	return TRUE;
+}
+
+void __wrap_game_precache_new_map(
+	char *map_name,
+	boolean blocking)
+{
+	if (boot_map_refuse(map_name, "game_precache_new_map"))
+	{
+		display_error_text_when_main_menu_loaded(boot_map_refused_text);
+		return;
+	}
+	__real_game_precache_new_map(map_name, blocking);
+}
+
+boolean __wrap_cache_file_open(
+	char const *scenario_name,
+	struct cache_file_header *header)
+{
+	/* (refused at its precache already: counted once) */
+	if (boot_map_check && scenario_name &&
+		boot_map_check(scenario_name, boot_map_refused_reason, sizeof(boot_map_refused_reason)))
+	{
+		wii_log("BOOT_MAP_NOT_OPENED map=%s\n", tag_name_strip_path(scenario_name));
+		return FALSE;
+	}
+	return __real_cache_file_open(scenario_name, header);
+}
+
+/* The menus' map selection precaches the selected map at once (a split-screen
+or network game: cache_files_give_time_to_precache), and a precache that
+cannot begin is the damaged-disc error, which aborts to the dashboard. With
+a check registered, a refused map is not precached; the network game ends
+(network_game_abort, which the engine's own main_loop handles: the main menu
+loads again) and the main menu shows the reason. The precache answers that
+it began, so the damaged-disc path is not taken; the map never loads. */
+boolean __real_cache_files_precache_map_begin(char const *map_name, boolean copy_map);
+void network_game_abort(void);
+
+boolean __wrap_cache_files_precache_map_begin(
+	char const *map_name,
+	boolean copy_map)
+{
+	if (boot_map_refuse(map_name, "cache_files_precache_map_begin"))
+	{
+		display_error_text_when_main_menu_loaded(boot_map_refused_text);
+		network_game_abort();
+		return TRUE;
+	}
+	return __real_cache_files_precache_map_begin(map_name, copy_map);
+}
