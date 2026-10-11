@@ -70,6 +70,11 @@ interface can draw it; NULL (none registered) everywhere else */
 struct bitmap_data;
 void wii_engine_set_bitmap_hardware_format(void *(*proc)(struct bitmap_data *bitmap));
 
+/* HWI-033: the boot mode's observer of the game's ticks: called after each
+of the engine's own game_tick (outside the map run and the fixed-step
+scenario), for the campaign's per-tick digests; NULL (the default) for none */
+void wii_engine_set_tick_observer(void (*observer)(void));
+
 /* the halt report (wii_engine_main.c): the engine stops here */
 void wii_driver_halt(const char *error_text) __attribute__((noreturn));
 

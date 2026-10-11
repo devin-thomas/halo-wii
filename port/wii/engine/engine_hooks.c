@@ -217,6 +217,15 @@ void __wrap_halt_and_catch_fire(
 	wii_driver_halt(error_get());
 }
 
+/* HWI-033: the boot mode's tick observer (engine_hooks.h) */
+static void (*boot_tick_observer)(void);
+
+void wii_engine_set_tick_observer(
+	void (*observer)(void))
+{
+	boot_tick_observer = observer;
+}
+
 void __wrap_game_tick(
 	void)
 {
@@ -228,6 +237,8 @@ void __wrap_game_tick(
 	{
 		__real_game_tick();
 		real_map_after_tick();
+		if (boot_tick_observer)
+			boot_tick_observer();
 	}
 }
 

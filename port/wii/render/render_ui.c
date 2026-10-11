@@ -57,6 +57,7 @@ the EFB on a 32x24 grid and the game state's digest.
 #include "bink/bink_playback.h"
 #include "game/game.h"
 #include "scenario/scenario.h"
+#include "scenario/scenario_definitions.h"
 #include "tag_files/tag_files.h"
 #include "tag_files/tag_groups.h"
 #include "memory/crc.h"
@@ -131,6 +132,14 @@ struct boot_ui_globals
 	char map_name[64];
 	long scenario_index;
 	long map_changes;
+	/* HWI-033: the loaded map is a campaign map (its scenario's type is solo),
+	whose environment drawing is pending (HWI-030): not drawn, labelled */
+	boolean campaign;
+	boolean environment_pending;    /* this frame */
+	boolean pending_logged;         /* this map */
+	/* the target map's ticks (the tick observer) and those digested */
+	long target_ticks;
+	long tick_digests;
 	/* the glyph cache and any other bitmap the engine makes */
 	struct boot_ui_dynamic_bitmap dynamic[BOOT_UI_MAXIMUM_DYNAMIC_BITMAPS];
 	/* text between rasterizer_text_begin and _end */
@@ -191,15 +200,21 @@ static void boot_ui_map_current(
 	}
 	boot_ui.scenario_index = global_scenario_index;
 	boot_ui.map_name[0] = 0;
+	boot_ui.campaign = FALSE;
+	boot_ui.pending_logged = FALSE;
+	boot_ui.target_ticks = 0;
 	if (global_scenario_index != NONE)
 	{
 		csstrncpy(boot_ui.map_name, tag_name_strip_path(tag_get_name(global_scenario_index)),
 			sizeof(boot_ui.map_name) - 1);
 		boot_ui.map_name[sizeof(boot_ui.map_name) - 1] = 0;
+		boot_ui.campaign = global_scenario_get()->type == _scenario_type_solo;
 	}
-	wii_log("BOOT_MAP frame=%ld map=%s scenario_tag=%ld changes=%ld game_time=%ld\n", boot_ui.frame,
+	wii_log("BOOT_MAP frame=%ld map=%s scenario_tag=%ld kind=%s changes=%ld game_time=%ld\n", boot_ui.frame,
 		boot_ui.map_name[0] ? boot_ui.map_name : "(none)",
 		global_scenario_index == NONE ? -1L : (long)DATUM_INDEX_TO_ABSOLUTE_INDEX(global_scenario_index),
+		global_scenario_index == NONE ? "none" : boot_ui.campaign ? "campaign" :
+		!csstrcmp(boot_ui.map_name, "ui") ? "menus" : "multiplayer",
 		boot_ui.map_changes, game_in_progress() ? game_time_get() : -1L);
 }
 
@@ -345,7 +360,15 @@ map's decals keep the answer the map run has: none) */
 static void *boot_ui_bitmap_hardware_format(
 	struct bitmap_data *bitmap)
 {
-	if (!bitmap || !boot_ui.initialized || !boot_ui_in_menu_map())
+	if (!bitmap || !boot_ui.initialized)
+		return NULL;
+	/* HWI-033: the map loaded now, not the one the last frame drew. The
+	engine asks while a new map loads, before its first frame: the menus'
+	map name was kept, and a bitmap of the new map (Prisoner's lightmap page,
+	tag 1642 bitmap 1) was looked for among the menus' textures and reported
+	missing */
+	boot_ui_map_current();
+	if (!boot_ui_in_menu_map())
 		return NULL;
 	return boot_ui_texture(bitmap) >= 0 ? (void *)bitmap : NULL;
 }
@@ -364,9 +387,9 @@ static void boot_ui_log_allocations(
 	}
 }
 
-/* the last digests without the script runtime's allocations ("hs ..."), whose
-stack slots hold shorts in longs that the PowerPC lays out differently
-(HWI-016C fixes the script runtime): the rest compares with the host */
+/* the last digests without the script runtime's allocations ("hs ..."):
+HWI-016D's comparison, kept beside the whole state's (which reads the
+script threads by their fields since HWI-033) */
 static unsigned long boot_ui_state_without_scripts(
 	void)
 {
@@ -429,19 +452,22 @@ static void boot_ui_screen_check(
 			focused_tag == NONE ? -1L : (long)DATUM_INDEX_TO_ABSOLUTE_INDEX(focused_tag), crc, covered, state,
 			boot_ui_state_without_scripts(), game_in_progress() ? game_time_get() : -1L);
 		if (boot_ui.screen_samples++ == 0)
-		{
 			boot_ui_log_allocations("first_screen");
-			if (boot_ui.config.dump_allocation >= 0 &&
-				boot_ui.config.dump_allocation < real_map_allocation_count())
-			{
-				FILE *dump = fopen("d:\\boot_dump.bin", "wb");
+		/* (diagnosis) the allocation's bytes at every sampled screen */
+		if (boot_ui.config.dump_allocation >= 0 &&
+			boot_ui.config.dump_allocation < real_map_allocation_count())
+		{
+			char path[64];
+			FILE *dump;
 
-				if (dump)
-				{
-					fwrite(real_map_allocation_address(boot_ui.config.dump_allocation), 1,
-						real_map_allocation_bytes(boot_ui.config.dump_allocation), dump);
-					fclose(dump);
-				}
+			_snprintf(path, sizeof(path) - 1, "d:\\boot_dump_%05ld.bin", boot_ui.frame);
+			path[sizeof(path) - 1] = 0;
+			dump = fopen(path, "wb");
+			if (dump)
+			{
+				fwrite(real_map_allocation_address(boot_ui.config.dump_allocation), 1,
+					real_map_allocation_bytes(boot_ui.config.dump_allocation), dump);
+				fclose(dump);
 			}
 		}
 	}
@@ -461,7 +487,20 @@ static void boot_ui_overlay(
 	wii_ui_gx_fill(0, 462, BOOT_UI_SCREEN_WIDTH, 480, 0xA0000000u);
 	if (boot_ui.config.overlay)
 		wii_ui_gx_text(4, 465, 1, 0xFFC8C8C8u, boot_ui.config.overlay);
-	if (boot_ui.map_name[0] && !boot_ui_in_menu_map())
+	if (boot_ui.map_name[0] && !boot_ui_in_menu_map() && boot_ui.campaign)
+	{
+		/* HWI-033: the campaign runs; its environment is not drawn (HWI-030:
+		a BSP's geometry does not fit the memory left), and says so */
+		_snprintf(line, sizeof(line) - 1, "MAP %s: CAMPAIGN - ENVIRONMENT DRAWING PENDING (HWI-030)", boot_ui.map_name);
+		wii_ui_gx_fill(0, 0, BOOT_UI_SCREEN_WIDTH, 14, 0xA0000000u);
+		wii_ui_gx_text(4, 3, 1, 0xFFFFD040u, line);
+		wii_ui_gx_fill(120, 200, 520, 268, 0xC0202020u);
+		wii_ui_gx_text(136, 210, 2, 0xFFFFFFFFu, "CAMPAIGN ENVIRONMENT");
+		wii_ui_gx_text(136, 228, 2, 0xFFFFFFFFu, "DRAWING PENDING (HWI-030)");
+		_snprintf(line, sizeof(line) - 1, "THE GAME RUNS: TICK %ld, NOT DRAWN", boot_ui.target_ticks);
+		wii_ui_gx_text(136, 250, 1, 0xFFFFE0A0u, line);
+	}
+	else if (boot_ui.map_name[0] && !boot_ui_in_menu_map())
 	{
 		/* a multiplayer map is never the campaign */
 		_snprintf(line, sizeof(line) - 1, "MAP %s: MULTIPLAYER ENVIRONMENT (DIAGNOSTIC) - NOT THE CAMPAIGN",
@@ -568,6 +607,7 @@ static void boot_ui_frame(
 	render.time_delta_since_tick_sec = dt;
 	boot_ui_map_current();
 	boot_ui.environment_drawn = FALSE;
+	boot_ui.environment_pending = FALSE;
 	for (window_index = 0; window_index < window_count; window_index++)
 	{
 		struct render_window *window = &windoze[window_index];
@@ -587,7 +627,21 @@ static void boot_ui_frame(
 		boot_ui.player_windows++;
 		/* the environment from the window's own camera, then the interface */
 		wii_ui_gx_window(bounds->x0, bounds->y0, bounds->x1, bounds->y1);
-		if (wii_render_environment_draw(&window->render_camera))
+		if (boot_ui.campaign)
+		{
+			/* HWI-033: a campaign map's environment is not drawn until its
+			BSPs fit (HWI-030); it is not loaded either, so nothing is taken
+			from the memory the game runs in. The window stays clear and the
+			overlay says why */
+			if (!boot_ui.pending_logged)
+			{
+				wii_log("BOOT_ENVIRONMENT_PENDING map=%s frame=%ld reason=campaign_bsp_geometry_does_not_fit "
+					"ticket=HWI-030\n", boot_ui.map_name, boot_ui.frame);
+			}
+			boot_ui.pending_logged = TRUE;
+			boot_ui.environment_pending = TRUE;
+		}
+		else if (wii_render_environment_draw(&window->render_camera))
 			boot_ui.environment_drawn = TRUE;
 		render.local_player_index = window->local_player_index;
 		boot_ui_interface(window, window->local_player_index, window_index);
@@ -616,7 +670,8 @@ static void boot_ui_present(
 {
 	boot_ui_screen_check();
 	boot_ui_overlay();
-	if (boot_ui.environment_drawn && boot_ui.map_name[0] && !boot_ui_in_menu_map())
+	/* (HWI-033: a campaign map's frames count too, its drawing pending) */
+	if ((boot_ui.environment_drawn || boot_ui.environment_pending) && boot_ui.map_name[0] && !boot_ui_in_menu_map())
 	{
 		boot_ui.environment_frames++;
 		if (boot_ui.environment_frames == 1)
@@ -626,8 +681,9 @@ static void boot_ui_present(
 			unsigned long state = wii_boot_state_digest(boot_ui.state_digests, BOOT_UI_MAXIMUM_STATE_ALLOCATIONS);
 
 			wii_log("BOOT_ENVIRONMENT first frame=%ld clock_ms=%lu map=%s efb_crc=%08lx covered=%d state=%08lx "
-				"game_time=%ld\n", boot_ui.frame, wii_boot_clock_milliseconds(), boot_ui.map_name, crc, covered,
-				state, game_in_progress() ? game_time_get() : -1L);
+				"game_time=%ld drawing=%s\n", boot_ui.frame, wii_boot_clock_milliseconds(), boot_ui.map_name, crc,
+				covered, state, game_in_progress() ? game_time_get() : -1L,
+				boot_ui.environment_pending ? "pending_hwi030" : "drawn");
 			boot_ui_log_allocations("first_environment");
 		}
 	}
@@ -638,9 +694,11 @@ static void boot_ui_present(
 		int covered = 0;
 		unsigned long state = wii_boot_state_digest(boot_ui.state_digests, BOOT_UI_MAXIMUM_STATE_ALLOCATIONS);
 
-		wii_log("BOOT_ENVIRONMENT end frames=%ld map=%s state=%08lx game_time=%ld covered_last=%d\n",
-			boot_ui.environment_frames, boot_ui.map_name, state, game_in_progress() ? game_time_get() : -1L, covered);
-		boot_ui_finish(1, "environment_reached");
+		wii_log("BOOT_ENVIRONMENT end frames=%ld map=%s state=%08lx game_time=%ld covered_last=%d ticks=%ld "
+			"tick_digests=%ld drawing=%s\n", boot_ui.environment_frames, boot_ui.map_name, state,
+			game_in_progress() ? game_time_get() : -1L, covered, boot_ui.target_ticks, boot_ui.tick_digests,
+			boot_ui.campaign ? "pending_hwi030" : "drawn");
+		boot_ui_finish(1, boot_ui.campaign ? "campaign_reached_drawing_pending" : "environment_reached");
 	}
 	else if (boot_ui.config.max_frames > 0 && boot_ui.frame >= boot_ui.config.max_frames)
 	{
@@ -838,6 +896,30 @@ static void boot_ui_bitmap_delete(
 	}
 }
 
+/* HWI-033: after each of the engine's ticks (engine_hooks.h): the target
+map's ticks are counted, and the first tick_digests of them each log the
+game state's digest (BOOT_TICK), which the i686 host reference replaying the
+launch logs too */
+static void boot_ui_after_tick(
+	void)
+{
+	unsigned long state;
+
+	if (!boot_ui.initialized || boot_ui.finished)
+		return;
+	boot_ui_map_current();
+	if (!boot_ui.map_name[0] || boot_ui_in_menu_map())
+		return;
+	boot_ui.target_ticks++;
+	if (boot_ui.tick_digests >= boot_ui.config.tick_digests)
+		return;
+	state = wii_boot_state_digest(boot_ui.state_digests, BOOT_UI_MAXIMUM_STATE_ALLOCATIONS);
+	boot_ui.tick_digests++;
+	wii_log("BOOT_TICK map=%s tick=%ld game_time=%ld frame=%ld state=%08lx state_without_scripts=%08lx "
+		"bsp=%d\n", boot_ui.map_name, boot_ui.target_ticks, game_in_progress() ? game_time_get() : -1L,
+		boot_ui.frame, state, boot_ui_state_without_scripts(), (int)global_structure_bsp_index);
+}
+
 /* ---------- public code */
 
 void wii_render_ui_register(
@@ -870,6 +952,7 @@ void wii_render_ui_register(
 	wii_boot_set_render_hooks(&hooks);
 	wii_boot_set_map_check(config->map_check);
 	wii_engine_set_bitmap_hardware_format(boot_ui_bitmap_hardware_format);
+	wii_engine_set_tick_observer(boot_ui_after_tick);
 }
 
 void wii_render_ui_report(

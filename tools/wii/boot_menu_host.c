@@ -12,7 +12,7 @@
  * the Wii's.
  *
  * usage: boot_menu_host <arena2 low> <arena2 high> <placement offset> <pad file> <max frames>
- *        <environment frames> <settle frames> */
+ *        <environment frames> <settle frames> [<tick digests>] */
 #include <execinfo.h>
 #include <signal.h>
 #include <unistd.h>
@@ -166,9 +166,9 @@ int __wrap_main(int argc, char **argv)
     struct wii_boot_ui_config config;
     int code;
 
-    if (argc != 8) {
+    if (argc != 8 && argc != 9) {
         fprintf(stderr, "usage: boot_menu_host <arena2 low> <arena2 high> <offset> <pad file> <max frames> "
-                        "<environment frames> <settle frames>\n");
+                        "<environment frames> <settle frames> [<tick digests>]\n");
         return 2;
     }
     wii_runtime_start(&start);
@@ -197,6 +197,7 @@ int __wrap_main(int argc, char **argv)
     config.max_frames = strtol(argv[5], NULL, 10);
     config.environment_frames = strtol(argv[6], NULL, 10);
     config.screen_settle_frames = strtol(argv[7], NULL, 10);
+    config.tick_digests = argc == 9 ? strtol(argv[8], NULL, 10) : 0;
     config.dump_allocation = getenv("BOOT_DUMP") ? strtol(getenv("BOOT_DUMP"), NULL, 10) : -1;
     config.overlay = "";
     config.finish = finish;

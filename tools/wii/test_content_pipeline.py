@@ -88,6 +88,29 @@ class CacheParsingTests(unittest.TestCase):
             cache.file_span(-1, 1)
 
 
+class EveryBitmapIndexTests(unittest.TestCase):
+    """HWI-033: a bitmap group's every bitmap is planned under its own index.
+
+    The boot mode reported "UI bitmap tag 1642, bitmap 1" missing from the
+    generation. The converter had converted it: tag 1642 is the multiplayer
+    map's lightmap group, whose page 1 the environment draws; the boot mode
+    asked for it under the menus' map name in the frame the map changed
+    (render_ui.c now checks which map is loaded first). This guards the
+    converter's side: every index of a multi-bitmap group, not only 0."""
+
+    def test_every_bitmap_of_a_group_is_planned_by_index(self):
+        bitmaps = [("dxt1", 16, 16, 1, "2d", 0, False), ("dxt1", 16, 16, 1, "2d", 0, False),
+                   ("a8r8g8b8", 8, 8, 1, "2d", 0, False)]
+        cache = open_bytes(fx.build_map(bitmaps=bitmaps))
+        (group,) = cache.by_group("bitm")
+        for name in ("gx-baseline-v1", "gx-splitalpha-v1"):
+            with self.subTest(profile=name):
+                items = cc.plan_textures(cache, "m01", cc.PROFILES[name])
+                self.assertEqual([item["path"] for item in items],
+                                 ["textures/m01/%05d-%03d.hwt" % (group["ordinal"], index) for index in range(3)])
+                self.assertEqual([item["index"] for item in items], [0, 1, 2])
+
+
 class PathRuleTests(unittest.TestCase):
     def test_relative_path_rules(self):
         for good in ("textures/m01/00001-000.hwt", "sounds/x/1.hws"):

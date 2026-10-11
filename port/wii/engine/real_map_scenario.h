@@ -155,5 +155,10 @@ void *real_map_tag_slot_address(void);
 
 /* the digest of size bytes at address, as a tick's (for checks) */
 unsigned long real_map_digest_bytes(const void *address, unsigned long size);
+/* (HWI-033) the script threads' data array (hs thread) by its decoded fields,
+independent of byte order: each typed field as its value, each live frame's
+values as the multiset of their bytes (real_map_scenario.c). The boot
+mode's digest (boot_hooks.h) reads the threads this way. */
+unsigned long real_map_digest_hs_threads(const void *address, unsigned long size);
 
 #endif

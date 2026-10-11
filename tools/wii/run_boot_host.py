@@ -13,6 +13,7 @@ maps' little-endian files in the run directory's sd:/halo-wii-engine/.
 
     python tools/wii/run_boot_host.py --build <dir> [--no-build] --run <new dir> --wii-log <engine.log>
         --map <private <name>.le.wmap> [--map ...] --max-frames <n> --environment-frames <n> [--settle-frames 45]
+        [--tick-digests <n>]
 """
 
 import argparse
@@ -141,8 +142,11 @@ def main() -> int:
     parser.add_argument("--max-frames", type=int, default=5400)
     parser.add_argument("--environment-frames", type=int, default=150)
     parser.add_argument("--settle-frames", type=int, default=45)
-    parser.add_argument("--dump", type=int, help="a recorded allocation's index: its bytes at the first screen "
-                                               "sample to the data folder's boot_dump.bin (diagnosis)")
+    parser.add_argument("--tick-digests", type=int, default=0,
+                        help="the game state's digest after each of the first n ticks of the map the menus load "
+                             "(BOOT_TICK lines, HWI-033); the Wii launch's boot.txt tick_digests")
+    parser.add_argument("--dump", type=int, help="a recorded allocation's index: its bytes at every screen "
+                                               "sample to the data folder's boot_dump_<frame>.bin (diagnosis)")
     args = parser.parse_args()
     out = args.build.resolve()
     program = out / "boot_menu_host" if args.no_build else build(out)
@@ -169,7 +173,7 @@ def main() -> int:
     if run.returncode != 0:
         raise SystemExit(run.stderr)
     command = [map_host.wsl(program), low, high, offset, map_host.wsl(run_dir / "pad.txt"), str(args.max_frames),
-               str(args.environment_frames), str(args.settle_frames)]
+               str(args.environment_frames), str(args.settle_frames), str(args.tick_digests)]
     started = time.perf_counter()
     run = subprocess.run(["wsl", "-d", "Debian", "--", "sh", "-c",
                           f"cd {map_host.sh(map_host.wsl(run_dir))} && "
