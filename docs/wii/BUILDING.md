@@ -34,7 +34,9 @@ at configure time from what the targets read: every directory that holds a
 hashed input or that a compile searches (`-I`, `-iquote`, `-idirafter`), with
 its subdirectories, plus port.json's game root and root-level inputs by name.
 It is a superset (any change under `source/` or `tools/` counts), and the
-same value applies to every Wii target of one configuration.
+same value applies to every Wii target of one configuration. Line endings that
+Git itself wrote are clean; converting a tracked file's line endings outside
+Git shows as modified and so counts as dirty.
 [CI](CI.md) describes the build-only workflow and the allowlisted artifact set.
 
 The native pipeline uses official Wii machine flags and libogc libraries:
