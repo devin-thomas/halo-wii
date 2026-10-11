@@ -2611,13 +2611,12 @@ void hs_evaluate_sleep_until(
 	}
 
 	/* port (HWI-016C): the condition is a boolean cell and the period a
-	short one (HS_CELL_BOOLEAN, HS_CELL_SHORT); the timeout, a short cell
-	unless none was given (NONE), is read whole as January does
-	(HS_CELL_SHORT_AS_LONG) */
+	short one (HS_CELL_BOOLEAN, HS_CELL_SHORT); the timeout is a long
+	(hs_parse_sleep_until), or NONE when none was given */
 	if (*argument_index==1)
 	{
 		if (HS_CELL_BOOLEAN(*condition) ||
-			(HS_CELL_SHORT_AS_LONG(*timeout)!=NONE && game_time_get()>=HS_CELL_SHORT_AS_LONG(*timeout)+*start_time))
+			(*timeout!=NONE && game_time_get()>=*timeout+*start_time))
 		{
 			hs_return(thread_index, 0);
 		}
@@ -2628,9 +2627,9 @@ void hs_evaluate_sleep_until(
 				condition);
 
 			thread->sleep_until = game_time_get()+MAX(1, HS_CELL_SHORT(*ticks));
-			if (HS_CELL_SHORT_AS_LONG(*timeout)!=NONE)
+			if (*timeout!=NONE)
 			{
-				thread->sleep_until = MIN(HS_CELL_SHORT_AS_LONG(*timeout)+*start_time, thread->sleep_until);
+				thread->sleep_until = MIN(*timeout+*start_time, thread->sleep_until);
 			}
 		}
 	}

@@ -179,6 +179,24 @@ class RuntimeCastTest(unittest.TestCase):
                 if not any(text.startswith(prefix) for prefix in allowed):
                     self.fail(f"hs_runtime.c:{number}: {line.strip()}")
 
+    def test_sleep_until_reads_each_argument_as_its_parser_types_it(self):
+        """(sleep_until <boolean> [<short> [<long>]]): hs_parse_sleep_until's types, read as such by the
+        runtime (a timeout read as a short cell went unnoticed until a10's script timed out on the host only)"""
+        compile_text = (ROOT / "source/hs/hs_compile.c").read_text(encoding="utf-8", errors="replace")
+        parser = compile_text[compile_text.index("boolean hs_parse_sleep_until("):]
+        parser = parser[:parser.index("
+}
+")]
+        self.assertEqual(re.findall(r"hs_parse\(\w+, (_hs_type_\w+)\)", parser),
+                         ["_hs_type_boolean", "_hs_type_short_integer", "_hs_type_long_integer"])
+        body = RUNTIME[RUNTIME.rindex("void hs_evaluate_sleep_until("):]
+        body = body[:body.index("
+}
+")]
+        self.assertIn("HS_CELL_BOOLEAN(*condition)", body)
+        self.assertIn("HS_CELL_SHORT(*ticks)", body)
+        self.assertNotRegex(body, r"HS_CELL_\w+\(\*timeout\)")
+
 
 if __name__ == "__main__":
     unittest.main()
