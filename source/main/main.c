@@ -3241,6 +3241,18 @@ void main_port_game_requests(
 	return;
 }
 
+/* port (HWI-034): whether a loss's revert is due: main_lost_map_private's
+death timer (main_death_timer_expired) as it would count now, unchanged */
+static boolean main_loss_revert_due(
+	void)
+{
+	long current_tick = game_time_get();
+
+	if (!main_globals.lost_map || game_time_get_paused() || current_tick < main_loss_last_tick)
+		return FALSE;
+	return (unsigned long)main_globals.loss_timer + ((unsigned long)current_tick - (unsigned long)main_loss_last_tick) >= 92;
+}
+
 /* port (HWI-016F): what main_loop does once a frame for the game, done
 between the ticks of a frame that runs several (game_time_update), so each
 tick is followed by it as at 30 Hz, a frame a tick, as on the Xbox. The
@@ -3251,11 +3263,16 @@ fell on a tick that depended on how many ticks the frames ran (measured:
 a10's opening checkpoint, saved after tick 1 at 30 Hz and after tick 3 at
 the Wii's measured retrace). At 30 Hz this never runs and nothing changes.
 A loss, a win, a revert, a reset, a core save or load and a map change stay
-with main_loop's next frame; while one is waiting this does nothing. */
+with main_loop's next frame; while one is waiting this does nothing.
+(HWI-034) Except a loss whose revert is not due yet: its death timer counts
+on here as main_loop's would (main_lost_map_private), and the save, switch
+and respawn are handled meanwhile. Once it is due, game_time_update has
+stopped the frame's ticks (main_port_revert_class_requests), and the revert
+is main_loop's, never made here between two ticks. */
 void main_port_game_requests_between_ticks(
 	void)
 {
-	if (game_in_editor() || main_globals.lost_map || main_globals.won_map || main_globals.revert_map ||
+	if (game_in_editor() || main_loss_revert_due() || main_globals.won_map || main_globals.revert_map ||
 		main_globals.reset_map || main_globals.save_core || main_globals.load_core ||
 		main_globals.defer_map_change)
 	{
@@ -3267,6 +3284,8 @@ void main_port_game_requests_between_ticks(
 	/* (the next tick's update to come: main_loop before game_time_update) */
 	if (main_globals.switch_to_structure_bsp_index != NONE)
 		main_switch_to_structure_bsp_private();
+	if (main_globals.lost_map)
+		main_lost_map_private();
 	if (main_globals.respawn)
 		main_respawn_private();
 	if (main_globals.save_map_completed)
@@ -3275,12 +3294,52 @@ void main_port_game_requests_between_ticks(
 	return;
 }
 
+/* port (HWI-034, option B): the requests waiting for main_loop
+that replace the game's state, a bit each: a revert, a loss's revert once
+its death timer is due, a core load, a won map, a map reset. A frame of
+several ticks stops its ticks after the tick that asked for one
+(game_time_update), as at 30 Hz, a frame a tick, main_loop handles it
+before the next tick. A core save, a cinematic skip, a map change and the
+menus' requests are not of them. */
+unsigned long main_port_revert_class_requests(
+	void)
+{
+	unsigned long requests = 0;
+
+	if (game_in_editor())
+		return 0;
+	if (main_globals.revert_map)
+		requests |= 1 << 0;
+	if (main_loss_revert_due())
+		requests |= 1 << 1;
+	if (main_globals.load_core)
+		requests |= 1 << 2;
+	if (main_globals.won_map)
+		requests |= 1 << 3;
+	if (main_globals.reset_map)
+		requests |= 1 << 4;
+
+	return requests;
+}
+
 /* port (HWI-016C): whether the game asked the main loop for something
 main_port_game_requests leaves to the driver (a won map, a map reset) */
 boolean main_port_game_requests_left(
 	void)
 {
 	return main_globals.won_map || main_globals.reset_map;
+}
+
+/* port (HWI-034): those taken by the driver, which stays on its map (as
+main_loop takes them: main_won_map_private, main_reset_map_private), so the
+next one is a new request */
+void main_port_game_requests_left_taken(
+	void)
+{
+	main_globals.won_map = FALSE;
+	main_globals.reset_map = FALSE;
+
+	return;
 }
 
 void main_loop(
