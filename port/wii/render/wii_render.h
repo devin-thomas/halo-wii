@@ -39,10 +39,14 @@ Configuration: WII_ENGINE_ROOT/render.txt, optional, "key=value" lines:
                        chunks, at every BSP load (default 1)
   run_pose_ticks=<t>,...  the map run's sampled frames (game ticks; default
                        30,150,300)
-  poses=<scenario path> [ticks=<t>,...]  a fixed-pose phase on that map, the
-                       engine's camera at those ticks (default 30,150,300);
-                       one line each, in order (default: one, on the plan's
-                       first map)
+  poses=<scenario path> [ticks=<t>,...] [switch_bsp=<t>:<i>,...] [overrides=each]
+                       a fixed-pose phase on that map: the engine's camera at
+                       those ticks (default 30,150,300); switch_bsp has the
+                       script runtime switch BSPs as the map run's does;
+                       overrides=each adds the two labelled diagnostic
+                       cameras of the BSP at every tick (otherwise once, at
+                       the end); one line each, in order (default: one, on
+                       the plan's first map)
 
 Geometry (HWI-016E): GX draws each BSP material's vertices where the staged
 map holds them, in the tag slot: the compressed environment vertex
@@ -156,10 +160,21 @@ texture cache shares the heap), no pool */
 void wii_gx_heap_textures(int on);
 int wii_gx_map_ready(void);
 /* render.txt's run_pose_ticks (count at most max) and the pose phases */
+#define WII_RENDER_MAXIMUM_POSE_TICKS 16
+#define WII_RENDER_MAXIMUM_POSE_SWITCHES 12
+struct wii_render_pose_plan
+{
+	const char *map;             /* the scenario path; NULL: the plan's first map */
+	long ticks[WII_RENDER_MAXIMUM_POSE_TICKS];
+	int tick_count;
+	long switch_ticks[WII_RENDER_MAXIMUM_POSE_SWITCHES];
+	int switch_indices[WII_RENDER_MAXIMUM_POSE_SWITCHES];
+	int switch_count;
+	int overrides_each;
+};
 int wii_render_run_pose_ticks(long *ticks, int max);
 int wii_render_pose_phase_count(void);
-/* the n-th pose phase's scenario path (NULL: the plan's first map) and ticks */
-const char *wii_render_pose_phase_map(int phase, long *ticks, int max, int *count);
+void wii_render_pose_plan_get(int phase, struct wii_render_pose_plan *plan);
 
 /* one game frame: every visible surface (surface_flags: the engine's bit
 vector, bit i of word i/32) of every material whose breakable surface stands

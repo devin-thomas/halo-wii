@@ -80,7 +80,7 @@ enum
 };
 
 #define RENDER_MAXIMUM_MATERIALS 4096
-#define RENDER_MAXIMUM_POSE_TICKS 16
+#define RENDER_MAXIMUM_POSE_TICKS WII_RENDER_MAXIMUM_POSE_TICKS
 #define RENDER_OVERRIDE_POSES 2
 #define RENDER_SNAPSHOT_BYTES 16384
 
@@ -668,9 +668,14 @@ static int render_engine_camera_effect_writes(
 	return before != after;
 }
 
+/* one fixed pose. With drawn_required, the pose must show lit, textured
+pixels; without it (the engine's camera in a phase that switches BSPs: the
+player may stand outside the BSP switched to), an empty frame passes, and
+whatever is drawn is checked as always */
 static int render_engine_capture(
 	char const *name,
-	boolean diagnostic_override)
+	boolean diagnostic_override,
+	boolean drawn_required)
 {
 	struct wii_gx_pose_result result;
 	unsigned long before, after;
@@ -688,14 +693,15 @@ static int render_engine_capture(
 	camera_effect_writes = diagnostic_override ? -1 : render_engine_camera_effect_writes();
 	/* lit and textured pixels, and culling as qualified: under GX_CULL_BACK
 	no sample shows a back face, under GX_CULL_FRONT none a front face */
-	ok = before == after && result.covered > 0 && result.differs_lightmap_only > 0 &&
-		result.differs_base_only > 0 && result.facing_back[1] == 0 && result.facing_front[1] > 0 &&
-		result.facing_front[2] == 0;
+	ok = before == after && ((!drawn_required && result.covered == 0) ||
+		(result.covered > 0 && result.differs_lightmap_only > 0 && result.differs_base_only > 0 &&
+		result.facing_back[1] == 0 && result.facing_front[1] > 0 && result.facing_front[2] == 0));
 	wii_log("RENDER_POSE name=%s camera=%s eye=%.4f,%.4f,%.4f leaf=%ld cluster=%ld clusters=%ld surfaces=%ld "
 		"crc_full=%08lx crc_lightmap_only=%08lx crc_base_only=%08lx crc_base_alpha=%08lx base_alpha_below_255=%d "
 		"samples=%d covered=%d distinct=%d "
 		"differs_lightmap_only=%d differs_base_only=%d facing_none=%d/%d facing_back=%d/%d facing_front=%d/%d "
-		"draw_us=%lu state_before=%08lx state_after=%08lx state_unchanged=%d camera_effect_writes=%d pass=%d\n",
+		"draw_us=%lu state_before=%08lx state_after=%08lx state_unchanged=%d camera_effect_writes=%d "
+		"drawn_required=%d pass=%d\n",
 		name, diagnostic_override ? "diagnostic_override" : "engine_unit_deterministic",
 		(double)render_engine.view.eye[0], (double)render_engine.view.eye[1], (double)render_engine.view.eye[2],
 		render_engine.view.leaf_index, render_engine.view.cluster_index, render_engine.view.rendered_clusters,
@@ -703,7 +709,7 @@ static int render_engine_capture(
 		result.crc_base_alpha, result.base_alpha_below_255, result.samples, result.covered, result.distinct, result.differs_lightmap_only, result.differs_base_only,
 		result.facing_front[0], result.facing_back[0], result.facing_front[1], result.facing_back[1],
 		result.facing_front[2], result.facing_back[2], result.draw_us, before, after, before == after,
-		camera_effect_writes, ok);
+		camera_effect_writes, drawn_required ? 1 : 0, ok);
 
 	return ok;
 }
@@ -769,26 +775,90 @@ void wii_render_register_hooks(
 	wii_engine_set_render_hooks(&hooks);
 }
 
+/* the two labelled diagnostic overrides of the camera, from the loaded
+BSP's bounds; the engine's visibility is computed from each */
+static int render_engine_override_captures(
+	char const *prefix,
+	int *captured)
+{
+	int failures = 0;
+	int pose;
+
+	for (pose = 0; pose < RENDER_OVERRIDE_POSES && render_engine.view_valid; pose++)
+	{
+		char name[48];
+
+		render_engine_override_camera(pose);
+		csprintf(name, "%s%s", prefix, pose == 0 ? "diagnostic_override_high" : "diagnostic_override_mid");
+		failures += !render_engine_capture(name, TRUE, TRUE);
+		(*captured)++;
+	}
+
+	return failures;
+}
+
+/* the engine's own camera at one of a phase's ticks; with overrides=each,
+the loaded BSP's two diagnostic overrides too (each named by the BSP) */
+static int render_engine_pose_tick(
+	const struct wii_render_pose_plan *plan,
+	long tick,
+	int *captured)
+{
+	char name[48];
+	int failures = 0;
+
+	if (plan->overrides_each)
+		csprintf(name, "bsp%d_engine_tick_%ld", global_structure_bsp_index, tick);
+	else
+		csprintf(name, "engine_tick_%ld", tick);
+	failures += !render_engine_capture(name, FALSE, plan->switch_count == 0);
+	(*captured)++;
+	if (plan->overrides_each)
+	{
+		csprintf(name, "bsp%d_", global_structure_bsp_index);
+		failures += render_engine_override_captures(name, captured);
+	}
+
+	return failures;
+}
+
 /* one pose phase: the map loaded once, the scripted player at 30 Hz with
-every frame drawn, the engine's own camera captured at the phase's ticks,
-then two labelled diagnostic overrides from the BSP's bounds */
+every frame drawn (and the phase's labelled BSP switches, through the
+script runtime), the engine's own camera captured at the phase's ticks,
+and the two labelled diagnostic overrides: at every tick (overrides=each)
+or once at the end */
 static int render_engine_pose_phase_map(
 	const char *scenario_path,
-	const long *ticks,
-	int tick_count)
+	const struct wii_render_pose_plan *plan)
 {
+	const long *ticks = plan->ticks;
+	int tick_count = plan->tick_count;
 	struct real_map_result result;
 	long frame = 0;
 	long last_tick = REAL_MAP_TICKS;
 	int next = 0;
 	int failures = 0;
 	int captured = 0;
-	int pose;
 
 	if (tick_count > 0 && ticks[tick_count - 1] > last_tick)
 		last_tick = ticks[tick_count - 1];
 	render_engine.pose_phase = TRUE;
-	wii_log("RENDER_POSES begin scenario=%s ticks=%ld poses=%d\n", scenario_path, last_tick, tick_count);
+	wii_log("RENDER_POSES begin scenario=%s ticks=%ld poses=%d switches=%d overrides_each=%d\n", scenario_path,
+		last_tick, tick_count, plan->switch_count, plan->overrides_each);
+	real_map_set_command(0, NULL);
+	if (plan->switch_count > 0)
+	{
+		char command[32];
+		int index;
+
+		csprintf(command, "(switch_bsp %d)", plan->switch_indices[0]);
+		real_map_set_command(plan->switch_ticks[0], command);
+		for (index = 1; index < plan->switch_count; index++)
+		{
+			csprintf(command, "(switch_bsp %d)", plan->switch_indices[index]);
+			real_map_add_command(plan->switch_ticks[index], command);
+		}
+	}
 	if (!real_map_load(scenario_path) || !real_map_begin(NULL, last_tick))
 	{
 		wii_log("RENDER_FAIL pose_phase_load\n");
@@ -801,37 +871,27 @@ static int render_engine_pose_phase_map(
 		frame++;
 		if (next < tick_count && game_time_get() >= ticks[next] && render_engine.view_valid)
 		{
-			char name[32];
-
-			csprintf(name, "engine_tick_%ld", ticks[next]);
-			failures += !render_engine_capture(name, FALSE);
-			captured++;
+			failures += render_engine_pose_tick(plan, ticks[next], &captured);
 			next++;
 		}
 	}
 	if (next < tick_count && render_engine.view_valid)
 	{
 		/* the last tick ends the run inside its frame */
-		char name[32];
-
-		csprintf(name, "engine_tick_%ld", ticks[next]);
-		failures += !render_engine_capture(name, FALSE);
-		captured++;
+		failures += render_engine_pose_tick(plan, ticks[next], &captured);
+		next++;
 	}
-	for (pose = 0; pose < RENDER_OVERRIDE_POSES && render_engine.view_valid; pose++)
-	{
-		render_engine_override_camera(pose);
-		failures += !render_engine_capture(pose == 0 ? "diagnostic_override_high" : "diagnostic_override_mid",
-			TRUE);
-		captured++;
-	}
+	if (!plan->overrides_each)
+		failures += render_engine_override_captures("", &captured);
 	real_map_end(&result);
+	real_map_set_command(0, NULL);
 	real_map_unload();
 	wii_log("RENDER_POSES end frames=%ld poses=%d failures=%d ticks=%ld sim=%08lx camera_effect_frames=%ld\n", frame,
 		captured, failures, result.ticks, result.simulation_digest, render_engine.camera_effect_skipped);
 	render_engine.pose_phase = FALSE;
 
-	return failures == 0 && captured == tick_count + RENDER_OVERRIDE_POSES;
+	return failures == 0 && captured == tick_count * (plan->overrides_each ? 1 + RENDER_OVERRIDE_POSES : 1) +
+		(plan->overrides_each ? 0 : RENDER_OVERRIDE_POSES);
 }
 
 int wii_render_pose_phase(
@@ -844,11 +904,10 @@ int wii_render_pose_phase(
 		return TRUE;
 	for (phase = 0; phase < wii_render_pose_phase_count(); phase++)
 	{
-		long ticks[RENDER_MAXIMUM_POSE_TICKS];
-		int count = 0;
-		const char *map = wii_render_pose_phase_map(phase, ticks, RENDER_MAXIMUM_POSE_TICKS, &count);
+		struct wii_render_pose_plan plan;
 
-		ok = render_engine_pose_phase_map(map ? map : scenario_path, ticks, count) && ok;
+		wii_render_pose_plan_get(phase, &plan);
+		ok = render_engine_pose_phase_map(plan.map ? plan.map : scenario_path, &plan) && ok;
 	}
 
 	return ok;

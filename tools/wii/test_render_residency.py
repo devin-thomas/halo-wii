@@ -96,6 +96,13 @@ class RendererLayout(unittest.TestCase):
         for attribute, rest in arrays:
             self.assertRegex(rest, r"m->(vertices|lightmap_vertices)", attribute)
 
+    def test_no_normal_is_read(self):
+        """the environment path draws no lighting: no packed normal, binormal, tangent or incident
+        radiosity is read (they stay in the tag slot as staged, for HWI-032)"""
+        code = re.sub(r"/\*.*?\*/", "", RENDER_GX.read_text(encoding="utf-8"), flags=re.S)
+        for word in ("normal", "binormal", "tangent", "incident", "content_unpack_vector"):
+            self.assertNotIn(word, code)
+
     def test_engine_passes_the_tag_slot_vertices(self):
         text = RENDER_ENGINE.read_text(encoding="utf-8")
         self.assertIn("material->compressed_vertex_data.address", text)

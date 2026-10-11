@@ -76,7 +76,7 @@
 #define GRID_Y 24
 #define RUN_GRID_X 16
 #define RUN_GRID_Y 12
-#define MAX_POSE_TICKS 16
+#define MAX_POSE_TICKS WII_RENDER_MAXIMUM_POSE_TICKS
 #define MAX_POSE_PHASES 4
 /* the compressed environment vertex and the lightmap vertex, as staged */
 #define VERTEX_BYTES 32u
@@ -167,8 +167,7 @@ static struct {
     long run_pose_ticks[MAX_POSE_TICKS];
     int run_pose_count;
     char pose_map[MAX_POSE_PHASES][64];
-    long pose_ticks[MAX_POSE_PHASES][MAX_POSE_TICKS];
-    int pose_tick_count[MAX_POSE_PHASES];
+    struct wii_render_pose_plan pose_plans[MAX_POSE_PHASES];
     int pose_phases;
     GXRModeObj *mode;
     void *xfb[2];
@@ -401,18 +400,37 @@ static void read_config(void)
             gx.run_pose_count = count > 0 ? count : 0;
         } else if (!strncmp(line, "poses=", 6) && gx.pose_phases < MAX_POSE_PHASES) {
             int phase = gx.pose_phases++;
-            char *path = line + 6, *ticks = strstr(path, " ticks=");
-            int count = -1;
-            if (ticks) {
-                *ticks = 0;
-                count = parse_ticks(ticks + 7, gx.pose_ticks[phase], MAX_POSE_TICKS);
-            }
+            struct wii_render_pose_plan *plan = &gx.pose_plans[phase];
+            char *path = line + 6, *word = strchr(path, ' ');
+            memset(plan, 0, sizeof(*plan));
+            if (word)
+                *word++ = 0;
             snprintf(gx.pose_map[phase], sizeof(gx.pose_map[phase]), "%s", path);
-            if (count <= 0) {
-                memcpy(gx.pose_ticks[phase], default_pose_ticks, sizeof(default_pose_ticks));
-                count = 3;
+            plan->map = gx.pose_map[phase];
+            plan->tick_count = -1;
+            for (; word && *word; word = strchr(word, ' ') ? strchr(word, ' ') + 1 : NULL) {
+                if (!strncmp(word, "ticks=", 6))
+                    plan->tick_count = parse_ticks(word + 6, plan->ticks, MAX_POSE_TICKS);
+                else if (!strncmp(word, "overrides=each", 14))
+                    plan->overrides_each = 1;
+                else if (!strncmp(word, "switch_bsp=", 11)) {
+                    char *at = word + 11, *end;
+                    while (plan->switch_count < WII_RENDER_MAXIMUM_POSE_SWITCHES) {
+                        long tick = strtol(at, &end, 10);
+                        if (end == at || *end != ':')
+                            break;
+                        plan->switch_ticks[plan->switch_count] = tick;
+                        plan->switch_indices[plan->switch_count++] = (int)strtol(end + 1, &end, 10);
+                        if (*end != ',')
+                            break;
+                        at = end + 1;
+                    }
+                }
             }
-            gx.pose_tick_count[phase] = count;
+            if (plan->tick_count <= 0) {
+                memcpy(plan->ticks, default_pose_ticks, sizeof(default_pose_ticks));
+                plan->tick_count = 3;
+            }
         }
     }
 }
@@ -489,19 +507,15 @@ int wii_render_pose_phase_count(void)
     return gx.pose_phases ? gx.pose_phases : 1;
 }
 
-const char *wii_render_pose_phase_map(int phase, long *ticks, int max, int *count)
+void wii_render_pose_plan_get(int phase, struct wii_render_pose_plan *plan)
 {
-    const long *source = default_pose_ticks;
-    int n = 3;
-    const char *map = NULL;
     if (gx.pose_phases && phase >= 0 && phase < gx.pose_phases) {
-        source = gx.pose_ticks[phase];
-        n = gx.pose_tick_count[phase];
-        map = gx.pose_map[phase];
+        *plan = gx.pose_plans[phase];
+        return;
     }
-    *count = n < max ? n : max;
-    memcpy(ticks, source, (size_t)*count * sizeof(long));
-    return map;
+    memset(plan, 0, sizeof(*plan));
+    memcpy(plan->ticks, default_pose_ticks, sizeof(default_pose_ticks));
+    plan->tick_count = 3;
 }
 
 void wii_render_set_map(const char *scenario_path)
