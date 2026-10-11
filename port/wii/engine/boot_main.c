@@ -261,27 +261,22 @@ static int map_check(const char *map_name, char *reason, unsigned long reason_si
     snprintf(path, sizeof(path), BOOT_MAPS "/%s.wmap", name);
     FILE *file = fopen(path, "rb");
     if (!file) {
-        snprintf(reason, reason_size,
-                 "The map %s is not on the SD card. Stage it from your own copy with tools/wii/map_stage.py "
-                 "and copy %s.wmap to sd:/halo-wii-engine/data/maps/.",
-                 name, name);
+        /* (short: the engine's error dialog holds about five lines) */
+        snprintf(reason, reason_size, "The map %s is not on the SD card. Stage it with tools/wii/map_stage.py.",
+                 name);
         return 1;
     }
     size_t got = fread(table, 1, sizeof(table), file);
     fclose(file);
     if (got != sizeof(table) || memcmp(table, "HWIMAP01", 8) ||
         !(table[8] == 1 && table[9] == 2 && table[10] == 3 && table[11] == 4)) {
-        snprintf(reason, reason_size,
-                 "The map %s on the SD card is not a staged map this build reads. Stage it again with "
-                 "tools/wii/map_stage.py; nothing was loaded.",
+        snprintf(reason, reason_size, "The map %s on the SD card is not one this build reads. Stage it again.",
                  name);
         return 2;
     }
     struct boot_manifest_file *f = manifest_file(name);
     if (f && !f->verified) {
-        snprintf(reason, reason_size,
-                 "The map %s on the SD card does not match its manifest (SHA-256): it is damaged or out of "
-                 "date. Stage it again with tools/wii/map_stage.py; nothing was loaded.",
+        snprintf(reason, reason_size, "The map %s on the SD card does not match its manifest. Stage it again.",
                  name);
         return 3;
     }
