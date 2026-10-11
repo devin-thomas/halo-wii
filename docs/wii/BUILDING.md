@@ -22,6 +22,21 @@ and artifact hashes. The same ID is embedded in the probe. SDK headers, tools,
 libraries, startup files and Git identity trigger reconfiguration. Generated
 files and machine paths stay outside Git. Debug info and linker maps name the
 checkout as `.` and the devkitPro root as `/opt/devkitpro` (`path_prefix_map`).
+
+Text inputs (no NUL byte) are hashed with CRLF normalized to LF
+(`inputs_sha256_rule`), so an LF checkout and a `core.autocrlf=true` checkout
+of one commit get the same build ID and byte-identical DOLs. Records written
+before HWI-016G have no `inputs_sha256_rule`: they hashed raw bytes, and their
+IDs stay valid under that rule. `source_dirty` is true when `git status`
+reports any modified, staged, deleted or untracked (not ignored) file under
+`source_dirty_paths`, or a hashed input is not tracked. Those paths are derived
+at configure time from what the targets read: every directory that holds a
+hashed input or that a compile searches (`-I`, `-iquote`, `-idirafter`), with
+its subdirectories, plus port.json's game root and root-level inputs by name.
+It is a superset (any change under `source/` or `tools/` counts), and the
+same value applies to every Wii target of one configuration. Line endings that
+Git itself wrote are clean; converting a tracked file's line endings outside
+Git shows as modified and so counts as dirty.
 [CI](CI.md) describes the build-only workflow and the allowlisted artifact set.
 
 The native pipeline uses official Wii machine flags and libogc libraries:
