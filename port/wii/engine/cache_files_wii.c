@@ -28,6 +28,11 @@ beside the directory's manifest.txt, which lists each staged map. So:
 - the bitmaps' pixels and the sounds' samples are not staged (the Wii
   renderer and sound are unsupported): a read of them fails as the Xbox
   reader's failed reads do (_cache_file_read_failed), and is reported.
+  HWI-074: once the Wii's sound has started, a map's sound samples come from
+  its sound pack beside it, d:\maps\<name>.wsnd (port/wii/sound/sound_pack.c,
+  tools/wii/sound_stage.py), opened with the map: a read the pack serves
+  completes at once, checked; one it has not, or that fails its check, fails
+  as before.
 
 Load failures (HWI-016C) are recoverable: each is refused with an actionable
 error before the engine relies on anything, written to the SD log
@@ -67,6 +72,7 @@ headers only, so the same file builds the i686 host reference.
 
 #include "cache_files_wii.h"
 #include "wii_platform.h"
+#include "../sound/wii_sound.h"
 
 void platform_translate_path(const char *xbox_path, char *host_path, unsigned long host_path_size);
 
@@ -789,6 +795,8 @@ void cache_file_close(
 		CloseHandle(wii_cache_globals.file);
 		wii_cache_globals.file = INVALID_HANDLE_VALUE;
 		wii_cache_globals.open = FALSE;
+		/* HWI-074 */
+		wii_sound_pack_close();
 	}
 
 	return;
@@ -847,6 +855,16 @@ boolean cache_file_open(
 	wii_cache_globals.open = TRUE;
 	wii_cache_globals.report.segments = wii_cache_globals.segment_count;
 	wii_cache_globals.report.milliseconds += system_milliseconds() - started;
+	/* HWI-074: the map's sound samples, once the Wii's sound has started */
+	if (wii_sound_started())
+	{
+		char pack[256];
+		char pack_on_card[256];
+
+		snprintf(pack, sizeof(pack), "%s%s.wsnd", wii_map_directory(), name);
+		platform_translate_path(pack, pack_on_card, sizeof(pack_on_card));
+		wii_sound_pack_open(pack_on_card, name);
+	}
 
 	return TRUE;
 }
@@ -874,6 +892,16 @@ short cache_file_read(
 	segment = wii_map_segment_at(offset);
 	if (!segment)
 	{
+		/* HWI-074: sound samples, from the map's sound pack */
+		int served = wii_sound_pack_read(offset, size, buffer);
+
+		if (served > 0)
+		{
+			*completion_flag_reference = TRUE;
+			return 0;
+		}
+		if (served < 0)
+			return NONE;
 		/* bitmap pixels and sound samples: not staged */
 		wii_cache_globals.report.unstaged_reads++;
 		if (!wii_cache_globals.unstaged_read_reported)

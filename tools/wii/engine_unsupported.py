@@ -71,23 +71,7 @@ SUBSYSTEMS: Dict[str, List[str]] = {
         "D3DXMatrixPerspectiveLH", "D3DXVec4Transform", "Direct3DCreate8", "Direct3D_CreateDevice",
         "Direct3D_SetPushBufferSize",
     ],
-    "dsound": [
-        "DirectSoundCreate", "DirectSoundCreateBuffer", "DirectSoundDoWork", "DirectSoundUseFullHRTF",
-        "IDirectSoundBuffer_Play", "IDirectSoundBuffer_Release", "IDirectSoundBuffer_SetBufferData",
-        "IDirectSoundBuffer_SetCurrentPosition", "IDirectSoundBuffer_SetLoopRegion",
-        "IDirectSoundBuffer_SetPitch", "IDirectSoundBuffer_SetVolume", "IDirectSoundBuffer_Stop",
-        "IDirectSoundStream_SetConeAngles", "IDirectSoundStream_SetConeOrientation",
-        "IDirectSoundStream_SetConeOutsideVolume", "IDirectSoundStream_SetFrequency",
-        "IDirectSoundStream_SetI3DL2Source", "IDirectSoundStream_SetMaxDistance",
-        "IDirectSoundStream_SetMinDistance", "IDirectSoundStream_SetMixBinVolumes",
-        "IDirectSoundStream_SetMixBins", "IDirectSoundStream_SetMode", "IDirectSoundStream_SetPosition",
-        "IDirectSoundStream_SetVelocity", "IDirectSoundStream_SetVolume", "IDirectSound_CommitDeferredSettings",
-        "IDirectSound_CreateSoundBuffer", "IDirectSound_CreateSoundStream", "IDirectSound_DownloadEffectsImage",
-        "IDirectSound_GetCaps", "IDirectSound_GetSpeakerConfig", "IDirectSound_Release",
-        "IDirectSound_SetDistanceFactor", "IDirectSound_SetI3DL2Listener", "IDirectSound_SetMixBinHeadroom",
-        "IDirectSound_SetOrientation", "IDirectSound_SetPosition", "IDirectSound_SetRolloffFactor",
-        "IDirectSound_SetVelocity",
-    ],
+    # (dsound: DirectSound is implemented on a software mixer, port/wii/sound/dsound_wii.c, HWI-074)
     # (input: XInput is implemented on the GameCube pad, port/wii/engine/wii_xinput.c, HWI-016D)
     # (network: Winsock and XNet are port/linux/src/xnet.c over port/wii/engine/wii_loopback_net.c, HWI-016D)
     "xbdm": ["DmCloseModuleSections", "DmWalkLoadedModules", "DmWalkModuleSections"],

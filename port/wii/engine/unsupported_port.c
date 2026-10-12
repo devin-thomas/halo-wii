@@ -3,8 +3,8 @@ UNSUPPORTED_PORT.C
 
 Entry points of the native ports' platform layer (port/linux/src) that the
 engine links against and the Wii engine build does not implement yet
-(HWI-015): the renderer's and the desktop's hooks, Bink video, sound
-streams, input devices, the high-resolution HUD and text, the PC menus and
+(HWI-015): the renderer's and the desktop's hooks, Bink video, input
+devices, the high-resolution HUD and text, the PC menus and
 internet play. The Xbox SDK's own entry points are in unsupported_sdk.c.
 
 Each reports itself as unsupported (wii_unsupported) and fails the call: it
@@ -183,19 +183,8 @@ void __stdcall BinkGetRealtime(HBINK bink, void *realtime, unsigned long frame_c
 	wii_unsupported("bink", "BinkGetRealtime");
 }
 
-/* ---------- sound streams (source/sound/sound_dsound_xbox.c) */
-
-void __stdcall DirectSoundStopStream(LPDIRECTSOUNDSTREAM stream)
-{
-	wii_unsupported("dsound", "DirectSoundStopStream");
-}
-
-/* 0: the stream's voice has finished, which ends the channel */
-unsigned long __stdcall DirectSoundGetStreamVoiceStatus(LPDIRECTSOUNDSTREAM stream)
-{
-	wii_unsupported("dsound", "DirectSoundGetStreamVoiceStatus");
-	return 0;
-}
+/* (sound streams: DirectSoundStopStream and DirectSoundGetStreamVoiceStatus,
+which source/sound/sound_dsound_xbox.c declares, are port/wii/sound/dsound_wii.c's, HWI-074) */
 
 /* ---------- input devices (the device tables and XInput: wii_xinput.c, HWI-016D) */
 

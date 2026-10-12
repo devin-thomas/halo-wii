@@ -33,6 +33,11 @@ services the engine calls (port/wii/engine), and converts it to a DOL.
   nothing in the game reads; ai_debug_initialize then runs as upstream's.
   "keep" compiles them as the other ports do, and ai_debug_initialize, whose
   records then need 30.36 MB of heap, is reported unsupported.
+- Sound (HWI-074, port/wii/sound): the Xbox's DirectSound on a software
+  mixer (dsound_wii.c, with the sound pack's reader and the ADPCM decoder:
+  platform units, so the i686 host reference mixes too), the engine side's
+  hooks (sound_hooks.c, an engine unit), and the ASND output (sound_out_asnd.c,
+  libogc: engine.dol only, linked with libasnd).
 """
 
 import json
@@ -40,6 +45,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 ENGINE_DIR = Path("port/wii/engine")
+SOUND_DIR = Path("port/wii/sound")
 BUILD = Path("build/wii")
 ENGINE_BUILD = BUILD / "engine"
 PORT_CONFIG = Path("port/linux/port.json")
@@ -60,7 +66,9 @@ REWRITTEN = (Path("source/memory/byte_swapping.c"),)
 ENGINE_AUTHORED = (ENGINE_DIR / "engine_hooks.c", ENGINE_DIR / "fixed_step_scenario.c",
                    ENGINE_DIR / "real_map_scenario.c",
                    # HWI-016D: the boot mode's wrapped entry points (pass-through unless registered)
-                   ENGINE_DIR / "boot_hooks.c")
+                   ENGINE_DIR / "boot_hooks.c",
+                   # HWI-074: the sound's engine side (pass-through unless the sound runs)
+                   SOUND_DIR / "sound_hooks.c")
 
 # Linux platform files whose code only needs a C library: reused unchanged.
 REUSED_PLATFORM = tuple(LINUX_PLATFORM / name for name in (
@@ -74,8 +82,14 @@ WII_PLATFORM = tuple(ENGINE_DIR / name for name in (
     "wii_engine_main.c",
     # HWI-016D: XInput on the GameCube pad; the in-process loopback sockets
     "wii_xinput.c", "wii_loopback_net.c")) + (
-    Path("port/wii/runtime/runtime_start.c"), Path("tools/wii/cache_arena_plan.c"))
-WII_HEADERS = tuple(sorted(ENGINE_DIR.glob("*.h"))) + (PREFIX, ENGINE_DIR / "sdl/SDL3/SDL.h")
+    Path("port/wii/runtime/runtime_start.c"), Path("tools/wii/cache_arena_plan.c")) + tuple(
+    # HWI-074: DirectSound on the software mixer, the sound pack, the ADPCM decoder
+    SOUND_DIR / name for name in ("dsound_wii.c", "sound_pack.c", "xbox_adpcm.c"))
+WII_HEADERS = tuple(sorted(ENGINE_DIR.glob("*.h"))) + (PREFIX, ENGINE_DIR / "sdl/SDL3/SDL.h") + tuple(
+    sorted(SOUND_DIR.glob("*.h")))
+# HWI-074: the mix's output, an ASND voice (libogc; engine.dol only: the i686
+# host reference only hashes the mix)
+SOUND_OUTPUT = (SOUND_DIR / "sound_out_asnd.c",)
 # HWI-016B: the Wii rasterizer's environment path, in engine.dol only (the
 # i686 host reference, tools/wii/run_engine_map_host.py, builds the engine
 # units and WII_PLATFORM without it and registers no rasterizer): its
@@ -132,6 +146,10 @@ WRAPPED = ("main", "halt_and_catch_fire", "game_tick", "game_frame", "update_cli
            "rasterizer_initialize_for_new_map", "rasterizer_dispose_from_old_map",
            # HWI-016C: the decal vertex cache rasterizer_decals_initialize would have made
            "_rasterizer_decal_vertices_new",
+           # HWI-074: the sound's own code, for its listener and the frame clock
+           # (port/wii/sound/sound_hooks.c; each passes through unless the sound runs)
+           "observer_get_camera", "sound_render", "sound_idle", "game_sound_update", "sound_new_impulse",
+           "sound_dispose_from_old_map", "compute_sound_obstruction",
            # HWI-016D: the boot mode (boot_hooks.c): the rasterizer backend the
            # menus and main_loop's frame reach, the menus' map selection, and
            # the frame clock; each passes through unless the boot mode registered
@@ -275,7 +293,7 @@ def engine_inputs() -> List[Path]:
     return [Path("tools/wii/engine_build.py"), Path("tools/wii/engine_semantics.py"),
             Path("tools/wii/engine_rewrite.py"), Path("tools/linux_msvc_semantics.py"), PORT_CONFIG,
             *WII_HEADERS, *game_units(), *ENGINE_AUTHORED, *(path for path, _ in platform_units()),
-            *RENDER_ENGINE, *RENDER_GX, *RENDER_HEADERS, *BOOT_DRIVER,
+            *RENDER_ENGINE, *RENDER_GX, *RENDER_HEADERS, *BOOT_DRIVER, *SOUND_OUTPUT,
             *REPLACED.values(), *sorted(set(headers))]
 
 
@@ -336,12 +354,14 @@ def generate_engine_build(n, semantic_flags: List[str], libraries: List[Path],
         n.build(obj, "wii_cc_file", unit, implicit=[*common, SEMANTICS, flag_files["engine"]],
                 variables={"flags": flag_files["engine"].as_posix()})
         engine_objects.append(obj)
-    for unit in (*RENDER_GX, *BOOT_DRIVER):
+    for unit in (*RENDER_GX, *BOOT_DRIVER, *SOUND_OUTPUT):
         obj = object_path(unit)
         n.build(obj, "wii_cc_file", unit, implicit=[*common, PLATFORM_SEMANTICS, flag_files["render_gx"]],
                 variables={"flags": flag_files["render_gx"].as_posix()})
         objects.append(obj)
 
+    # HWI-074: ASND (libogc's libasnd), after the objects that use it
+    objects += [library for library in libraries if library.name == "libasnd.a"]
     engine_list = ENGINE_BUILD / "engine-objects.txt"
     all_list = ENGINE_BUILD / "link-objects.txt"
     for path, items in ((engine_list, engine_objects), (all_list, [*engine_objects, *objects])):

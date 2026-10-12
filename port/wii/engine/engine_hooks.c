@@ -33,6 +33,7 @@ Compiled as an engine unit.
 #include "fixed_step_scenario.h"
 #include "real_map_scenario.h"
 #include "wii_platform.h"
+#include "../sound/wii_sound.h"
 
 /* the engine's (source/shell, source/main, source/cseries ...) */
 boolean shell_platform_initialize(void);
@@ -395,18 +396,29 @@ void *__wrap__texture_cache_bitmap_get_hardware_format(
 
 /* The sound cache likewise (source/cache/xbox_sound_cache.c) is made by
 sound_initialize, which shell_initialize starts only after the rasterizer:
-the Wii build has no DirectSound either, and sound samples are not staged. */
+the Wii build has no DirectSound either, and sound samples are not staged.
+HWI-074: once the Wii's sound started it (port/wii/sound), the cache is the
+engine's own. */
+
+void __real_sound_cache_open(void);
+void __real_sound_cache_close(void);
 
 void __wrap_sound_cache_open(
 	void)
 {
-	wii_unsupported("dsound", "sound_cache_open (no sound cache: sound not started)");
+	if (wii_sound_started())
+		__real_sound_cache_open();
+	else
+		wii_unsupported("dsound", "sound_cache_open (no sound cache: sound not started)");
 }
 
 void __wrap_sound_cache_close(
 	void)
 {
-	wii_unsupported("dsound", "sound_cache_close (no sound cache: sound not started)");
+	if (wii_sound_started())
+		__real_sound_cache_close();
+	else
+		wii_unsupported("dsound", "sound_cache_close (no sound cache: sound not started)");
 }
 
 /* What objects predict they will draw and play (source/cache/

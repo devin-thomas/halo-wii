@@ -24,6 +24,7 @@ i686 host reference (tools/wii/run_engine_map_host.py).
 
 #include "real_map_scenario.h"
 #include "cache_files_wii.h"
+#include "../sound/wii_sound.h"
 #include "tag_schema.h"
 
 /* the engine's own (main.c, game.c, player_queues_new.c, scenario.c ...),
@@ -94,6 +95,7 @@ enum
 	TAG_SLOT_BYTES = 0x01600000,
 	REAL_MAP_LOCAL_RANDOM_SEED = 0x4C4F4341, /* "LOCA" */
 	REAL_MAP_TICK_LOCAL_RANDOM_SEED = 0x5449434B, /* "TICK" (random_math.c, HWI-016F) */
+	REAL_MAP_SOUND_LOCAL_RANDOM_SEED = 0x534E4421, /* "SND!" (random_math.c, HWI-074) */
 	GAME_STATE_REGION_BYTES = 0x01600000,
 };
 
@@ -886,6 +888,9 @@ static unsigned long tag_slot_digest(
 	byte const *slot = physical_memory_get_tag_cache_base_address();
 	unsigned long crc;
 	long index;
+	/* (HWI-074) the sound's own fields in the sound tags, while the sound
+	runs, read as zeros (port/wii/sound/sound_hooks.c) */
+	int masked = wii_sound_tags_mask_begin();
 
 	wii_cache_load_report_get(&load);
 	crc_new(&crc);
@@ -894,6 +899,8 @@ static unsigned long tag_slot_digest(
 		crc_add_word(&crc, load.range_offset[index]);
 		crc_add_word(&crc, digest_multiset(slot + load.range_offset[index], load.range_size[index]));
 	}
+	if (masked)
+		wii_sound_tags_mask_end();
 
 	return crc;
 }
@@ -1357,6 +1364,8 @@ int real_map_load(
 	run) */
 	*get_global_local_random_seed_address() = REAL_MAP_LOCAL_RANDOM_SEED;
 	*get_tick_local_random_seed_address() = REAL_MAP_TICK_LOCAL_RANDOM_SEED;
+	/* (HWI-074) and the sound's own (random_math.c) */
+	*get_sound_local_random_seed_address() = REAL_MAP_SOUND_LOCAL_RANDOM_SEED;
 	if (!game_load((struct game_options *)&options))
 		return FALSE;
 	game_initialize_for_new_map();
@@ -1428,6 +1437,8 @@ int real_map_begin(
 	the same seed, as it gives the same input */
 	*get_global_local_random_seed_address() = REAL_MAP_LOCAL_RANDOM_SEED;
 	*get_tick_local_random_seed_address() = REAL_MAP_TICK_LOCAL_RANDOM_SEED;
+	/* (HWI-074) and the sound's own (random_math.c) */
+	*get_sound_local_random_seed_address() = REAL_MAP_SOUND_LOCAL_RANDOM_SEED;
 	real_map_globals.armed = TRUE;
 	game_time_start();
 	game_initial_pulse();
@@ -1448,6 +1459,9 @@ int real_map_frame(
 	frame_made_mark();
 	game_time_update(dt);
 	frame_made_count();
+	/* (HWI-074) the frame's sound, as main_loop's main_game_render renders it
+	(port/wii/sound/sound_hooks.c; nothing unless the plan has the sound) */
+	wii_sound_map_frame(dt);
 	main_port_game_requests(FALSE);
 	if (main_port_game_requests_left())
 		real_map_globals.requests_left++;

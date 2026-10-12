@@ -117,6 +117,12 @@ void *physical_memory_get_game_state_base_address(void);
 #undef HALO_PORT_GAME_STATE_BASE_ADDRESS
 #define HALO_PORT_GAME_STATE_BASE_ADDRESS ((unsigned long)physical_memory_get_game_state_base_address())
 
+/* HWI-074: the sound manager draws its local random numbers from a stream of
+its own (source/math/random_math.c, real_math.h), so enabling the Wii's
+sound does not move the numbers the ticks draw. The Wii build and its i686
+host reference only; the other ports are unchanged. */
+#define HALO_SOUND_RANDOM_STREAM 1
+
 #ifndef HALO_LINUX_PLATFORM_LAYER
 #define FD_SETSIZE HALO_PORT_FD_SETSIZE
 #endif

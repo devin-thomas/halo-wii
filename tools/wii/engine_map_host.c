@@ -24,6 +24,7 @@
 #include "../../port/wii/engine/engine_map_run.h"
 #include "../../port/wii/engine/real_map_scenario.h"
 #include "../../port/wii/runtime/runtime_start.h"
+#include "../../port/wii/sound/wii_sound.h"
 #include "engine_host_shim.h"
 
 #define GENERAL_BYTES (1024u * 1024u)
@@ -155,6 +156,10 @@ int __wrap_main(int argc, char **argv)
     /* HWI015B_DUMP=<index>[,<index>...]:<tick> (diagnosis, engine_map_run_set_dump) */
     if (getenv("HWI015B_DUMP"))
         engine_map_run_set_dump(getenv("HWI015B_DUMP"), ".");
+    /* HWI074_SOUND_CAPTURE=<file>: the plan's sound mix, as it is made (raw 16-bit
+     * little-endian stereo, 48 kHz), to compare with the Wii's output */
+    if (getenv("HWI074_SOUND_CAPTURE"))
+        wii_sound_set_capture(getenv("HWI074_SOUND_CAPTURE"));
     stage = "map_run";
     memset(&config, 0, sizeof(config));
     {

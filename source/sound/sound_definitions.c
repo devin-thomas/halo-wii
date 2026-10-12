@@ -308,7 +308,7 @@ short sound_definition_next_permutation(
 	}
 
 	selected_permutation_index = seed_random_range(
-		get_global_local_random_seed_address(),
+		get_sound_random_seed_address(),
 		0,
 		range->actual_permutation_count);
 
@@ -325,7 +325,7 @@ short sound_definition_next_permutation(
 				break;
 
 			{
-				real random = real_seed_random(get_global_local_random_seed_address());
+				real random = real_seed_random(get_sound_random_seed_address());
 
 				permutation = TAG_BLOCK_GET_ELEMENT(
 				&range->permutations,
