@@ -1,0 +1,1257 @@
+{
+ "ticket": "HWI-073",
+ "date": "2026-10-11",
+ "runner": {
+  "source_commit": "1751aa76",
+  "tool": "tools/wii/run_dolphin.py",
+  "concurrent_flag": "--allow-concurrent"
+ },
+ "guest": {
+  "dol": "gx_materials.dol",
+  "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+  "build_id": "6958875983abf052",
+  "source_commit": "4a4aa208a7a7fb1e05d73d74f31d93e8081b88e2",
+  "scenario": "gx_materials",
+  "input_script": "gx-materials.json",
+  "input_script_sha256": "844146bfdbed3a5cc77ed4c7bdbf90aefe1e761bb215e2c2d92fc9858e4cd2eb",
+  "movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+  "runs_per_lane": 2,
+  "profile": "new isolated stock-limit profile per lane, CPU EFB access"
+ },
+ "hosts": {
+  "titan": {
+   "os": "Windows 11 Pro 10.0.26200",
+   "cpu": "Intel Core i7-12700, 20 logical",
+   "gpu": "RTX 4090",
+   "backend": "D3D",
+   "dolphin_executable_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+   "lanes": 2,
+   "summary": {
+    "lanes": 2,
+    "exclusive": {
+     "runs": 4,
+     "wall_seconds": 86.005,
+     "seconds_per_run": 21.5,
+     "runs_per_hour": 167.4,
+     "dolphin_elapsed_mean": 15.633,
+     "dolphin_elapsed_range": [
+      15.201,
+      16.592
+     ]
+    },
+    "concurrent": {
+     "runs": 4,
+     "wall_seconds": 43.861,
+     "seconds_per_run": 10.97,
+     "runs_per_hour": 328.3,
+     "dolphin_elapsed_mean": 15.88,
+     "dolphin_elapsed_range": [
+      15.331,
+      16.19
+     ]
+    },
+    "throughput_ratio": 1.96,
+    "per_run_elapsed_ratio": 1.016
+   }
+  },
+  "research": {
+   "os": "macOS 27.0",
+   "cpu": "Apple M5 Max, 18 cores",
+   "backend": "Vulkan",
+   "dolphin_executable_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+   "lanes": 3,
+   "summary": {
+    "lanes": 3,
+    "exclusive": {
+     "runs": 6,
+     "wall_seconds": 106.58,
+     "seconds_per_run": 17.76,
+     "runs_per_hour": 202.7,
+     "dolphin_elapsed_mean": 12.156,
+     "dolphin_elapsed_range": [
+      12.077,
+      12.387
+     ]
+    },
+    "concurrent": {
+     "runs": 6,
+     "wall_seconds": 36.63,
+     "seconds_per_run": 6.11,
+     "runs_per_hour": 589.7,
+     "dolphin_elapsed_mean": 12.502,
+     "dolphin_elapsed_range": [
+      12.115,
+      13.147
+     ]
+    },
+    "throughput_ratio": 2.91,
+    "per_run_elapsed_ratio": 1.028
+   }
+  }
+ },
+ "identity_all_hosts_all_batches": {
+  "1": {
+   "distinct": 1,
+   "log_sha256": [
+    "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c"
+   ],
+   "counter_sha256": [
+    "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787"
+   ]
+  },
+  "2": {
+   "distinct": 1,
+   "log_sha256": [
+    "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318"
+   ],
+   "counter_sha256": [
+    "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d"
+   ]
+  }
+ },
+ "batches": [
+  {
+   "batch": "titan-exclusive",
+   "mode": "exclusive",
+   "lanes": 2,
+   "wall_seconds": 86.005,
+   "runs": 4,
+   "seconds_per_run": 21.5,
+   "runs_per_hour": 167.4,
+   "lane_records": [
+    {
+     "lane": "lane1",
+     "tool_exit": 0,
+     "aborted": null,
+     "concurrency": {
+      "mode": "exclusive",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 0,
+      "lock_slot": null,
+      "other_dolphin_processes_at_end": 0,
+      "host_shared": false,
+      "lanes_max": 1
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": false,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c",
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 16.592,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        0,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": false
+      },
+      {
+       "number": 2,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318",
+       "counter_sha256": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 15.532,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        0,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": false
+      }
+     ]
+    },
+    {
+     "lane": "lane2",
+     "tool_exit": 0,
+     "aborted": null,
+     "concurrency": {
+      "mode": "exclusive",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 0,
+      "lock_slot": null,
+      "other_dolphin_processes_at_end": 0,
+      "host_shared": false,
+      "lanes_max": 1
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": false,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c",
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 15.208,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        0,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": false
+      },
+      {
+       "number": 2,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318",
+       "counter_sha256": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 15.201,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        0,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "batch": "titan-concurrent",
+   "mode": "concurrent",
+   "lanes": 2,
+   "wall_seconds": 43.861,
+   "runs": 4,
+   "seconds_per_run": 10.97,
+   "runs_per_hour": 328.3,
+   "lane_records": [
+    {
+     "lane": "lane1",
+     "tool_exit": 0,
+     "aborted": null,
+     "concurrency": {
+      "mode": "concurrent",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 0,
+      "lock_slot": "0",
+      "other_dolphin_processes_at_end": 0,
+      "host_shared": true,
+      "lanes_max": 2
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": true,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c",
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 15.845,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        1,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": true
+      },
+      {
+       "number": 2,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318",
+       "counter_sha256": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 16.156,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        1,
+        1
+       ],
+       "dolphin_processes_after": 1,
+       "host_shared": true
+      }
+     ]
+    },
+    {
+     "lane": "lane2",
+     "tool_exit": 0,
+     "aborted": null,
+     "concurrency": {
+      "mode": "concurrent",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 1,
+      "lock_slot": "1",
+      "other_dolphin_processes_at_end": 0,
+      "host_shared": true,
+      "lanes_max": 2
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": true,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c",
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 15.331,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        1,
+        1,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": true
+      },
+      {
+       "number": 2,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318",
+       "counter_sha256": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 16.19,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        1,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "batch": "titan-forced",
+   "mode": "forced",
+   "lanes": 2,
+   "wall_seconds": 44.92,
+   "runs": 3,
+   "seconds_per_run": 14.97,
+   "runs_per_hour": 240.4,
+   "lane_records": [
+    {
+     "lane": "lane1",
+     "tool_exit": 0,
+     "aborted": null,
+     "concurrency": {
+      "mode": "concurrent",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 1,
+      "lock_slot": "1",
+      "other_dolphin_processes_at_end": 0,
+      "host_shared": true,
+      "lanes_max": 2
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": true,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c",
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 17.076,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        1,
+        1,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": true
+      },
+      {
+       "number": 2,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318",
+       "counter_sha256": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 15.379,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        0,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": false
+      }
+     ]
+    },
+    {
+     "lane": "lane2",
+     "tool_exit": 1,
+     "aborted": "run 1 was force-stopped; later runs skipped",
+     "concurrency": {
+      "mode": "concurrent",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 0,
+      "lock_slot": "0",
+      "other_dolphin_processes_at_end": 1,
+      "host_shared": true,
+      "lanes_max": 2
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": true,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "failed",
+       "persistence": "failed",
+       "guest_failures": [
+        "guest_log_missing",
+        "forced_stop_before_natural_exit"
+       ],
+       "log_sha256": null,
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [],
+       "exit": "0x00000001",
+       "outcome": "forced_stop_timeout",
+       "forced_stop": true,
+       "forced_stop_scope": "own_process_tree",
+       "elapsed_seconds": 6.237,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        1,
+        1
+       ],
+       "dolphin_processes_after": 1,
+       "host_shared": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "batch": "research-exclusive",
+   "mode": "exclusive",
+   "lanes": 3,
+   "wall_seconds": 106.58,
+   "runs": 6,
+   "seconds_per_run": 17.76,
+   "runs_per_hour": 202.7,
+   "lane_records": [
+    {
+     "lane": "lane1",
+     "tool_exit": 0,
+     "aborted": null,
+     "concurrency": {
+      "mode": "exclusive",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 0,
+      "lock_slot": null,
+      "other_dolphin_processes_at_end": 0,
+      "host_shared": false,
+      "lanes_max": 1
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": false,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c",
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 12.387,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        0,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": false
+      },
+      {
+       "number": 2,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318",
+       "counter_sha256": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 12.077,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        0,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": false
+      }
+     ]
+    },
+    {
+     "lane": "lane2",
+     "tool_exit": 0,
+     "aborted": null,
+     "concurrency": {
+      "mode": "exclusive",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 0,
+      "lock_slot": null,
+      "other_dolphin_processes_at_end": 0,
+      "host_shared": false,
+      "lanes_max": 1
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": false,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c",
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 12.118,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        0,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": false
+      },
+      {
+       "number": 2,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318",
+       "counter_sha256": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 12.113,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        0,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": false
+      }
+     ]
+    },
+    {
+     "lane": "lane3",
+     "tool_exit": 0,
+     "aborted": null,
+     "concurrency": {
+      "mode": "exclusive",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 0,
+      "lock_slot": null,
+      "other_dolphin_processes_at_end": 0,
+      "host_shared": false,
+      "lanes_max": 1
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": false,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c",
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 12.147,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        0,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": false
+      },
+      {
+       "number": 2,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318",
+       "counter_sha256": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 12.093,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        0,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "batch": "research-concurrent",
+   "mode": "concurrent",
+   "lanes": 3,
+   "wall_seconds": 36.63,
+   "runs": 6,
+   "seconds_per_run": 6.11,
+   "runs_per_hour": 589.7,
+   "lane_records": [
+    {
+     "lane": "lane1",
+     "tool_exit": 0,
+     "aborted": null,
+     "concurrency": {
+      "mode": "concurrent",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 0,
+      "lock_slot": "1",
+      "other_dolphin_processes_at_end": 0,
+      "host_shared": true,
+      "lanes_max": 3
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": true,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c",
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 13.112,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        2,
+        1
+       ],
+       "dolphin_processes_after": 1,
+       "host_shared": true
+      },
+      {
+       "number": 2,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318",
+       "counter_sha256": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 12.136,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        1,
+        2,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": true
+      }
+     ]
+    },
+    {
+     "lane": "lane2",
+     "tool_exit": 0,
+     "aborted": null,
+     "concurrency": {
+      "mode": "concurrent",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 0,
+      "lock_slot": "0",
+      "other_dolphin_processes_at_end": 0,
+      "host_shared": true,
+      "lanes_max": 3
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": true,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c",
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 12.373,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        2,
+        2
+       ],
+       "dolphin_processes_after": 2,
+       "host_shared": true
+      },
+      {
+       "number": 2,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318",
+       "counter_sha256": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 12.115,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        2,
+        2,
+        2
+       ],
+       "dolphin_processes_after": 2,
+       "host_shared": true
+      }
+     ]
+    },
+    {
+     "lane": "lane3",
+     "tool_exit": 0,
+     "aborted": null,
+     "concurrency": {
+      "mode": "concurrent",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 0,
+      "lock_slot": "2",
+      "other_dolphin_processes_at_end": 0,
+      "host_shared": true,
+      "lanes_max": 3
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": true,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c",
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 13.147,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        2,
+        1
+       ],
+       "dolphin_processes_after": 1,
+       "host_shared": true
+      },
+      {
+       "number": 2,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318",
+       "counter_sha256": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 12.127,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        2,
+        2,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "batch": "research-forced",
+   "mode": "forced",
+   "lanes": 3,
+   "wall_seconds": 36.019,
+   "runs": 5,
+   "seconds_per_run": 7.2,
+   "runs_per_hour": 499.7,
+   "lane_records": [
+    {
+     "lane": "lane1",
+     "tool_exit": 0,
+     "aborted": null,
+     "concurrency": {
+      "mode": "concurrent",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 0,
+      "lock_slot": "0",
+      "other_dolphin_processes_at_end": 0,
+      "host_shared": true,
+      "lanes_max": 3
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": true,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c",
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 12.382,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        2,
+        1
+       ],
+       "dolphin_processes_after": 1,
+       "host_shared": true
+      },
+      {
+       "number": 2,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318",
+       "counter_sha256": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 12.092,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        1,
+        1,
+        1
+       ],
+       "dolphin_processes_after": 1,
+       "host_shared": true
+      }
+     ]
+    },
+    {
+     "lane": "lane2",
+     "tool_exit": 0,
+     "aborted": null,
+     "concurrency": {
+      "mode": "concurrent",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 2,
+      "lock_slot": "2",
+      "other_dolphin_processes_at_end": 0,
+      "host_shared": true,
+      "lanes_max": 3
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": true,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c",
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 12.161,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        2,
+        2,
+        1
+       ],
+       "dolphin_processes_after": 1,
+       "host_shared": true
+      },
+      {
+       "number": 2,
+       "guest": "passed",
+       "persistence": "passed",
+       "guest_failures": [],
+       "log_sha256": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318",
+       "counter_sha256": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+       "cycle_crcs": [
+        "53843a35"
+       ],
+       "exit": "0x00000000",
+       "outcome": "exit_zero",
+       "forced_stop": false,
+       "forced_stop_scope": null,
+       "elapsed_seconds": 12.085,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        1,
+        1,
+        0
+       ],
+       "dolphin_processes_after": 0,
+       "host_shared": true
+      }
+     ]
+    },
+    {
+     "lane": "lane3",
+     "tool_exit": 1,
+     "aborted": "run 1 was force-stopped; later runs skipped",
+     "concurrency": {
+      "mode": "concurrent",
+      "ownership": "pid_scoped_process_tree",
+      "other_dolphin_processes_at_start": 0,
+      "lock_slot": "1",
+      "other_dolphin_processes_at_end": 2,
+      "host_shared": true,
+      "lanes_max": 3
+     },
+     "os_stability": "no_instability_events_observed",
+     "os_scope": "host_wide",
+     "os_shared": true,
+     "dolphin_fault_events": [],
+     "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+     "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+     "input_movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+     "runs": [
+      {
+       "number": 1,
+       "guest": "failed",
+       "persistence": "failed",
+       "guest_failures": [
+        "guest_log_missing",
+        "forced_stop_before_natural_exit"
+       ],
+       "log_sha256": null,
+       "counter_sha256": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+       "cycle_crcs": [],
+       "exit": "0xfffffff7",
+       "outcome": "forced_stop_timeout",
+       "forced_stop": true,
+       "forced_stop_scope": "own_process_tree",
+       "elapsed_seconds": 6.096,
+       "teardown_check": "own_process_tree_exited",
+       "own_tree_observed_count": 1,
+       "own_tree_alive_after": [],
+       "other_dolphin_processes": [
+        0,
+        2,
+        2
+       ],
+       "dolphin_processes_after": 2,
+       "host_shared": true
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "a10_concurrency": "not run: the live lanes were in use by HWI-030/033/034; optional per the ticket",
+ "lock": "every batch held the live single-slot lock as owner hwi-073 (exclusive host); lanes inside a concurrent batch each held a slot of a .local copy of the v2 counted-slot lock via locked_run_v2.sh"
+}

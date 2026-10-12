@@ -104,20 +104,42 @@ effects), which a render path may not.
 `tools/wii/render_stage.py` copies a map's files from one content pipeline
 generation (private; never in Git) to the card:
 `data/render/<map>/lightmaps/<bsp tag>.hwl` and
-`data/render/<map>/textures/<bitmap tag>-<bitmap>.hwt`. The HWL1 decoded form
-is reduced to positions, base texcoords and lightmap texcoords (24 bytes a
-vertex) and released. Lightmap pages are always loaded; base maps are loaded
-in order of the surfaces they cover while they fit `base_budget` (default
-3 MiB, `wii_render.h`; 2 MiB before HWI-008F), pending the Wii texture cache
-(HWI-032). Base maps left out are logged with their bytes
-(`RENDER_BASE_NOT_RESIDENT`), resident ones with their format and alpha
-(`RENDER_BASE_RESIDENT`).
+`data/render/<map>/textures/<bitmap tag>-<bitmap>.hwt`.
+
+**Geometry (HWI-030)** costs nothing beyond the tag slot. GX draws each BSP
+material's vertices where the staged map already holds them for the game:
+the 32-byte compressed environment vertex (position F32 at 0, texcoord F32
+at 24) and the 8-byte lightmap vertex (texcoord S16 at 4), big-endian as
+`map_stage.py` stages them, indexed by the BSP's surfaces block. The HWL1
+file holds the same bytes; at every BSP load it is read in 32 KiB chunks and
+compared byte for byte (`RENDER_GEOMETRY_CHECK`), and a BSP that differs is
+not drawn. HWI-016B's path decoded the whole file (normals expanded to F32)
+beside it: a10's first BSP needed 8,100,736 bytes, its largest 11,664,352.
+
+**Textures** fill one render pool per map, taken from the heap at the map's
+first BSP load (MEM1's arena above `pool_keep`'s first value, MEM2's above
+the 2 MiB reserve and the second) and given back when the map unloads. Each
+BSP load, including a script's BSP switch, refills it from the start: the
+material tables, every lightmap page the BSP uses, then its base maps in
+order of the surfaces they cover while they fit `base_budget` (default
+3 MiB, `wii_render.h`) and the pool, pending the texture cache (HWI-054).
+Base maps left out are logged with their bytes and why
+(`RENDER_BASE_NOT_RESIDENT reason=budget|pool`), resident ones with their
+format and alpha (`RENDER_BASE_RESIDENT`). Their materials draw
+lightmap-only, and every frame counts the visible triangles drawn textured
+and lightmap-only (`RENDER_MAP_STATS`). The boot mode's menus share the
+heap, so there each texture is its own heap block (HWI-016D's rule).
 
 ## `render.txt`
 
-Optional, on the card at `sd:/halo-wii-engine/render.txt`:
-`render=off` (the HWI-015B build: nothing drawn, the rasterizer reported
-unsupported), `mode=poses_only` (skip the map run; only the fixed-pose
-checks, for short frame dumps), `base_budget=<bytes>`, `base_limit=<count>`
-(at most that many base maps, in coverage order: compares texture profiles
-at equal residency).
+Optional, on the card at `sd:/halo-wii-engine/render.txt` (full list in
+`wii_render.h`): `render=off` (the HWI-015B build: nothing drawn, the
+rasterizer reported unsupported), `mode=poses_only` (skip the map run; only
+the fixed-pose checks, for short frame dumps), `base_budget=<bytes>`,
+`base_limit=<count>` (at most that many base maps, in coverage order:
+compares texture profiles at equal residency), `pool_max`, `pool_keep`,
+`geometry_check`, `run_pose_ticks=<t>,...` (the map run's sampled frames)
+and `poses=<scenario> [ticks=...] [switch_bsp=<t>:<i>,...] [overrides=each]`
+(a fixed-pose phase; with `overrides=each`, two labelled diagnostic cameras
+inside the BSP loaded at each tick: above one of its largest floor
+triangles in an open leaf, looking toward its centre).

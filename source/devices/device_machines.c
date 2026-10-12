@@ -248,7 +248,11 @@ boolean machine_update(
 				struct unit_definition *unit_definition = unit_definition_get(unit->definition_index);
 				boolean can_open = TRUE;
 
-				if (TEST_FLAG(*((byte *)unit + 0xb6), _object_function2_active_bit) ||
+				/* port (HWI-030): the Xbox code tests byte 0xb6 of the little-endian unit,
+				the low byte of its object's damage_flags; read as a value, a big-endian
+				port tests the same bit (it tested bit 10 and opened doors the Xbox kept
+				shut) */
+				if (TEST_FLAG((byte)unit->object.damage_flags, _object_function2_active_bit) ||
 					TEST_FLAG(*(unsigned long *)((byte *)unit_definition + 0x17c), _object_runtime_unit_cannot_open_doors_automatically_bit))
 				{
 					can_open = FALSE;

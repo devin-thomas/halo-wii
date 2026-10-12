@@ -53,6 +53,11 @@ short main_get_difficulty(
 requests, between the ticks of a frame that runs several (main.c) */
 void main_port_game_requests_between_ticks(
 	void);
+/* port (HWI-034): the requests waiting for main_loop that replace the
+game's state (a revert, a loss's revert once due, a core load, a won map, a
+map reset), a bit each; a multi-tick frame stops its ticks at one (main.c) */
+unsigned long main_port_revert_class_requests(
+	void);
 boolean main_saving_map(
 	void);
 

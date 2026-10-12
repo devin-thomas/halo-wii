@@ -61,10 +61,21 @@ struct map_line
 	unsigned long expect_simulation; /* (HWI-016F) the simulation, HWI-016F's frame-coupled fields left out */
 	long switch_tick;
 	int switch_index;
+	/* HWI-030: switch_bsp=<tick>:<index>,<tick>:<index>,...: the switches
+	after the first */
+	int more_switches;
+	long more_switch_ticks[REAL_MAP_MAXIMUM_MORE_COMMANDS];
+	int more_switch_indices[REAL_MAP_MAXIMUM_MORE_COMMANDS];
 	short expected_error;        /* a fail line's, or a map line's expect_error= */
 	char directory[96];          /* a fail line's maps directory */
 	int canonical_every_tick;    /* canonical=every (the default) or canonical=checkpoints */
 	int invariance;              /* invariance=1 (the default): a run whose simulation differs is a failure */
+	/* (HWI-034) script=<tick>:<command>: the command's script source ('~'
+	for a space), run after that tick as switch_bsp's is; core_save=<tick>:
+	a core saved by the harness after that tick (real_map_set_core_save) */
+	long script_tick;
+	char script[96];
+	long core_save_tick;
 };
 
 static struct map_line plan_lines[ENGINE_MAP_RUN_MAXIMUM_LINES];
@@ -303,13 +314,13 @@ static int parse_cadences(const char *text, unsigned *mask)
 /* one line of the plan; 0 if it is not understood */
 static int parse_line(char *text, int default_cycles, struct map_line *line)
 {
-	char *words[12];
+	char *words[16];
 	int count = 0;
 	int first = 0;
 	char *cursor;
 
 	memset(line, 0, sizeof(*line));
-	for (cursor = strtok(text, " \t"); cursor && count < 12; cursor = strtok(NULL, " \t"))
+	for (cursor = strtok(text, " \t"); cursor && count < 16; cursor = strtok(NULL, " \t"))
 		words[count++] = cursor;
 	if (!count)
 		return 0;
@@ -368,11 +379,27 @@ static int parse_line(char *text, int default_cycles, struct map_line *line)
 		else if (!strcmp(word, "switch_bsp"))
 		{
 			char *colon = strchr(value, ':');
+			char *next;
 
 			if (!colon)
 				return 0;
 			line->switch_tick = strtol(value, NULL, 10);
-			line->switch_index = (int)strtol(colon + 1, NULL, 10);
+			line->switch_index = (int)strtol(colon + 1, &next, 10);
+			/* (HWI-030) more switches, each "<tick>:<index>" after a comma */
+			while (*next == ',')
+			{
+				char *pair = next + 1;
+				int more = line->more_switches;
+
+				colon = strchr(pair, ':');
+				if (!colon || more >= REAL_MAP_MAXIMUM_MORE_COMMANDS)
+					return 0;
+				line->more_switch_ticks[more] = strtol(pair, NULL, 10);
+				line->more_switch_indices[more] = (int)strtol(colon + 1, &next, 10);
+				if (line->more_switch_ticks[more] < 1)
+					return 0;
+				line->more_switches++;
+			}
 		}
 		else if (!strcmp(word, "expect_error"))
 		{
@@ -390,11 +417,37 @@ static int parse_line(char *text, int default_cycles, struct map_line *line)
 			line->invariance = (int)strtol(value, NULL, 10);
 		else if (!strcmp(word, "directory"))
 			snprintf(line->directory, sizeof(line->directory), "%s", value);
+		else if (!strcmp(word, "script"))
+		{
+			char *colon = strchr(value, ':');
+
+			if (!colon || !colon[1] || strlen(colon + 1) >= sizeof(line->script))
+				return 0;
+			line->script_tick = strtol(value, NULL, 10);
+			snprintf(line->script, sizeof(line->script), "%s", colon + 1);
+			for (char *space = line->script; *space; space++)
+			{
+				if (*space == '~')
+					*space = ' ';
+			}
+		}
+		else if (!strcmp(word, "core_save"))
+			line->core_save_tick = strtol(value, NULL, 10);
+		else if (!strcmp(word, "name"))
+			snprintf(line->name, sizeof(line->name), "%s", value);
 		else
 			return 0;
 	}
+	for (int more = 0; more < line->more_switches; more++)
+	{
+		if (line->more_switch_ticks[more] >= line->ticks)
+			return 0;
+	}
+	/* (one command a run: a script= or a switch_bsp=) */
 	return line->ticks >= 1 && line->ticks <= REAL_MAP_MAXIMUM_TICKS && line->cycles >= 1 && line->cycles <= 8 &&
-		(line->switch_tick >= 0 && line->switch_tick < line->ticks);
+		(line->switch_tick >= 0 && line->switch_tick < line->ticks) &&
+		(line->script_tick >= 0 && line->script_tick < line->ticks) && !(line->script_tick && line->switch_tick) &&
+		(line->core_save_tick >= 0 && line->core_save_tick < line->ticks);
 }
 
 /* the plan's lines; -1 if a line is not understood */
@@ -490,7 +543,15 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 
 		snprintf(command, sizeof(command), "(switch_bsp %d)", line->switch_index);
 		real_map_set_command(line->switch_tick, command);
+		for (int more = 0; more < line->more_switches; more++)
+		{
+			snprintf(command, sizeof(command), "(switch_bsp %d)", line->more_switch_indices[more]);
+			real_map_add_command(line->more_switch_ticks[more], command);
+		}
 	}
+	if (line->script_tick)
+		real_map_set_command(line->script_tick, line->script);
+	real_map_set_core_save(line->core_save_tick);
 	progress_logging = reference;
 	real_map_set_canonical_every_tick(line->canonical_every_tick);
 	if (!real_map_begin(reference ? NULL : reference_raw_digests, line->ticks))
@@ -517,7 +578,9 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 		"seed=%08lx objects=%ld player_unit=%08lx spawn_tick=%ld position=%.6f,%.6f,%.6f tags_end=%08lx "
 		"bsp=%d bsp_switches=%ld command_tick=%ld command_result=%ld requests_left=%ld sim_raw=%08lx "
 		"sim_raw_chain=%08lx raw=%08lx raw_chain=%08lx sim_hwi015b=%08lx sim_hwi015b_raw=%08lx "
-		"sim_hwi015b_raw_chain=%08lx frame_effects=%ld frame_sounds=%ld ms=%lu\n",
+		"sim_hwi015b_raw_chain=%08lx frame_effects=%ld frame_sounds=%ld requests=%lx request_tick=%ld "
+		"ticks_after_request=%ld clock_ticks=%ld ticks_run=%ld carried=%ld frames_stopped=%ld carried_total=%ld "
+		"most_carried=%ld queue_resets=%ld core_saved_tick=%ld ms=%lu\n",
 		line->name, cycle, cadence_names[cadence], result->ticks, result->frames, result->frames_without_ticks,
 		result->most_ticks_in_a_frame, result->digest, result->chain, result->digest_at[0], result->digest_at[1],
 		result->digest_at[2], result->digest_at[3], result->simulation_digest, result->simulation_chain,
@@ -529,7 +592,17 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 		result->command_result, result->requests_left, result->simulation_raw_digest,
 		result->simulation_raw_chain, result->raw_digest, result->raw_chain, result->simulation_hwi015b_digest,
 		result->simulation_hwi015b_raw_digest, result->simulation_hwi015b_raw_chain, result->frame_made_effects,
-		result->frame_made_looping_sounds, *milliseconds);
+		result->frame_made_looping_sounds, result->requests_seen, result->request_tick, result->ticks_after_request,
+		result->clock_ticks, result->ticks_run, result->ticks_carried, result->frames_stopped,
+		result->ticks_carried_total, result->most_ticks_carried, result->queue_resets, result->core_saved_tick,
+		*milliseconds);
+	if (line->more_switches)
+	{
+		wii_log("RUN_SWITCHES map=%s cycle=%d cadence=%s asked=%d ran=%ld bsp_after_last=%d bsp_at_end=%d "
+			"bsp_switches=%ld\n", line->name, cycle, cadence_names[cadence], line->more_switches,
+			result->more_commands_ran, result->more_commands_bsp_after, result->structure_bsp_index,
+			result->bsp_switches);
+	}
 	if (cadence == _cadence_vsync)
 	{
 		/* the frame times, bit for bit, ten a line */
@@ -590,9 +663,10 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 	memset(cadence_first, 0, sizeof(cadence_first));
 	current_map = line->name;
 	wii_log("MAP_LINE map=%s scenario=%s ticks=%ld cycles=%d cadences=%x warmup=%d expect=%08lx switch_bsp=%ld:%d "
-		"expect_error=%s\n", line->name, line->scenario_path, line->ticks, line->cycles, line->cadences, line->warmup,
-		line->has_expect ? line->expect : 0UL, line->switch_tick, line->switch_index,
-		line->expected_error > 0 ? wii_cache_error_name(line->expected_error) : "none");
+		"expect_error=%s script_tick=%ld core_save=%ld\n", line->name, line->scenario_path, line->ticks, line->cycles,
+		line->cadences, line->warmup, line->has_expect ? line->expect : 0UL, line->switch_tick, line->switch_index,
+		line->expected_error > 0 ? wii_cache_error_name(line->expected_error) : "none", line->script_tick,
+		line->core_save_tick);
 
 	/* a warm-up run first, not measured: a map leaves state behind for the
 	next (a light's stale field, the game sound's first-map flag), so every
@@ -609,6 +683,8 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 		if (line->warmup > 1)
 			warm_line.ticks = line->warmup < REAL_MAP_MAXIMUM_TICKS ? line->warmup : REAL_MAP_MAXIMUM_TICKS;
 		warm_line.switch_tick = 0;
+		warm_line.script_tick = 0;
+		warm_line.core_save_tick = 0;
 		ran = real_map_load(line->scenario_path) &&
 			run_cadence(config, &warm_line, -1, _cadence_30, 0, &warm, &milliseconds);
 

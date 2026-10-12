@@ -80,12 +80,36 @@ struct real_map_result
 	long command_tick;                           /* when the run's script command ran, or -1 */
 	long command_result;                         /* hs_compile_and_evaluate's */
 	short command_bsp_before, command_bsp_after; /* the structure bsp loaded as the command ran, and after it */
-	long requests_left;                          /* frames ending with a won map or a reset asked for */
+	/* HWI-030: the commands after the first (real_map_add_command): how
+	many ran, and the structure bsp after the last */
+	long more_commands_ran;
+	short more_commands_bsp_after;
+	long requests_left;                          /* frames ending with a won map or a reset asked for (taken then, HWI-034) */
 	/* (HWI-016F) effects and object looping sounds made by the frames
 	(game_frame: a particle's effect, a background sound), outside the
 	ticks, in arrays whose other datums the ticks make */
 	long frame_made_effects;
 	long frame_made_looping_sounds;
+	/* (HWI-034) the revert-class requests (main.c
+	main_port_revert_class_requests): the bits seen during the run, the
+	first tick after which one arrived (or -1), and the ticks begun while
+	one that arrived in the same frame was waiting (none: the frame stopped
+	at it). The scheduler's counts (game_time_port_tick_counts): the ticks
+	the clock gave, the ticks run (past the run's last tick too) and the
+	ticks held back at the end; the frames that stopped early, the ticks they
+	held back, the most one did; the update queue's resets (a revert's, a
+	core load's) */
+	unsigned long requests_seen;
+	long request_tick;
+	long ticks_after_request;
+	long clock_ticks;
+	long ticks_run;
+	long ticks_carried;
+	long frames_stopped;
+	long ticks_carried_total;
+	long most_ticks_carried;
+	long queue_resets;
+	long core_saved_tick;                        /* when the harness saved a core (real_map_set_core_save), or -1 */
 };
 
 /* the game's state at a tick, for the log (engine_map_run.c's PROGRESS lines) */
@@ -137,6 +161,14 @@ void real_map_set_canonical_every_tick(int every);
 runs through the engine's own script compiler and runtime after the given
 tick of every run armed from now on (0: none) */
 void real_map_set_command(long tick, const char *command);
+/* (HWI-030) another command after its tick, run after the first's; at most
+REAL_MAP_MAXIMUM_MORE_COMMANDS, cleared by real_map_set_command. 1 if kept */
+#define REAL_MAP_MAXIMUM_MORE_COMMANDS 12
+int real_map_add_command(long tick, const char *command);
+/* (HWI-034) a core saved by the harness after the given tick of every run
+armed from now on (0: none), as main_save_core_private saves one
+(game_state_save_core, "core.bin"), at that tick's boundary */
+void real_map_set_core_save(long tick);
 void real_map_progress_get(struct real_map_progress *progress);
 void real_map_unload(void);
 /* nonzero while a run is armed */
@@ -146,6 +178,10 @@ int real_map_armed(void);
 update_client_local_ticks wrappers call them while a run is armed) */
 void real_map_after_tick(void);
 void real_map_local_ticks(short ticks);
+/* (HWI-034) before each tick; and after the update queue's reset
+(update_queues_reset_and_fill_with_lies: a revert's, a core load's) */
+void real_map_before_tick(void);
+void real_map_queues_reset(void);
 
 /* (diagnostics) called after each tick's digest; and an allocation's address */
 void real_map_set_tick_observer(void (*observer)(long tick));
