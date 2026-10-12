@@ -132,8 +132,8 @@ struct boot_ui_globals
 	char map_name[64];
 	long scenario_index;
 	long map_changes;
-	/* HWI-033: the loaded map is a campaign map (its scenario's type is solo),
-	whose environment drawing is pending (HWI-030): not drawn, labelled */
+	/* HWI-033: the loaded map is a campaign map (its scenario's type is solo);
+	if its environment cannot be drawn, the frame says so (pending) */
 	boolean campaign;
 	boolean environment_pending;    /* this frame */
 	boolean pending_logged;         /* this map */
@@ -492,16 +492,21 @@ static void boot_ui_overlay(
 	wii_ui_gx_window(0, 0, BOOT_UI_SCREEN_WIDTH, BOOT_UI_SCREEN_HEIGHT);
 	if (boot_ui.map_name[0] && !boot_ui_in_menu_map() && boot_ui.campaign)
 	{
-		/* HWI-033: the campaign runs; its environment is not drawn (HWI-030:
-		a BSP's geometry does not fit the memory left), and says so */
-		_snprintf(line, sizeof(line) - 1, "MAP %s: CAMPAIGN - ENVIRONMENT DRAWING PENDING (HWI-030)", boot_ui.map_name);
+		/* HWI-033: the campaign, loaded from the menus: its environment (the
+		structure BSP, HWI-030) is drawn; objects, the sky, effects and the
+		HUD are not yet, and the line says so */
+		_snprintf(line, sizeof(line) - 1, "MAP %s: CAMPAIGN - ENVIRONMENT ONLY (NO OBJECTS, SKY, EFFECTS, HUD YET)",
+			boot_ui.map_name);
 		wii_ui_gx_fill(0, 0, BOOT_UI_SCREEN_WIDTH, 14, 0xA0000000u);
 		wii_ui_gx_text(4, 3, 1, 0xFFFFD040u, line);
-		wii_ui_gx_fill(120, 200, 520, 268, 0xC0202020u);
-		wii_ui_gx_text(136, 210, 2, 0xFFFFFFFFu, "CAMPAIGN ENVIRONMENT");
-		wii_ui_gx_text(136, 228, 2, 0xFFFFFFFFu, "DRAWING PENDING (HWI-030)");
-		_snprintf(line, sizeof(line) - 1, "THE GAME RUNS: TICK %ld, NOT DRAWN", boot_ui.target_ticks);
-		wii_ui_gx_text(136, 250, 1, 0xFFFFE0A0u, line);
+		if (boot_ui.environment_pending && !boot_ui.environment_drawn)
+		{
+			wii_ui_gx_fill(120, 200, 520, 268, 0xC0202020u);
+			wii_ui_gx_text(136, 210, 2, 0xFFFFFFFFu, "CAMPAIGN ENVIRONMENT");
+			wii_ui_gx_text(136, 228, 2, 0xFFFFFFFFu, "NOT DRAWN: SEE ENGINE.LOG");
+			_snprintf(line, sizeof(line) - 1, "THE GAME RUNS: TICK %ld (RENDER_FAIL SAYS WHY)", boot_ui.target_ticks);
+			wii_ui_gx_text(136, 250, 1, 0xFFFFE0A0u, line);
+		}
 	}
 	else if (boot_ui.map_name[0] && !boot_ui_in_menu_map())
 	{
@@ -634,24 +639,24 @@ static void boot_ui_frame(
 		boot_ui.player_windows++;
 		/* the environment from the window's own camera, then the interface */
 		wii_ui_gx_window(bounds->x0, bounds->y0, bounds->x1, bounds->y1);
-		if (boot_ui.campaign)
+		if (wii_render_environment_draw(&window->render_camera))
 		{
-			/* HWI-033: a campaign map's environment is not drawn until its
-			BSPs fit (HWI-030); it is not loaded either, so nothing is taken
-			from the memory the game runs in. The window stays clear and the
-			overlay says why */
+			boot_ui.environment_drawn = TRUE;
+		}
+		else if (boot_ui.campaign)
+		{
+			/* HWI-033: a campaign map whose environment cannot be drawn (its
+			render files not staged, or a BSP refused: RENDER_FAIL says why)
+			still runs; the window stays clear and the overlay says so */
 			if (!boot_ui.pending_logged)
 			{
-				wii_log("BOOT_ENVIRONMENT_PENDING map=%s frame=%ld reason=campaign_bsp_geometry_does_not_fit "
-					"ticket=HWI-030 window=%d,%d,%d,%d windows=%d overlay_chars=%d\n", boot_ui.map_name, boot_ui.frame,
-					bounds->x0, bounds->y0, bounds->x1, bounds->y1, window_count,
-					boot_ui.config.overlay ? (int)csstrlen(boot_ui.config.overlay) : -1);
+				wii_log("BOOT_ENVIRONMENT_NOT_DRAWN map=%s frame=%ld reason=render_failed_see_RENDER_FAIL "
+					"window=%d,%d,%d,%d\n", boot_ui.map_name, boot_ui.frame, bounds->x0, bounds->y0, bounds->x1,
+					bounds->y1);
 			}
 			boot_ui.pending_logged = TRUE;
 			boot_ui.environment_pending = TRUE;
 		}
-		else if (wii_render_environment_draw(&window->render_camera))
-			boot_ui.environment_drawn = TRUE;
 		render.local_player_index = window->local_player_index;
 		boot_ui_interface(window, window->local_player_index, window_index);
 	}
@@ -679,7 +684,7 @@ static void boot_ui_present(
 {
 	boot_ui_screen_check();
 	boot_ui_overlay();
-	/* (HWI-033: a campaign map's frames count too, its drawing pending) */
+	/* (HWI-033: a campaign map's frames count too when it cannot be drawn) */
 	if ((boot_ui.environment_drawn || boot_ui.environment_pending) && boot_ui.map_name[0] && !boot_ui_in_menu_map())
 	{
 		boot_ui.environment_frames++;
@@ -694,7 +699,7 @@ static void boot_ui_present(
 			wii_log("BOOT_ENVIRONMENT first frame=%ld clock_ms=%lu map=%s efb_crc=%08lx covered=%d state=%08lx "
 				"state_raw=%08lx game_time=%ld drawing=%s\n", boot_ui.frame, wii_boot_clock_milliseconds(), boot_ui.map_name, crc,
 				covered, state, state_raw, game_in_progress() ? game_time_get() : -1L,
-				boot_ui.environment_pending ? "pending_hwi030" : "drawn");
+				boot_ui.environment_drawn ? "drawn" : "not_drawn");
 			boot_ui_log_allocations("first_environment");
 		}
 	}
@@ -709,8 +714,8 @@ static void boot_ui_present(
 		wii_log("BOOT_ENVIRONMENT end frames=%ld map=%s state=%08lx state_raw=%08lx game_time=%ld covered_last=%d "
 			"ticks=%ld tick_digests=%ld drawing=%s\n", boot_ui.environment_frames, boot_ui.map_name, state, state_raw,
 			game_in_progress() ? game_time_get() : -1L, covered, boot_ui.target_ticks, boot_ui.tick_digests,
-			boot_ui.campaign ? "pending_hwi030" : "drawn");
-		boot_ui_finish(1, boot_ui.campaign ? "campaign_reached_drawing_pending" : "environment_reached");
+			boot_ui.environment_drawn ? "drawn" : "not_drawn");
+		boot_ui_finish(1, boot_ui.campaign ? "campaign_reached" : "environment_reached");
 	}
 	else if (boot_ui.config.max_frames > 0 && boot_ui.frame >= boot_ui.config.max_frames)
 	{

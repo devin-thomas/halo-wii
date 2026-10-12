@@ -144,12 +144,14 @@ def stage(generation, stage_dir, ui, names, environments, out):
         for name, map_path in environments.items():
             scratch = out / f".render-{name}"
             result = render_stage.stage(generation, map_path, name, scratch)
-            for item in result["files"]:
-                target = out / "data" / item["path"]
+            # (HWI-033) a campaign map's BSPs share textures: render_stage lists a shared one once per BSP
+            paths = list(dict.fromkeys(item["path"] for item in result["files"]))
+            for path in paths:
+                target = out / "data" / path
                 target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.move(str(scratch / item["path"]), target)
+                shutil.move(str(scratch / path), target)
             shutil.rmtree(scratch)
-            environment_records[name] = {"files": len(result["files"]), "totals": result["totals"]}
+            environment_records[name] = {"files": len(paths), "listed": len(result["files"]), "totals": result["totals"]}
     (out / "manifest.txt").write_text(manifest_text(source, generation.name, stager_identity(),
                                                     [(ui, copied, total)]), encoding="ascii", newline="\n")
     record = {"schema": "halo-wii-boot-stage-1", "generation": generation.name, "source_image_sha256": source,
