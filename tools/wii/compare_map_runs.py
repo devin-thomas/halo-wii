@@ -10,12 +10,12 @@ every allocation's checkpoint digests, every tick's simulation digest of each
 map's first run, and each refused load's kind.
 
 Two digests (real_map_scenario.c): the canonical one (pointers into the game
-state and the tag slot as region and offset, HWI-015B's) and the raw one
-(words as they are). Within one launch the Wii and the host place their
-regions at the same addresses, and the raw digest is the comparison: the
-canonical one can read four bytes that are not a pointer as one in one byte
-order only. Both are reported; a tick where only the canonical one differs
-is listed as such.
+state and the tag slot as region and offset, HWI-015B's; since HWI-079 only
+the saved game's declared pointer places, so it is the same at every arena
+placement) and the raw one (words as they are). Within one launch the Wii
+and the host place their regions at the same addresses, and the raw digest
+is the comparison. Both are reported; a tick where only the canonical one
+differs is listed as such.
 
 The host has no video: its "vsync_measured" run is paced at 1/60 s unless it
 replays the Wii's measured frame times, so that run's frame-coupled state is
@@ -87,7 +87,9 @@ RUN_KEYS_SIMULATION = ("sim_raw", "sim_raw_chain", "seed", "objects", "player_un
                        "frame_effects", "frame_sounds",
                        # (HWI-034) the revert-class requests and the scheduler's counts
                        "requests", "request_tick", "ticks_after_request", "clock_ticks", "ticks_run", "carried",
-                       "frames_stopped", "carried_total", "most_carried", "queue_resets", "core_saved_tick")
+                       "frames_stopped", "carried_total", "most_carried", "queue_resets", "core_saved_tick",
+                       # (HWI-079) the canonical digest's pointer places (address_values is each byte order's own)
+                       "places", "places_failed")
 RUN_KEYS_CANONICAL = ("sim", "sim_chain", "sim_at1", "sim_at30", "sim_at150", "sim_atend", "sim_at300", "sim_hwi015b")
 # (HWI-016F) what one map's runs must share whatever their cadence: the simulation (HWI-016F's classification)
 CADENCE_KEYS = ("sim_raw", "sim_raw_chain", "sim", "seed", "objects", "player_unit", "position", "tags_end", "bsp",
@@ -139,6 +141,25 @@ def revert_class(log):
 def revert_class_pass(entries):
     """(HWI-034) no tick ran after a revert-class request in its frame, and no tick was lost or run twice"""
     return all(entry["ticks_after_request"] == 0 and entry["conserved"] for entry in entries)
+
+
+def pointer_places(log):
+    """(HWI-079) per run of one log that reports them: the pointer places the canonical digest found (the most at a
+    tick) and the digests made without them (places_failed: then every address-like word was read as a pointer,
+    and the canonical digest can follow the arena's placement)"""
+    result = []
+    for (name, cycle, cadence), run in sorted(log["runs"].items(), key=lambda item: (item[0][0], int(item[0][1]))):
+        if "places_failed" not in run:
+            continue
+        result.append({"map": name, "cycle": int(cycle), "cadence": cadence, "places": int(run.get("places", "0")),
+                       "places_failed": int(run["places_failed"]),
+                       "address_values": int(run.get("address_values", "0"))})
+    return result
+
+
+def pointer_places_pass(entries):
+    """(HWI-079) every canonical digest found its pointer places"""
+    return all(entry["places_failed"] == 0 for entry in entries)
 
 
 def compare(wii, host):
@@ -193,6 +214,10 @@ def compare(wii, host):
     report["revert_class_host"] = revert_class(host)
     report["revert_class_pass"] = (revert_class_pass(report["revert_class_wii"]) and
                                    revert_class_pass(report["revert_class_host"]))
+    report["pointer_places_wii"] = pointer_places(wii)
+    report["pointer_places_host"] = pointer_places(host)
+    report["pointer_places_pass"] = (pointer_places_pass(report["pointer_places_wii"]) and
+                                     pointer_places_pass(report["pointer_places_host"]))
     return report
 
 
@@ -220,6 +245,8 @@ def main():
         print(f"revert-class requests ({side}): pass={revert_class_pass(report[f'revert_class_{side}'])} "
               f"frames stopped in {len(stopped)} runs:",
               [(entry["map"], entry["cadence"], entry["request_tick"], entry["carried_total"]) for entry in stopped])
+    print("pointer places (HWI-079): pass=" + str(report["pointer_places_pass"]),
+          sorted({entry["places"] for side in ("wii", "host") for entry in report[f"pointer_places_{side}"]}))
     print("canonical-only differing ticks:", {k: len(v) for k, v in report["canonical_only_ticks"].items()},
           {k: v[:10] for k, v in report["canonical_only_ticks"].items()})
     for run in report["runs"]:
@@ -231,7 +258,7 @@ def main():
     invariant = all(entry["invariant"] for side in ("wii", "host")
                     for entry in report[f"cadence_invariance_{side}"].values())
     return 0 if (report["simulation_all_same"] and report["whole_all_same_unpaced"] and report["failures_same"] and
-                 invariant and report["revert_class_pass"]) else 1
+                 invariant and report["revert_class_pass"] and report["pointer_places_pass"]) else 1
 
 
 if __name__ == "__main__":

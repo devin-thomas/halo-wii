@@ -336,7 +336,10 @@ a10's objects) can read as one in one byte order only, and the same state
 then digests differently on the Wii and the host. The raw digest compares
 the Wii and the host of one launch, whose regions lie at the same addresses
 (the host maps the Wii's); the canonical one stays for comparing launches
-placed apart (their persistence check) and keeps HWI-015B's values. */
+placed apart (their persistence check) and keeps HWI-015B's values.
+(HWI-079: the map run's canonical digest now makes only the saved game's
+pointer places canonical, pointer_place above; real_map_digest_bytes's,
+the boot mode's and the drawing checks', still reads by value.) */
 static boolean digest_words_raw;
 
 static void digest_group_end(

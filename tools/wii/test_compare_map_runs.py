@@ -1,4 +1,5 @@
-"""Tests of compare_map_runs.py's cadence invariance (HWI-016F) and revert-class requests (HWI-034)."""
+"""Tests of compare_map_runs.py's cadence invariance (HWI-016F), revert-class requests (HWI-034) and the
+canonical digest's pointer places (HWI-079)."""
 import unittest
 
 import compare_map_runs as cmr
@@ -80,6 +81,31 @@ class RevertClassRequests(unittest.TestCase):
         report = cmr.compare(wii, host)
         self.assertEqual(report["runs"][0]["simulation_differences"], ["carried_total"])
         self.assertTrue(report["revert_class_pass"])
+
+
+class PointerPlaces(unittest.TestCase):
+    def line(self, places="2741", failed="0", values="4"):
+        return run_line("30hz") + f" places={places} places_failed={failed} address_values={values}"
+
+    def test_found_places_pass(self):
+        log = cmr.parse(self.line() + "\n")
+        entries = cmr.pointer_places(log)
+        self.assertEqual(entries, [{"map": "a10", "cycle": 0, "cadence": "30hz", "places": 2741, "places_failed": 0,
+                                    "address_values": 4}])
+        self.assertTrue(cmr.pointer_places_pass(entries))
+
+    def test_a_digest_without_places_fails(self):
+        self.assertFalse(cmr.pointer_places_pass(cmr.pointer_places(cmr.parse(self.line(failed="3") + "\n"))))
+
+    def test_logs_without_the_fields_are_left_out(self):
+        self.assertEqual(cmr.pointer_places(cmr.parse(run_line("30hz") + "\n")), [])
+
+    def test_wii_and_host_compare_the_places_not_the_values(self):
+        wii = cmr.parse(self.line() + "\n")
+        host = cmr.parse(self.line(places="2740", values="9") + "\n")
+        report = cmr.compare(wii, host)
+        self.assertEqual(report["runs"][0]["simulation_differences"], ["places"])
+        self.assertTrue(report["pointer_places_pass"])
 
 
 if __name__ == "__main__":

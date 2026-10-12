@@ -205,8 +205,10 @@ that tick) and `selftest=1` (the GX self-test of the plasma program and the
 min/max blends before the engine starts).
 
 **State digests** (HWI-033): every screen and the environment log the whole
-state twice, canonical (pointers into the game state and the tag slot as
-region and offset, comparable across placements) and raw (words as they
+state twice, canonical (words that read as addresses in the game state or
+the tag slot as region and offset; HWI-079 found values among them, cluster
+bit vectors and datum handles, so this one can still follow the placement,
+unlike the map run's below) and raw (words as they
 are, the Wii against its host replay at the same addresses: four bytes that
 are no pointer can read as one in one byte order only). The script threads
 (`hs thread`) are read by their fields (`real_map_digest_hs_threads`): their
@@ -241,7 +243,22 @@ counter), `result.txt` (last digests, compared at the next launch),
 `config.toml` (the ports' settings, written by `port_config.c`),
 `data/debug.txt` (the engine's log), `map.txt` (the staged map's scenario
 path, `levels\...\<name>`), `data/maps/<name>.wmap` (the staged map,
-private: never in Git).
+private: never in Git), `placement.txt` (optional, HWI-079:
+`offset=<bytes>`, whole 4 KiB pages up to 1 MiB by which the arena's
+regions are placed lower, on top of each second launch's 4 KiB).
+
+**The map run's simulation digest is the same at every placement**
+(HWI-079). Its canonical form makes canonical only the words the saved
+game's image (`source/saved games/game_state_image.c`) writes as places,
+found again before each digest (`game_state_image_pointer_places`); every
+other word is hashed as the value it is. Before, any word whose value lay in
+the game state or the tag slot was taken for a pointer: a10's cluster bit
+vectors and datum handles then hashed differently at each placement
+(`f752db70` at a launch's base, `03181654` at 4 KiB below it). The RUN line
+reports the places found (`places`), digests made without them
+(`places_failed`, which must be 0) and the address-like values at the last
+tick (`address_values`). The host reference places the arena with
+`run_engine_map_host.py --offset`.
 
 ## Limits
 
