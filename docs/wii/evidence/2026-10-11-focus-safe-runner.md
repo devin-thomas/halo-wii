@@ -321,7 +321,9 @@ clicked Dolphin 345 ms after the front switch.
   Windows. `test_run_dolphin_focus`, `test_run_dolphin` and
   `test_run_dolphin_lanes` also pass with Python 3.12 on Research and 3.14 on
   Command.
-- Build-only package: pending (built from a clean tree at this record's commit).
+- Build-only package at `b7361144`, built from a clean tree with all eight
+  Wii targets: `package_artifacts.py stage`, then `inspect --require-clean`.
+  Result: 33 allowlisted files, `source_dirty: false`, 0 problems, 0 findings.
 
 ## Limits
 
