@@ -987,8 +987,11 @@ void game_state_load_core(
 {
 	struct game_state_header header;
 
+	/* port (HWI-076): a core of another map, build, player count or byte
+	order is refused, not halted on (game_state_header_valid says why in
+	the log), and the game state is left as it is */
 	if (game_state_read_core_header(name, &header, sizeof(header))
-		&& game_state_header_valid(&header, TRUE))
+		&& game_state_header_valid(&header, FALSE))
 	{
 		/* port (HWI-076): checked whole first (game_state_port_image_load);
 		one that is not taken leaves the game state as it is */
