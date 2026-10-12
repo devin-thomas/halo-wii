@@ -80,6 +80,10 @@ struct real_map_result
 	long command_tick;                           /* when the run's script command ran, or -1 */
 	long command_result;                         /* hs_compile_and_evaluate's */
 	short command_bsp_before, command_bsp_after; /* the structure bsp loaded as the command ran, and after it */
+	/* HWI-030: the commands after the first (real_map_add_command): how
+	many ran, and the structure bsp after the last */
+	long more_commands_ran;
+	short more_commands_bsp_after;
 	long requests_left;                          /* frames ending with a won map or a reset asked for (taken then, HWI-034) */
 	/* (HWI-016F) effects and object looping sounds made by the frames
 	(game_frame: a particle's effect, a background sound), outside the
@@ -157,6 +161,10 @@ void real_map_set_canonical_every_tick(int every);
 runs through the engine's own script compiler and runtime after the given
 tick of every run armed from now on (0: none) */
 void real_map_set_command(long tick, const char *command);
+/* (HWI-030) another command after its tick, run after the first's; at most
+REAL_MAP_MAXIMUM_MORE_COMMANDS, cleared by real_map_set_command. 1 if kept */
+#define REAL_MAP_MAXIMUM_MORE_COMMANDS 12
+int real_map_add_command(long tick, const char *command);
 /* (HWI-034) a core saved by the harness after the given tick of every run
 armed from now on (0: none), as main_save_core_private saves one
 (game_state_save_core, "core.bin"), at that tick's boundary */

@@ -14,9 +14,18 @@ No local path is hard-coded: Dolphin, the DOL, build manifest, SD image and stag
 files are arguments. The JSON record stores file names and hashes, not the
 caller's directories, so it can be reviewed for publication.
 
-Two hosts are supported: Windows (Dolphin.exe, tasklist, mtools through WSL,
-the Windows event logs) and macOS (Dolphin.app/Contents/MacOS/Dolphin, pgrep,
-native mtools, kern.boottime, DiagnosticReports and the unified log).
+Two hosts are supported: Windows (Dolphin.exe, a Toolhelp process snapshot,
+mtools through WSL, the Windows event logs) and macOS
+(Dolphin.app/Contents/MacOS/Dolphin, ps, native mtools, kern.boottime,
+DiagnosticReports and the unified log).
+
+Ownership is PID-scoped: the runner tracks the Dolphin it launched and that
+process's observed descendants, checks at teardown that this tree is gone, and
+a forced stop ends only this tree. By default it still refuses to start beside
+any other Dolphin (exclusive mode). --allow-concurrent runs one lane beside
+other lanes; every run then records host_shared and the number of other Dolphin
+processes seen, so shared-host timings are never mistaken for exclusive ones.
+OS-stability observation stays host-wide and is shared by concurrent lanes.
 """
 
 import argparse
@@ -383,6 +392,208 @@ def running_count(image_name, host="windows"):
     return parse_tasklist(result.stdout, image_name)
 
 
+# ---------------------------------------------------------------------------
+# PID-scoped ownership: the runner owns the Dolphin it launched and that
+# process's descendants, never another lane's Dolphin
+# ---------------------------------------------------------------------------
+
+TREE_POLL_SECONDS = 2.0
+TIMING_RULE = ("elapsed_seconds of a run with host_shared true was measured while other Dolphin processes "
+               "shared the host; compare it only with runs at the same lane count, never with exclusive runs.")
+
+
+def parse_ps(text):
+    """`ps -A -o pid=,ppid=,comm=` -> {pid: (ppid, executable base name)}."""
+    table = {}
+    for line in text.splitlines():
+        parts = line.strip().split(None, 2)
+        if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():
+            table[int(parts[0])] = (int(parts[1]), PurePosixPath(parts[2]).name)
+    return table
+
+
+def windows_process_table():
+    """{pid: (ppid, image name)} from a Toolhelp32 process snapshot (no subprocess, no WMI)."""
+    import ctypes
+    from ctypes import wintypes
+
+    class Entry(ctypes.Structure):
+        _fields_ = [("dwSize", wintypes.DWORD), ("cntUsage", wintypes.DWORD),
+                    ("th32ProcessID", wintypes.DWORD), ("th32DefaultHeapID", ctypes.c_size_t),
+                    ("th32ModuleID", wintypes.DWORD), ("cntThreads", wintypes.DWORD),
+                    ("th32ParentProcessID", wintypes.DWORD), ("pcPriClassBase", ctypes.c_long),
+                    ("dwFlags", wintypes.DWORD), ("szExeFile", ctypes.c_wchar * 260)]
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
+    kernel32.CreateToolhelp32Snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
+    for name in ("Process32FirstW", "Process32NextW"):
+        getattr(kernel32, name).argtypes = [wintypes.HANDLE, ctypes.POINTER(Entry)]
+        getattr(kernel32, name).restype = wintypes.BOOL
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    snapshot = kernel32.CreateToolhelp32Snapshot(0x2, 0)  # TH32CS_SNAPPROCESS
+    if snapshot is None or snapshot == ctypes.c_void_p(-1).value:
+        raise RuntimeError("process snapshot failed; cannot establish Dolphin ownership")
+    table = {}
+    try:
+        entry = Entry()
+        entry.dwSize = ctypes.sizeof(Entry)
+        more = kernel32.Process32FirstW(snapshot, ctypes.byref(entry))
+        while more:
+            table[entry.th32ProcessID] = (entry.th32ParentProcessID, entry.szExeFile)
+            more = kernel32.Process32NextW(snapshot, ctypes.byref(entry))
+    finally:
+        kernel32.CloseHandle(snapshot)
+    if not table:
+        raise RuntimeError("process snapshot was empty; cannot establish Dolphin ownership")
+    return table
+
+
+def process_table(host="windows"):
+    """Every host process as {pid: (ppid, name)}; a failed query raises (ownership unknown)."""
+    if host == "macos":
+        result = subprocess.run(["ps", "-A", "-o", "pid=,ppid=,comm="], capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError("ps failed; cannot establish Dolphin ownership")
+        return parse_ps(result.stdout)
+    return windows_process_table()
+
+
+def same_image(a, b, host):
+    return a.lower() == b.lower() if host == "windows" else a == b
+
+
+def dolphin_pids(table, image_name, host):
+    """PIDs on the host running this Dolphin image, whoever launched them."""
+    return {pid for pid, (_, name) in table.items() if same_image(name, image_name, host)}
+
+
+def process_tree(table, root):
+    """root and every descendant present in the table (parent links only)."""
+    children = {}
+    for pid, (ppid, _) in table.items():
+        if pid != ppid:
+            children.setdefault(ppid, []).append(pid)
+    tree, pending = set(), [root]
+    while pending:
+        pid = pending.pop()
+        if pid in tree or pid not in table:
+            continue
+        tree.add(pid)
+        pending.extend(children.get(pid, []))
+    return tree
+
+
+def observe_tree(table, root, owned):
+    """Add root's present descendants (pid -> image name) to the runner's owned set."""
+    for pid in process_tree(table, root):
+        owned.setdefault(pid, table[pid][1])
+
+
+def owned_alive(table, owned, root, host):
+    """Owned descendants still present under the same image name; root's exit is known from its handle.
+
+    A PID that now runs a different image was reused by someone else and is not ours.
+    """
+    return sorted(pid for pid, name in owned.items()
+                  if pid != root and pid in table and same_image(table[pid][1], name, host))
+
+
+def kill_pid(pid, host):
+    """Force-stop one PID (never a tree walk: the caller chooses each PID)."""
+    if host == "macos":
+        import signal
+        try:
+            os.kill(pid, getattr(signal, "SIGKILL", 9))
+        except ProcessLookupError:
+            pass
+        return
+    subprocess.run(["taskkill", "/PID", str(pid), "/F"], capture_output=True, text=True)
+
+
+def kill_owned(pids, owned, host, kill=kill_pid):
+    """Force-stop PIDs of this runner's own tree; refuses any PID it did not launch or observe under its Dolphin."""
+    foreign = [pid for pid in pids if pid not in owned]
+    if foreign:
+        raise ValueError(f"refusing to stop PIDs outside this runner's Dolphin tree: {foreign}")
+    for pid in pids:
+        kill(pid, host)
+    return list(pids)
+
+
+class OwnedDolphin:
+    """One launched Dolphin: waits with a timeout, tracks its process tree, stops only that tree.
+
+    query: () -> {pid: (ppid, name)} (process_table bound to the host);
+    kill: (pid, host) -> None for descendants; the root is always stopped through its own handle.
+    """
+
+    def __init__(self, process, image_name, host, query, kill=kill_pid, poll=TREE_POLL_SECONDS,
+                 clock=time.monotonic):
+        self.process, self.image, self.host, self.query, self.kill = process, image_name, host, query, kill
+        self.poll, self.clock = poll, clock
+        self.owned = {process.pid: image_name}
+        self.others_max, self.query_errors = 0, 0
+
+    def snapshot(self):
+        try:
+            table = self.query()
+        except (RuntimeError, OSError):
+            self.query_errors += 1
+            return None
+        if self.process.poll() is None:
+            observe_tree(table, self.process.pid, self.owned)
+        others = dolphin_pids(table, self.image, self.host) - set(self.owned)
+        self.others_max = max(self.others_max, len(others))
+        return table
+
+    def wait(self, timeout):
+        """(status, forced): natural exit, or a forced stop of this tree after timeout seconds."""
+        deadline = self.clock() + timeout
+        self.snapshot()
+        while True:
+            remaining = deadline - self.clock()
+            if remaining <= 0:
+                break
+            try:
+                return self.process.wait(timeout=min(self.poll, remaining)), False
+            except subprocess.TimeoutExpired:
+                self.snapshot()
+        self.snapshot()
+        self.process.kill()  # handle-scoped: our own child process, never looked up by name
+        status = self.process.wait()
+        table = self.snapshot()
+        if table is not None:
+            kill_owned(owned_alive(table, self.owned, self.process.pid, self.host), self.owned, self.host, self.kill)
+        return status, True
+
+    def teardown(self):
+        """Teardown check of this runner's own tree after the root exited; leftovers are ours and are stopped."""
+        table = self.snapshot() or self.snapshot()
+        if table is None:
+            return {"own_pid": self.process.pid, "own_tree_observed": sorted(self.owned),
+                    "own_tree_alive_after": None, "other_dolphin_processes_at_end": None,
+                    "dolphin_processes_after": None, "teardown_check": "unmeasured_process_query_failed"}
+        alive = owned_alive(table, self.owned, self.process.pid, self.host)
+        result = {"own_pid": self.process.pid, "own_tree_observed": sorted(self.owned),
+                  "own_tree_alive_after": alive,
+                  "other_dolphin_processes_at_end": len(dolphin_pids(table, self.image, self.host) -
+                                                        set(alive) - {self.process.pid}),
+                  "dolphin_processes_after": len(dolphin_pids(table, self.image, self.host))}
+        if not alive:
+            result["teardown_check"] = "own_process_tree_exited"
+            return result
+        result["own_tree_stopped_after_exit"] = kill_owned(alive, self.owned, self.host, self.kill)
+        time.sleep(1.0)
+        table = self.snapshot()
+        still = None if table is None else owned_alive(table, self.owned, self.process.pid, self.host)
+        result["own_tree_alive_after_stop"] = still
+        result["teardown_check"] = {True: "own_process_tree_remained_then_stopped",
+                                    False: "own_process_tree_still_running"}.get(
+            None if still is None else not still, "own_process_tree_stop_unverified")
+        return result
+
+
 def exit_fields(status, posix=False):
     """Exit status as recorded; on POSIX a negative status names the killing signal."""
     unsigned = status & 0xFFFFFFFF
@@ -446,6 +657,9 @@ def sanitize_application_event(event):
         match = re.search(pattern, message)
         if match:
             fields[key] = match.group(1)
+    match = re.search(r"Faulting process id:\s*(0x[0-9a-fA-F]+|\d+)", message)
+    if match:
+        fields["process_id"] = int(match.group(1), 0)
     return {"id": event.get("id"), "provider": event.get("provider"), "time_utc": event.get("time_utc"), **fields}
 
 
@@ -554,6 +768,8 @@ def classify_macos(reports, log_entries, boot_utc, window_start_utc, log_ok=True
             continue
         process = PurePosixPath(entry.get("processImagePath") or "").name
         item = {"time": entry.get("timestamp"), "process": process, "message": scrub(entry.get("eventMessage"))}
+        if isinstance(entry.get("processID"), int):
+            item["process_id"] = entry["processID"]
         if process == "kernel":
             kernel.append(item)
             if MACOS_KERNEL_INSTABILITY.search(entry.get("eventMessage") or ""):
@@ -613,6 +829,21 @@ def query_macos_os(window_start_utc, window_end_utc):
     if log.returncode != 0:
         result["log_show_error"] = scrub((log.stderr.strip().splitlines() or [""])[0])
     return result
+
+
+def attribute_lanes(stability, own_pids, host_shared):
+    """OS stability stays host-wide; mark which Dolphin fault events name this lane's own PIDs.
+
+    An event without a process ID (a macOS crash report file, an event log
+    entry without one) is "unattributed": with concurrent lanes it may belong
+    to another lane, and the record says so instead of guessing.
+    """
+    stability["scope"] = "host_wide"
+    stability["shared_with_concurrent_lanes"] = bool(host_shared)
+    for event in stability.get("dolphin_application_events") or []:
+        pid = event.get("process_id")
+        event["lane"] = "unattributed" if pid is None else ("own" if pid in own_pids else "other")
+    return stability
 
 
 def query_host_os(host, window_start_utc, window_end_utc):
@@ -1154,7 +1385,11 @@ def combine(results, requested):
 
 
 def overall_exit(record):
-    """0 pass; 1 guest/persistence failure; 3 host lifecycle not accepted; 4 OS instability."""
+    """0 pass; 1 guest/persistence failure; 3 host lifecycle not accepted; 4 OS instability.
+
+    Host lifecycle is not accepted for an untolerated exit, a forced stop, or a
+    teardown check that found this runner's own process tree still present.
+    """
     if record["os_stability"].get("observation") == "instability_observed":
         return 4
     if any(r["guest"]["result"] == "failed" or r["persistence"]["result"] == "failed" for r in record["runs"]):
@@ -1162,6 +1397,9 @@ def overall_exit(record):
     if len(record["runs"]) != record["requested_runs"]:
         return 1
     if any(r["host"]["outcome"] not in ("exit_zero", "nonzero_exit_tolerated") for r in record["runs"]):
+        return 3
+    if any(r["host"].get("teardown_check", "own_process_tree_exited") != "own_process_tree_exited"
+           for r in record["runs"]):
         return 3
     return 0
 
@@ -1220,6 +1458,9 @@ def parse_args(argv):
     parser.add_argument("--probe-exit", default="pad_start", help="expected guest END exit reason")
     parser.add_argument("--tolerated-host-exit", action="append", default=[],
                         help="nonzero host exit code (hex) disclosed as tolerated, e.g. 0xc0000409")
+    parser.add_argument("--allow-concurrent", action="store_true",
+                        help="run beside other Dolphin processes (another lane); ownership, teardown checks and "
+                             "forced stops are PID-scoped in either mode, and each run records host_shared")
     parser.add_argument("--event-settle", type=float, default=10.0,
                         help="seconds to wait after the last launch before querying event logs")
     args = parser.parse_args(argv)
@@ -1271,8 +1512,15 @@ def main(argv=None):
     gc_ports = script_ports(script) if script else 1
     files = profile_files(backend, args.efb_access, args.dump_frames, args.safe_texture_cache, gc_ports)
     check_stock_limits(files)
-    if running_count(exe.name, host):
-        print("another Dolphin process is running; exclusive ownership required", file=sys.stderr)
+    query = lambda: process_table(host)
+    try:
+        others_at_start = len(dolphin_pids(query(), exe.name, host))
+    except (RuntimeError, OSError) as error:
+        print(f"{error}", file=sys.stderr)
+        return 2
+    if others_at_start and not args.allow_concurrent:
+        print("another Dolphin process is running; exclusive ownership required "
+              "(--allow-concurrent runs a PID-scoped lane beside it)", file=sys.stderr)
         return 2
 
     profile = out / "profile"
@@ -1374,6 +1622,11 @@ def main(argv=None):
         "tolerated_host_exits": sorted(f"0x{c:08x}" for c in tolerated),
         "requested_runs": args.runs, "runs": [], "os_stability": {"observation": "pending"},
         "physical_wii": "untested",
+        "concurrency": {"mode": "concurrent" if args.allow_concurrent else "exclusive",
+                        "ownership": "pid_scoped_process_tree",
+                        "other_dolphin_processes_at_start": others_at_start,
+                        "lock_slot": os.environ.get("DOLPHIN_LOCK_SLOT"),
+                        "timing_rule": TIMING_RULE},
     }
     (out / "config").mkdir()
     for name, text in files.items():
@@ -1384,8 +1637,14 @@ def main(argv=None):
 
     save()
     window_start = utc_now()
+    own_pids = set()
     for number in range(1, args.runs + 1):
-        if running_count(exe.name, host):
+        try:
+            others = len(dolphin_pids(query(), exe.name, host))
+        except (RuntimeError, OSError):
+            record["aborted"] = f"run {number}: process query failed; Dolphin ownership unknown"
+            break
+        if others and not args.allow_concurrent:
             record["aborted"] = f"run {number}: another Dolphin process appeared"
             break
         argv = [str(exe), "--user", str(profile), "--batch", "--video_backend", backend, "--exec", str(dol)]
@@ -1394,16 +1653,22 @@ def main(argv=None):
         run = {"number": number, "cold_process": True, "started_utc": utc_now()}
         begin = time.monotonic()
         with (out / f"run{number}.stdout.txt").open("wb") as so, (out / f"run{number}.stderr.txt").open("wb") as se:
-            process = subprocess.Popen(argv, stdout=so, stderr=se, **launch_options(host))
-            try:
-                status, forced = process.wait(timeout=args.timeout), False
-            except subprocess.TimeoutExpired:
-                process.kill()
-                status, forced = process.wait(), True
+            owned = OwnedDolphin(subprocess.Popen(argv, stdout=so, stderr=se, **launch_options(host)),
+                                 exe.name, host, query)
+            status, forced = owned.wait(args.timeout)
         elapsed = round(time.monotonic() - begin, 3)
+        teardown = owned.teardown()
+        own_pids.update(owned.owned)
+        others_max = max(others, owned.others_max, teardown["other_dolphin_processes_at_end"] or 0)
         run["host"] = {**exit_fields(status, posix=host != "windows"), "forced_stop": forced,
                        "elapsed_seconds": elapsed, "outcome": host_outcome(status, forced, tolerated),
-                       "dolphin_processes_after": running_count(exe.name, host)}
+                       **teardown,
+                       "other_dolphin_processes_at_start": others,
+                       "other_dolphin_processes_max": others_max,
+                       "host_shared": bool(others_max),
+                       "process_query_errors": owned.query_errors}
+        if forced:
+            run["host"]["forced_stop_scope"] = "own_process_tree"
         run["ended_utc"] = utc_now()
         frames_dir = profile / "Dump" / "Frames"
         if frames_dir.is_dir():
@@ -1463,12 +1728,25 @@ def main(argv=None):
     window_end = utc_now()
     record["os_stability"] = query_host_os(host, window_start, window_end)
     record["os_stability"]["window_utc"] = [window_start, window_end]
+    concurrency = record["concurrency"]
+    try:
+        concurrency["other_dolphin_processes_at_end"] = len(dolphin_pids(query(), exe.name, host) - own_pids)
+    except (RuntimeError, OSError):
+        concurrency["other_dolphin_processes_at_end"] = None
+    concurrency["host_shared"] = bool(concurrency["other_dolphin_processes_at_start"]
+                                      or concurrency["other_dolphin_processes_at_end"]
+                                      or any(r["host"].get("host_shared") for r in record["runs"]))
+    concurrency["lanes_max"] = 1 + max([r["host"].get("other_dolphin_processes_max", 0) for r in record["runs"]] +
+                                       [concurrency["other_dolphin_processes_at_start"],
+                                        concurrency["other_dolphin_processes_at_end"] or 0])
+    attribute_lanes(record["os_stability"], own_pids, concurrency["host_shared"])
     record["outcomes"] = {
         "guest": combine([r["guest"]["result"] for r in record["runs"]], args.runs),
         "persistence": combine([r["persistence"]["result"] for r in record["runs"]], args.runs),
         "host": sorted({r["host"]["outcome"] for r in record["runs"]}),
         "os_stability": record["os_stability"]["observation"],
         "physical_wii": "untested",
+        "host_shared": concurrency["host_shared"],
     }
     record["tool_exit"] = overall_exit(record)
     save()

@@ -238,3 +238,57 @@ Memory viability is a separate gate. An ELF that links does not prove the game f
 ## Running after compilation
 
 Read [RUNNING.md](RUNNING.md). The optional [PowerShell sender](../../tools/wii/Send-WiiBuild.ps1) sends an existing executable only. It cannot manufacture a build target or validate gameplay.
+
+### Concurrent Dolphin lanes (HWI-073)
+
+`tools/wii/run_dolphin.py` owns the Dolphin it launched by PID, in both modes:
+
+- It tracks the launched process and the descendants it observes (a
+  Toolhelp process snapshot on Windows, `ps` on macOS, every 2 s).
+- The teardown check (`teardown_check`) looks only for that tree.
+  `own_process_tree_exited` is the clean result. A leftover child of its own
+  is stopped and recorded as `own_process_tree_remained_then_stopped`, and the
+  tool exits 3.
+- A forced stop ends the root through its own process handle, then each
+  observed descendant by explicit PID. A PID outside that tree is refused,
+  so another lane's Dolphin is never touched.
+
+**Exclusive mode stays the default.** Without a flag the runner still refuses
+to start if any other Dolphin is running, and aborts the batch if one appears
+between launches. Callers that rely on a single-slot lock and exclusive
+timings keep that behaviour.
+
+**`--allow-concurrent`** runs one lane beside other lanes. Use it only under a
+counted-slot lane lock: the host's lock decides how many lanes run (Research
+3, Titan 2). The batch's lock slot, when exported as `DOLPHIN_LOCK_SLOT`, is
+recorded too.
+
+Every run records the following, whichever mode it ran in:
+
+| Field | Meaning |
+|---|---|
+| `own_pid`, `own_tree_observed`, `own_tree_alive_after` | the tree this runner owns |
+| `teardown_check` | the PID-scoped teardown result |
+| `other_dolphin_processes_at_start`, `_max`, `_at_end` | other Dolphin processes seen beside this run |
+| `host_shared` | true when any other Dolphin was seen during the run |
+| `dolphin_processes_after` | the host-wide count after exit, kept with its old meaning |
+
+The record's `concurrency` object holds the mode, the batch-level counts, `host_shared` and `lanes_max`.
+
+**Honest-timing rule.** `elapsed_seconds` from a run with `host_shared: true`
+was measured on a shared host. Compare it only with runs at the same lane
+count on the same host. Never compare it with exclusive timings, and never
+report it as exclusive. Shared-host and exclusive timings belong in separate
+measurement records.
+
+OS-stability observation (event log, unified log) stays host-wide.
+Concurrent lanes share it: `os_stability.scope` is `host_wide`, and
+`shared_with_concurrent_lanes` says whether other lanes ran. Each Dolphin
+fault event that carries a process ID is marked `lane: own` or
+`lane: other`. One without a process ID is `unattributed`, for example a
+macOS crash report file. Observed OS instability fails every lane that
+shared the window.
+
+Concurrency does not change guest results. A DOL run with the same input in 2
+or 3 lanes produces byte-identical guest output to exclusive runs. See
+[the concurrency record](evidence/2026-10-11-concurrent-dolphin-lanes.md).

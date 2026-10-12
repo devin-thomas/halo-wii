@@ -28,7 +28,9 @@ python -B tools/wii/run_dolphin.py `
 
 What one invocation does:
 
-1. Refuses to start if any `Dolphin.exe` is already running, if the output
+1. Refuses to start if any `Dolphin.exe` is already running (unless
+   `--allow-concurrent` runs a PID-scoped lane; see
+   [concurrent lanes](BUILDING.md#concurrent-dolphin-lanes-hwi-073)), if the output
    directory exists, if the Dolphin hash differs from `--dolphin-sha256`, or
    if the DOL hash differs from the build manifest.
 2. Creates a new profile under `<out>/profile`: Wii mode, stock clock and
@@ -65,14 +67,18 @@ and OS stability as separate outcomes, with hashes and names rather than local
 paths. The runner exits 0 when every outcome is accepted, 1 for a guest or
 persistence failure or a missing run, 2 for a refused precondition, 3 for a
 host exit that is neither zero nor named with `--tolerated-host-exit` (or a
-forced stop), and 4 when OS instability events are observed. A tolerated code
+forced stop, or a teardown check that found the runner's own Dolphin process
+tree still present), and 4 when OS instability events are observed. A tolerated code
 is still recorded as `nonzero_exit_tolerated` with the actual exit code; it is
 never rewritten as zero. The SD image, frame dumps, guest logs and profile stay
 in the output directory, outside Git.
 
-When several agents or people share the host, take an exclusive host-wide
-Dolphin lock around every batch and release it afterwards, even on failure.
-The runner's own process check is a guard, not a lock.
+When several agents or people share the host, take the host's Dolphin lane
+lock around every batch and release it afterwards, even on failure. With one
+slot it is exclusive; with counted slots, pass `--allow-concurrent` and
+follow the honest-timing rule in
+[concurrent lanes](BUILDING.md#concurrent-dolphin-lanes-hwi-073). The runner's
+own process check is a guard, not a lock.
 
 Unit tests for the pure parts (DTM authoring, profile generation, FAT32
 read-back, staging commands, event classification, scenario checks):
@@ -104,7 +110,7 @@ Differences from Windows:
   backend fails two mip-LOD checks of the GX materials self-test
   (`mip_max_lod_1`, `mip_min_lod_2`, CRC `2efb1ade`) that pass under Vulkan,
   OpenGL and Windows D3D. Do not use Metal for EFB evidence.
-- Process exclusivity uses `pgrep -x Dolphin`; staging runs native mtools.
+- Process ownership and the exclusivity check use `ps`; staging runs native mtools.
 - Launch: Dolphin is executed directly by the runner, which keeps the real
   exit status, stdout/stderr and timeout control. This works from an SSH
   session as long as the same user has an active desktop login session; the
@@ -124,7 +130,7 @@ Differences from Windows:
   runner, so it would show up as a later boot time or panic report rather than
   in that batch's record.
 
-On a shared host, wrap every batch in the host's own exclusive Dolphin lock,
+On a shared host, wrap every batch in the host's own Dolphin lane lock,
 as on Windows.
 
 ## Physical console loop
