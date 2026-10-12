@@ -720,6 +720,18 @@ short game_state_port_image_load(
 	return result;
 }
 
+/* port (HWI-076): the SHA-256 the game state's image would have now (a
+harness's check that a load gives back what was saved) */
+boolean game_state_port_image_digest(
+	unsigned long digest[8])
+{
+	struct game_state_image_layout layout;
+
+	game_state_image_layout_get(&layout);
+
+	return game_state_image_digest(&layout, game_state_globals.header, digest);
+}
+
 /* port (HWI-076): whether an image would be taken (nothing is) */
 boolean game_state_port_image_check(
 	struct game_state_image_file const *file,

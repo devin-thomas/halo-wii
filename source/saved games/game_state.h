@@ -61,6 +61,8 @@ short game_state_port_image_load(
 boolean game_state_port_image_check(
 	struct game_state_image_file const *file,
 	boolean check_header);
+boolean game_state_port_image_digest(
+	unsigned long digest[8]);
 void game_state_save_core(
 	const char *name);
 boolean game_state_reverted(

@@ -142,8 +142,11 @@ struct game_state_image_report
 	unsigned long references;        /* memory pool blocks' references made again from their blocks */
 	unsigned long script_threads;
 	unsigned long foreign_pointers;  /* pointers outside the game state, kept as they are */
-	unsigned long address_like_words;/* other words that read as an address in the game state */
+	/* other words that read as an address in the game state: in what the
+	game reads, and the first one's offset; in room nothing reads */
+	unsigned long address_like_words;
 	long first_address_like_offset;
+	unsigned long address_like_dead_words;
 	unsigned long peak_bytes;        /* the most taken from the heap at once */
 	unsigned long save_base;
 	boolean base_bound;
@@ -182,7 +185,7 @@ struct game_state_image_report const *game_state_image_last_report(
 char const *game_state_image_refusal_name(
 	short refusal);
 /* told after each save and load, and after each check (port harnesses
-measure them); event: 0 save, 1 load, 2 check */
+measure them); event: 0 save, 1 load, 2 check, and 3 as each begins */
 void game_state_image_set_observer(
 	void (*observer)(short event, struct game_state_image_report const *report));
 /* the SHA-256 the image of the game state as it is would have, written

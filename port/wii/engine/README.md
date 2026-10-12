@@ -157,6 +157,16 @@ decals' per-map vertex-cache flush (the decals' own unlocking is kept).
      frames and that every tick the clock gave ran. A revert or core load
      rebinds the decal vertex cache, which the Wii build does not make: that
      step is reported unsupported.
+   - Saved games (HWI-076): checkpoints, reverts, a loss's revert, cores and
+     their loads go through the canonical game-state image
+     (`source/saved games/game_state_image.c`, every port), written to the
+     card in 64 KiB chunks and checked whole before any of it is taken: no
+     second 20 MiB buffer. `save_image_scenario.c` reports each save, load
+     and check as an IMAGE line (sizes, chunks, the most taken from the heap,
+     the pointers made places, the SHA-256, and whether a load gave back the
+     state that image was saved from), and a plan line's `image_test=<tick>`
+     loads twelve damaged copies of a core saved after that tick, each of
+     which must be refused with the game state unchanged (IMAGE_TEST line).
 5. Shuts the engine down; the arena's bound must be restored. Reports the
    main stack's peak, the engine threads' stack peak and every unsupported
    entry point called.

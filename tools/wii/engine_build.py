@@ -60,7 +60,9 @@ REWRITTEN = (Path("source/memory/byte_swapping.c"),)
 ENGINE_AUTHORED = (ENGINE_DIR / "engine_hooks.c", ENGINE_DIR / "fixed_step_scenario.c",
                    ENGINE_DIR / "real_map_scenario.c",
                    # HWI-016D: the boot mode's wrapped entry points (pass-through unless registered)
-                   ENGINE_DIR / "boot_hooks.c")
+                   ENGINE_DIR / "boot_hooks.c",
+                   # HWI-076: the real-map run's view of saved games' images
+                   ENGINE_DIR / "save_image_scenario.c")
 
 # Linux platform files whose code only needs a C library: reused unchanged.
 REUSED_PLATFORM = tuple(LINUX_PLATFORM / name for name in (

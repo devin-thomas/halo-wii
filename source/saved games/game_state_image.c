@@ -211,6 +211,9 @@ struct image_writer
 	long *references;
 	long reference_count;
 	long next_reference;
+	/* whether the words being written are room nothing reads: a memory
+	pool's outside its blocks, a script thread's above its top frame */
+	boolean dead;
 	boolean failed;
 	struct game_state_image_report *report;
 };
@@ -879,9 +882,12 @@ static void writer_words(
 		else if (word && (unsigned long)word - low < (unsigned long)writer->layout->size)
 		{
 			/* a word left as it is that reads as an address in the game
-			state (a script thread's popped frames, or a value that happens
-			to be one) */
-			if (!writer->report->address_like_words++)
+			state: in room nothing reads (a moved block's old header, a
+			popped frame), or in what is read (a value that happens to be
+			one, or a pointer this file does not know: none measured) */
+			if (writer->dead)
+				writer->report->address_like_dead_words++;
+			else if (!writer->report->address_like_words++)
 				writer->report->first_address_like_offset = offset + at;
 		}
 		writer_word(writer, word);
@@ -950,12 +956,16 @@ static void writer_data_array(
 		byte const *thread_live = layout->base + thread_offset;
 		short identifier;
 
+		long live_bytes = 0;
+
 		csmemcpy(thread, thread_live, SCRIPT_THREAD_BYTES);
 		csmemcpy(&identifier, thread, sizeof(identifier));
 		if (index < live->count && identifier)
 		{
 			byte const *frame;
 			long frames = 0;
+
+			live_bytes = SCRIPT_THREAD_BYTES;
 
 			writer->report->script_threads++;
 			csmemcpy(&frame, thread_live + SCRIPT_THREAD_STACK, sizeof(frame));
@@ -970,12 +980,18 @@ static void writer_data_array(
 				csmemcpy(&size, frame + SCRIPT_FRAME_SIZE, sizeof(size));
 				if (size < 0 || (unsigned long)size > SCRIPT_THREAD_STACK_BYTES - SCRIPT_FRAME_HEADER_BYTES - at)
 					break;
+				/* (the top frame's values end what is read) */
+				if (frames == 1)
+					live_bytes = (SCRIPT_THREAD_STACK_DATA + (long)at + SCRIPT_FRAME_HEADER_BYTES + size + 3) & ~3L;
 				writer_pointer_field(writer, thread + SCRIPT_THREAD_STACK_DATA + at + SCRIPT_FRAME_PREVIOUS);
 				writer_pointer_field(writer, thread + SCRIPT_THREAD_STACK_DATA + at + SCRIPT_FRAME_RESULT);
 				csmemcpy(&frame, frame + SCRIPT_FRAME_PREVIOUS, sizeof(frame));
 			}
 		}
-		writer_words(writer, thread, thread_offset, SCRIPT_THREAD_BYTES);
+		writer_words(writer, thread, thread_offset, live_bytes);
+		writer->dead = TRUE;
+		writer_words(writer, thread + live_bytes, thread_offset + live_bytes, SCRIPT_THREAD_BYTES - live_bytes);
+		writer->dead = FALSE;
 	}
 }
 
@@ -1006,7 +1022,9 @@ static void writer_memory_pool(
 		{
 			break;
 		}
+		writer->dead = TRUE;
 		writer_words(writer, layout->base + position, position, at - position);
+		writer->dead = FALSE;
 		copy = *block;
 		writer_pointer_field(writer, (byte *)&copy.reference);
 		writer_pointer_field(writer, (byte *)&copy.next_block);
@@ -1016,7 +1034,9 @@ static void writer_memory_pool(
 		position = at + block->size;
 		block = block->next_block;
 	}
+	writer->dead = TRUE;
 	writer_words(writer, layout->base + position, position, end - position);
+	writer->dead = FALSE;
 }
 
 static void writer_lruv_cache(
@@ -1826,7 +1846,11 @@ boolean game_state_image_write(
 	struct game_state_image_file const *file)
 {
 	byte digest[32];
-	boolean success = file && image_write_or_measure(layout, header, file, digest);
+	boolean success;
+
+	if (image_observer)
+		image_observer(3, &image_report);
+	success = file && image_write_or_measure(layout, header, file, digest);
 
 	if (image_observer)
 		image_observer(0, &image_report);
@@ -1870,7 +1894,11 @@ boolean game_state_image_check(
 	struct game_state_header const *expected,
 	struct game_state_image_file const *file)
 {
-	boolean valid = image_read(layout, expected, file, FALSE, NULL) == _game_state_image_taken;
+	boolean valid;
+
+	if (image_observer)
+		image_observer(3, &image_report);
+	valid = image_read(layout, expected, file, FALSE, NULL) == _game_state_image_taken;
 
 	if (image_observer)
 		image_observer(2, &image_report);
@@ -1884,7 +1912,11 @@ short game_state_image_load(
 	struct game_state_image_file const *file,
 	void (*before_taking)(void))
 {
-	short result = image_read(layout, expected, file, TRUE, before_taking);
+	short result;
+
+	if (image_observer)
+		image_observer(3, &image_report);
+	result = image_read(layout, expected, file, TRUE, before_taking);
 
 	if (result != _game_state_image_taken)
 	{
