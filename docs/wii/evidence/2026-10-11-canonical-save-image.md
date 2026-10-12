@@ -409,6 +409,38 @@ layout table for the image (12,288 bytes) and the declared pointer words
 - **Network games** are not exercised, as in HWI-034.
 - **Physical Wii:** untested.
 
+## After merging HWI-074 (sound)
+
+`wii` at `2ece041d` was merged (`f2ccd48a`). The conflicts were in
+`engine_map_run.c` and `engine_build.py`, and both sides were kept: the
+sound plan line, `couplings` and the sound units, beside the save-image
+scenario and the 20-line plan. HWI-074's engine-source changes give the
+sound manager its own random stream when `HALO_SOUND_RANDOM_STREAM` is set
+(the Wii build and its host reference). None of them is reached by this
+ticket's Dolphin plan, which has no sound line.
+
+- **Builds.** A clean `wii_engine` build gives `1def2af852a84a02`
+  (`source_dirty=false`, 575 units). The `tools/wii` tests pass on
+  Python 3.14 and 3.11 (602, 1 skipped).
+- **The original path at `2ece041d` against the merge**, line for line:
+  - the scenarios, 1,592 of 1,592;
+  - HWI-034's evidence plan, 4,258 of 4,258;
+  - a10 at six cadences, 1,392 of 1,392.
+
+  Each is also identical to the merge's own results before HWI-074,
+  including every image's SHA-256 and state CRC.
+- **The Wii evidence replayed.** The merged host reference, replaying both
+  Titan evidence launches, reproduces them: 63 of 63 run lines, every tick,
+  and 227 of 227 image events. No new Dolphin launch was needed.
+- **Damaged images:** all 12 cases refused at six cadences, state intact.
+- **Saves beside the sound.** HWI-074's own host plan reproduces its host
+  reference (8,073 of 8,087 lines; the other 14 differ only in wall-clock
+  fields).
+  - With the revert, loss and core-load lines added after its `sound`
+    line, they give `e825c57b`, `ade62b23` and `9453ab30` at every cadence
+    while the sound runs.
+  - All 18 loads gave back the saved state.
+
 ## Timings
 
 | Step | Host | Wall time |
