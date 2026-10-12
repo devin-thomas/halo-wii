@@ -146,6 +146,11 @@ WRAPPED = ("main", "halt_and_catch_fire", "game_tick", "game_frame", "update_cli
            "rasterizer_initialize_for_new_map", "rasterizer_dispose_from_old_map",
            # HWI-016C: the decal vertex cache rasterizer_decals_initialize would have made
            "_rasterizer_decal_vertices_new",
+           # HWI-034 (engine_hooks.c): the update queue's reset (a revert's, a
+           # core load's), after which a real map's run keeps its script's input
+           # per tick; and a saved game's load rebinding the decal vertex cache
+           # the Wii build does not make
+           "update_queues_reset_and_fill_with_lies", "_rasterizer_decals_update_function_pointers",
            # HWI-074: the sound's own code, for its listener and the frame clock
            # (port/wii/sound/sound_hooks.c; each passes through unless the sound runs)
            "observer_get_camera", "sound_render", "sound_idle", "game_sound_update", "sound_new_impulse",

@@ -1,4 +1,4 @@
-"""Tests of compare_map_runs.py's cadence invariance (HWI-016F)."""
+"""Tests of compare_map_runs.py's cadence invariance (HWI-016F) and revert-class requests (HWI-034)."""
 import unittest
 
 import compare_map_runs as cmr
@@ -41,6 +41,45 @@ class CadenceInvariance(unittest.TestCase):
         report = cmr.compare(wii, host)
         self.assertFalse(report["simulation_all_same"])
         self.assertEqual(report["runs"][0]["simulation_differences"], ["sim_hwi015b_raw"])
+
+
+def stopped_line(cadence, after="0", clock="600", ran="598", carried="2", stopped="1"):
+    # (HWI-034) a RUN line with the revert-class request fields
+    return (run_line(cadence, name="a10rv") + f" requests=1 request_tick=51 ticks_after_request={after} "
+            f"clock_ticks={clock} ticks_run={ran} carried={carried} frames_stopped={stopped} carried_total=6 "
+            f"most_carried=6 queue_resets=1 core_saved_tick=-1")
+
+
+class RevertClassRequests(unittest.TestCase):
+    def test_a_stopped_frame_that_keeps_every_tick_passes(self):
+        log = cmr.parse("\n".join([stopped_line("30hz", carried="0", ran="600", stopped="0"),
+                                   stopped_line("irregular")]) + "\n")
+        entries = cmr.revert_class(log)
+        self.assertEqual([entry["conserved"] for entry in entries], [True, True])
+        self.assertEqual(entries[1]["frames_stopped"], 1)
+        self.assertTrue(cmr.revert_class_pass(entries))
+
+    def test_a_tick_after_the_request_fails(self):
+        log = cmr.parse(stopped_line("irregular", after="3") + "\n")
+        self.assertFalse(cmr.revert_class_pass(cmr.revert_class(log)))
+
+    def test_a_lost_tick_fails(self):
+        log = cmr.parse(stopped_line("irregular", ran="597") + "\n")
+        entries = cmr.revert_class(log)
+        self.assertFalse(entries[0]["conserved"])
+        self.assertFalse(cmr.revert_class_pass(entries))
+
+    def test_logs_without_the_fields_are_left_out(self):
+        log = cmr.parse(run_line("30hz") + "\n")
+        self.assertEqual(cmr.revert_class(log), [])
+        self.assertTrue(cmr.revert_class_pass([]))
+
+    def test_wii_and_host_compare_the_counts(self):
+        wii = cmr.parse(stopped_line("irregular") + "\n")
+        host = cmr.parse(stopped_line("irregular").replace("carried_total=6", "carried_total=5") + "\n")
+        report = cmr.compare(wii, host)
+        self.assertEqual(report["runs"][0]["simulation_differences"], ["carried_total"])
+        self.assertTrue(report["revert_class_pass"])
 
 
 if __name__ == "__main__":

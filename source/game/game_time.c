@@ -111,6 +111,15 @@ struct game_time_globals_struct
 /* ---------- globals */
 
 static struct game_time_globals_struct *game_time_globals;
+/* port (HWI-034): the ticks a frame's clock gave that a revert-class request
+kept from running in that frame (game_time_update), which the next frame
+runs before its own. Not the game state's: a revert does not take them back,
+a new clock (game_time_start, a new map) drops them. And, for the run
+harnesses (game_time_port_tick_counts), the clock's ticks and the ticks run
+since the clock started. */
+static long game_time_ticks_carried;
+static long game_time_clock_ticks;
+static long game_time_ticks_run;
 
 /* ---------- public code */
 
@@ -135,6 +144,7 @@ void game_time_initialize_for_new_map(
 	match_assert("c:\\halo\\SOURCE\\game\\game_time.c", 131, game_time_globals && !game_time_globals->initialized);
 	memset(game_time_globals, 0, sizeof(*game_time_globals));
 	game_time_globals->initialized = TRUE;
+	game_time_ticks_carried = 0; /* port (HWI-034) */
 
 	return;
 }
@@ -344,6 +354,10 @@ void game_time_start(
 	game_time_globals->speed = 1.f;
 	game_time_globals->leftover_dt = 0;
 	game_time_globals->active = TRUE;
+	/* port (HWI-034) */
+	game_time_ticks_carried = 0;
+	game_time_clock_ticks = 0;
+	game_time_ticks_run = 0;
 
 	connection = game_connection();
 
@@ -433,19 +447,41 @@ void game_time_update(
 			match_assert("c:\\halo\\SOURCE\\game\\game_time.c", 306,
 				game_time_globals->leftover_dt>=0.f && game_time_globals->leftover_dt<100.f);
 
-			if (ticks_elapsed > 0)
+			/* port (HWI-034): or ticks held back by the last frame */
+			if (ticks_elapsed > 0 || game_time_ticks_carried > 0)
 			{
 				long final_local_time;
 				long maximum_possible_server_time;
+				long carried = game_time_ticks_carried;
+				long ticks_run = 0;
 
-				final_local_time = game_time_globals->local_time + ticks_elapsed;
+				game_time_ticks_carried = 0;
+				game_time_clock_ticks += ticks_elapsed;
+				final_local_time = game_time_globals->local_time + ticks_elapsed + carried;
 				switch (game_connection())
 				{
 				case _game_connection_local:
-					update_client_local_ticks(ticks_elapsed);
+				{
+					/* port (HWI-034): the held-back ticks' updates are queued
+					already, unless the request emptied the queue (a revert's
+					or a core load's update_queues_reset_and_fill_with_lies,
+					game_state.c): those are built again, from this frame's
+					input, as the frame's own are */
+					long rebuilt = 0;
+
+					if (carried > 0)
+					{
+						long queued = update_client_get_maximum_possible_server_time() - game_time_globals->server_time;
+
+						rebuilt = carried - PIN(queued, 0, carried);
+					}
+					if (ticks_elapsed + rebuilt > 0)
+						update_client_local_ticks((short)(ticks_elapsed + rebuilt));
 					break;
+				}
 				case _game_connection_network_server:
-					network_game_server_update_ticks(global_network_game_server_get(), (short)ticks_elapsed);
+					if (ticks_elapsed > 0)
+						network_game_server_update_ticks(global_network_game_server_get(), (short)ticks_elapsed);
 					break;
 				}
 
@@ -465,6 +501,9 @@ void game_time_update(
 					long final_server_time = MIN(maximum_possible_server_time, final_local_time);
 					long server_updates = final_server_time - game_time_globals->server_time;
 					long update_index;
+					/* port (HWI-034): the revert-class requests already waiting
+					as a frame of several ticks begins (main.c) */
+					unsigned long requests_before = server_updates > 1 ? main_port_revert_class_requests() : 0;
 
 					for (update_index = 0; update_index < server_updates; update_index++)
 					{
@@ -481,12 +520,39 @@ void game_time_update(
 						game_time_globals->local_time++;
 						/* the distributed netcode's per-tick state */
 						network_distributed_tick();
+						ticks_run++;
+						/* port (HWI-034, option B, every port): a tick
+						that asked for a revert, a loss's revert (once due), a
+						core load, a won map or a map reset ends the frame's
+						ticks there. At 30 Hz, a frame a tick as on the Xbox,
+						main_loop handles it before the next tick; the ticks
+						after it in a frame of several would otherwise run
+						first, on the state the request replaces, and draw the
+						tick random numbers (random_math.c) a revert does not
+						restore. The ticks left are carried to the next frame,
+						none lost and none run twice. A frame of one tick
+						never stops here. */
+						if (update_index + 1 < server_updates &&
+							(main_port_revert_class_requests() & ~requests_before))
+						{
+							/* (as many as the clock gives at most, as above) */
+							game_time_ticks_carried = MIN(server_updates - ticks_run, SOME_LARGE_NUMBER_OF_TICKS);
+							break;
+						}
 					}
 				}
+				else
+				{
+					/* (no update to run: the ticks held back still wait) */
+					game_time_ticks_carried = carried;
+				}
+				game_time_ticks_run += ticks_run;
 
 				/* (none while a client's clock waits: a frame that runs no tick
-				reports none) */
-				game_time_globals->last_local_time_elapsed = game_time_held() ? 0 : (short)ticks_elapsed;
+				reports none); port (HWI-034): the ticks a frame ran, those it
+				held back the next frame's */
+				game_time_globals->last_local_time_elapsed = game_time_held() ? 0 :
+					(short)(ticks_elapsed + carried - game_time_ticks_carried);
 			}
 		}
 
@@ -503,6 +569,19 @@ void game_time_update(
 	{
 		game_time_globals->last_local_time_elapsed = 0;
 	}
+
+	return;
+}
+
+/* port (HWI-034): game.h */
+void game_time_port_tick_counts(
+	long *clock_ticks,
+	long *ticks_run,
+	long *ticks_carried)
+{
+	*clock_ticks = game_time_clock_ticks;
+	*ticks_run = game_time_ticks_run;
+	*ticks_carried = game_time_ticks_carried;
 
 	return;
 }

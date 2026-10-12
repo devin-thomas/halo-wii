@@ -28,6 +28,13 @@ carry the simulation as HWI-015B classified it (sim_hwi015b, compared
 between the Wii and the host like the rest) and the effects and looping
 sounds the frames made (frame_effects, frame_sounds).
 
+Revert-class requests (HWI-034): a frame of several ticks stops its ticks at
+a revert, a loss's revert, a core load, a won map or a map reset
+(game_time.c). Per run of each log: no tick begun after such a request in
+the frame it arrived in (ticks_after_request=0), and every tick the clock
+gave either run or held back for the next frame (clock_ticks = ticks_run +
+carried). The Wii's and the host's RUN lines also compare these counts.
+
     python tools/wii/compare_map_runs.py --wii <engine.log> --host <engine.log> [--json <out>]
 """
 import argparse
@@ -77,7 +84,10 @@ RUN_KEYS_WHOLE = ("raw", "raw_chain")
 RUN_KEYS_WHOLE_CANONICAL = ("digest", "chain", "at1", "at30", "at150", "atend", "at300")
 RUN_KEYS_SIMULATION = ("sim_raw", "sim_raw_chain", "seed", "objects", "player_unit", "spawn_tick", "position",
                        "ticks", "tags_end", "bsp", "bsp_switches", "sim_hwi015b_raw", "sim_hwi015b_raw_chain",
-                       "frame_effects", "frame_sounds")
+                       "frame_effects", "frame_sounds",
+                       # (HWI-034) the revert-class requests and the scheduler's counts
+                       "requests", "request_tick", "ticks_after_request", "clock_ticks", "ticks_run", "carried",
+                       "frames_stopped", "carried_total", "most_carried", "queue_resets", "core_saved_tick")
 RUN_KEYS_CANONICAL = ("sim", "sim_chain", "sim_at1", "sim_at30", "sim_at150", "sim_atend", "sim_at300", "sim_hwi015b")
 # (HWI-016F) what one map's runs must share whatever their cadence: the simulation (HWI-016F's classification)
 CADENCE_KEYS = ("sim_raw", "sim_raw_chain", "sim", "seed", "objects", "player_unit", "position", "tags_end", "bsp",
@@ -104,6 +114,31 @@ def cadence_invariance(log):
     for entry in result.values():
         entry["invariant"] = not entry["different"]
     return result
+
+
+def revert_class(log):
+    """(HWI-034) per run of one log that reports them: the revert-class request's tick, the ticks begun after it in
+    its frame (0: the frame stopped), the frames stopped and the ticks they held back, and whether every tick the
+    clock gave was run or held back (clock_ticks = ticks_run + carried)"""
+    result = []
+    for (name, cycle, cadence), run in sorted(log["runs"].items(), key=lambda item: (item[0][0], int(item[0][1]))):
+        if "clock_ticks" not in run:
+            continue
+        clock, ran, carried = (int(run[key]) for key in ("clock_ticks", "ticks_run", "carried"))
+        result.append({"map": name, "cycle": int(cycle), "cadence": cadence, "requests": run.get("requests"),
+                       "request_tick": int(run.get("request_tick", "-1")),
+                       "ticks_after_request": int(run.get("ticks_after_request", "0")),
+                       "frames_stopped": int(run.get("frames_stopped", "0")),
+                       "carried_total": int(run.get("carried_total", "0")),
+                       "most_carried": int(run.get("most_carried", "0")),
+                       "clock_ticks": clock, "ticks_run": ran, "carried": carried,
+                       "conserved": clock == ran + carried})
+    return result
+
+
+def revert_class_pass(entries):
+    """(HWI-034) no tick ran after a revert-class request in its frame, and no tick was lost or run twice"""
+    return all(entry["ticks_after_request"] == 0 and entry["conserved"] for entry in entries)
 
 
 def compare(wii, host):
@@ -154,6 +189,10 @@ def compare(wii, host):
     report["ticks_all_same"] = all(tick is None for tick in report["first_divergent_tick"].values())
     report["cadence_invariance_wii"] = cadence_invariance(wii)
     report["cadence_invariance_host"] = cadence_invariance(host)
+    report["revert_class_wii"] = revert_class(wii)
+    report["revert_class_host"] = revert_class(host)
+    report["revert_class_pass"] = (revert_class_pass(report["revert_class_wii"]) and
+                                   revert_class_pass(report["revert_class_host"]))
     return report
 
 
@@ -176,6 +215,11 @@ def main():
     for side in ("wii", "host"):
         print(f"cadence invariance ({side}):", {name: (entry["invariant"], entry["runs"], entry["cadences"])
                                                 for name, entry in report[f"cadence_invariance_{side}"].items()})
+    for side in ("wii", "host"):
+        stopped = [entry for entry in report[f"revert_class_{side}"] if entry["frames_stopped"]]
+        print(f"revert-class requests ({side}): pass={revert_class_pass(report[f'revert_class_{side}'])} "
+              f"frames stopped in {len(stopped)} runs:",
+              [(entry["map"], entry["cadence"], entry["request_tick"], entry["carried_total"]) for entry in stopped])
     print("canonical-only differing ticks:", {k: len(v) for k, v in report["canonical_only_ticks"].items()},
           {k: v[:10] for k, v in report["canonical_only_ticks"].items()})
     for run in report["runs"]:
@@ -187,7 +231,7 @@ def main():
     invariant = all(entry["invariant"] for side in ("wii", "host")
                     for entry in report[f"cadence_invariance_{side}"].values())
     return 0 if (report["simulation_all_same"] and report["whole_all_same_unpaced"] and report["failures_same"] and
-                 invariant) else 1
+                 invariant and report["revert_class_pass"]) else 1
 
 
 if __name__ == "__main__":

@@ -45,6 +45,9 @@ unsigned long *get_tick_local_random_seed_address(void);
 /* (main.c's, HWI-016C: the main loop's handling of the game's requests) */
 void main_port_game_requests(boolean before_update);
 boolean main_port_game_requests_left(void);
+void main_port_game_requests_left_taken(void);
+/* (main.c's, HWI-034: the requests that stop a frame's ticks) */
+unsigned long main_port_revert_class_requests(void);
 
 /* (game.c's, private there) */
 struct real_map_game_options
@@ -161,6 +164,12 @@ struct real_map_globals
 	long command_ran_tick;
 	long command_result;
 	short command_bsp_before, command_bsp_after;
+	/* HWI-030: more commands, each after its own tick */
+	long more_command_ticks[REAL_MAP_MAXIMUM_MORE_COMMANDS];
+	char more_commands[REAL_MAP_MAXIMUM_MORE_COMMANDS][32];
+	int more_command_count;
+	long more_commands_ran;
+	short more_commands_bsp_after;
 	long bsp_reads_at_begin;
 	long requests_left;                /* frames ending with a won map or a reset asked for */
 	/* (HWI-016F) effects and looping sounds made outside the ticks: their
@@ -168,6 +177,17 @@ struct real_map_globals
 	game_frame, and what the frames added */
 	short frame_mark_effects, frame_mark_looping_sounds;
 	long frame_made_effects, frame_made_looping_sounds;
+	/* (HWI-034) the revert-class requests (real_map_result) */
+	unsigned long frame_requests_before;        /* waiting as the frame's ticks began */
+	unsigned long requests_seen;
+	long request_tick;
+	long ticks_after_request;
+	long frames_stopped;
+	long ticks_carried_total;
+	long most_ticks_carried;
+	long queue_resets;
+	long core_save_tick;
+	long core_saved_tick;
 };
 
 extern struct data_array *hs_thread_data;
@@ -1125,6 +1145,9 @@ built, one a tick. */
 void real_map_local_ticks(
 	short ticks)
 {
+	/* (HWI-034: a frame that runs the ticks a revert-class request held
+	back builds them again when the request emptied the queue: their
+	updates take the next updates' input, by the reset below) */
 	while (ticks-- > 0)
 	{
 		struct player_action actions[MAXIMUM_LOCAL_PLAYERS];
@@ -1148,7 +1171,52 @@ void real_map_local_ticks(
 	return;
 }
 
+/* (HWI-034) the update queue's reset (update_queues_reset_and_fill_with_lies,
+by a revert or a core load: game_state.c) drops the updates built but not
+yet run, a frame's ticks held back by a revert-class request among them
+(game_time.c builds those again). The script's input is the input of the
+tick that runs an update, so the next update built takes the next tick's:
+as at 30 Hz, a frame a tick, where no update waits when the queue resets
+and this changes nothing. */
+void real_map_queues_reset(
+	void)
+{
+	if (!real_map_globals.armed)
+		return;
+	real_map_globals.queue_resets++;
+	real_map_globals.updates_built = real_map_globals.tick;
+
+	return;
+}
+
 /* ---------- the tick */
+
+/* (HWI-034) a revert-class request that arrived in this frame (after its
+ticks began) and is waiting: its tick, and whether a tick begins after it */
+static void revert_class_request_note(
+	boolean tick_begins)
+{
+	unsigned long requests = main_port_revert_class_requests();
+
+	real_map_globals.requests_seen |= requests;
+	if (!(requests & ~real_map_globals.frame_requests_before))
+		return;
+	if (real_map_globals.request_tick == NONE)
+		real_map_globals.request_tick = real_map_globals.tick;
+	if (tick_begins)
+		real_map_globals.ticks_after_request++;
+
+	return;
+}
+
+void real_map_before_tick(
+	void)
+{
+	if (real_map_globals.armed)
+		revert_class_request_note(TRUE);
+
+	return;
+}
 
 static long local_player_unit(
 	void)
@@ -1253,6 +1321,13 @@ void real_map_after_tick(
 	}
 	if (real_map_globals.observer)
 		real_map_globals.observer(tick);
+	/* (HWI-034) the harness's core save, as main_save_core_private makes
+	one, at this tick's boundary */
+	if (real_map_globals.core_save_tick == tick)
+	{
+		game_state_save_core("core.bin");
+		real_map_globals.core_saved_tick = tick;
+	}
 	/* the harness's script command, through the engine's own compiler and
 	runtime (as a console command), between this tick and the next */
 	if (real_map_globals.command_tick == tick && real_map_globals.command[0])
@@ -1261,6 +1336,19 @@ void real_map_after_tick(
 		real_map_globals.command_bsp_before = global_structure_bsp_index;
 		real_map_globals.command_result = hs_compile_and_evaluate(real_map_globals.command);
 		real_map_globals.command_bsp_after = global_structure_bsp_index;
+	}
+	{
+		int index;
+
+		for (index = 0; index < real_map_globals.more_command_count; index++)
+		{
+			if (real_map_globals.more_command_ticks[index] == tick)
+			{
+				hs_compile_and_evaluate(real_map_globals.more_commands[index]);
+				real_map_globals.more_commands_ran++;
+				real_map_globals.more_commands_bsp_after = global_structure_bsp_index;
+			}
+		}
 	}
 
 	return;
@@ -1272,11 +1360,38 @@ void real_map_set_command(
 {
 	real_map_globals.command_tick = tick;
 	real_map_globals.command[0] = 0;
+	real_map_globals.more_command_count = 0;
 	if (command)
 	{
 		csstrncpy(real_map_globals.command, command, sizeof(real_map_globals.command) - 1);
 		real_map_globals.command[sizeof(real_map_globals.command) - 1] = 0;
 	}
+
+	return;
+}
+
+int real_map_add_command(
+	long tick,
+	const char *command)
+{
+	int index = real_map_globals.more_command_count;
+
+	if (index >= REAL_MAP_MAXIMUM_MORE_COMMANDS || !command ||
+		csstrlen(command) >= sizeof(real_map_globals.more_commands[0]))
+	{
+		return FALSE;
+	}
+	real_map_globals.more_command_ticks[index] = tick;
+	csstrcpy(real_map_globals.more_commands[index], command);
+	real_map_globals.more_command_count++;
+
+	return TRUE;
+}
+
+void real_map_set_core_save(
+	long tick)
+{
+	real_map_globals.core_save_tick = tick;
 
 	return;
 }
@@ -1405,9 +1520,20 @@ int real_map_begin(
 	real_map_globals.requests_left = 0;
 	real_map_globals.frame_made_effects = 0;
 	real_map_globals.frame_made_looping_sounds = 0;
+	real_map_globals.frame_requests_before = 0;
+	real_map_globals.requests_seen = 0;
+	real_map_globals.request_tick = NONE;
+	real_map_globals.ticks_after_request = 0;
+	real_map_globals.frames_stopped = 0;
+	real_map_globals.ticks_carried_total = 0;
+	real_map_globals.most_ticks_carried = 0;
+	real_map_globals.queue_resets = 0;
+	real_map_globals.core_saved_tick = NONE;
 	real_map_globals.ticks = ticks;
 	real_map_globals.command_ran_tick = NONE;
 	real_map_globals.command_result = 0;
+	real_map_globals.more_commands_ran = 0;
+	real_map_globals.more_commands_bsp_after = NONE;
 	real_map_globals.final_structure_bsp_index = NONE;
 	real_map_globals.tick = 0;
 	real_map_globals.frames = 0;
@@ -1457,14 +1583,35 @@ int real_map_frame(
 	checkpoint save in progress */
 	main_port_game_requests(TRUE);
 	frame_made_mark();
+	/* (HWI-034) the revert-class requests waiting as the ticks begin (a won
+	map or a reset the driver leaves: main_port_game_requests_left) */
+	real_map_globals.frame_requests_before = main_port_revert_class_requests();
 	game_time_update(dt);
 	frame_made_count();
+	revert_class_request_note(FALSE);
+	{
+		long clock_ticks, ticks_run, ticks_carried;
+
+		game_time_port_tick_counts(&clock_ticks, &ticks_run, &ticks_carried);
+		if (ticks_carried > 0)
+		{
+			real_map_globals.frames_stopped++;
+			real_map_globals.ticks_carried_total += ticks_carried;
+			if (ticks_carried > real_map_globals.most_ticks_carried)
+				real_map_globals.most_ticks_carried = ticks_carried;
+		}
+	}
 	/* (HWI-074) the frame's sound, as main_loop's main_game_render renders it
 	(port/wii/sound/sound_hooks.c; nothing unless the plan has the sound) */
 	wii_sound_map_frame(dt);
 	main_port_game_requests(FALSE);
 	if (main_port_game_requests_left())
+	{
 		real_map_globals.requests_left++;
+		/* (HWI-034) taken, the run staying on its map, so a won map asked
+		for later (or in the next run) is a new request */
+		main_port_game_requests_left_taken();
+	}
 	elapsed = game_time_get_elapsed();
 	real_map_globals.frames++;
 	if (!elapsed)
@@ -1526,9 +1673,20 @@ void real_map_end(
 	result->command_result = real_map_globals.command_result;
 	result->command_bsp_before = real_map_globals.command_bsp_before;
 	result->command_bsp_after = real_map_globals.command_bsp_after;
+	result->more_commands_ran = real_map_globals.more_commands_ran;
+	result->more_commands_bsp_after = real_map_globals.more_commands_bsp_after;
 	result->requests_left = real_map_globals.requests_left;
 	result->frame_made_effects = real_map_globals.frame_made_effects;
 	result->frame_made_looping_sounds = real_map_globals.frame_made_looping_sounds;
+	result->requests_seen = real_map_globals.requests_seen;
+	result->request_tick = real_map_globals.request_tick;
+	result->ticks_after_request = real_map_globals.ticks_after_request;
+	game_time_port_tick_counts(&result->clock_ticks, &result->ticks_run, &result->ticks_carried);
+	result->frames_stopped = real_map_globals.frames_stopped;
+	result->ticks_carried_total = real_map_globals.ticks_carried_total;
+	result->most_ticks_carried = real_map_globals.most_ticks_carried;
+	result->queue_resets = real_map_globals.queue_resets;
+	result->core_saved_tick = real_map_globals.core_saved_tick;
 	real_map_globals.armed = FALSE;
 	game_time_end();
 
