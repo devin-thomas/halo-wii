@@ -329,6 +329,18 @@ static boolean boot_nibble_first_high(
 	return probe.value == 0x10;
 }
 
+unsigned long wii_boot_state_digest_raw(
+	unsigned long *per_allocation,
+	long count)
+{
+	int was = real_map_digest_words_raw(1);
+	unsigned long crc = wii_boot_state_digest(per_allocation, count);
+
+	real_map_digest_words_raw(was);
+
+	return crc;
+}
+
 unsigned long wii_boot_state_digest(
 	unsigned long *per_allocation,
 	long count)

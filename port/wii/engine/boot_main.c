@@ -90,6 +90,7 @@ static struct {
     int expect_refusal;
     long dump_allocation;
     long tick_digests;
+    long tick_allocations;
     int selftest;
     /* manifest.txt */
     char source[40], generation[40], stager[40];
@@ -151,6 +152,8 @@ static void read_config(void)
             boot.dump_allocation = strtol(line + 16, NULL, 10);
         else if (!strcmp(line, "selftest=1"))
             boot.selftest = 1;
+        else if (!strncmp(line, "tick_allocations=", 17))
+            boot.tick_allocations = strtol(line + 17, NULL, 10);
         else if (!strncmp(line, "tick_digests=", 13))
             boot.tick_digests = strtol(line + 13, NULL, 10);
         else if (!strcmp(line, "expect=refusal"))
@@ -613,6 +616,7 @@ int wii_boot_run(const struct wii_boot_driver *driver)
     config.expect_refusal = boot.expect_refusal;
     config.dump_allocation = boot.dump_allocation;
     config.tick_digests = boot.tick_digests;
+    config.tick_allocations = boot.tick_allocations;
     config.overlay = boot.overlay;
     config.finish = engine_finish;
     config.map_check = map_check;

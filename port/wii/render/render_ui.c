@@ -445,13 +445,18 @@ static void boot_ui_screen_check(
 		int covered = 0;
 		unsigned long crc = wii_ui_gx_sample_crc(&covered);
 		unsigned long state = wii_boot_state_digest(boot_ui.state_digests, BOOT_UI_MAXIMUM_STATE_ALLOCATIONS);
+		unsigned long without_scripts = boot_ui_state_without_scripts();
+		/* (HWI-033: the raw form too, the Wii against its host replay; the
+		allocations logged below are the raw form's) */
+		unsigned long state_raw = wii_boot_state_digest_raw(boot_ui.state_digests,
+			BOOT_UI_MAXIMUM_STATE_ALLOCATIONS);
 
 		current->sampled = TRUE;
 		wii_log("BOOT_SCREEN frame=%ld clock_ms=%lu map=%s screen_tag=%ld focused_tag=%ld efb_crc=%08lx covered=%d "
-			"state=%08lx state_without_scripts=%08lx game_time=%ld\n", boot_ui.frame, wii_boot_clock_milliseconds(),
+			"state=%08lx state_without_scripts=%08lx state_raw=%08lx state_without_scripts_raw=%08lx game_time=%ld\n", boot_ui.frame, wii_boot_clock_milliseconds(),
 			boot_ui.map_name, screen_tag == NONE ? -1L : (long)DATUM_INDEX_TO_ABSOLUTE_INDEX(screen_tag),
 			focused_tag == NONE ? -1L : (long)DATUM_INDEX_TO_ABSOLUTE_INDEX(focused_tag), crc, covered, state,
-			boot_ui_state_without_scripts(), game_in_progress() ? game_time_get() : -1L);
+			without_scripts, state_raw, boot_ui_state_without_scripts(), game_in_progress() ? game_time_get() : -1L);
 		if (boot_ui.screen_samples++ == 0)
 			boot_ui_log_allocations("first_screen");
 		/* (diagnosis) the allocation's bytes at every sampled screen */
@@ -679,10 +684,12 @@ static void boot_ui_present(
 			int covered = 0;
 			unsigned long crc = wii_ui_gx_sample_crc(&covered);
 			unsigned long state = wii_boot_state_digest(boot_ui.state_digests, BOOT_UI_MAXIMUM_STATE_ALLOCATIONS);
+			unsigned long state_raw = wii_boot_state_digest_raw(boot_ui.state_digests,
+				BOOT_UI_MAXIMUM_STATE_ALLOCATIONS);
 
 			wii_log("BOOT_ENVIRONMENT first frame=%ld clock_ms=%lu map=%s efb_crc=%08lx covered=%d state=%08lx "
-				"game_time=%ld drawing=%s\n", boot_ui.frame, wii_boot_clock_milliseconds(), boot_ui.map_name, crc,
-				covered, state, game_in_progress() ? game_time_get() : -1L,
+				"state_raw=%08lx game_time=%ld drawing=%s\n", boot_ui.frame, wii_boot_clock_milliseconds(), boot_ui.map_name, crc,
+				covered, state, state_raw, game_in_progress() ? game_time_get() : -1L,
 				boot_ui.environment_pending ? "pending_hwi030" : "drawn");
 			boot_ui_log_allocations("first_environment");
 		}
@@ -693,9 +700,10 @@ static void boot_ui_present(
 	{
 		int covered = 0;
 		unsigned long state = wii_boot_state_digest(boot_ui.state_digests, BOOT_UI_MAXIMUM_STATE_ALLOCATIONS);
+		unsigned long state_raw = wii_boot_state_digest_raw(boot_ui.state_digests, BOOT_UI_MAXIMUM_STATE_ALLOCATIONS);
 
-		wii_log("BOOT_ENVIRONMENT end frames=%ld map=%s state=%08lx game_time=%ld covered_last=%d ticks=%ld "
-			"tick_digests=%ld drawing=%s\n", boot_ui.environment_frames, boot_ui.map_name, state,
+		wii_log("BOOT_ENVIRONMENT end frames=%ld map=%s state=%08lx state_raw=%08lx game_time=%ld covered_last=%d "
+			"ticks=%ld tick_digests=%ld drawing=%s\n", boot_ui.environment_frames, boot_ui.map_name, state, state_raw,
 			game_in_progress() ? game_time_get() : -1L, covered, boot_ui.target_ticks, boot_ui.tick_digests,
 			boot_ui.campaign ? "pending_hwi030" : "drawn");
 		boot_ui_finish(1, boot_ui.campaign ? "campaign_reached_drawing_pending" : "environment_reached");
@@ -1006,11 +1014,16 @@ static void boot_ui_after_tick(
 	boot_ui.target_ticks++;
 	if (boot_ui.tick_digests >= boot_ui.config.tick_digests)
 		return;
-	state = wii_boot_state_digest(boot_ui.state_digests, BOOT_UI_MAXIMUM_STATE_ALLOCATIONS);
+	/* (the raw form: the Wii against its host replay at the same addresses,
+	where the canonical form's reading of a word as a pointer depends on the
+	byte order: real_map_digest_words_raw) */
+	state = wii_boot_state_digest_raw(boot_ui.state_digests, BOOT_UI_MAXIMUM_STATE_ALLOCATIONS);
 	boot_ui.tick_digests++;
-	wii_log("BOOT_TICK map=%s tick=%ld game_time=%ld frame=%ld state=%08lx state_without_scripts=%08lx "
+	wii_log("BOOT_TICK map=%s tick=%ld game_time=%ld frame=%ld state_raw=%08lx state_without_scripts_raw=%08lx "
 		"bsp=%d\n", boot_ui.map_name, boot_ui.target_ticks, game_in_progress() ? game_time_get() : -1L,
 		boot_ui.frame, state, boot_ui_state_without_scripts(), (int)global_structure_bsp_index);
+	if (boot_ui.target_ticks == boot_ui.config.tick_allocations)
+		boot_ui_log_allocations("tick");
 }
 
 /* ---------- public code */

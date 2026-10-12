@@ -95,5 +95,8 @@ threads (hs thread) by their decoded fields, real_map_digest_hs_threads
 (HWI-033). Returns the CRC of all of them; per_allocation (count entries)
 may be NULL. */
 unsigned long wii_boot_state_digest(unsigned long *per_allocation, long count);
+/* (HWI-033) the same with words read as they are (real_map_digest_words_raw):
+the Wii against its host replay at the same addresses */
+unsigned long wii_boot_state_digest_raw(unsigned long *per_allocation, long count);
 
 #endif

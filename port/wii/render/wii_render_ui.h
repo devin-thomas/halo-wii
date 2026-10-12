@@ -41,7 +41,8 @@ struct wii_boot_ui_config
 	long screen_settle_frames;  /* a screen is sampled once it has stood this many frames */
 	long dump_allocation;       /* diagnosis: this recorded allocation's bytes to d:\boot_dump_<frame>.bin at
 	                               every screen sample (-1: none) */
-	long tick_digests;          /* HWI-033: the game state's digest after each of the first n ticks of a map
+	long tick_digests;
+	long tick_allocations;      /* (diagnosis) each allocation's raw digest at this tick of that map (0: none) */          /* HWI-033: the game state's digest after each of the first n ticks of a map
 	                               other than the menus' (BOOT_TICK lines; 0: none) */
 	int expect_refusal;         /* a load-failure test: max_frames passes if a map was refused and the
 	                               menus' map is loaded again (the menus recovered) */

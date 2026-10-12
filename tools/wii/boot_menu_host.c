@@ -198,6 +198,7 @@ int __wrap_main(int argc, char **argv)
     config.environment_frames = strtol(argv[6], NULL, 10);
     config.screen_settle_frames = strtol(argv[7], NULL, 10);
     config.tick_digests = argc == 9 ? strtol(argv[8], NULL, 10) : 0;
+    config.tick_allocations = getenv("BOOT_TICK_ALLOCATIONS") ? strtol(getenv("BOOT_TICK_ALLOCATIONS"), NULL, 10) : 0;
     config.dump_allocation = getenv("BOOT_DUMP") ? strtol(getenv("BOOT_DUMP"), NULL, 10) : -1;
     config.overlay = "";
     config.finish = finish;

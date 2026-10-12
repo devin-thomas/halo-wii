@@ -598,6 +598,16 @@ static void digest_add_hs_thread_frames(
 	return;
 }
 
+int real_map_digest_words_raw(
+	int raw)
+{
+	int was = digest_words_raw ? 1 : 0;
+
+	digest_words_raw = raw ? TRUE : FALSE;
+
+	return was;
+}
+
 unsigned long real_map_digest_hs_threads(
 	const void *address,
 	unsigned long size)

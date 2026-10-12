@@ -145,6 +145,8 @@ def main() -> int:
     parser.add_argument("--tick-digests", type=int, default=0,
                         help="the game state's digest after each of the first n ticks of the map the menus load "
                              "(BOOT_TICK lines, HWI-033); the Wii launch's boot.txt tick_digests")
+    parser.add_argument("--tick-allocations", type=int, help="(diagnosis) each allocation's raw digest at this "
+                                                              "tick of the map the menus load")
     parser.add_argument("--dump", type=int, help="a recorded allocation's index: its bytes at every screen "
                                                "sample to the data folder's boot_dump_<frame>.bin (diagnosis)")
     args = parser.parse_args()
@@ -178,6 +180,7 @@ def main() -> int:
     run = subprocess.run(["wsl", "-d", "Debian", "--", "sh", "-c",
                           f"cd {map_host.sh(map_host.wsl(run_dir))} && "
                           f"{('BOOT_DUMP=' + str(args.dump) + ' ') if args.dump is not None else ''}"
+                          f"{('BOOT_TICK_ALLOCATIONS=' + str(args.tick_allocations) + ' ') if args.tick_allocations else ''}"
                           f"{' '.join(map_host.sh(part) for part in command)}"],
                          capture_output=True, text=True)
     seconds = time.perf_counter() - started

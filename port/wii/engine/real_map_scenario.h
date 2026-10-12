@@ -160,5 +160,12 @@ independent of byte order: each typed field as its value, each live frame's
 values as the multiset of their bytes (real_map_scenario.c). The boot
 mode's digest (boot_hooks.h) reads the threads this way. */
 unsigned long real_map_digest_hs_threads(const void *address, unsigned long size);
+/* (HWI-033) real_map_digest_bytes and real_map_digest_hs_threads read words
+as they are (raw, nonzero) or with pointers into the game state and the tag
+slot made canonical (0, the default); returns the previous setting. The raw
+form compares a Wii launch with its host replay, whose regions lie at the
+same addresses: four bytes that are no pointer can read as one in one byte
+order only, and the canonical form then differs where the state does not. */
+int real_map_digest_words_raw(int raw);
 
 #endif
