@@ -175,9 +175,13 @@ stock-limit profile, authors the DTM input, optionally stages SD files with
 mtools in WSL, performs cold launches and records guest, persistence, host
 lifecycle and OS-stability outcomes separately. Usage, exit codes and limits
 are in [running](../../docs/wii/RUNNING.md#supported-launch-and-evidence-runner).
+By default it maps no host input device (`dolphin_controls.json` lists every
+control written empty) and a focus guard keeps Dolphin from becoming
+frontmost or taking keyboard focus; see
+[focus- and keyboard-safe launch](../../docs/wii/RUNNING.md#focus--and-keyboard-safe-launch-hwi-077).
 
 ```powershell
-python -B -m unittest discover -s tools/wii -p test_run_dolphin.py
+python -B -m unittest discover -s tools/wii -p "test_run_dolphin*.py"
 ```
 
 ## Toolchain preflight
