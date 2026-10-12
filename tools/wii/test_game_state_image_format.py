@@ -126,6 +126,26 @@ class SourceTests(unittest.TestCase):
             self.assertNotIn("game_state_image_accept", text)
             self.assertIsNone(re.search(r"\bmalloc\s*\(", text), path.name)
 
+    def test_the_census_pointer_fields_are_declared(self):
+        """the pointer members the HWI-076 census found outside the game state's own structures, each declared"""
+        declared = {
+            "source/cutscene/recorded_animations.c": ["offsetof(struct animation_thread, event_stream)"],
+            "source/objects/widgets/glow.c": ["offsetof(struct glow_datum, head_particle)",
+                                             "offsetof(struct glow_datum, tail_particle)",
+                                             "offsetof(struct glow_particle, next)",
+                                             "offsetof(struct glow_particle, previous)"],
+            "source/effects/effects.c": ["impulse_field.user_data", "impulse_field.translational_function",
+                                         "impulse_field.angular_function"],
+            "source/interface/hud_messaging.c": ["state_message->info[info].icon", "&state_message->state_message",
+                                                 "help_message", "objective.message"],
+            "source/rasterizer/rasterizer_cinematics.c": ["convolution_mask", "video_scanline_map", "video_noise_map"],
+        }
+        for path, fields in declared.items():
+            text = (ROOT / path).read_text(encoding="utf-8")
+            self.assertRegex(text, r"game_state_port_(data_)?pointer_field\(", path)
+            for field in fields:
+                self.assertIn(field, text, f"{path}: {field}")
+
     def test_every_load_checks_before_it_takes(self):
         text = SOURCE.read_text(encoding="utf-8")
         body = text[text.index("static short image_read("):text.index("/* ---------- public code */")]

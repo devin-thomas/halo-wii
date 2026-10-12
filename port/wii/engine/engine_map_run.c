@@ -239,12 +239,12 @@ static void image_observer(const struct save_image_event *event)
 		return;
 	}
 	wii_log("IMAGE map=%s event=%s tick=%ld case=%s result=%d refusal=%s at=%ld state_bytes=%lu file_bytes=%lu "
-		"payload_bytes=%lu chunks=%lu chunk_bytes=%lu peak_bytes=%lu pointers=%lu references=%lu threads=%lu "
+		"payload_bytes=%lu chunks=%lu chunk_bytes=%lu peak_bytes=%lu pointers=%lu tag_pointers=%lu references=%lu threads=%lu "
 		"foreign=%lu address_like=%lu first_address_like=%ld dead_address_like=%lu passes=%d sha=%08lx%08lx%08lx%08lx%08lx%08lx%08lx%08lx "
 		"state=%08lx same_as_saved=%d reencoded_same=%d intact=%d expected=%d us=%lu\n",
 		current_map, kinds[event->kind], event->tick, event->test_case ? event->test_case : "-", event->result,
 		event->refusal ? event->refusal : "none", event->refusal_offset, event->state_bytes, event->file_bytes,
-		event->payload_bytes, event->chunks, event->chunk_bytes, event->peak_bytes, event->pointers, event->references,
+		event->payload_bytes, event->chunks, event->chunk_bytes, event->peak_bytes, event->pointers, event->tag_pointers, event->references,
 		event->script_threads, event->foreign_pointers, event->address_like_words, event->first_address_like_offset,
 		event->address_like_dead_words,
 		event->passes, event->sha[0], event->sha[1], event->sha[2], event->sha[3], event->sha[4], event->sha[5],

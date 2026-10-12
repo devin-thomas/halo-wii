@@ -345,12 +345,22 @@ void glow_initialize(
 			sizeof(struct glow_datum));
 		if (glow_globals.glow_data)
 		{
+			/* port (HWI-076): as the particles' links (below) */
+			game_state_port_data_pointer_field(glow_globals.glow_data, offsetof(struct glow_datum, head_particle));
+			game_state_port_data_pointer_field(glow_globals.glow_data, offsetof(struct glow_datum, tail_particle));
 			if (!glow_globals.glow_particle_data)
 			{
 				glow_globals.glow_particle_data = game_state_data_new(
 					"glow particles",
 					MAXIMUM_GLOW_PARTICLES,
 					sizeof(struct glow_particle));
+				/* port (HWI-076): a glow's particles are a list in the game
+				state; the saved game's image writes its links as places */
+				if (glow_globals.glow_particle_data)
+				{
+					game_state_port_data_pointer_field(glow_globals.glow_particle_data, offsetof(struct glow_particle, next));
+					game_state_port_data_pointer_field(glow_globals.glow_particle_data, offsetof(struct glow_particle, previous));
+				}
 				if (!glow_globals.glow_particle_data)
 				{
 					error(_error_silent, "could not allocate glow particle data array");

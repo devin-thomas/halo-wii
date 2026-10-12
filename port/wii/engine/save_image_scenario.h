@@ -40,6 +40,7 @@ struct save_image_event
 	unsigned long chunk_bytes;
 	unsigned long peak_bytes;
 	unsigned long pointers;
+	unsigned long tag_pointers;
 	unsigned long references;
 	unsigned long script_threads;
 	unsigned long foreign_pointers;

@@ -123,6 +123,7 @@ symbols in this file:
 #include "memory_pool.h"
 #include "cluster_partitions.h"
 #include "game_state_image.h"
+#include "physical_memory_map.h"
 
 void platform_log(const char *format, ...);
 
@@ -619,13 +620,26 @@ struct game_state_allocation
 	whether it was reported since (game_state_check_data_arrays) */
 	long good_time;
 	boolean reported;
-	/* (HWI-076) how the image writes it (game_state_image.h) */
+	/* (HWI-076) how the image writes it (game_state_image.h), and the
+	pointer fields its elements' unit declared */
 	short encoding;
+	short pointer_field_count;
+	short pointer_fields[GAME_STATE_IMAGE_MAXIMUM_POINTER_FIELDS];
 };
 
 static struct game_state_allocation game_state_allocations[MAXIMUM_GAME_STATE_ALLOCATIONS];
 static long game_state_allocation_count;
 static struct game_state_image_allocation game_state_image_allocations[MAXIMUM_GAME_STATE_ALLOCATIONS];
+
+/* (HWI-076) the pointer words of the game state's globals their units
+declared (game_state_port_pointer_field), in ascending offset */
+enum
+{
+	MAXIMUM_GAME_STATE_POINTER_WORDS = 64,
+};
+
+static struct game_state_image_pointer_word game_state_pointer_words[MAXIMUM_GAME_STATE_POINTER_WORDS];
+static long game_state_pointer_word_count;
 
 static struct game_state_allocation *game_state_allocation_new(
 	short kind,
@@ -660,6 +674,8 @@ static void game_state_image_layout_get(
 		image->encoding = allocation->encoding;
 		image->maximum_count = allocation->maximum_count;
 		image->element_size = allocation->element_size;
+		image->pointer_field_count = allocation->pointer_field_count;
+		csmemcpy(image->pointer_fields, allocation->pointer_fields, sizeof(image->pointer_fields));
 		switch (allocation->kind)
 		{
 		case _game_state_allocation_data:
@@ -687,8 +703,65 @@ static void game_state_image_layout_get(
 	layout->cpu_used = game_state_globals.cpu_allocation_size;
 	layout->gpu_used = game_state_globals.gpu_allocation_size;
 	layout->allocation_size_checksum = (unsigned long)game_state_globals.allocation_size_checksum;
+	layout->tags = physical_memory_get_tag_cache_base_address();
+	layout->tags_size = layout->tags ? TAG_CACHE_SIZE : 0;
+	layout->pointer_word_count = game_state_pointer_word_count;
+	layout->pointer_words = game_state_pointer_words;
 	layout->allocation_count = game_state_allocation_count;
 	layout->allocations = game_state_image_allocations;
+}
+
+/* port (HWI-076): a pointer in each element in use of a data array of the
+game state (one whose identifier is not 0), at that byte offset, which the
+image is to write as a place: into the game state or the tag cache.
+Pointers the game state's own structures hold (data arrays, memory pools,
+lruv caches, script threads) need none */
+void game_state_port_data_pointer_field(
+	struct data_array *data,
+	short offset)
+{
+	long index;
+
+	for (index = 0; index < game_state_allocation_count; index++)
+	{
+		struct game_state_allocation *allocation = &game_state_allocations[index];
+
+		if (allocation->address == data && allocation->kind == _game_state_allocation_data)
+		{
+			match_assert("game_state.c", 0, allocation->pointer_field_count < GAME_STATE_IMAGE_MAXIMUM_POINTER_FIELDS);
+			if (allocation->pointer_field_count < GAME_STATE_IMAGE_MAXIMUM_POINTER_FIELDS)
+				allocation->pointer_fields[allocation->pointer_field_count++] = offset;
+			return;
+		}
+	}
+	match_assert("game_state.c", 0, FALSE);
+}
+
+/* port (HWI-076): a pointer word of a game state global outside the data
+arrays, memory pools and lruv caches (a game_state_malloc'd structure's),
+which the image is to write as a place: kind is game_state_image.h's, a
+pointer, or a union's word that holds a pointer or a value that reads as
+none */
+void game_state_port_pointer_field(
+	void const *field,
+	short kind)
+{
+	long offset = (long)((byte const *)field - (byte const *)game_state_globals.base_address);
+	long index;
+
+	match_assert("game_state.c", 0, game_state_pointer_word_count < MAXIMUM_GAME_STATE_POINTER_WORDS &&
+		offset >= 0 && offset <= game_state_globals.cpu_allocation_size - 4 && !(offset & 3));
+	if (game_state_pointer_word_count >= MAXIMUM_GAME_STATE_POINTER_WORDS || offset < 0 ||
+		offset > game_state_globals.cpu_allocation_size - 4 || (offset & 3))
+	{
+		return;
+	}
+	/* (kept in ascending offset) */
+	for (index = game_state_pointer_word_count; index > 0 && game_state_pointer_words[index - 1].offset > offset; index--)
+		game_state_pointer_words[index] = game_state_pointer_words[index - 1];
+	game_state_pointer_words[index].offset = offset;
+	game_state_pointer_words[index].kind = kind;
+	game_state_pointer_word_count++;
 }
 
 /* port (HWI-076): the game state written as an image */

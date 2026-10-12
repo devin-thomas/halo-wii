@@ -53,14 +53,21 @@ starting at 0xFFFFFFFF, not inverted at the end).
 The words are the game state's: its CPU part from its base to what is used,
 then its GPU part from what is used to its end, each 32-bit word written
 little-endian, with its pointers made places:
-- a pointer into the game state is 0x40000000 plus its offset there; none
-  is 0;
+- a pointer into the game state is 0x40000000 plus its offset there, one
+  into the tag cache 0x80000000 plus its offset there (the map's tags, which
+  the header's map checksum names); none is 0;
 - a data array's pointer to its elements (data.h), a memory pool's to its
   room and its first and last blocks, each block's to the next and previous
   blocks and to its reference (memory_pool.h), an lruv cache's to its blocks
-  (lruv_cache.h), and in each script thread in use (hs_runtime.c) the
-  pointer to its top frame and each frame's to its previous frame and to its
-  result;
+  (lruv_cache.h), in each script thread in use (hs_runtime.c) the pointer
+  to its top frame and each frame's to its previous frame and to its result,
+  in each element in use of a data array the fields its unit declares
+  (game_state_port_data_pointer_field: a recorded animation's place in its
+  event stream, in the tag cache; a glow's particles), and the words its
+  unit declares in a game state global (game_state_port_pointer_field: the
+  HUD's messages, in the tag cache). The full list follows a census of every
+  pointer member of the game state's types in the Wii engine's debug
+  information (HWI-076's evidence);
 - a memory pool block's reference (the element's field that points to the
   block, which the pool keeps up to date) is 0: loading makes it again from
   the block;
@@ -120,6 +127,7 @@ enum
 	ZERO_RUN_BIT = 0x80000000,
 
 	POINTER_TAG = 0x40000000,
+	TAG_POINTER_TAG = 0x80000000,
 	POINTER_TAG_MASK = 0xC0000000,
 	POINTER_OFFSET_MASK = 0x3FFFFFFF,
 
@@ -207,10 +215,14 @@ struct image_writer
 	long literal_count;
 	long zero_run;
 	struct sha256 sha;
+	/* a copy of a data array's element (one with declared pointer fields) */
+	byte *element;
 	/* the memory pools' blocks' references, ascending, and the next one */
 	long *references;
 	long reference_count;
 	long next_reference;
+	/* the next declared pointer word */
+	long next_pointer_word;
 	/* whether the words being written are room nothing reads: a memory
 	pool's outside its blocks, a script thread's above its top frame */
 	boolean dead;
@@ -245,7 +257,25 @@ struct image_reader
 	whether the game state has begun to change */
 	byte first_header[GAME_STATE_IMAGE_HEADER_BYTES];
 	boolean writing;
+	/* while reading a declared pointer field, which may point into the tag
+	cache */
+	boolean allow_tag_pointers;
+	byte *element;
+	/* the next declared pointer word */
+	long next_pointer_word;
 };
+
+/* ---------- prototypes */
+
+static image_word writer_declared_word(
+	struct image_writer *writer,
+	image_word word,
+	short kind);
+static boolean reader_pointer_field(
+	struct image_reader *reader,
+	byte *field,
+	long *offset,
+	long at);
 
 /* ---------- globals */
 
@@ -520,6 +550,7 @@ static unsigned long image_layout_digest(
 	unsigned long crc;
 	byte bytes[40];
 	long index;
+	short field;
 
 	crc_new(&crc);
 	put_le32(bytes, (image_word)layout->size);
@@ -540,8 +571,13 @@ static unsigned long image_layout_digest(
 		put_le32(bytes + 24, (image_word)allocation->pool_size);
 		put_le32(bytes + 28, (image_word)allocation->page_count);
 		put_le32(bytes + 32, (image_word)allocation->page_size_bits);
-		put_le32(bytes + 36, 0);
+		put_le32(bytes + 36, (image_word)allocation->pointer_field_count);
 		crc_checksum_buffer(&crc, bytes, 40);
+		for (field = 0; field < allocation->pointer_field_count; field++)
+		{
+			put_le32(bytes, (image_word)allocation->pointer_fields[field]);
+			crc_checksum_buffer(&crc, bytes, 4);
+		}
 	}
 
 	return crc & 0xFFFFFFFFUL;
@@ -554,18 +590,41 @@ static boolean image_layout_valid(
 {
 	long end = 0;
 	long index;
+	long other;
 
 	if (!layout || !layout->base || ((unsigned long)layout->base & 3) || layout->size <= 0 || (layout->size & 3) ||
 		layout->size > POINTER_OFFSET_MASK || layout->cpu_used < 0 || layout->gpu_used < 0 ||
 		(layout->cpu_used & 3) || (layout->gpu_used & 3) || layout->cpu_used > layout->size - layout->gpu_used ||
-		layout->allocation_count < 0 || (layout->allocation_count && !layout->allocations))
+		layout->allocation_count < 0 || (layout->allocation_count && !layout->allocations) ||
+		layout->tags_size < 0 || layout->tags_size > POINTER_OFFSET_MASK || (layout->tags_size && !layout->tags) ||
+		layout->pointer_word_count < 0 || (layout->pointer_word_count && !layout->pointer_words))
 	{
 		return FALSE;
+	}
+	for (index = 0; index < layout->pointer_word_count; index++)
+	{
+		struct game_state_image_pointer_word const *declared = &layout->pointer_words[index];
+
+		if ((declared->offset & 3) || declared->offset < 0 || declared->offset > layout->cpu_used - 4 ||
+			(index && declared->offset <= layout->pointer_words[index - 1].offset) ||
+			(declared->kind != _game_state_image_pointer && declared->kind != _game_state_image_pointer_or_value))
+		{
+			return FALSE;
+		}
+		for (other = 0; other < layout->allocation_count; other++)
+		{
+			if (declared->offset >= layout->allocations[other].offset &&
+				declared->offset < layout->allocations[other].offset + layout->allocations[other].size)
+			{
+				return FALSE;
+			}
+		}
 	}
 	for (index = 0; index < layout->allocation_count; index++)
 	{
 		struct game_state_image_allocation const *allocation = &layout->allocations[index];
 		long expected;
+		short field;
 
 		switch (allocation->kind)
 		{
@@ -580,6 +639,20 @@ static boolean image_layout_valid(
 			break;
 		default:
 			return FALSE;
+		}
+		if (allocation->pointer_field_count < 0 || allocation->pointer_field_count > GAME_STATE_IMAGE_MAXIMUM_POINTER_FIELDS ||
+			(allocation->pointer_field_count && (allocation->kind != _game_state_image_data ||
+				allocation->encoding != _game_state_image_encoding_plain)))
+		{
+			return FALSE;
+		}
+		for (field = 0; field < allocation->pointer_field_count; field++)
+		{
+			if (allocation->pointer_fields[field] < (short)sizeof(short) ||
+				allocation->pointer_fields[field] > allocation->element_size - (short)sizeof(void *))
+			{
+				return FALSE;
+			}
 		}
 		if (allocation->offset < end || (allocation->offset & 3) || allocation->size != expected ||
 			allocation->size > layout->cpu_used - allocation->offset || allocation->maximum_count < 0 ||
@@ -624,6 +697,25 @@ static boolean image_in_data_array_elements(
 	}
 
 	return FALSE;
+}
+
+/* the largest element of a data array with declared pointer fields (at
+least 4 bytes) */
+static unsigned long image_largest_pointer_element(
+	struct game_state_image_layout const *layout)
+{
+	unsigned long largest = 4;
+	long index;
+
+	for (index = 0; index < layout->allocation_count; index++)
+	{
+		struct game_state_image_allocation const *allocation = &layout->allocations[index];
+
+		if (allocation->pointer_field_count && (unsigned long)allocation->element_size > largest)
+			largest = (unsigned long)allocation->element_size;
+	}
+
+	return largest;
 }
 
 /* ---------- private code: the header */
@@ -873,11 +965,23 @@ static void writer_words(
 		{
 			writer->next_reference++;
 		}
+		while (writer->next_pointer_word < writer->layout->pointer_word_count &&
+			writer->layout->pointer_words[writer->next_pointer_word].offset < offset + at)
+		{
+			writer->next_pointer_word++;
+		}
 		if (writer->next_reference < writer->reference_count &&
 			writer->references[writer->next_reference] == offset + at)
 		{
 			word = 0;
 			writer->next_reference++;
+		}
+		else if (writer->next_pointer_word < writer->layout->pointer_word_count &&
+			writer->layout->pointer_words[writer->next_pointer_word].offset == offset + at)
+		{
+			word = writer_declared_word(writer, word,
+				writer->layout->pointer_words[writer->next_pointer_word].kind);
+			writer->next_pointer_word++;
 		}
 		else if (word && (unsigned long)word - low < (unsigned long)writer->layout->size)
 		{
@@ -908,14 +1012,46 @@ static image_word writer_pointer(
 		writer->report->pointers++;
 		return (image_word)(POINTER_TAG | offset);
 	}
+	offset = value - (unsigned long)writer->layout->tags;
+	if (writer->layout->tags && offset < (unsigned long)writer->layout->tags_size)
+	{
+		writer->report->pointers++;
+		writer->report->tag_pointers++;
+		return (image_word)(TAG_POINTER_TAG | offset);
+	}
 	/* outside the game state: kept, and the image bound to this base. One
 	that reads as a place in it could not be told from one */
 	writer->report->foreign_pointers++;
 	writer->report->base_bound = TRUE;
-	if ((value & POINTER_TAG_MASK) == POINTER_TAG && (value & POINTER_OFFSET_MASK) < (unsigned long)writer->layout->size)
+	if (((value & POINTER_TAG_MASK) == POINTER_TAG && (value & POINTER_OFFSET_MASK) < (unsigned long)writer->layout->size) ||
+		((value & POINTER_TAG_MASK) == TAG_POINTER_TAG && (value & POINTER_OFFSET_MASK) < (unsigned long)writer->layout->tags_size))
+	{
 		writer->failed = TRUE;
+	}
 
 	return (image_word)value;
+}
+
+/* a declared pointer word of a global: a pointer made its place; a union's
+value that is no pointer kept (one that would read as a place could not be
+told from one) */
+static image_word writer_declared_word(
+	struct image_writer *writer,
+	image_word word,
+	short kind)
+{
+	unsigned long value = word;
+
+	if (kind == _game_state_image_pointer_or_value &&
+		value - (unsigned long)writer->layout->base >= (unsigned long)writer->layout->size &&
+		(!writer->layout->tags || value - (unsigned long)writer->layout->tags >= (unsigned long)writer->layout->tags_size))
+	{
+		if ((value & POINTER_TAG_MASK) == POINTER_TAG || (value & POINTER_TAG_MASK) == TAG_POINTER_TAG)
+			writer->failed = TRUE;
+		return word;
+	}
+
+	return writer_pointer(writer, (void const *)value);
 }
 
 /* a pointer field (at any byte) of a copy, made its place */
@@ -933,6 +1069,7 @@ static void writer_pointer_field(
 
 static void writer_data_array(
 	struct image_writer *writer,
+	struct game_state_image_allocation const *allocation,
 	long offset,
 	short encoding)
 {
@@ -944,9 +1081,50 @@ static void writer_data_array(
 
 	writer_pointer_field(writer, (byte *)&header.data);
 	writer_words(writer, (byte const *)&header, offset, sizeof(header));
-	if (encoding != _game_state_image_encoding_script_threads)
+	if (allocation && allocation->pointer_field_count)
+	{
+		/* each element in use with its declared pointers made places */
+		for (index = 0; index < live->maximum_count; index++)
+		{
+			long element_offset = elements + index * live->size;
+			byte const *element = layout->base + element_offset;
+			short identifier;
+			short field;
+
+			csmemcpy(&identifier, element, sizeof(identifier));
+			if (index >= live->count || !identifier)
+			{
+				writer->dead = TRUE;
+				writer_words(writer, element, element_offset, live->size);
+				writer->dead = FALSE;
+				continue;
+			}
+			csmemcpy(writer->element, element, (unsigned long)live->size);
+			for (field = 0; field < allocation->pointer_field_count; field++)
+				writer_pointer_field(writer, writer->element + allocation->pointer_fields[field]);
+			writer_words(writer, writer->element, element_offset, live->size);
+		}
+		return;
+	}
+	if (encoding != _game_state_image_encoding_script_threads && (live->size & 3))
 	{
 		writer_words(writer, layout->base + elements, elements, (long)live->maximum_count * live->size);
+		return;
+	}
+	if (encoding != _game_state_image_encoding_script_threads)
+	{
+		/* (an element not in use is room nothing reads: datum_new clears it
+		before it is used again) */
+		for (index = 0; index < live->maximum_count; index++)
+		{
+			long element_offset = elements + index * live->size;
+			short identifier;
+
+			csmemcpy(&identifier, layout->base + element_offset, sizeof(identifier));
+			writer->dead = index >= live->count || !identifier;
+			writer_words(writer, layout->base + element_offset, element_offset, live->size);
+		}
+		writer->dead = FALSE;
 		return;
 	}
 	for (index = 0; index < live->maximum_count; index++)
@@ -1050,7 +1228,7 @@ static void writer_lruv_cache(
 	header.locked_block_proc = NULL;
 	writer_pointer_field(writer, (byte *)&header.blocks);
 	writer_words(writer, (byte const *)&header, allocation->offset, sizeof(header));
-	writer_data_array(writer, allocation->offset + (long)sizeof(struct lruv_cache), _game_state_image_encoding_plain);
+	writer_data_array(writer, NULL, allocation->offset + (long)sizeof(struct lruv_cache), _game_state_image_encoding_plain);
 }
 
 static int image_compare_offsets(
@@ -1141,10 +1319,12 @@ static boolean image_write_or_measure(
 		return FALSE;
 	}
 	writer.literal = image_allocate(LITERAL_MAXIMUM_WORDS * sizeof(image_word));
+	writer.element = image_allocate(image_largest_pointer_element(layout));
 	writer.chunk = file ? image_allocate(GAME_STATE_IMAGE_CHUNK_HEADER_BYTES + GAME_STATE_IMAGE_CHUNK_BYTES) : NULL;
-	if (!writer.literal || (file && !writer.chunk) || !writer_collect_references(&writer))
+	if (!writer.literal || !writer.element || (file && !writer.chunk) || !writer_collect_references(&writer))
 	{
 		image_report.refusal = _game_state_image_refusal_memory;
+		image_free(writer.element);
 		image_free(writer.references);
 		image_free(writer.chunk);
 		image_free(writer.literal);
@@ -1166,7 +1346,7 @@ static boolean image_write_or_measure(
 		switch (allocation->kind)
 		{
 		case _game_state_image_data:
-			writer_data_array(&writer, allocation->offset, allocation->encoding);
+			writer_data_array(&writer, allocation, allocation->offset, allocation->encoding);
 			break;
 		case _game_state_image_memory_pool:
 			writer_memory_pool(&writer, allocation);
@@ -1196,6 +1376,7 @@ static boolean image_write_or_measure(
 	success = !writer.failed;
 	if (!success)
 		image_report.refusal = _game_state_image_refusal_read;
+	image_free(writer.element);
 	image_free(writer.references);
 	image_free(writer.chunk);
 	image_free(writer.literal);
@@ -1306,6 +1487,31 @@ static boolean reader_segment(
 	return TRUE;
 }
 
+/* a declared pointer word of a global (in this port's order): its place
+made a pointer; a union's value that is no place kept */
+static boolean reader_declared_word(
+	struct image_reader *reader,
+	byte *field,
+	short kind,
+	long at)
+{
+	image_word word;
+	long place;
+	boolean valid;
+
+	csmemcpy(&word, field, sizeof(word));
+	if (kind == _game_state_image_pointer_or_value && (word & POINTER_TAG_MASK) != POINTER_TAG &&
+		(word & POINTER_TAG_MASK) != TAG_POINTER_TAG)
+	{
+		return TRUE;
+	}
+	reader->allow_tag_pointers = TRUE;
+	valid = reader_pointer_field(reader, field, &place, at);
+	reader->allow_tag_pointers = FALSE;
+
+	return valid;
+}
+
 /* the game state's next size bytes (whole words) at offset: into bytes,
 each word in this port's order, or (bytes NULL) only checked */
 static boolean reader_words(
@@ -1329,6 +1535,12 @@ static boolean reader_words(
 		{
 			if (bytes)
 				csmemset(bytes + done, 0, (unsigned long)words * 4);
+			/* (a declared pointer word among them is none) */
+			while (reader->next_pointer_word < reader->layout->pointer_word_count &&
+				reader->layout->pointer_words[reader->next_pointer_word].offset < offset + done + words * 4)
+			{
+				reader->next_pointer_word++;
+			}
 		}
 		else
 		{
@@ -1337,11 +1549,25 @@ static boolean reader_words(
 			for (index = 0; index < words; index++)
 			{
 				byte word[4];
+				byte field[4];
 
 				if (!reader_payload(reader, word, 4))
 					return FALSE;
+				put_native_word(field, get_le32(word));
+				while (reader->next_pointer_word < reader->layout->pointer_word_count &&
+					reader->layout->pointer_words[reader->next_pointer_word].offset < offset + done + index * 4)
+				{
+					reader->next_pointer_word++;
+				}
+				if (reader->next_pointer_word < reader->layout->pointer_word_count &&
+					reader->layout->pointer_words[reader->next_pointer_word].offset == offset + done + index * 4 &&
+					!reader_declared_word(reader, field, reader->layout->pointer_words[reader->next_pointer_word].kind,
+						offset + done + index * 4))
+				{
+					return FALSE;
+				}
 				if (bytes)
-					put_native_word(bytes + done + index * 4, get_le32(word));
+					csmemcpy(bytes + done + index * 4, field, 4);
 			}
 		}
 		reader->segment_left -= words;
@@ -1384,6 +1610,15 @@ static boolean reader_pointer_field(
 		*offset = (long)(word & POINTER_OFFSET_MASK);
 		pointer = reader->layout->base + *offset;
 		reader->report->pointers++;
+	}
+	else if (reader->allow_tag_pointers && (word & POINTER_TAG_MASK) == TAG_POINTER_TAG &&
+		(word & POINTER_OFFSET_MASK) < (image_word)reader->layout->tags_size)
+	{
+		/* (into the tag cache: only where a unit declared one) */
+		*offset = NONE;
+		pointer = reader->layout->tags + (word & POINTER_OFFSET_MASK);
+		reader->report->pointers++;
+		reader->report->tag_pointers++;
 	}
 	else if (reader->base_bound && reader->save_base == (unsigned long)reader->layout->base)
 	{
@@ -1476,6 +1711,7 @@ static boolean reader_script_thread(
 
 static boolean reader_data_array(
 	struct image_reader *reader,
+	struct game_state_image_allocation const *allocation,
 	long offset,
 	short maximum_count,
 	short element_size,
@@ -1492,6 +1728,34 @@ static boolean reader_data_array(
 	}
 	if (reader->taking)
 		csmemcpy(reader->layout->base + offset, &header, sizeof(header));
+	if (allocation && allocation->pointer_field_count)
+	{
+		for (index = 0; index < maximum_count; index++)
+		{
+			long element_offset = elements + index * element_size;
+			short identifier;
+			short field;
+
+			if (!reader_words(reader, reader->element, element_offset, element_size))
+				return FALSE;
+			csmemcpy(&identifier, reader->element, sizeof(identifier));
+			for (field = 0; index < header.count && identifier && field < allocation->pointer_field_count; field++)
+			{
+				long place;
+				boolean valid;
+
+				reader->allow_tag_pointers = TRUE;
+				valid = reader_pointer_field(reader, reader->element + allocation->pointer_fields[field], &place,
+					element_offset);
+				reader->allow_tag_pointers = FALSE;
+				if (!valid)
+					return FALSE;
+			}
+			if (reader->taking)
+				csmemcpy(reader->layout->base + element_offset, reader->element, (unsigned long)element_size);
+		}
+		return TRUE;
+	}
 	if (encoding != _game_state_image_encoding_script_threads)
 		return reader_take(reader, elements, (long)maximum_count * element_size);
 	for (index = 0; index < maximum_count; index++)
@@ -1608,7 +1872,7 @@ static boolean reader_lruv_cache(
 	if (reader->taking)
 		csmemcpy(reader->layout->base + allocation->offset, &header, sizeof(header));
 
-	return reader_data_array(reader, blocks, allocation->maximum_count, sizeof(struct lruv_cache_block),
+	return reader_data_array(reader, NULL, blocks, allocation->maximum_count, sizeof(struct lruv_cache_block),
 		_game_state_image_encoding_plain);
 }
 
@@ -1685,6 +1949,7 @@ static boolean reader_pass(
 	reader->segment_left = 0;
 	reader->segment_zero = FALSE;
 	reader->state_words_left = state_bytes / 4;
+	reader->next_pointer_word = 0;
 	sha256_begin(&reader->sha);
 	if (!reader->chunk_checksums)
 	{
@@ -1705,8 +1970,8 @@ static boolean reader_pass(
 		switch (allocation->kind)
 		{
 		case _game_state_image_data:
-			valid = reader_data_array(reader, allocation->offset, allocation->maximum_count, allocation->element_size,
-				allocation->encoding);
+			valid = reader_data_array(reader, allocation, allocation->offset, allocation->maximum_count,
+				allocation->element_size, allocation->encoding);
 			break;
 		case _game_state_image_memory_pool:
 			valid = reader_memory_pool(reader, allocation);
@@ -1796,7 +2061,8 @@ static short image_read(
 	else
 	{
 		reader.chunk = image_allocate(GAME_STATE_IMAGE_CHUNK_BYTES);
-		if (!reader.chunk)
+		reader.element = image_allocate(image_largest_pointer_element(layout));
+		if (!reader.chunk || !reader.element)
 		{
 			reader_refuse(&reader, _game_state_image_refusal_memory, 0);
 		}
@@ -1833,6 +2099,7 @@ static short image_read(
 	image_report.refusal = reader.refusal;
 	image_report.refusal_offset = reader.refusal_offset;
 	image_free(reader.chunk_checksums);
+	image_free(reader.element);
 	image_free(reader.chunk);
 
 	return result;

@@ -24,6 +24,9 @@ enum
 	GAME_STATE_IMAGE_HEADER_BYTES = 512,
 	GAME_STATE_IMAGE_CHUNK_HEADER_BYTES = 16,
 	GAME_STATE_IMAGE_CHUNK_BYTES = 0x10000,
+	/* pointer fields a data array's elements may declare
+	(game_state_port_data_pointer_field) */
+	GAME_STATE_IMAGE_MAXIMUM_POINTER_FIELDS = 4,
 };
 
 enum game_state_image_allocation_kind
@@ -31,6 +34,23 @@ enum game_state_image_allocation_kind
 	_game_state_image_data,
 	_game_state_image_memory_pool,
 	_game_state_image_lruv_cache,
+};
+
+/* a pointer word of the game state outside its data arrays, memory pools
+and lruv caches (game_state_port_pointer_field) */
+enum game_state_image_pointer_kind
+{
+	/* none, or into the game state or the tag cache */
+	_game_state_image_pointer,
+	/* a union's word: such a pointer, or a value that reads as none of them
+	(hud_messaging.c's icon or text) */
+	_game_state_image_pointer_or_value,
+};
+
+struct game_state_image_pointer_word
+{
+	long offset; /* from the game state's base, 4-aligned */
+	short kind;
 };
 
 enum game_state_image_encoding
@@ -103,6 +123,10 @@ struct game_state_image_allocation
 	long page_size_bits;
 	void (*delete_block_proc)(long);
 	boolean (*locked_block_proc)(long);
+	/* a data array's: the byte offsets in each element in use of pointers
+	into the game state or the tag cache */
+	short pointer_field_count;
+	short pointer_fields[GAME_STATE_IMAGE_MAXIMUM_POINTER_FIELDS];
 };
 
 /* the game state as this build makes it */
@@ -113,6 +137,12 @@ struct game_state_image_layout
 	long cpu_used; /* from the base */
 	long gpu_used; /* down from base+size */
 	unsigned long allocation_size_checksum;
+	/* the tag cache, which pointers in the game state may point into */
+	byte *tags;
+	long tags_size;
+	/* the pointer words outside the allocations above, in ascending offset */
+	long pointer_word_count;
+	struct game_state_image_pointer_word const *pointer_words;
 	long allocation_count; /* in ascending offset */
 	struct game_state_image_allocation const *allocations;
 };
@@ -138,7 +168,8 @@ struct game_state_image_report
 	unsigned long chunks;
 	unsigned long chunk_bytes;
 	unsigned long digest[8]; /* SHA-256 of the payload, as eight big-endian words */
-	unsigned long pointers;          /* pointers made places in the game state */
+	unsigned long pointers;          /* pointers made places in the game state or the tag cache */
+	unsigned long tag_pointers;      /* of those, places in the tag cache */
 	unsigned long references;        /* memory pool blocks' references made again from their blocks */
 	unsigned long script_threads;
 	unsigned long foreign_pointers;  /* pointers outside the game state, kept as they are */

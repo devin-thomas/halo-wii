@@ -61,6 +61,7 @@ symbols in this file:
 #include "rasterizer/rasterizer_cinematics.h"
 #include "rasterizer/rasterizer_globals_internal.h"
 #include "saved games/game_state.h"
+#include "saved games/game_state_image.h"
 
 /* ---------- constants */
 
@@ -127,6 +128,14 @@ void rasterizer_screen_effects_initialize(
 		"c:\\halo\\SOURCE\\rasterizer\\rasterizer_cinematics.c",
 		54,
 		cinematic_screen_effect_globals);
+	/* port (HWI-076): the screen effect's bitmaps are in the tag cache; the
+	saved game's image writes them as places there */
+	if (cinematic_screen_effect_globals)
+	{
+		game_state_port_pointer_field(&cinematic_screen_effect_globals->parameters.convolution_mask, _game_state_image_pointer);
+		game_state_port_pointer_field(&cinematic_screen_effect_globals->parameters.video_scanline_map, _game_state_image_pointer);
+		game_state_port_pointer_field(&cinematic_screen_effect_globals->parameters.video_noise_map, _game_state_image_pointer);
+	}
 
 	return;
 }

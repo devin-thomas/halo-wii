@@ -53,6 +53,12 @@ boolean game_state_test_persistent_storage(
 written, checked whole and then taken (with the before-load procedures run
 between), or only checked */
 struct game_state_image_file;
+void game_state_port_data_pointer_field(
+	struct data_array *data,
+	short offset);
+void game_state_port_pointer_field(
+	void const *field,
+	short kind);
 boolean game_state_port_image_write(
 	struct game_state_image_file const *file);
 short game_state_port_image_load(

@@ -163,6 +163,7 @@ static void event_from_report(
 	event->chunk_bytes = report->chunk_bytes;
 	event->peak_bytes = report->peak_bytes;
 	event->pointers = report->pointers;
+	event->tag_pointers = report->tag_pointers;
 	event->references = report->references;
 	event->script_threads = report->script_threads;
 	event->foreign_pointers = report->foreign_pointers;

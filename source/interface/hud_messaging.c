@@ -138,6 +138,7 @@ symbols in this file:
 #include "render/render.h"
 #include "render/render_debug.h"
 #include "saved games/game_state.h"
+#include "saved games/game_state_image.h"
 #include "scenario/scenario.h"
 #include "scenario/scenario_definitions.h"
 #include "tag_files/tag_groups.h"
@@ -579,6 +580,25 @@ void hud_messaging_initialize(
 		"hud messaging",
 		NULL,
 		sizeof(*hud_messaging_globals));
+	/* port (HWI-076): the messages' places in the tag cache, which the saved
+	game's image writes as places there; an info word is an icon's or a
+	text's (a short index and flags, never such a place) */
+	{
+		long datum;
+		long info;
+
+		for (datum = 0; datum < NUMBER_OF_HUD_MESSAGING_DATUMS; datum++)
+		{
+			struct hud_state_message_runtime_definition *state_message =
+				&hud_messaging_globals->message_data[datum].state_message;
+
+			for (info = 0; info < NUMBEROF(state_message->info); info++)
+				game_state_port_pointer_field(&state_message->info[info].icon, _game_state_image_pointer_or_value);
+			game_state_port_pointer_field(&state_message->state_message, _game_state_image_pointer);
+		}
+		game_state_port_pointer_field(&hud_messaging_globals->help_message, _game_state_image_pointer);
+		game_state_port_pointer_field(&hud_messaging_globals->objective.message, _game_state_image_pointer);
+	}
 	return;
 }
 

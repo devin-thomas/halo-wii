@@ -619,6 +619,15 @@ void effects_initialize(
 	/* the native builds' larger effect pools (halo_port_capacity.h); a full
 	pool drops deterministic effects, damage included */
 	effect_data = game_state_data_new("effect", HALO_PORT_MAXIMUM_EFFECTS, 0xFC);
+	/* port (HWI-076): an effect's impulse field's procedures and their data
+	(none, as the game sets them); the saved game's image would bind one to
+	its base */
+	if (effect_data)
+	{
+		game_state_port_data_pointer_field(effect_data, offsetof(struct effect_datum, impulse_field.user_data));
+		game_state_port_data_pointer_field(effect_data, offsetof(struct effect_datum, impulse_field.translational_function));
+		game_state_port_data_pointer_field(effect_data, offsetof(struct effect_datum, impulse_field.angular_function));
+	}
 	effect_location_data = game_state_data_new("effect location", HALO_PORT_MAXIMUM_EFFECT_LOCATIONS, 0x3C);
 	if (!effect_data || !effect_location_data)
 		error(_error_immediate, "couldn't allocate effect globals");
