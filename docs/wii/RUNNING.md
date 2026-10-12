@@ -38,6 +38,8 @@ What one invocation does:
    emulation speed, single-core, 1x internal resolution, a standard GC
    controller on port 1, Wii remotes disabled, a writable emulated SD card
    with folder sync off. `--efb-access` adds CPU EFB peeks for GX self-checks.
+   By default no host input device is mapped anywhere; see
+   [focus- and keyboard-safe launch](#focus--and-keyboard-safe-launch-hwi-077).
 3. Authors a DTM from the JSON pad script (one entry per controller poll).
    Dolphin derives a DOL's game ID from its file name (`ID-` plus the stem,
    compared on six bytes) and silently ignores a movie whose ID differs, so
@@ -80,11 +82,64 @@ follow the honest-timing rule in
 [concurrent lanes](BUILDING.md#concurrent-dolphin-lanes-hwi-073). The runner's
 own process check is a guard, not a lock.
 
+### Focus- and keyboard-safe launch (HWI-077)
+
+Dolphin runs on desktops that people are using. By default the runner keeps
+it from taking the foreground, keyboard focus or any input device, on both
+hosts:
+
+- **Input:** every input config (GC pads, GC keyboards, GBA, free look,
+  hotkeys, Wii remotes) is written bound to an absent device
+  (`None/0/No Device`). Every control that Dolphin 2609 binds by default is
+  written with an empty expression, listed in
+  [`dolphin_controls.json`](../../tools/wii/dolphin_controls.json); this
+  includes all 144 hotkeys, such as Escape for Stop. Without these files
+  Dolphin maps the keyboard to GC pad 1 and to its hotkeys.
+  `BackgroundInput`, pause-on-focus-loss, always-on-top and fullscreen are
+  off. All emulated input comes from the DTM.
+- **macOS launch environment:** `QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM=1`
+  and `QT_MAC_SET_RAISE_PROCESS=0` stop Qt from activating the process.
+  `SDL_JOYSTICK_MFI=0` stops SDL from opening a GameController HID client.
+  Windows keeps its hidden-window launch (STARTUPINFO `SW_HIDE`).
+- **Focus guard:** a helper thread in the runner samples every 0.25 s. On
+  macOS it reads the frontmost application with `lsappinfo`, and this run's
+  hidden and active state through `NSRunningApplication` (ctypes). On
+  Windows it reads `GetForegroundWindow` and `GetGUIThreadInfo`.
+  - On macOS it hides this run's Dolphin as soon as it registers.
+  - On either host it stops this run's Dolphin if it is ever frontmost,
+    active, or holds keyboard focus. The root is stopped through its own
+    process handle; a descendant is stopped only by explicit PID from the
+    runner's own tree.
+  - Another lane's Dolphin, or any other application, is only counted.
+  - If the guard cannot start, the runner refuses to launch.
+  - `--focus-guard observe` samples only; `--focus-guard off` disables it.
+- **Audio:** off by default on macOS (`--audio` turns it on), unchanged on
+  Windows (`--no-audio` turns it off). The guest's DSP is emulated either
+  way; only the host output changes.
+
+Each run records `focus_guard`: the sample counts, `own_frontmost`,
+`own_active`, `own_keyboard_focus`, hide requests, other lanes' Dolphins
+seen frontmost, and whether the guard stopped Dolphin. It also records
+`input_binding_audit`, which reads back the input configs Dolphin actually
+saved and lists any bound device or control (`no_input_bound` is the clean
+result).
+
+The batch's `focus_safety` object lists the added environment variables and
+`Dolphin.ini` settings, the input files and the controls file hash.
+
+A guard stop is host outcome `focus_guard_stop` and guest failure
+`focus_guard_stop_before_natural_exit`, and later launches are skipped.
+
+`--no-focus-safe` writes the earlier profile byte for byte, for comparison
+only. Guest output is byte-identical with and without these changes; see
+[the focus-safe runner record](evidence/2026-10-11-focus-safe-runner.md).
+
 Unit tests for the pure parts (DTM authoring, profile generation, FAT32
-read-back, staging commands, event classification, scenario checks):
+read-back, staging commands, event classification, scenario checks, PID-scoped
+lanes, and the focus guard with mocked focus queries):
 
 ```powershell
-python -B -m unittest discover -s tools/wii -p test_run_dolphin.py
+python -B -m unittest discover -s tools/wii -p "test_run_dolphin*.py"
 ```
 
 ### macOS lane
@@ -113,8 +168,12 @@ Differences from Windows:
 - Process ownership and the exclusivity check use `ps`; staging runs native mtools.
 - Launch: Dolphin is executed directly by the runner, which keeps the real
   exit status, stdout/stderr and timeout control. This works from an SSH
-  session as long as the same user has an active desktop login session; the
-  render window appears on that desktop. `open -W -n` was not used because it
+  session as long as the same user has an active desktop login session. With
+  the default focus guard the process is hidden on that desktop as soon as it
+  registers and never becomes frontmost (see
+  [focus- and keyboard-safe launch](#focus--and-keyboard-safe-launch-hwi-077)).
+  It still has a Dock icon and a Cmd-Tab entry; switching to it on purpose
+  gets it stopped. `open -W -n` was not used because it
   loses the exit status. A host with no desktop login session is untested.
 - `--user` keeps all Dolphin state in the new profile; no global Dolphin
   configuration is created in the user's Library.
