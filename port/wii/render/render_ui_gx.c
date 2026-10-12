@@ -69,7 +69,7 @@ static struct {
     unsigned long alpha_planes;
     unsigned long loads, load_failures, evictions, quads, text_quads, failed_draws;
     /* HWI-033 */
-    unsigned long plasma_quads, plasma_stages, minmax_quads, minmax_tiles;
+    unsigned long plasma_quads, plasma_stages, minmax_quads, minmax_tiles, minmax_no_memory;
     unsigned long long load_us;
 } ui;
 
@@ -486,10 +486,12 @@ pixel in three compare stages after the source's, and the result replaces
 the pixel (GX_BM_NONE): min = (s > d ? d : 0) + (d > s ? s : 0) + (s == d ? s : 0)
 per channel, max the same with the other operand taken; exact on 8 bits. A
 quad is drawn in tiles of at most MINMAX_TILE pixels square, each with its
-own copy, so a later quad reads what an earlier one wrote. */
+own copy, so a later quad reads what an earlier one wrote. The copy is a
+heap block taken for the draw and given back after it: MEM1 is the menus'
+texture cache's (a static buffer cost a 512x512 menu bitmap its place). */
 
-#define MINMAX_TILE 128
-static unsigned char minmax_copy[MINMAX_TILE * MINMAX_TILE * 4] __attribute__((aligned(32)));
+#define MINMAX_TILE 64
+static unsigned char *minmax_copy;
 
 /* the three compare stages from stage on; the destination texel at texcoord */
 static int minmax_stages(u8 stage, u8 texcoord, int maximum)
@@ -612,6 +614,13 @@ void wii_ui_gx_quads(const struct wii_ui_draw *draw, const struct wii_ui_vertex 
     if (minmax) {
         /* each quad, tile by tile, against its own copy of the destination */
         u8 texcoord = t ? GX_TEXCOORD1 : GX_TEXCOORD0;
+        minmax_copy = memalign(32, MINMAX_TILE * MINMAX_TILE * 4);
+        if (!minmax_copy) {
+            ui.minmax_no_memory++;
+            ui.failed_draws++;
+            GX_SetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
+            return;
+        }
         stages += minmax_stages((u8)(GX_TEVSTAGE0 + stages), texcoord, draw->blend == WII_UI_BLEND_MAX);
         GX_SetNumTevStages((u8)stages);
         for (int q = 0; q < quad_count; ++q) {
@@ -632,6 +641,9 @@ void wii_ui_gx_quads(const struct wii_ui_draw *draw, const struct wii_ui_vertex 
                 }
         }
         GX_SetScissor((u32)ui.window_x0, (u32)ui.window_y0, (u32)ui.window_w, (u32)ui.window_h);
+        GX_DrawDone();
+        free(minmax_copy);
+        minmax_copy = NULL;
         ui.minmax_quads += (unsigned long)quad_count;
     } else {
         GX_SetNumTevStages((u8)stages);
@@ -1137,8 +1149,9 @@ void wii_ui_gx_report(void)
         tags += ui.textures[i].kind == TEXTURE_TAG;
     wii_log("BOOT_UI_GX_TOTALS frames=%lu quads=%lu text_quads=%lu loads=%lu load_failures=%lu evictions=%lu "
             "resident=%lu resident_peak=%lu budget=%lu tag_textures_now=%d alpha_planes=%lu load_ms=%llu "
-            "plasma_quads=%lu plasma_stages=%lu minmax_quads=%lu minmax_tiles=%lu failed_draws=%lu\n",
+            "plasma_quads=%lu plasma_stages=%lu minmax_quads=%lu minmax_tiles=%lu minmax_no_memory=%lu "
+            "failed_draws=%lu\n",
             ui.frame, ui.quads, ui.text_quads, ui.loads, ui.load_failures, ui.evictions, ui.resident, ui.resident_peak,
             ui.budget, tags, ui.alpha_planes, ui.load_us / 1000ull, ui.plasma_quads, ui.plasma_stages, ui.minmax_quads,
-            ui.minmax_tiles, ui.failed_draws);
+            ui.minmax_tiles, ui.minmax_no_memory, ui.failed_draws);
 }

@@ -177,21 +177,30 @@ static void hex_of(const unsigned char digest[32], char out[65])
 /* the SHA-256 of a file on the card, streamed; 0 if it cannot be read */
 static int file_sha256(const char *path, unsigned long *bytes, char out[65])
 {
-    static unsigned char chunk[64 * 1024] __attribute__((aligned(32)));
+    /* (HWI-033: a heap block for the hash only, given back: a static 64 KiB
+    stayed out of the menus' MEM1 for the whole launch) */
+    enum { CHUNK = 64 * 1024 };
+    unsigned char *chunk;
     struct content_sha256 context;
     unsigned char digest[32];
     FILE *file = fopen(path, "rb");
     size_t got;
     if (!file)
         return 0;
+    chunk = memalign(32, CHUNK);
+    if (!chunk) {
+        fclose(file);
+        return 0;
+    }
     content_sha256_init(&context);
     *bytes = 0;
-    while ((got = fread(chunk, 1, sizeof(chunk), file)) > 0) {
+    while ((got = fread(chunk, 1, CHUNK, file)) > 0) {
         content_sha256_update(&context, chunk, got);
         *bytes += (unsigned long)got;
     }
     int ok = !ferror(file);
     fclose(file);
+    free(chunk);
     content_sha256_final(&context, digest);
     hex_of(digest, out);
     return ok;
