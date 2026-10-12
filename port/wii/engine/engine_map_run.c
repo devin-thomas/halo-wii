@@ -17,6 +17,7 @@ fixed_step_scenario.h, real_map_scenario.h and cache_files_wii.h.
 #include "real_map_scenario.h"
 #include "cache_files_wii.h"
 #include "save_image_scenario.h"
+#include "../sound/wii_sound.h"
 
 #define FIXED_STEP_SEED 0x48574931UL /* "HWI1", as HWI-015A */
 #define FIXED_STEP_DIGEST 0xc1ad6ae6UL
@@ -87,6 +88,11 @@ static unsigned long reference_digests[REAL_MAP_MAXIMUM_TICKS];
 static unsigned long reference_raw_digests[REAL_MAP_MAXIMUM_TICKS];
 static const char *current_map = "";
 static int progress_logging;
+/* (HWI-074) the plan's sound line, if it has one */
+static int plan_sound;
+/* the plan's line before which the sound starts (the lines above it run without) */
+static int plan_sound_line;
+static struct wii_sound_map_options plan_sound_options;
 
 /* the frame times of a run paced by the vertical retrace, logged so the host
 can replay them (VSYNC_DT lines) */
@@ -500,6 +506,39 @@ static int parse_line(char *text, int default_cycles, struct map_line *line)
 		(line->image_test_tick >= 0 && line->image_test_tick < line->ticks);
 }
 
+/* (HWI-074) "sound [listener=player|observer] [verify=0|1] [events=0|1]
+[couplings=presentation|original]":
+the engine's sound for the whole plan (wii_sound.h); 0 if not understood */
+static int parse_sound_line(char *text)
+{
+	char *word;
+
+	memset(&plan_sound_options, 0, sizeof(plan_sound_options));
+	plan_sound_options.listener_follows_player = 1;
+	plan_sound_options.events = 1;
+	strtok(text, " \t");
+	for (word = strtok(NULL, " \t"); word; word = strtok(NULL, " \t"))
+	{
+		char *value = strchr(word, '=');
+
+		if (!value)
+			return 0;
+		*value++ = 0;
+		if (!strcmp(word, "listener") && (!strcmp(value, "player") || !strcmp(value, "observer")))
+			plan_sound_options.listener_follows_player = !strcmp(value, "player");
+		else if (!strcmp(word, "verify"))
+			plan_sound_options.verify_decode = (int)strtol(value, NULL, 10);
+		else if (!strcmp(word, "events"))
+			plan_sound_options.events = (int)strtol(value, NULL, 10);
+		else if (!strcmp(word, "couplings") && (!strcmp(value, "presentation") || !strcmp(value, "original")))
+			plan_sound_options.game_couplings = !strcmp(value, "original");
+		else
+			return 0;
+	}
+	plan_sound = 1;
+	return 1;
+}
+
 /* the plan's lines; -1 if a line is not understood */
 static int parse_plan(const char *plan, int default_cycles)
 {
@@ -521,6 +560,16 @@ static int parse_plan(const char *plan, int default_cycles)
 			line[--length] = 0;
 		if (!length || line[0] == '#')
 			continue;
+		if (!strncmp(line, "sound", 5) && (line[5] == 0 || line[5] == ' ' || line[5] == '\t'))
+		{
+			plan_sound_line = count;
+			if (!parse_sound_line(line))
+			{
+				wii_log("PLAN error line=%d (sound)\n", count + 1);
+				return -1;
+			}
+			continue;
+		}
 		if (count >= ENGINE_MAP_RUN_MAXIMUM_LINES || !parse_line(line, default_cycles, &plan_lines[count]))
 		{
 			wii_log("PLAN error line=%d\n", count + 1);
@@ -608,6 +657,7 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 	if (!real_map_begin(reference ? NULL : reference_raw_digests, line->ticks))
 		return 0;
 	vsync_frame_count = 0;
+	wii_sound_map_run_begin();
 	if (cadence == _cadence_vsync && config->vsync_begin)
 		config->vsync_begin(config->context);
 	started = wii_time_microseconds();
@@ -615,6 +665,7 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 		frame++;
 	*milliseconds = (unsigned long)((wii_time_microseconds() - started) / 1000ULL);
 	real_map_end(result);
+	wii_sound_map_run_end(line->name, cycle, cadence_names[cadence]);
 	progress_logging = 0;
 	if (trace_count)
 		trace_flush();
@@ -950,6 +1001,7 @@ int engine_map_run(
 	report->fixed_step_pass = run_fixed_step();
 	if (!report->fixed_step_pass)
 		report->failures++;
+	plan_sound = 0;
 	lines = parse_plan(config->plan, config->cycles);
 	if (lines <= 0)
 	{
@@ -961,6 +1013,13 @@ int engine_map_run(
 	{
 		const struct map_line *line = &plan_lines[index];
 
+		/* (HWI-074) the engine's sound, once, before the line the plan's
+		sound line precedes: the lines above it run without sound */
+		if (plan_sound && index == plan_sound_line && !wii_sound_map_start(&plan_sound_options))
+		{
+			report->failures++;
+			wii_log("FAIL sound_start\n");
+		}
 		if (line->failure)
 			run_failure(line, report);
 		else if (!run_map(config, line, maps++ == 0, report))

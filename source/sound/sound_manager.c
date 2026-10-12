@@ -1591,7 +1591,7 @@ static long update_potentially_audible_looping_sound(
 						definition->random_pitch_bounds.lower;
 
 					sound->pitch = real_seed_random_range(
-						get_global_local_random_seed_address(),
+						get_sound_random_seed_address(),
 						pitch_lower_bound,
 						pitch_upper_bound);
 				}
@@ -1771,7 +1771,7 @@ static real sound_scale_random_value(
 	real scale)
 {
 	real base = real_seed_random_range(
-		get_global_local_random_seed_address(),
+		get_sound_random_seed_address(),
 		base_lower_bound,
 		base_upper_bound);
 
@@ -2441,7 +2441,7 @@ long sound_new_impulse(
 			if (source->scale != 0.f || definition->zero_gain_modifier != 0.f)
 			{
 				real random = real_seed_random(
-					get_global_local_random_seed_address());
+					get_sound_random_seed_address());
 
 				if (random > sound_scale_value(
 					definition->skip_fraction,
@@ -3127,7 +3127,8 @@ static void process_looping_sounds(
 					lower_scale = definition->scale_lower_bound.detail_period;
 					period_upper_bound = detail->period_bounds.upper;
 					period_lower_bound = detail->period_bounds.lower;
-					period = real_local_random_range(
+					period = real_seed_random_range(
+						get_sound_random_seed_address(),
 						period_lower_bound,
 						period_upper_bound);
 
@@ -3828,7 +3829,8 @@ static void detail_sound_random_offset(
 	struct looping_sound_detail const *detail,
 	real_vector3d *offset)
 {
-	real distance = real_local_random_range(
+	real distance = real_seed_random_range(
+		get_sound_random_seed_address(),
 		detail->distance_bounds.lower,
 		detail->distance_bounds.upper);
 
@@ -3836,10 +3838,12 @@ static void detail_sound_random_offset(
 	{
 		real_euler_angles2d angles;
 
-		angles.pitch = real_local_random_range(
+		angles.pitch = real_seed_random_range(
+			get_sound_random_seed_address(),
 			detail->phi_bounds.lower,
 			detail->phi_bounds.upper);
-		angles.yaw = real_local_random_range(
+		angles.yaw = real_seed_random_range(
+			get_sound_random_seed_address(),
 			detail->theta_bounds.lower,
 			detail->theta_bounds.upper);
 		vector3d_from_euler_angles2d(offset, &angles);

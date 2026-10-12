@@ -847,6 +847,16 @@ apart from the frames' (random_math.c) */
 void local_random_tick_begin(void);
 void local_random_tick_end(void);
 unsigned long *get_tick_local_random_seed_address(void);
+/* port (HWI-074): with HALO_SOUND_RANDOM_STREAM (the Wii build and its i686
+host reference), the sound manager's local random numbers are a stream of
+their own, apart from the ticks' and the frames' (random_math.c); elsewhere
+they are the local stream, as before */
+unsigned long *get_sound_local_random_seed_address(void);
+#if defined(HALO_SOUND_RANDOM_STREAM) && HALO_SOUND_RANDOM_STREAM
+#define get_sound_random_seed_address() get_sound_local_random_seed_address()
+#else
+#define get_sound_random_seed_address() get_global_local_random_seed_address()
+#endif
 void random_seed_debug_log(
 	boolean log);
 void random_math_initialize(

@@ -150,6 +150,8 @@ def main() -> int:
                         help="(HWI-076) copy a file into the run's card before it starts, such as a core saved by "
                              "another run: FILE=sd:/halo-wii-engine/data/core/core.bin")
     parser.add_argument("--dump", help="<allocation index>:<tick>: dump that allocation after that tick (diagnosis)")
+    parser.add_argument("--sound-capture", type=Path,
+                        help="(HWI-074) write the plan's sound mix here (raw 16-bit LE stereo, 48 kHz; private)")
     args = parser.parse_args()
     out = args.build.resolve()
     program = out / "engine_map_host" if args.no_build else build(out)
@@ -168,6 +170,10 @@ def main() -> int:
         for staged in sorted(directory.glob("*.le.wmap")):
             copies.append(f"cp {sh(wsl(staged.resolve()))} "
                           f"{sh(wsl(run_dir) + '/sd:/halo-wii-engine/data/maps/' + staged.name[:-len('.le.wmap')] + '.wmap')}")
+        # (HWI-074) each map's sound pack, the same file as the Wii's
+        for pack in sorted(directory.glob("*.wsnd")):
+            copies.append(f"cp {sh(wsl(pack.resolve()))} "
+                          f"{sh(wsl(run_dir) + '/sd:/halo-wii-engine/data/maps/' + pack.name)}")
         listed = directory / "manifest.le.txt"
         if listed.exists():
             rows = listed.read_text(encoding="ascii").splitlines()
@@ -202,6 +208,7 @@ def main() -> int:
     run = subprocess.run(["wsl", "-d", "Debian", "--", "sh", "-c",
                           f"cd {sh(wsl(run_dir))} && "
                           f"{('HWI015B_DUMP=' + sh(args.dump) + ' ') if args.dump else ''}"
+                          f"{('HWI074_SOUND_CAPTURE=' + sh(wsl(args.sound_capture.resolve())) + ' ') if args.sound_capture else ''}"
                           f"{' '.join(sh(part) for part in command)}"],
                          capture_output=True, text=True)
     seconds = time.perf_counter() - started

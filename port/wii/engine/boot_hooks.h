@@ -86,6 +86,14 @@ same in every launch and on the i686 host, which replays the launch's pad
 input frame by frame. Off (the default), both are the engine's own. */
 void wii_boot_set_frame_clock(int on);
 unsigned long wii_boot_clock_milliseconds(void);
+/* HWI-074: the map run's sound moves the frame clock by its frames' time
+(port/wii/sound/sound_hooks.c); and whether the frame clock is on */
+void wii_boot_advance_frame_clock(unsigned long milliseconds);
+int wii_boot_frame_clock_on(void);
+/* while on, each read of the frame clock (system_milliseconds) moves it a
+millisecond on: an engine loop that waits on the clock ends, under the frame
+clock, as it does in real time (sound_dispose_from_old_map's fade) */
+void wii_boot_frame_clock_advance_on_read(int on);
 
 /* The game state's digests at a boot-mode checkpoint, through the recorded
 allocations (real_map_scenario.h): each allocation's live bytes (a data

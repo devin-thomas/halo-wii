@@ -46,12 +46,13 @@ everything it reaches, so the image is the whole game's
 Everything else the engine links against reports itself: the first call of
 each entry point logs `UNSUPPORTED <subsystem> <name>`, every call is
 counted, and the call fails with its interface's failure value. Unsupported
-now: Direct3D 8 (`render`), DirectSound (`dsound`), XInput and devices
+now: Direct3D 8 (`render`), XInput and devices
 (`input`), Winsock/XNet and internet play (`network`, `p2p`), Bink
 (`bink`), the desktop hooks (`desktop`), the high-resolution HUD/text
 (`hires_assets`), the PC menus (`menus`), the debug monitor (`xbdm`), the
 Xbox hard-disk cache (`cache`), and Custom Edition maps' fixed tag window
-(`custom_edition`).
+(`custom_edition`). DirectSound is the Wii's own software mixer
+(HWI-074, [port/wii/sound](../sound/README.md)).
 
 ## Diagnostic storage left out (HWI-015D)
 
@@ -108,7 +109,9 @@ a truncated or damaged file and a manifest that lists another staging are
 each refused with `MAP_ERROR kind=... text="..."` in the log, saying what to
 copy again; the engine's error is a silent one, so the game does not halt,
 and the next load works. A refused BSP switch keeps the BSP loaded before. Bitmap pixels and sound samples are not
-staged: their reads fail and report `UNSUPPORTED content`.
+staged: their reads fail and report `UNSUPPORTED content`. Once the Wii's sound
+runs (HWI-074), sound samples come from the map's sound pack, `<name>.wsnd`
+([port/wii/sound](../sound/README.md)).
 
 The texture and sound caches (made by the rasterizer's and sound's
 start-up, which do not run) and what feeds them
