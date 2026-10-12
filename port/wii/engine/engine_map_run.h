@@ -15,7 +15,7 @@ print the same report lines (through wii_log):
        [switch_bsp=<tick>:<index>]
        [canonical=every|checkpoints] [invariance=1|0]
        [script=<tick>:<script source, ~ for a space>] [core_save=<tick>]
-       [name=<the runs' name in the log>]
+       [image_test=<tick>] [name=<the runs' name in the log>]
      A map's runs: an unmeasured warm-up run (unless warmup=0; of N ticks
      with warmup=N, N>1), then cycles
      x (load the staged map; run it at each cadence for ticks of the
@@ -33,7 +33,9 @@ print the same report lines (through wii_log):
      rather than failing it. (HWI-034) script= has the script runtime run
      that source after that tick, as switch_bsp= does (one or the other);
      core_save= saves a core after that tick (real_map_set_core_save);
-     name= names the line's runs in the log, so lines of one map compare
+     (HWI-076) image_test= saves a core after that tick and loads damaged
+     copies of it, each of which must be refused with the game state
+     unchanged (save_image_scenario.h); name= names the line's runs in the log, so lines of one map compare
      apart. Defaults:
      300 ticks, the driver's cycles, all six cadences (60hz, 30hz, 20hz,
      144hz, irregular, vsync_measured), a warm-up.
@@ -63,7 +65,7 @@ Only C types: the drivers include it beside libogc or the host's C library.
 #define __HALO_WII_ENGINE_MAP_RUN_H
 
 #define ENGINE_MAP_RUN_CADENCES 6
-#define ENGINE_MAP_RUN_MAXIMUM_LINES 16
+#define ENGINE_MAP_RUN_MAXIMUM_LINES 20 /* (HWI-076: HWI-034's 14 lines and its three save scenarios) */
 
 struct engine_map_run_config
 {

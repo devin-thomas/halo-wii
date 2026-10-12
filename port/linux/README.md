@@ -700,13 +700,19 @@ renamed one) is refused, not copied again for ever. The `loading.tga` a map
 pack may put in the maps folder is read only if it is an uncompressed 24-bit
 picture of 320 by 240, the loading screen's texture.
 
-A checkpoint (`savegame.bin`, in the profile's folder) and a core are
-images of the game state's memory: with the data arrays' pointers to their
-elements, the objects' memory pool's blocks and the references to them, and
-the caches' procedures. Before one is taken, each of those is checked
-against what the game made at startup (`game_state_image_accept` in
-`saved games/game_state.c`): an image that does not match (a damaged or
-crafted file) is refused, and the level starts over.
+A checkpoint (`savegame.bin`), a core and the saved game of "save and
+quit" are canonical game-state images (`saved games/game_state_image.c`,
+HWI-076), on every port: the game state's words, little-endian, with every
+pointer the game reads written as its place in the game state, in 64 KiB
+chunks with a CRC each and a SHA-256 of the whole. A load reads the file
+twice: the first pass checks all of it (the chunks, the digest, and each
+data array, memory pool, block and script thread against what the game made
+at startup) and changes nothing; only then does the second take it, making
+the pointers again at the game state's address. An image that does not
+match (a damaged, cut short or crafted file, or one of another map, build
+or byte order) is refused, and the level starts over. A saved game of a
+build before this format (the game state's memory, written as it was) is
+refused too.
 
 ## What operates
 

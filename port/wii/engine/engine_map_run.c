@@ -16,6 +16,7 @@ fixed_step_scenario.h, real_map_scenario.h and cache_files_wii.h.
 #include "fixed_step_scenario.h"
 #include "real_map_scenario.h"
 #include "cache_files_wii.h"
+#include "save_image_scenario.h"
 #include "../sound/wii_sound.h"
 
 #define FIXED_STEP_SEED 0x48574931UL /* "HWI1", as HWI-015A */
@@ -77,6 +78,9 @@ struct map_line
 	long script_tick;
 	char script[96];
 	long core_save_tick;
+	/* (HWI-076) image_test=<tick>: damaged copies of a core saved after that
+	tick loaded and refused (save_image_scenario.h) */
+	long image_test_tick;
 };
 
 static struct map_line plan_lines[ENGINE_MAP_RUN_MAXIMUM_LINES];
@@ -219,8 +223,51 @@ static void trace_flush(void)
 	trace_ticks = 0;
 }
 
+/* (HWI-076) each save, load and check of a saved game's image, and the image
+tests' cases, as IMAGE lines; the time from each one's beginning */
+static unsigned long long image_began;
+static unsigned long long image_ended;
+
+static void image_observer(const struct save_image_event *event)
+{
+	static const char *const kinds[] = {"save", "load", "check", "begin", "test", "test_summary"};
+	unsigned long long now = wii_time_microseconds();
+
+	if (event->kind == SAVE_IMAGE_EVENT_BEGIN)
+	{
+		image_began = now;
+		return;
+	}
+	if (event->kind == SAVE_IMAGE_EVENT_END)
+	{
+		image_ended = now;
+		return;
+	}
+	if (event->kind == SAVE_IMAGE_EVENT_SUMMARY)
+	{
+		wii_log("IMAGE_TEST map=%s tick=%ld original_valid=%d cases=%d refused_as_expected=%d intact=%d pass=%d\n",
+			current_map, event->tick, !event->result, event->cases, event->cases_expected, event->cases_intact,
+			!event->result && event->cases == event->cases_expected && event->cases == event->cases_intact);
+		return;
+	}
+	wii_log("IMAGE map=%s event=%s tick=%ld case=%s result=%d refusal=%s at=%ld state_bytes=%lu file_bytes=%lu "
+		"payload_bytes=%lu chunks=%lu chunk_bytes=%lu peak_bytes=%lu pointers=%lu tag_pointers=%lu references=%lu threads=%lu "
+		"foreign=%lu address_like=%lu first_address_like=%ld dead_address_like=%lu passes=%d sha=%08lx%08lx%08lx%08lx%08lx%08lx%08lx%08lx "
+		"state=%08lx same_as_saved=%d reencoded_same=%d intact=%d expected=%d us=%lu check_us=%lu\n",
+		current_map, kinds[event->kind], event->tick, event->test_case ? event->test_case : "-", event->result,
+		event->refusal ? event->refusal : "none", event->refusal_offset, event->state_bytes, event->file_bytes,
+		event->payload_bytes, event->chunks, event->chunk_bytes, event->peak_bytes, event->pointers, event->tag_pointers, event->references,
+		event->script_threads, event->foreign_pointers, event->address_like_words, event->first_address_like_offset,
+		event->address_like_dead_words,
+		event->passes, event->sha[0], event->sha[1], event->sha[2], event->sha[3], event->sha[4], event->sha[5],
+		event->sha[6], event->sha[7], event->state_digest, event->same_as_saved, event->reencoded_same, event->intact,
+		event->expected, event->kind == SAVE_IMAGE_EVENT_TEST ? 0UL : (unsigned long)(image_ended - image_began),
+		event->kind == SAVE_IMAGE_EVENT_TEST ? 0UL : (unsigned long)(now - image_ended));
+}
+
 static void tick_observer(long tick)
 {
+	save_image_scenario_after_tick(tick);
 	if (trace_count)
 		trace_allocations(tick);
 	if (dump_count)
@@ -439,6 +486,8 @@ static int parse_line(char *text, int default_cycles, struct map_line *line)
 		}
 		else if (!strcmp(word, "core_save"))
 			line->core_save_tick = strtol(value, NULL, 10);
+		else if (!strcmp(word, "image_test"))
+			line->image_test_tick = strtol(value, NULL, 10);
 		else if (!strcmp(word, "name"))
 			snprintf(line->name, sizeof(line->name), "%s", value);
 		else
@@ -453,7 +502,8 @@ static int parse_line(char *text, int default_cycles, struct map_line *line)
 	return line->ticks >= 1 && line->ticks <= REAL_MAP_MAXIMUM_TICKS && line->cycles >= 1 && line->cycles <= 8 &&
 		(line->switch_tick >= 0 && line->switch_tick < line->ticks) &&
 		(line->script_tick >= 0 && line->script_tick < line->ticks) && !(line->script_tick && line->switch_tick) &&
-		(line->core_save_tick >= 0 && line->core_save_tick < line->ticks);
+		(line->core_save_tick >= 0 && line->core_save_tick < line->ticks) &&
+		(line->image_test_tick >= 0 && line->image_test_tick < line->ticks);
 }
 
 /* (HWI-074) "sound [listener=player|observer] [verify=0|1] [events=0|1]
@@ -601,6 +651,7 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 	if (line->script_tick)
 		real_map_set_command(line->script_tick, line->script);
 	real_map_set_core_save(line->core_save_tick);
+	save_image_scenario_set_test(line->image_test_tick);
 	progress_logging = reference;
 	real_map_set_canonical_every_tick(line->canonical_every_tick);
 	if (!real_map_begin(reference ? NULL : reference_raw_digests, line->ticks))
@@ -736,6 +787,7 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 		warm_line.switch_tick = 0;
 		warm_line.script_tick = 0;
 		warm_line.core_save_tick = 0;
+		warm_line.image_test_tick = 0;
 		ran = real_map_load(line->scenario_path) &&
 			run_cadence(config, &warm_line, -1, _cadence_30, 0, &warm, &milliseconds);
 
@@ -944,6 +996,7 @@ int engine_map_run(
 	report->whole_identical = 1;
 	report->heap_flat = 1;
 	real_map_set_tick_observer(tick_observer);
+	save_image_scenario_set_observer(image_observer);
 
 	report->fixed_step_pass = run_fixed_step();
 	if (!report->fixed_step_pass)

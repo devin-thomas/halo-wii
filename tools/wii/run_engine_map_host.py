@@ -146,6 +146,9 @@ def main() -> int:
     parser.add_argument("--no-build", action="store_true")
     parser.add_argument("--vsync-from", type=Path,
                         help="a Wii engine.log whose VSYNC_DT frame times the host's retrace-paced runs replay")
+    parser.add_argument("--stage", action="append", default=[], metavar="FILE=PATH",
+                        help="(HWI-076) copy a file into the run's card before it starts, such as a core saved by "
+                             "another run: FILE=sd:/halo-wii-engine/data/core/core.bin")
     parser.add_argument("--dump", help="<allocation index>:<tick>: dump that allocation after that tick (diagnosis)")
     parser.add_argument("--sound-capture", type=Path,
                         help="(HWI-074) write the plan's sound mix here (raw 16-bit LE stereo, 48 kHz; private)")
@@ -180,6 +183,12 @@ def main() -> int:
     (run_dir / "manifest.txt").write_text(header + "\n" + "".join(manifest[key] + "\n" for key in sorted(manifest)),
                                           encoding="ascii", newline="\n")
     copies.append(f"mv {sh(wsl(run_dir / 'manifest.txt'))} {sh(wsl(run_dir) + '/sd:/halo-wii-engine/data/maps/')}")
+    for stage in args.stage:
+        source, _, destination = stage.partition("=")
+        if not destination.startswith("sd:/halo-wii-engine/") or ".." in destination:
+            parser.error(f"--stage {stage}: the path must be under sd:/halo-wii-engine/")
+        target = wsl(run_dir) + "/" + destination
+        copies.append(f"mkdir -p {sh(target.rsplit('/', 1)[0])} && cp {sh(wsl(Path(source).resolve()))} {sh(target)}")
     run = subprocess.run(["wsl", "-d", "Debian", "--", "sh", "-c",
                           f"mkdir -p {sh(wsl(run_dir) + '/sd:/halo-wii-engine/data/maps')} && " + " && ".join(copies)],
                          capture_output=True, text=True)

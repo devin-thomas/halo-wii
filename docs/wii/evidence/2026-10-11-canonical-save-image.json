@@ -1,0 +1,2189 @@
+{
+ "ticket": "HWI-076",
+ "date": "2026-10-11",
+ "decision": "ADR-021, option C: saved games through the canonical pointer-free image",
+ "build": {
+  "source_commit": "8e3d0d84e3ff0104c7ad12d8475a2ad1f300bc7a",
+  "source_dirty": false,
+  "build_id": "a496a5b302fcc6ed",
+  "engine_dol_bytes": 4210208,
+  "engine_dol_sha256": "130dce4da0e3c541091187e743ef786898ba09e264c2553cdf5f0aceea113db6",
+  "later_engine_change": {
+   "commit": "59f70117",
+   "what": "a core whose header does not match is refused instead of halting; not reached by the Dolphin plan"
+  }
+ },
+ "original_path_reference": {
+  "commit": "bae56603",
+  "what": "wii before HWI-076, the same harness"
+ },
+ "format": {
+  "version": 2,
+  "header_bytes": 512,
+  "chunk_payload_bytes": 65536,
+  "chunk_header_bytes": 16,
+  "chunk_checksum": "engine CRC-32 (polynomial 0xEDB88320, start 0xFFFFFFFF, not inverted)",
+  "whole_digest": "SHA-256 of the payload",
+  "zero_run_minimum_words": 3,
+  "literal_maximum_words": 1024,
+  "state_pointer": "0x40000000 + offset",
+  "tag_cache_pointer": "0x80000000 + offset",
+  "byte_order_rule": "32-bit words little-endian; narrower fields keep their place: an image is taken only by a port of the same byte order",
+  "version_1": "the upstream raw image, refused (magic)",
+  "migration": "version 3 (HWI-046): per-field encoding, write generations; reads version 2 of its own byte order through this decoder"
+ },
+ "host_original_vs_canonical": {
+  "evidence": {
+   "lines": 4258,
+   "equal": 4258,
+   "kinds": {
+    "FIXED_STEP": 1,
+    "MAP_LINE": 8,
+    "RUN": 42,
+    "WARMUP": 5,
+    "LOAD": 37,
+    "ALLOC": 2886,
+    "TICKS": 90,
+    "TICKS_RAW": 1131,
+    "RUN_SAME": 37,
+    "EXPECT": 3,
+    "MAP_RUNS": 8,
+    "EXPECT_SIM": 2,
+    "LOAD_FAILURE": 6,
+    "BSP_FAILURE": 1,
+    "MAP_PLAN": 1
+   },
+   "runs": {
+    "prisoner": [
+     [
+      "961a5ec5",
+      -1,
+      0,
+      true
+     ]
+    ],
+    "a10bsp": [
+     [
+      "6fd90bc4",
+      -1,
+      0,
+      true
+     ]
+    ],
+    "a10sw": [
+     [
+      "fb92eccd",
+      -1,
+      0,
+      true
+     ]
+    ],
+    "a10": [
+     [
+      "f752db70",
+      -1,
+      0,
+      true
+     ]
+    ],
+    "a10won": [
+     [
+      "941dc7dd",
+      -1,
+      0,
+      true
+     ]
+    ],
+    "a10reset": [
+     [
+      "941dc7dd",
+      -1,
+      0,
+      true
+     ]
+    ]
+   },
+   "expectations": [
+    "FIXED_STEP cadence=30hz ticks=300 digest=c1ad6ae6 chain=58ce9719 expected=c1ad6ae6/58ce9719 pass=1",
+    "EXPECT map=prisoner simulation_hwi015b=127656ef expected=127656ef pass=1",
+    "EXPECT map=prisoner simulation_hwi015b=127656ef expected=127656ef pass=1",
+    "EXPECT_SIM map=prisoner simulation=961a5ec5 expected=961a5ec5 pass=1",
+    "EXPECT map=prisoner simulation_hwi015b=127656ef expected=127656ef pass=1",
+    "EXPECT_SIM map=prisoner simulation=961a5ec5 expected=961a5ec5 pass=1"
+   ],
+   "images": {
+    "saves": 20,
+    "loads_taken": 0,
+    "loads_same_as_saved": 0,
+    "loads_reencoded_same": 0,
+    "refused_loads": 0,
+    "failed_while_taking": 0,
+    "image_tests": [],
+    "test_refusals": [],
+    "save_payload_bytes": [
+     458652,
+     700624
+    ],
+    "save_file_bytes": [
+     459276,
+     701312
+    ],
+    "save_chunks": [
+     7,
+     11
+    ],
+    "save_peak_bytes": [
+     71684,
+     71684
+    ],
+    "load_peak_bytes": null,
+    "save_us": [
+     26039,
+     34908
+    ],
+    "load_us": null,
+    "load_check_us": null,
+    "pointers": [
+     1306,
+     1306
+    ],
+    "tag_pointers": [
+     0,
+     0
+    ],
+    "references": [
+     358,
+     358
+    ],
+    "foreign_pointers": [
+     0,
+     0
+    ],
+    "dead_address_like": [
+     14,
+     132
+    ]
+   }
+  },
+  "scen": {
+   "lines": 1592,
+   "equal": 1592,
+   "kinds": {
+    "FIXED_STEP": 1,
+    "MAP_LINE": 3,
+    "RUN": 21,
+    "WARMUP": 3,
+    "LOAD": 18,
+    "ALLOC": 1404,
+    "TICKS_RAW": 120,
+    "RUN_SAME": 18,
+    "MAP_RUNS": 3,
+    "MAP_PLAN": 1
+   },
+   "runs": {
+    "a10revert": [
+     [
+      "e825c57b",
+      -1,
+      0,
+      true
+     ]
+    ],
+    "a10loss": [
+     [
+      "ade62b23",
+      -1,
+      0,
+      true
+     ]
+    ],
+    "a10core": [
+     [
+      "9453ab30",
+      -1,
+      0,
+      true
+     ]
+    ]
+   },
+   "expectations": [
+    "FIXED_STEP cadence=30hz ticks=300 digest=c1ad6ae6 chain=58ce9719 expected=c1ad6ae6/58ce9719 pass=1"
+   ],
+   "images": {
+    "saves": 27,
+    "loads_taken": 18,
+    "loads_same_as_saved": 18,
+    "loads_reencoded_same": 18,
+    "refused_loads": 0,
+    "failed_while_taking": 0,
+    "image_tests": [],
+    "test_refusals": [],
+    "save_payload_bytes": [
+     410440,
+     459760
+    ],
+    "save_file_bytes": [
+     411064,
+     460400
+    ],
+    "save_chunks": [
+     7,
+     8
+    ],
+    "save_peak_bytes": [
+     71628,
+     71684
+    ],
+    "load_peak_bytes": [
+     66168,
+     66172
+    ],
+    "save_us": [
+     22750,
+     27805
+    ],
+    "load_us": [
+     12723,
+     51446
+    ],
+    "load_check_us": [
+     56115,
+     59836
+    ],
+    "pointers": [
+     1262,
+     1306
+    ],
+    "tag_pointers": [
+     0,
+     0
+    ],
+    "references": [
+     344,
+     358
+    ],
+    "foreign_pointers": [
+     0,
+     0
+    ],
+    "dead_address_like": [
+     14,
+     105
+    ]
+   }
+  },
+  "all6": {
+   "lines": 1392,
+   "equal": 1392,
+   "kinds": {
+    "FIXED_STEP": 1,
+    "MAP_LINE": 1,
+    "RUN": 7,
+    "WARMUP": 1,
+    "LOAD": 6,
+    "ALLOC": 468,
+    "TICKS_RAW": 900,
+    "RUN_SAME": 6,
+    "MAP_RUNS": 1,
+    "MAP_PLAN": 1
+   },
+   "runs": {
+    "a10": [
+     [
+      "f752db70",
+      -1,
+      0,
+      true
+     ]
+    ]
+   },
+   "expectations": [
+    "FIXED_STEP cadence=30hz ticks=300 digest=c1ad6ae6 chain=58ce9719 expected=c1ad6ae6/58ce9719 pass=1"
+   ],
+   "images": {
+    "saves": 7,
+    "loads_taken": 0,
+    "loads_same_as_saved": 0,
+    "loads_reencoded_same": 0,
+    "refused_loads": 0,
+    "failed_while_taking": 0,
+    "image_tests": [],
+    "test_refusals": [],
+    "save_payload_bytes": [
+     410440,
+     703532
+    ],
+    "save_file_bytes": [
+     411064,
+     704220
+    ],
+    "save_chunks": [
+     7,
+     11
+    ],
+    "save_peak_bytes": [
+     71684,
+     71684
+    ],
+    "load_peak_bytes": null,
+    "save_us": [
+     22624,
+     31433
+    ],
+    "load_us": null,
+    "load_check_us": null,
+    "pointers": [
+     1306,
+     1306
+    ],
+    "tag_pointers": [
+     0,
+     0
+    ],
+    "references": [
+     358,
+     358
+    ],
+    "foreign_pointers": [
+     0,
+     0
+    ],
+    "dead_address_like": [
+     14,
+     127
+    ]
+   }
+  }
+ },
+ "host_image_test": {
+  "saves": 13,
+  "loads_taken": 6,
+  "loads_same_as_saved": 6,
+  "loads_reencoded_same": 6,
+  "refused_loads": 72,
+  "failed_while_taking": 0,
+  "image_tests": [
+   {
+    "map": "a10revert",
+    "tick": "40",
+    "original_valid": "1",
+    "cases": "12",
+    "refused_as_expected": "12",
+    "intact": "12",
+    "pass": "1"
+   },
+   {
+    "map": "a10revert",
+    "tick": "40",
+    "original_valid": "1",
+    "cases": "12",
+    "refused_as_expected": "12",
+    "intact": "12",
+    "pass": "1"
+   },
+   {
+    "map": "a10revert",
+    "tick": "40",
+    "original_valid": "1",
+    "cases": "12",
+    "refused_as_expected": "12",
+    "intact": "12",
+    "pass": "1"
+   },
+   {
+    "map": "a10revert",
+    "tick": "40",
+    "original_valid": "1",
+    "cases": "12",
+    "refused_as_expected": "12",
+    "intact": "12",
+    "pass": "1"
+   },
+   {
+    "map": "a10revert",
+    "tick": "40",
+    "original_valid": "1",
+    "cases": "12",
+    "refused_as_expected": "12",
+    "intact": "12",
+    "pass": "1"
+   },
+   {
+    "map": "a10revert",
+    "tick": "40",
+    "original_valid": "1",
+    "cases": "12",
+    "refused_as_expected": "12",
+    "intact": "12",
+    "pass": "1"
+   }
+  ],
+  "test_refusals": [
+   [
+    "empty",
+    "read",
+    "1",
+    "1"
+   ],
+   [
+    "flip_header",
+    "header_checksum",
+    "1",
+    "1"
+   ],
+   [
+    "flip_payload",
+    "chunk_checksum",
+    "1",
+    "1"
+   ],
+   [
+    "flip_payload_checksum_fixed",
+    "digest",
+    "1",
+    "1"
+   ],
+   [
+    "incomplete",
+    "incomplete",
+    "1",
+    "1"
+   ],
+   [
+    "truncated_half",
+    "read",
+    "1",
+    "1"
+   ],
+   [
+    "truncated_last_byte",
+    "read",
+    "1",
+    "1"
+   ],
+   [
+    "wrong_build",
+    "build",
+    "1",
+    "1"
+   ],
+   [
+    "wrong_byte_order",
+    "byte_order",
+    "1",
+    "1"
+   ],
+   [
+    "wrong_layout",
+    "layout",
+    "1",
+    "1"
+   ],
+   [
+    "wrong_map",
+    "map",
+    "1",
+    "1"
+   ],
+   [
+    "wrong_version",
+    "version",
+    "1",
+    "1"
+   ]
+  ],
+  "save_payload_bytes": [
+   410440,
+   459528
+  ],
+  "save_file_bytes": [
+   411064,
+   460168
+  ],
+  "save_chunks": [
+   7,
+   8
+  ],
+  "save_peak_bytes": [
+   71628,
+   71684
+  ],
+  "load_peak_bytes": [
+   66168,
+   66168
+  ],
+  "save_us": [
+   22348,
+   26439
+  ],
+  "load_us": [
+   12066,
+   17276
+  ],
+  "load_check_us": [
+   56320,
+   59861
+  ],
+  "pointers": [
+   1262,
+   1306
+  ],
+  "tag_pointers": [
+   0,
+   0
+  ],
+  "references": [
+   344,
+   358
+  ],
+  "foreign_pointers": [
+   0,
+   0
+  ],
+  "dead_address_like": [
+   14,
+   105
+  ]
+ },
+ "host_wii_core_refused_equals_no_core": {
+  "lines": 530,
+  "equal": 530,
+  "kinds": {
+   "FIXED_STEP": 1,
+   "MAP_LINE": 1,
+   "LOAD": 6,
+   "RUN": 6,
+   "ALLOC": 468,
+   "TICKS": 20,
+   "TICKS_RAW": 20,
+   "RUN_SAME": 6,
+   "MAP_RUNS": 1,
+   "MAP_PLAN": 1
+  }
+ },
+ "host_cross_placement_census": [
+  {
+   "core": "a10-1",
+   "differing_words": 23,
+   "dead_room": 23,
+   "canonical_digests_equal": false,
+   "pointers": 1306,
+   "blocks": 358,
+   "threads": 105,
+   "payload_bytes": [
+    409724,
+    409724
+   ]
+  },
+  {
+   "core": "a10-30",
+   "differing_words": 114,
+   "dead_room": 114,
+   "canonical_digests_equal": true,
+   "pointers": 1262,
+   "blocks": 344,
+   "threads": 105,
+   "payload_bytes": [
+    425076,
+    425076
+   ]
+  },
+  {
+   "core": "a10-150",
+   "differing_words": 42,
+   "dead_room": 42,
+   "canonical_digests_equal": true,
+   "pointers": 1288,
+   "blocks": 351,
+   "threads": 105,
+   "payload_bytes": [
+    424416,
+    424416
+   ]
+  },
+  {
+   "core": "a10-400",
+   "differing_words": 42,
+   "dead_room": 42,
+   "canonical_digests_equal": true,
+   "pointers": 1290,
+   "blocks": 351,
+   "threads": 105,
+   "payload_bytes": [
+    424736,
+    424736
+   ]
+  },
+  {
+   "core": "a10-1000",
+   "differing_words": 31,
+   "dead_room": 31,
+   "canonical_digests_equal": true,
+   "pointers": 1302,
+   "blocks": 355,
+   "threads": 105,
+   "payload_bytes": [
+    429104,
+    429104
+   ]
+  },
+  {
+   "core": "a10-2000",
+   "differing_words": 38,
+   "dead_room": 38,
+   "canonical_digests_equal": true,
+   "pointers": 1365,
+   "blocks": 375,
+   "threads": 105,
+   "payload_bytes": [
+    451104,
+    451104
+   ]
+  },
+  {
+   "core": "a10-3000",
+   "differing_words": 57,
+   "dead_room": 57,
+   "canonical_digests_equal": true,
+   "pointers": 1360,
+   "blocks": 373,
+   "threads": 105,
+   "payload_bytes": [
+    444964,
+    444964
+   ]
+  },
+  {
+   "core": "a10-4500",
+   "differing_words": 94,
+   "dead_room": 94,
+   "canonical_digests_equal": false,
+   "pointers": 1344,
+   "blocks": 360,
+   "threads": 105,
+   "payload_bytes": [
+    649228,
+    649228
+   ]
+  },
+  {
+   "core": "a10-6000",
+   "differing_words": 104,
+   "dead_room": 104,
+   "canonical_digests_equal": false,
+   "pointers": 1436,
+   "blocks": 390,
+   "threads": 105,
+   "payload_bytes": [
+    701664,
+    701664
+   ]
+  },
+  {
+   "core": "a10-8000",
+   "differing_words": 215,
+   "dead_room": 215,
+   "canonical_digests_equal": false,
+   "pointers": 1510,
+   "blocks": 406,
+   "threads": 105,
+   "payload_bytes": [
+    723468,
+    723468
+   ]
+  },
+  {
+   "core": "a10-8999",
+   "differing_words": 219,
+   "dead_room": 219,
+   "canonical_digests_equal": false,
+   "pointers": 1513,
+   "blocks": 404,
+   "threads": 105,
+   "payload_bytes": [
+    722984,
+    722984
+   ]
+  },
+  {
+   "core": "prisoner-1",
+   "differing_words": 1,
+   "dead_room": 1,
+   "canonical_digests_equal": true,
+   "pointers": 57,
+   "blocks": 5,
+   "threads": 0,
+   "payload_bytes": [
+    56908,
+    56908
+   ]
+  },
+  {
+   "core": "prisoner-299",
+   "differing_words": 1,
+   "dead_room": 1,
+   "canonical_digests_equal": true,
+   "pointers": 57,
+   "blocks": 5,
+   "threads": 0,
+   "payload_bytes": [
+    104504,
+    104504
+   ]
+  }
+ ],
+ "host_cross_placement_loads": {
+  "tick30": {
+   "a": {
+    "load_sha": "d0e33765656d802f",
+    "reencoded_same": "1",
+    "tag_pointers": "0",
+    "raw_chain": "c3d4dc77",
+    "seed": "e0e23bc8"
+   },
+   "b": {
+    "load_sha": "d0e33765656d802f",
+    "reencoded_same": "1",
+    "tag_pointers": "0",
+    "raw_chain": "8e12e360",
+    "seed": "e0e23bc8"
+   },
+   "a4096": {
+    "load_sha": "a6cfcad5add24544",
+    "reencoded_same": "1",
+    "tag_pointers": "0",
+    "raw_chain": "8e12e360",
+    "seed": "e0e23bc8"
+   }
+  },
+  "tick8000": {
+   "a": {
+    "load_sha": "d146871bb2ab97ea",
+    "reencoded_same": "1",
+    "tag_pointers": "1",
+    "raw_chain": "a65ac9af",
+    "seed": "74d962af"
+   },
+   "b": {
+    "load_sha": "d146871bb2ab97ea",
+    "reencoded_same": "1",
+    "tag_pointers": "1",
+    "raw_chain": "0120f9d9",
+    "seed": "74d962af"
+   },
+   "a4096": {
+    "load_sha": "071214e75f6a72ac",
+    "reencoded_same": "1",
+    "tag_pointers": "1",
+    "raw_chain": "c4a425d4",
+    "seed": "74d962af"
+   }
+  }
+ },
+ "dwarf_pointer_census": {
+  "game_state_header": {
+   "size": 332,
+   "pointers": 0
+  },
+  "actor_datum": {
+   "size": 1828,
+   "pointers": 0
+  },
+  "swarm_datum": {
+   "size": 152,
+   "pointers": 0
+  },
+  "swarm_component_datum": {
+   "size": 64,
+   "pointers": 0
+  },
+  "ai_globals": {
+   "size": 2268,
+   "pointers": 0
+  },
+  "encounter_datum": {
+   "size": 108,
+   "pointers": 0
+  },
+  "squad_datum": {
+   "size": 32,
+   "pointers": 0
+  },
+  "platoon_datum": {
+   "size": 16,
+   "pointers": 0
+  },
+  "pursuit_datum": {
+   "size": 40,
+   "pointers": 0
+  },
+  "prop_datum": {
+   "size": 312,
+   "pointers": 0
+  },
+  "var:cinematic_globals": {
+   "size": 28,
+   "pointers": 0
+  },
+  "animation_thread": {
+   "size": 100,
+   "pointers": 1
+  },
+  "device_group_datum": {
+   "size": 8,
+   "pointers": 0
+  },
+  "decal_datum": {
+   "size": 56,
+   "pointers": 0
+  },
+  "decal_globals": {
+   "size": 10252,
+   "pointers": 0
+  },
+  "effect_datum": {
+   "size": 252,
+   "pointers": 3
+  },
+  "effect_location_datum": {
+   "size": 60,
+   "pointers": 0
+  },
+  "player_effect_globals_definition": {
+   "size": 1004,
+   "pointers": 0
+  },
+  "var:game_globals": {
+   "size": 428,
+   "pointers": 30
+  },
+  "var:game_allegiance_globals": {
+   "size": 180,
+   "pointers": 0
+  },
+  "var:game_time_globals": {
+   "size": 32,
+   "pointers": 0
+  },
+  "var:player_control_globals": {
+   "size": 272,
+   "pointers": 0
+  },
+  "var:rumble_globals": {
+   "size": 2092,
+   "pointers": 0
+  },
+  "player_datum": {
+   "size": 212,
+   "pointers": 0
+  },
+  "players_globals": {
+   "size": 176,
+   "pointers": 0
+  },
+  "hs_global_datum": {
+   "size": 8,
+   "pointers": 0
+  },
+  "hs_thread_datum": {
+   "size": 536,
+   "pointers": 1
+  },
+  "object_list_header_datum": {
+   "size": 12,
+   "pointers": 0
+  },
+  "data_reference": {
+   "size": 12,
+   "pointers": 0
+  },
+  "var:first_person_weapons": {
+   "size": 7840,
+   "pointers": 0
+  },
+  "var:hud_scripted_globals": {
+   "size": 4,
+   "pointers": 0
+  },
+  "var:hud_messaging_globals": {
+   "size": 4520,
+   "pointers": 38
+  },
+  "var:unit_hud_globals": {
+   "size": 356,
+   "pointers": 0
+  },
+  "var:weapon_hud_globals": {
+   "size": 484,
+   "pointers": 0
+  },
+  "light_datum": {
+   "size": 124,
+   "pointers": 0
+  },
+  "lights_game_globals": {
+   "size": 4,
+   "pointers": 0
+  },
+  "object_header_datum": {
+   "size": 12,
+   "pointers": 1
+  },
+  "var:object_globals": {
+   "size": 152,
+   "pointers": 0
+  },
+  "var:object_name_list": {
+   "size": 4,
+   "pointers": 0
+  },
+  "antenna_datum": {
+   "size": 700,
+   "pointers": 0
+  },
+  "glow_datum": {
+   "size": 604,
+   "pointers": 2
+  },
+  "glow_particle": {
+   "size": 100,
+   "pointers": 2
+  },
+  "widget_datum": {
+   "size": 12,
+   "pointers": 0
+  },
+  "breakable_surface_globals": {
+   "size": 16900,
+   "pointers": 0
+  },
+  "var:global_rasterizer_model_ambient_reflection_tint": {
+   "size": 16,
+   "pointers": 0
+  },
+  "var:cinematic_screen_effect_globals": {
+   "size": 120,
+   "pointers": 3
+  },
+  "object_render_state": {
+   "size": 256,
+   "pointers": 0
+  },
+  "var:scenario_globals": {
+   "size": 256,
+   "pointers": 0
+  },
+  "game_looping_sound_datum": {
+   "size": 52,
+   "pointers": 0
+  },
+  "var:game_sound_globals": {
+   "size": 8,
+   "pointers": 0
+  },
+  "sound_class_datum": {
+   "size": 12,
+   "pointers": 0
+  },
+  "var:detail_object_global_runtime_data": {
+   "size": 42032,
+   "pointers": 1794
+  },
+  "var:structure_decals_globals": {
+   "size": 4,
+   "pointers": 0
+  },
+  "var:unit_globals": {
+   "size": 8,
+   "pointers": 0
+  },
+  "motion_sensor_globals_definition": {
+   "size": 5544,
+   "pointers": 0
+  },
+  "hud_nav_point_datum": {
+   "size": 12,
+   "pointers": 0
+  },
+  "flag_datum_prefix": {
+   "size": 5820,
+   "pointers": 0
+  },
+  "dialogue_event_status": {
+   "size": 8,
+   "pointers": 0
+  },
+  "light_volume_datum": {
+   "size": 8,
+   "pointers": 0
+  },
+  "lightning_datum": {
+   "size": 8,
+   "pointers": 0
+  },
+  "var:conversation_data": {
+   "size": 56,
+   "pointers": 1
+  },
+  "object_datum": {
+   "size": 420,
+   "pointers": 0
+  },
+  "unit_datum": {
+   "size": 1060,
+   "pointers": 0
+  },
+  "biped_datum": {
+   "size": 1152,
+   "pointers": 0
+  },
+  "vehicle_datum": {
+   "size": 1148,
+   "pointers": 0
+  },
+  "item_datum": {
+   "size": 476,
+   "pointers": 0
+  },
+  "weapon_datum": {
+   "size": 636,
+   "pointers": 0
+  },
+  "garbage_datum": {
+   "size": 480,
+   "pointers": 0
+  },
+  "projectile_datum": {
+   "size": 552,
+   "pointers": 0
+  },
+  "scenery_datum": {
+   "size": 424,
+   "pointers": 0
+  },
+  "device_datum": {
+   "size": 452,
+   "pointers": 0
+  },
+  "machine_datum": {
+   "size": 472,
+   "pointers": 0
+  },
+  "control_datum": {
+   "size": 460,
+   "pointers": 0
+  },
+  "light_fixture_datum": {
+   "size": 476,
+   "pointers": 0
+  }
+ },
+ "declared_pointer_fields": {
+  "recorded animations": [
+   "animation_thread.event_stream (tag cache)"
+  ],
+  "glow": [
+   "glow_datum.head_particle",
+   "glow_datum.tail_particle"
+  ],
+  "glow particles": [
+   "glow_particle.next",
+   "glow_particle.previous"
+  ],
+  "effect": [
+   "impulse_field.user_data",
+   "impulse_field.translational_function",
+   "impulse_field.angular_function"
+  ],
+  "hud messaging": [
+   "4 x state_message.state_message (tag cache)",
+   "4 x 8 state_message.info icon-or-text (union)",
+   "help_message (tag cache)",
+   "objective.message (tag cache)"
+  ],
+  "screen effect filth": [
+   "convolution_mask",
+   "video_scanline_map",
+   "video_noise_map (tag cache; not made on the Wii)"
+  ],
+  "not declared": [
+   "structure detail objects' per-player caches: rebuilt after every load (structure_detail_objects_flush)"
+  ]
+ },
+ "wii_dolphin": {
+  "titan_1": {
+   "end": "END target=engine build=a496a5b302fcc6ed cycles=3 cadences=6 failures=0 elapsed_ms=1653895 result=pass",
+   "arena_offset": 0,
+   "stack": "STACK entry_sp=0x81465958 painted=114688 peak_below_entry=105760 window_exhausted=0",
+   "arena_close": "ARENA close restored=1 high_after=0x933db7e0 high_before=0x933db7e0 low_before=0x90002000 low_after=0x90002000 general_peak=65536 failed_allocations=0 heap_in_use=2126040",
+   "map_plan": "MAP_PLAN lines=17 maps=11 runs=55 simulation_identical=1 whole_identical_per_cadence=0 heap_flat=1 expectations=12 met=12 map_errors=7 failures=0",
+   "images": {
+    "saves": 53,
+    "loads_taken": 18,
+    "loads_same_as_saved": 18,
+    "loads_reencoded_same": 18,
+    "refused_loads": 72,
+    "failed_while_taking": 0,
+    "image_tests": [
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     }
+    ],
+    "test_refusals": [
+     [
+      "empty",
+      "read",
+      "1",
+      "1"
+     ],
+     [
+      "flip_header",
+      "header_checksum",
+      "1",
+      "1"
+     ],
+     [
+      "flip_payload",
+      "chunk_checksum",
+      "1",
+      "1"
+     ],
+     [
+      "flip_payload_checksum_fixed",
+      "digest",
+      "1",
+      "1"
+     ],
+     [
+      "incomplete",
+      "incomplete",
+      "1",
+      "1"
+     ],
+     [
+      "truncated_half",
+      "read",
+      "1",
+      "1"
+     ],
+     [
+      "truncated_last_byte",
+      "read",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_build",
+      "build",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_byte_order",
+      "byte_order",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_layout",
+      "layout",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_map",
+      "map",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_version",
+      "version",
+      "1",
+      "1"
+     ]
+    ],
+    "save_payload_bytes": [
+     458652,
+     732152
+    ],
+    "save_file_bytes": [
+     459276,
+     732856
+    ],
+    "save_chunks": [
+     7,
+     12
+    ],
+    "save_peak_bytes": [
+     71628,
+     71684
+    ],
+    "load_peak_bytes": [
+     66184,
+     66188
+    ],
+    "save_us": [
+     588075,
+     630287
+    ],
+    "load_us": [
+     250099,
+     261654
+    ],
+    "load_check_us": [
+     797778,
+     800917
+    ],
+    "pointers": [
+     1262,
+     1306
+    ],
+    "tag_pointers": [
+     0,
+     0
+    ],
+    "references": [
+     344,
+     358
+    ],
+    "foreign_pointers": [
+     0,
+     0
+    ],
+    "dead_address_like": [
+     14,
+     222
+    ]
+   },
+   "compare": {
+    "allocations_compared": 4134,
+    "ticks_compared": {
+     "a10": 9000,
+     "a10bsp": 10,
+     "a10core": 400,
+     "a10loss": 400,
+     "a10reset": 400,
+     "a10revert": 400,
+     "a10sw": 600,
+     "a10won": 400,
+     "prisoner": 900
+    },
+    "first_divergent_tick": {
+     "a10": null,
+     "a10bsp": null,
+     "a10core": null,
+     "a10loss": null,
+     "a10reset": null,
+     "a10revert": null,
+     "a10sw": null,
+     "a10won": null,
+     "prisoner": null
+    },
+    "failures_same": true,
+    "fixed_step_same": true,
+    "simulation_all_same": true,
+    "whole_all_same_unpaced": true,
+    "ticks_all_same": true
+   },
+   "all-runs": {
+    "wii_runs": 63,
+    "host_runs": 63,
+    "equal": 63
+   },
+   "images_vs_host": {
+    "wii_events": 227,
+    "host_events": 227,
+    "equal_in_order": true,
+    "differences": []
+   }
+  },
+  "titan_2": {
+   "end": "END target=engine build=a496a5b302fcc6ed cycles=3 cadences=6 failures=0 elapsed_ms=1653625 result=pass",
+   "arena_offset": 4096,
+   "stack": "STACK entry_sp=0x81465958 painted=114688 peak_below_entry=105760 window_exhausted=0",
+   "arena_close": "ARENA close restored=1 high_after=0x933db7e0 high_before=0x933db7e0 low_before=0x90002000 low_after=0x90002000 general_peak=65536 failed_allocations=0 heap_in_use=2126072",
+   "map_plan": "MAP_PLAN lines=17 maps=11 runs=55 simulation_identical=1 whole_identical_per_cadence=0 heap_flat=1 expectations=12 met=12 map_errors=7 failures=0",
+   "images": {
+    "saves": 53,
+    "loads_taken": 18,
+    "loads_same_as_saved": 18,
+    "loads_reencoded_same": 18,
+    "refused_loads": 72,
+    "failed_while_taking": 0,
+    "image_tests": [
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     }
+    ],
+    "test_refusals": [
+     [
+      "empty",
+      "read",
+      "1",
+      "1"
+     ],
+     [
+      "flip_header",
+      "header_checksum",
+      "1",
+      "1"
+     ],
+     [
+      "flip_payload",
+      "chunk_checksum",
+      "1",
+      "1"
+     ],
+     [
+      "flip_payload_checksum_fixed",
+      "digest",
+      "1",
+      "1"
+     ],
+     [
+      "incomplete",
+      "incomplete",
+      "1",
+      "1"
+     ],
+     [
+      "truncated_half",
+      "read",
+      "1",
+      "1"
+     ],
+     [
+      "truncated_last_byte",
+      "read",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_build",
+      "build",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_byte_order",
+      "byte_order",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_layout",
+      "layout",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_map",
+      "map",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_version",
+      "version",
+      "1",
+      "1"
+     ]
+    ],
+    "save_payload_bytes": [
+     458652,
+     732152
+    ],
+    "save_file_bytes": [
+     459276,
+     732856
+    ],
+    "save_chunks": [
+     7,
+     12
+    ],
+    "save_peak_bytes": [
+     71628,
+     71684
+    ],
+    "load_peak_bytes": [
+     66184,
+     66188
+    ],
+    "save_us": [
+     588047,
+     630268
+    ],
+    "load_us": [
+     250100,
+     261654
+    ],
+    "load_check_us": [
+     797777,
+     800916
+    ],
+    "pointers": [
+     1262,
+     1306
+    ],
+    "tag_pointers": [
+     0,
+     0
+    ],
+    "references": [
+     344,
+     358
+    ],
+    "foreign_pointers": [
+     0,
+     0
+    ],
+    "dead_address_like": [
+     14,
+     222
+    ]
+   },
+   "compare": {
+    "allocations_compared": 4134,
+    "ticks_compared": {
+     "a10": 9000,
+     "a10bsp": 10,
+     "a10core": 400,
+     "a10loss": 400,
+     "a10reset": 400,
+     "a10revert": 400,
+     "a10sw": 600,
+     "a10won": 400,
+     "prisoner": 900
+    },
+    "first_divergent_tick": {
+     "a10": null,
+     "a10bsp": null,
+     "a10core": null,
+     "a10loss": null,
+     "a10reset": null,
+     "a10revert": null,
+     "a10sw": null,
+     "a10won": null,
+     "prisoner": null
+    },
+    "failures_same": true,
+    "fixed_step_same": true,
+    "simulation_all_same": true,
+    "whole_all_same_unpaced": true,
+    "ticks_all_same": true
+   },
+   "all-runs": {
+    "wii_runs": 63,
+    "host_runs": 63,
+    "equal": 63
+   },
+   "images_vs_host": {
+    "wii_events": 227,
+    "host_events": 227,
+    "equal_in_order": true,
+    "differences": []
+   }
+  },
+  "research_1": {
+   "end": "END target=engine build=a496a5b302fcc6ed cycles=3 cadences=6 failures=0 elapsed_ms=1653895 result=pass",
+   "arena_offset": 0,
+   "stack": "STACK entry_sp=0x81465958 painted=114688 peak_below_entry=105760 window_exhausted=0",
+   "arena_close": "ARENA close restored=1 high_after=0x933db7e0 high_before=0x933db7e0 low_before=0x90002000 low_after=0x90002000 general_peak=65536 failed_allocations=0 heap_in_use=2126040",
+   "map_plan": "MAP_PLAN lines=17 maps=11 runs=55 simulation_identical=1 whole_identical_per_cadence=0 heap_flat=1 expectations=12 met=12 map_errors=7 failures=0",
+   "images": {
+    "saves": 53,
+    "loads_taken": 18,
+    "loads_same_as_saved": 18,
+    "loads_reencoded_same": 18,
+    "refused_loads": 72,
+    "failed_while_taking": 0,
+    "image_tests": [
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     }
+    ],
+    "test_refusals": [
+     [
+      "empty",
+      "read",
+      "1",
+      "1"
+     ],
+     [
+      "flip_header",
+      "header_checksum",
+      "1",
+      "1"
+     ],
+     [
+      "flip_payload",
+      "chunk_checksum",
+      "1",
+      "1"
+     ],
+     [
+      "flip_payload_checksum_fixed",
+      "digest",
+      "1",
+      "1"
+     ],
+     [
+      "incomplete",
+      "incomplete",
+      "1",
+      "1"
+     ],
+     [
+      "truncated_half",
+      "read",
+      "1",
+      "1"
+     ],
+     [
+      "truncated_last_byte",
+      "read",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_build",
+      "build",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_byte_order",
+      "byte_order",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_layout",
+      "layout",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_map",
+      "map",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_version",
+      "version",
+      "1",
+      "1"
+     ]
+    ],
+    "save_payload_bytes": [
+     458652,
+     732152
+    ],
+    "save_file_bytes": [
+     459276,
+     732856
+    ],
+    "save_chunks": [
+     7,
+     12
+    ],
+    "save_peak_bytes": [
+     71628,
+     71684
+    ],
+    "load_peak_bytes": [
+     66184,
+     66188
+    ],
+    "save_us": [
+     588075,
+     630287
+    ],
+    "load_us": [
+     250099,
+     261654
+    ],
+    "load_check_us": [
+     797778,
+     800917
+    ],
+    "pointers": [
+     1262,
+     1306
+    ],
+    "tag_pointers": [
+     0,
+     0
+    ],
+    "references": [
+     344,
+     358
+    ],
+    "foreign_pointers": [
+     0,
+     0
+    ],
+    "dead_address_like": [
+     14,
+     222
+    ]
+   },
+   "compare": {
+    "allocations_compared": 4134,
+    "ticks_compared": {
+     "a10": 9000,
+     "a10bsp": 10,
+     "a10core": 400,
+     "a10loss": 400,
+     "a10reset": 400,
+     "a10revert": 400,
+     "a10sw": 600,
+     "a10won": 400,
+     "prisoner": 900
+    },
+    "first_divergent_tick": {
+     "a10": null,
+     "a10bsp": null,
+     "a10core": null,
+     "a10loss": null,
+     "a10reset": null,
+     "a10revert": null,
+     "a10sw": null,
+     "a10won": null,
+     "prisoner": null
+    },
+    "failures_same": true,
+    "fixed_step_same": true,
+    "simulation_all_same": true,
+    "whole_all_same_unpaced": true,
+    "ticks_all_same": true
+   },
+   "all-runs": {
+    "wii_runs": 63,
+    "host_runs": 63,
+    "equal": 63
+   },
+   "images_vs_host": {
+    "wii_events": 227,
+    "host_events": 227,
+    "equal_in_order": true,
+    "differences": []
+   }
+  },
+  "research_2": {
+   "end": "END target=engine build=a496a5b302fcc6ed cycles=3 cadences=6 failures=0 elapsed_ms=1653459 result=pass",
+   "arena_offset": 4096,
+   "stack": "STACK entry_sp=0x81465958 painted=114688 peak_below_entry=105760 window_exhausted=0",
+   "arena_close": "ARENA close restored=1 high_after=0x933db7e0 high_before=0x933db7e0 low_before=0x90002000 low_after=0x90002000 general_peak=65536 failed_allocations=0 heap_in_use=2126072",
+   "map_plan": "MAP_PLAN lines=17 maps=11 runs=55 simulation_identical=1 whole_identical_per_cadence=0 heap_flat=1 expectations=12 met=12 map_errors=7 failures=0",
+   "images": {
+    "saves": 53,
+    "loads_taken": 18,
+    "loads_same_as_saved": 18,
+    "loads_reencoded_same": 18,
+    "refused_loads": 72,
+    "failed_while_taking": 0,
+    "image_tests": [
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     },
+     {
+      "map": "a10revert",
+      "tick": "40",
+      "original_valid": "1",
+      "cases": "12",
+      "refused_as_expected": "12",
+      "intact": "12",
+      "pass": "1"
+     }
+    ],
+    "test_refusals": [
+     [
+      "empty",
+      "read",
+      "1",
+      "1"
+     ],
+     [
+      "flip_header",
+      "header_checksum",
+      "1",
+      "1"
+     ],
+     [
+      "flip_payload",
+      "chunk_checksum",
+      "1",
+      "1"
+     ],
+     [
+      "flip_payload_checksum_fixed",
+      "digest",
+      "1",
+      "1"
+     ],
+     [
+      "incomplete",
+      "incomplete",
+      "1",
+      "1"
+     ],
+     [
+      "truncated_half",
+      "read",
+      "1",
+      "1"
+     ],
+     [
+      "truncated_last_byte",
+      "read",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_build",
+      "build",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_byte_order",
+      "byte_order",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_layout",
+      "layout",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_map",
+      "map",
+      "1",
+      "1"
+     ],
+     [
+      "wrong_version",
+      "version",
+      "1",
+      "1"
+     ]
+    ],
+    "save_payload_bytes": [
+     458652,
+     732152
+    ],
+    "save_file_bytes": [
+     459276,
+     732856
+    ],
+    "save_chunks": [
+     7,
+     12
+    ],
+    "save_peak_bytes": [
+     71628,
+     71684
+    ],
+    "load_peak_bytes": [
+     66184,
+     66188
+    ],
+    "save_us": [
+     588047,
+     630268
+    ],
+    "load_us": [
+     250852,
+     261654
+    ],
+    "load_check_us": [
+     797778,
+     800917
+    ],
+    "pointers": [
+     1262,
+     1306
+    ],
+    "tag_pointers": [
+     0,
+     0
+    ],
+    "references": [
+     344,
+     358
+    ],
+    "foreign_pointers": [
+     0,
+     0
+    ],
+    "dead_address_like": [
+     14,
+     222
+    ]
+   },
+   "compare": {
+    "allocations_compared": 4134,
+    "ticks_compared": {
+     "a10": 9000,
+     "a10bsp": 10,
+     "a10core": 400,
+     "a10loss": 400,
+     "a10reset": 400,
+     "a10revert": 400,
+     "a10sw": 600,
+     "a10won": 400,
+     "prisoner": 900
+    },
+    "first_divergent_tick": {
+     "a10": null,
+     "a10bsp": null,
+     "a10core": null,
+     "a10loss": null,
+     "a10reset": null,
+     "a10revert": null,
+     "a10sw": null,
+     "a10won": null,
+     "prisoner": null
+    },
+    "failures_same": true,
+    "fixed_step_same": true,
+    "simulation_all_same": true,
+    "whole_all_same_unpaced": true,
+    "ticks_all_same": true
+   },
+   "all-runs": {
+    "wii_runs": 63,
+    "host_runs": 63,
+    "equal": 63
+   },
+   "images_vs_host": {
+    "wii_events": 227,
+    "host_events": 227,
+    "equal_in_order": true,
+    "differences": []
+   }
+  }
+ },
+ "wii_runner": {
+  "research": {
+   "runs": [
+    {
+     "host_exit": "0xfffffffb",
+     "signal": 5,
+     "after_guest_end": true,
+     "elapsed_seconds": 1654.503
+    },
+    {
+     "host_exit": "0x00000000",
+     "elapsed_seconds": 1654.384
+    }
+   ],
+   "persistence": "passed",
+   "os_stability": "no_instability_events_observed",
+   "host_shared": true,
+   "wall_seconds": 3326,
+   "load_before": "2.48 3.12 3.15",
+   "load_after": "3.32 3.85 3.45",
+   "dolphin": "Vulkan"
+  },
+  "titan": {
+   "runs": [
+    {
+     "host_exit": "0x00000000",
+     "elapsed_seconds": 1658.787
+    },
+    {
+     "host_exit": "0x00000000",
+     "elapsed_seconds": 1656.809
+    }
+   ],
+   "persistence": "passed",
+   "os_stability": "no_instability_events_observed",
+   "host_shared": true,
+   "wall_seconds": 3380,
+   "dolphin": "D3D"
+  },
+  "between_hosts": {
+   "launch1_run_lines_identical": "63/63",
+   "launch2_run_lines_identical": "62/63 (a10revert retrace-paced whole-state chain; one measured frame time differs; simulation identical)"
+  },
+  "preliminary": {
+   "source_commit": "da5cfce3",
+   "build_id": "8b27600da127af5b",
+   "all_runs_equal_host": "63/63 each launch",
+   "research_launch2_host_exit": "0xfffffffb after the guest's END"
+  },
+  "focus": "batches ran with the runner of their tree, before HWI-077's focus-safe runner"
+ },
+ "memory": {
+  "second_buffer_before": 20971520,
+  "second_buffer_now": 0,
+  "save_peak_heap_bytes": 71684,
+  "load_peak_heap_bytes": 66188,
+  "checkpoint_file_bytes_a10": [
+   459276,
+   732856
+  ],
+  "mem2_spare": 2985984,
+  "main_stack_peak": 105760,
+  "heap_in_use_at_close": 2126040,
+  "mem1_free_at_entry": 2951392,
+  "game_state_image_o": {
+   "text": 20790,
+   "bss": 116
+  },
+  "save_image_scenario_o": {
+   "text": 7764,
+   "bss": 5272
+  },
+  "game_state_c_layout_table_bss": 12288,
+  "game_state_c_pointer_words_bss": 512
+ },
+ "timings_seconds": {
+  "host_build_full_canonical": 67,
+  "host_build_full_original": 80,
+  "host_build_incremental": [
+   13,
+   20
+  ],
+  "host_proof_evidence_plan": {
+   "canonical": 72,
+   "original": 113
+  },
+  "host_proof_scenarios": {
+   "canonical": 26,
+   "original": 29
+  },
+  "host_proof_a10_all6": {
+   "canonical": 75,
+   "original": 80
+  },
+  "cross_placement_census_26_runs": 302,
+  "dwarf_listing": 15,
+  "dwarf_walk": 6,
+  "host_reference_per_launch": [
+   96,
+   134
+  ],
+  "wii_build_evidence": 120,
+  "research_two_launches": 3326,
+  "titan_two_launches": 3380,
+  "guest_elapsed_per_launch": [
+   1653.5,
+   1653.9
+  ],
+  "wii_save_guest": [
+   0.588,
+   0.63
+  ],
+  "wii_load_taken_guest": [
+   0.25,
+   0.262
+  ],
+  "wii_harness_checks_after_load_guest": [
+   0.798,
+   0.801
+  ]
+ },
+ "physical_wii": "untested"
+}

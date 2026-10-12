@@ -224,6 +224,9 @@ void recorded_animations_initialize(
 		"recorded animations",
 		64,
 		sizeof(struct animation_thread));
+	/* port (HWI-076): a thread's place in its event stream is in the tag
+	cache; the saved game's image writes it as a place there */
+	game_state_port_data_pointer_field(animation_threads, offsetof(struct animation_thread, event_stream));
 	match_assert(
 		"c:\\halo\\SOURCE\\cutscene\\recorded_animations.c",
 		108,

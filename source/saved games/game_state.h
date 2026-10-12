@@ -49,11 +49,26 @@ boolean game_state_test_persistent_storage(
 	char *map_name,
 	short *difficulty,
 	boolean *corrupted);
-/* port: takes an image of the game state read from a file, if it is one of
-this build's (game_state.c) */
-boolean game_state_image_accept(
-	void *image,
-	long size);
+/* port (HWI-076): the canonical game-state image (game_state_image.h):
+written, checked whole and then taken (with the before-load procedures run
+between), or only checked */
+struct game_state_image_file;
+void game_state_port_data_pointer_field(
+	struct data_array *data,
+	short offset);
+void game_state_port_pointer_field(
+	void const *field,
+	short kind);
+boolean game_state_port_image_write(
+	struct game_state_image_file const *file);
+short game_state_port_image_load(
+	struct game_state_image_file const *file,
+	boolean check_header);
+boolean game_state_port_image_check(
+	struct game_state_image_file const *file,
+	boolean check_header);
+boolean game_state_port_image_digest(
+	unsigned long digest[8]);
 void game_state_save_core(
 	const char *name);
 boolean game_state_reverted(
@@ -116,7 +131,7 @@ boolean game_state_read_core_header(
 	const char *name,
 	void *header,
 	long header_size);
-void game_state_read_core(
+boolean game_state_read_core(
 	const char *name,
 	void *buffer,
 	long buffer_size);
@@ -133,7 +148,7 @@ void game_state_write_to_persistent_storage(
 	unsigned long *header_checksum,
 	long header_size,
 	long buffer_size);
-void game_state_read_from_persistent_storage(
+boolean game_state_read_from_persistent_storage(
 	void *buffer,
 	long buffer_size);
 void game_state_create_persistent_storage(

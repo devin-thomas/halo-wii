@@ -67,6 +67,8 @@ ENGINE_AUTHORED = (ENGINE_DIR / "engine_hooks.c", ENGINE_DIR / "fixed_step_scena
                    ENGINE_DIR / "real_map_scenario.c",
                    # HWI-016D: the boot mode's wrapped entry points (pass-through unless registered)
                    ENGINE_DIR / "boot_hooks.c",
+                   # HWI-076: the real-map run's view of saved games' images
+                   ENGINE_DIR / "save_image_scenario.c",
                    # HWI-074: the sound's engine side (pass-through unless the sound runs)
                    SOUND_DIR / "sound_hooks.c")
 
