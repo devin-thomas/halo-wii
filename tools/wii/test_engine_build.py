@@ -153,6 +153,9 @@ class TargetTests(unittest.TestCase):
         for name in ("main", "halt_and_catch_fire", "game_tick", "game_frame"):
             self.assertIn(f"-Wl,--wrap={name}", engine_build.LINK_FLAGS)
         self.assertIn("-Wl,--gc-sections", engine_build.LINK_FLAGS)
+        # HWI-034: a revert's or core load's queue reset and decal rebind
+        for name in ("update_queues_reset_and_fill_with_lies", "_rasterizer_decals_update_function_pointers"):
+            self.assertIn(f"-Wl,--wrap={name}", engine_build.LINK_FLAGS)
 
     def test_render_units_are_in_the_dol_only(self):
         # HWI-016B: the Wii rasterizer is linked into engine.dol; the i686

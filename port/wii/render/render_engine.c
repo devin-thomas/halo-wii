@@ -1027,6 +1027,8 @@ static int render_engine_pose_phase_map(
 	wii_log("RENDER_POSES begin scenario=%s ticks=%ld poses=%d switches=%d overrides_each=%d\n", scenario_path,
 		last_tick, tick_count, plan->switch_count, plan->overrides_each);
 	real_map_set_command(0, NULL);
+	/* (HWI-034's harness core save stays off in a pose phase) */
+	real_map_set_core_save(0);
 	if (plan->switch_count > 0)
 	{
 		char command[32];
