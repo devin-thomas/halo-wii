@@ -71,8 +71,13 @@ def compare(wii, host):
     environment = {}
     for key in ("first", "end"):
         a, b = wii["environment"].get(key), host["environment"].get(key)
-        environment[key] = {"present": bool(a and b), "equal": bool(a and b and a.get("state") == b.get("state")
+        # (the raw digest when both logs carry it: the Wii against its replay at the same addresses; the
+        # canonical one reads some non-pointer words as pointers in one byte order only)
+        field = "state_raw" if a and b and a.get("state_raw") and b.get("state_raw") else "state"
+        environment[key] = {"present": bool(a and b), "equal": bool(a and b and a.get(field) == b.get(field)
                                                                     and a.get("frame") == b.get("frame")),
+                            "compared": field,
+                            "canonical_equal": bool(a and b and a.get("state") == b.get("state")),
                             "state": a.get("state") if a else None, "frame": a.get("frame") if a else None,
                             "drawing": a.get("drawing") if a else None}
     allocations = {}

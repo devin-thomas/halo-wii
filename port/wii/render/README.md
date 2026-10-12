@@ -49,10 +49,12 @@ HWI-033 completes the interface's drawing:
 - **Self-test:** `boot.txt` `selftest=1` draws authored plasma and min/max
   cases before the engine starts and logs each EFB result
   (`BOOT_UI_SELFTEST`; `ui_combiners.py check-log`).
-- **A campaign map** loaded from the menus is not drawn until its BSPs fit
-  (HWI-030): its windows stay clear under a labelled panel
-  (`CAMPAIGN ENVIRONMENT DRAWING PENDING (HWI-030)`), and nothing is loaded
-  for it.
+- **A campaign map** loaded from the menus (a scenario of type solo) draws
+  its environment through HWI-030's path, labelled as the campaign's
+  environment only (objects, the sky, effects and the HUD are not drawn
+  yet). If a BSP cannot be drawn, the frame says so under a panel
+  (`CAMPAIGN ENVIRONMENT NOT DRAWN`, `BOOT_ENVIRONMENT_NOT_DRAWN` in the
+  log) and the game runs on.
 
 Still approximated, counted: other map combinations (none in the menus) and
 meters. The console window, the HUD and the game engine's overlays are not

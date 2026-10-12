@@ -184,7 +184,36 @@ changes maps as the menus ask ([evidence](../../../docs/wii/evidence/2026-10-10-
 `boot.txt` keys: `mode=menu`, `max_frames`, `environment_frames` (the launch
 passes this many frames after a map other than the menus' draws),
 `settle_frames`, `texture_budget`, `clock=frame|real`, `error_frames`,
-`expect=refusal` (a load-failure test), `dump_allocation` (diagnosis).
+`expect=refusal` (a load-failure test), `dump_allocation` (diagnosis: that
+allocation's bytes at every sampled screen). HWI-033 adds `tick_digests=<n>`
+(the whole state's raw digest after each of the first n ticks of the map
+the menus load, `BOOT_TICK`), `tick_allocations=<t>` (each allocation's at
+that tick) and `selftest=1` (the GX self-test of the plasma program and the
+min/max blends before the engine starts).
+
+**State digests** (HWI-033): every screen and the environment log the whole
+state twice, canonical (pointers into the game state and the tag slot as
+region and offset, comparable across placements) and raw (words as they
+are, the Wii against its host replay at the same addresses: four bytes that
+are no pointer can read as one in one byte order only). The script threads
+(`hs thread`) are read by their fields (`real_map_digest_hs_threads`): their
+frames' values sit at the same offsets on every port, but a long at a
+2-byte offset straddles two of the digest's 8-byte groups.
+
+**The main stack** (HWI-033) is the driver's own 256 KiB (libogc's weak
+`__ppc_main_sp`): the campaign path through the menus reaches 155,952 bytes
+below the driver's entry, past libogc's 128 KiB default, which sat just
+above the boot mode's state and libfat's. The boot mode logs the peak
+(`STACK`).
+
+**A campaign map from the menus:** Campaign, the new profile, the
+difficulty; the engine loads a10 through its own path
+(`main_menu_switch_to_single_player`), and the rasterizer draws its
+environment (HWI-030). Skipping the opening cinematic (any button during
+it) reverts to the checkpoint the cinematic saved, which reads the saved
+game through a 20 MiB temporary (`game_state_read_from_file`); the Wii's
+heap has no such block and the engine halts: an open gap, not exercised by
+the evidence launches.
 
 **The frame clock** (the default): main_update_time's 33 ms wait advances a
 clock of the boot mode's own, which `system_milliseconds` reads; `rand` is
