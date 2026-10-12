@@ -196,6 +196,10 @@ void game_time_start(void);
 progress: the host's) */
 void game_time_set_distributed(long time);
 void game_time_update(real time_delta_sec);
+/* port (HWI-034): since the clock started, the ticks its time gave, the
+ticks run, and the ticks a revert-class request held back for the next
+frame (game_time.c) */
+void game_time_port_tick_counts(long *clock_ticks, long *ticks_run, long *ticks_carried);
 
 /* ---------- prototypes/MAIN.C */
 

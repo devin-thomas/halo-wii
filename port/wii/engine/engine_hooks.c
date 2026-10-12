@@ -226,6 +226,7 @@ void __wrap_game_tick(
 	}
 	else
 	{
+		real_map_before_tick(); /* (HWI-034) */
 		__real_game_tick();
 		real_map_after_tick();
 	}
@@ -284,6 +285,18 @@ void __wrap_update_client_local_ticks(
 		__real_update_client_local_ticks(ticks);
 }
 
+/* (HWI-034) the update queue's reset (a revert's, a core load's: game_state.c
+update_queues_reset_and_fill_with_lies): a real map's run keeps its script's
+input on the tick that runs each update (real_map_scenario.c) */
+void __real_update_queues_reset_and_fill_with_lies(void);
+
+void __wrap_update_queues_reset_and_fill_with_lies(
+	void)
+{
+	__real_update_queues_reset_and_fill_with_lies();
+	real_map_queues_reset();
+}
+
 /* a local game ticks only as far as its players' input reaches; the
 scenario's script has every tick's */
 long __wrap_update_client_get_maximum_possible_server_time(
@@ -337,6 +350,17 @@ long __wrap__rasterizer_decal_vertices_new(
 {
 	wii_unsupported("render", "rasterizer_decal_vertices_new (no decal vertex cache: no decal made)");
 	return NONE;
+}
+
+/* (HWI-034) a saved game's load (a revert, a core load: game_state.c's
+after-load procs) points the decal vertex cache's purge and lock procs at
+this program's (lruv_update_function_pointers), asserting the cache, which
+the Wii build does not make (above): with no cache there is nothing to
+point, and the decals' game state is the engine's own */
+void __wrap__rasterizer_decals_update_function_pointers(
+	void)
+{
+	wii_unsupported("render", "rasterizer_decals_update_function_pointers (no decal vertex cache)");
 }
 
 /* ---------- the texture cache (HWI-015B)

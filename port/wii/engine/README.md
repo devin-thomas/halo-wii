@@ -150,6 +150,13 @@ decals' per-map vertex-cache flush (the decals' own unlocking is kept).
      The main loop's deferred game requests (BSP switches, checkpoint saves,
      reverts) run between ticks as the main loop runs them
      (`main_port_game_requests`), so map scripts work (HWI-016C).
+   - A frame of several ticks stops its ticks at a revert, a loss's revert,
+     a core load, a won map or a map reset, and the next frame runs the ticks
+     left (every port, `game_time.c`, HWI-034). A plan line's `script=` and
+     `core_save=` ask for them mid-frame; its RUN lines report the stopped
+     frames and that every tick the clock gave ran. A revert or core load
+     rebinds the decal vertex cache, which the Wii build does not make: that
+     step is reported unsupported.
 5. Shuts the engine down; the arena's bound must be restored. Reports the
    main stack's peak, the engine threads' stack peak and every unsupported
    entry point called.
