@@ -486,6 +486,12 @@ static void boot_end(int result, const char *reason)
     wii_xinput_report_get(&input);
     wii_log("BOOT_INPUT scans=%lu reads=%lu packets=%lu last_buttons=%04x\n", input.scans, input.reads, input.packets,
             input.last_xbox_buttons);
+    {
+        unsigned long stack_bytes = 0;
+        int exhausted = 0;
+        unsigned long peak = wii_main_stack_peak(&stack_bytes, &exhausted);
+        wii_log("STACK main_stack=%lu peak_below_entry=%lu window_exhausted=%d\n", stack_bytes, peak, exhausted);
+    }
     wii_log("UNSUPPORTED names=%lu calls=%lu\n", wii_unsupported_names(), wii_unsupported_calls());
     for (unsigned long index = 0; index < wii_unsupported_names(); index++)
         wii_log("UNSUPPORTED_NAME %s\n", wii_unsupported_name(index));

@@ -490,9 +490,6 @@ static void boot_ui_overlay(
 	long refusals = wii_boot_map_refusals(&refused_map, &refused_reason);
 
 	wii_ui_gx_window(0, 0, BOOT_UI_SCREEN_WIDTH, BOOT_UI_SCREEN_HEIGHT);
-	wii_ui_gx_fill(0, 462, BOOT_UI_SCREEN_WIDTH, 480, 0xA0000000u);
-	if (boot_ui.config.overlay)
-		wii_ui_gx_text(4, 465, 1, 0xFFC8C8C8u, boot_ui.config.overlay);
 	if (boot_ui.map_name[0] && !boot_ui_in_menu_map() && boot_ui.campaign)
 	{
 		/* HWI-033: the campaign runs; its environment is not drawn (HWI-030:
@@ -521,6 +518,11 @@ static void boot_ui_overlay(
 		wii_ui_gx_fill(0, 448, BOOT_UI_SCREEN_WIDTH, 462, 0xC0400000u);
 		wii_ui_gx_text(4, 451, 1, 0xFFFFFFFFu, line);
 	}
+	/* the manifest line, last (the build, the source, the generation and each map) */
+	wii_ui_gx_window(0, 0, BOOT_UI_SCREEN_WIDTH, BOOT_UI_SCREEN_HEIGHT);
+	wii_ui_gx_fill(0, 462, BOOT_UI_SCREEN_WIDTH, 480, 0xA0000000u);
+	if (boot_ui.config.overlay)
+		wii_ui_gx_text(4, 465, 1, 0xFFC8C8C8u, boot_ui.config.overlay);
 }
 
 /* ---------- the hooks */
@@ -641,7 +643,9 @@ static void boot_ui_frame(
 			if (!boot_ui.pending_logged)
 			{
 				wii_log("BOOT_ENVIRONMENT_PENDING map=%s frame=%ld reason=campaign_bsp_geometry_does_not_fit "
-					"ticket=HWI-030\n", boot_ui.map_name, boot_ui.frame);
+					"ticket=HWI-030 window=%d,%d,%d,%d windows=%d overlay_chars=%d\n", boot_ui.map_name, boot_ui.frame,
+					bounds->x0, bounds->y0, bounds->x1, bounds->y1, window_count,
+					boot_ui.config.overlay ? (int)csstrlen(boot_ui.config.overlay) : -1);
 			}
 			boot_ui.pending_logged = TRUE;
 			boot_ui.environment_pending = TRUE;

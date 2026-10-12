@@ -25,4 +25,8 @@ side or a boot error finishes it. Returns 0 only when boot.txt is not a
 boot configuration (the driver goes on with the map run). */
 int wii_boot_run(const struct wii_boot_driver *driver);
 
+/* (wii_engine_main.c, HWI-033) the main stack's peak below the driver's entry
+frame so far; its size and whether the painted window was used up */
+unsigned long wii_main_stack_peak(unsigned long *stack_bytes, int *exhausted);
+
 #endif
