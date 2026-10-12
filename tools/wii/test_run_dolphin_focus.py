@@ -12,6 +12,7 @@ import unittest
 from unittest import mock
 
 import run_dolphin as rd
+from test_run_dolphin import CAMPAIGN, Fat32Image, pad_line
 from test_run_dolphin_lanes import Clock, FakeProcess, Host
 
 
@@ -45,6 +46,9 @@ class ProfileTests(unittest.TestCase):
                     if name == "WiimoteNew.ini":
                         self.assertEqual(set(bound.values()), {"0"})
                         self.assertEqual({k[1] for k in bound}, {"Source"})
+                    elif name == "GCPadNew.ini":
+                        # (HWI-081) a setting, no binding: the pad stays plugged in when the DTM is not playing
+                        self.assertEqual(bound, {(s, "Options/Always Connected"): "True" for s in spec["sections"]})
                     else:
                         self.assertEqual(bound, {})
                 core = rd.parse_ini(files["Dolphin.ini"])
@@ -54,6 +58,28 @@ class ProfileTests(unittest.TestCase):
                 self.assertEqual(core[("Display", "KeepWindowOnTop")], "False")
                 self.assertEqual(core.get(("SDL_Hints", "SDL_JOYSTICK_MFI")), "0" if host == "macos" else None)
                 self.assertNotIn(("DSP", "Backend"), core)
+
+    def test_gc_pads_stay_plugged_in_without_a_device(self):
+        """(HWI-081) every GC pad is always connected; nothing else changes, and the legacy profile is untouched."""
+        files = rd.profile_files(focus_safe=True, host="windows")
+        pads = rd.parse_ini(files["GCPadNew.ini"])
+        for section in ("GCPad1", "GCPad2", "GCPad3", "GCPad4"):
+            self.assertEqual(pads[(section, rd.ALWAYS_CONNECTED)], "True")
+            self.assertEqual(pads[(section, "Device")], "None/0/No Device")
+        core = rd.parse_ini(files["Dolphin.ini"])
+        self.assertEqual((core[("Core", "SIDevice0")], core[("Input", "BackgroundInput")]), ("6", "False"))
+        self.assertNotIn("GCPadNew.ini", rd.profile_files())
+        with tempfile.TemporaryDirectory() as temp:
+            config = Path(temp)
+            for name, text in files.items():
+                (config / name).write_text(text, encoding="ascii")
+            audit = rd.input_binding_audit(config)
+            self.assertEqual(audit["result"], "no_input_bound")  # a setting, not a binding
+            self.assertEqual(audit["gc_pads_always_connected"], ["GCPad1", "GCPad2", "GCPad3", "GCPad4"])
+            self.assertTrue(rd.pads_kept_plugged(audit))
+            # Dolphin saved the pads without the option: the run cannot vouch for its pad
+            (config / "GCPadNew.ini").write_text("[GCPad1]\nDevice = None/0/No Device\n", encoding="ascii")
+            self.assertFalse(rd.pads_kept_plugged(rd.input_binding_audit(config)))
 
     def test_default_keyboard_bindings_are_all_covered(self):
         """The controls Dolphin 2609 binds by default, including the hotkeys that act on the emulator."""
@@ -320,13 +346,22 @@ class ProbeTests(unittest.TestCase):
 class MainTests(unittest.TestCase):
     """main() with the process table, Popen, focus queries and the OS query mocked."""
 
-    def run_main(self, host_name, extra, probe=None, exit_at=0.0):
+    def run_main(self, host_name, extra, probe=None, exit_at=0.0, engine_log=None):
         image = "Dolphin.exe" if host_name == "windows" else "Dolphin"
         temp = Path(tempfile.mkdtemp())
         self.addCleanup(lambda: __import__("shutil").rmtree(temp, ignore_errors=True))
         exe, dol = temp / image, temp / "lane.dol"
         exe.write_bytes(b"dolphin")
         dol.write_bytes(b"dol")
+        if engine_log is not None:
+            # the card as the guest left it: its engine.log, read back after each launch
+            card = Fat32Image()
+            folder = card.mkdir(2, "halo-wii-engine", b"HALO-W~1   ")
+            card.write(folder, "engine.log", b"ENGINE  LOG", engine_log.encode("ascii"))
+            (temp / "sd.raw").write_bytes(bytes(card.image))
+            (temp / "pad.json").write_text(json.dumps(CAMPAIGN), encoding="utf-8")
+            extra = extra + ["--sd-image", str(temp / "sd.raw"), "--read-back", "sd:/halo-wii-engine/engine.log",
+                             "--input-script", str(temp / "pad.json")]
         clock = Clock()
         state = {"process": None, "popen": []}
         pids = iter(range(500, 600))
@@ -416,6 +451,26 @@ class MainTests(unittest.TestCase):
             self.assertEqual(rd.main(argv), 2)
         popen.assert_not_called()
         self.assertFalse((temp / "out").exists())
+
+    def test_a_guest_seen_unplug_fails_the_run_even_with_a_clean_host(self):
+        """(HWI-081) the pad read unplugged mid-run: the runner fails the guest outcome, whatever a replay says."""
+        clean = "".join(line + "\n" for line in (pad_line(0), pad_line(20, buttons="0100"), pad_line(22)))
+        code, record, config, _, _ = self.run_main("windows", [], engine_log=clean)
+        self.assertEqual(code, 0)
+        self.assertIn("Options/Always Connected = True", config["GCPadNew.ini"])
+        self.assertEqual(record["input"]["playback_ends"], "when its pad states run out")
+        self.assertEqual(record["input"]["tick_count"], 2 ** 64 - 1)
+        for run in record["runs"]:
+            self.assertTrue(run["input_integrity"]["applicable"])
+            self.assertTrue(run["input_integrity"]["gc_pads_always_connected"])
+            self.assertEqual(run["input_integrity"]["failures"], [])
+            self.assertEqual(run["guest"]["result"], "not_evaluated")
+        code, record, _, _, _ = self.run_main("windows", [], engine_log=clean + pad_line(1485, connected=0) + "\n")
+        self.assertEqual(code, 1)
+        self.assertEqual(record["outcomes"]["guest"], "failed")
+        for run in record["runs"]:
+            self.assertEqual(run["guest"]["failures"], ["pad_unplugged:port1:scan1485:unplugged"])
+            self.assertEqual(run["host"]["outcome"], "exit_zero")
 
     def test_guard_stop_fails_the_run_and_skips_later_launches(self):
         probe = FakeProbe(front=[500])  # the first launch's own PID is frontmost

@@ -106,6 +106,17 @@ def pad_lines(log_text):
     return result
 
 
+def unplugged_scans(lines):
+    """(HWI-081) the scans at which the Wii launch's pad reported no controller on its own port: the replay
+    follows such a launch tick for tick, so an equal comparison does not make it a valid input-script run"""
+    result = []
+    for line in lines:
+        port, scan, connected = line.split()[:3]
+        if not int(connected, 16) >> int(port) & 1:
+            result.append({"port": int(port) + 1, "scan": int(scan)})
+    return result
+
+
 def arena_of(log_text):
     """(arena2 low, arena2 high, placement offset) of the Wii launch"""
     for line in log_text.splitlines():
@@ -147,6 +158,9 @@ def main() -> int:
                              "(BOOT_TICK lines, HWI-033); the Wii launch's boot.txt tick_digests")
     parser.add_argument("--tick-allocations", type=int, help="(diagnosis) each allocation's raw digest at this "
                                                               "tick of the map the menus load")
+    parser.add_argument("--allow-unplugged-pad", action="store_true",
+                        help="exit 0 even if the Wii launch's pad reported no controller (by default the replay "
+                             "runs, is recorded, and exits 5: the launch did not get its input script; HWI-081)")
     parser.add_argument("--dump", type=int, help="a recorded allocation's index: its bytes at every screen "
                                                "sample to the data folder's boot_dump_<frame>.bin (diagnosis)")
     args = parser.parse_args()
@@ -160,7 +174,9 @@ def main() -> int:
     low, high, offset = arena_of(log_text)
     run_dir = args.run.resolve()
     run_dir.mkdir(parents=True, exist_ok=False)
-    (run_dir / "pad.txt").write_text("\n".join(pad_lines(log_text)) + "\n", encoding="ascii", newline="\n")
+    pads = pad_lines(log_text)
+    (run_dir / "pad.txt").write_text("\n".join(pads) + "\n", encoding="ascii", newline="\n")
+    unplugged = unplugged_scans(pads)
     # (the maps' little-endian manifest lines, from manifest.le.txt beside each, as the card's manifest.txt)
     (run_dir / "manifest.txt").write_text(maps_manifest(args.map), encoding="ascii", newline="\n")
     copies = " && ".join([
@@ -186,9 +202,17 @@ def main() -> int:
     seconds = time.perf_counter() - started
     record = {"command": ["boot_menu_host", *command[1:4], "pad.txt", *command[5:]], "exit_code": run.returncode,
               "seconds": round(seconds, 1), "program_sha256": hashlib.sha256(program.read_bytes()).hexdigest(),
-              "stdout_tail": run.stdout[-2000:], "stderr_tail": run.stderr[-8000:]}
+              "stdout_tail": run.stdout[-2000:], "stderr_tail": run.stderr[-8000:],
+              "wii_pad_unplugged": unplugged}
     (run_dir / "host.json").write_text(json.dumps(record, indent=1) + "\n", encoding="utf-8", newline="\n")
     print(f"exit={run.returncode} seconds={seconds:.1f}")
+    if unplugged:
+        first = unplugged[0]
+        print(f"WARNING: the Wii launch's pad {first['port']} reported no controller at scan {first['scan']} "
+              f"({len(unplugged)} time(s)); the replay followed it, so an equal comparison does not validate "
+              f"the launch (HWI-081)", file=sys.stderr)
+        if run.returncode == 0 and not args.allow_unplugged_pad:
+            return 5
     return run.returncode
 
 

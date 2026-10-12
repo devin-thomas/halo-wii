@@ -1,5 +1,5 @@
 {
- "about": "Every control Dolphin 2609 binds to the keyboard or mouse by default, per input config file. run_dolphin.py writes each one with an empty expression, under Device = absent_device, so no host input device is mapped anywhere (HWI-077). Pad, keyboard, GBA and free-look names: the defaults Dolphin 2609 saved on macOS (HWI-075) and Windows (HWI-077), Calibration settings excluded. Hotkeys: every hotkey of HotkeyManager.cpp at Dolphin 2609 (f84df020). Wii remotes: Source 0 (none attached); a WiimoteNew.ini with sections loads every unlisted control empty.",
+ "about": "Every control Dolphin 2609 binds to the keyboard or mouse by default, per input config file. run_dolphin.py writes each one with an empty expression, under Device = absent_device, so no host input device is mapped anywhere (HWI-077). Pad, keyboard, GBA and free-look names: the defaults Dolphin 2609 saved on macOS (HWI-075) and Windows (HWI-077), Calibration settings excluded. Hotkeys: every hotkey of HotkeyManager.cpp at Dolphin 2609 (f84df020). Wii remotes: Source 0 (none attached); a WiimoteNew.ini with sections loads every unlisted control empty. GC pads: Options/Always Connected = True (HWI-081). With no device bound, Dolphin otherwise reports the emulated pad unplugged whenever the DTM is not playing (GCPadEmu.cpp GCPad::GetInput), so a guest saw no controller once the movie ended; the keyboard default device of the old profile kept it plugged.",
  "dolphin_version": "2609",
  "absent_device": "None/0/No Device",
  "files": {
@@ -9,6 +9,12 @@
     "GCPad2",
     "GCPad3",
     "GCPad4"
+   ],
+   "settings": [
+    [
+     "Options/Always Connected",
+     "True"
+    ]
    ],
    "controls": [
     "Buttons/A",

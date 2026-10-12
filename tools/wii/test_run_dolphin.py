@@ -135,7 +135,8 @@ class MovieTests(unittest.TestCase):
         self.assertEqual(movie[0:10], b"DTM\x1aID-pro")
         self.assertEqual(movie[10:13], b"\x01\x01\x00")
         self.assertEqual(struct.unpack_from("<QQ", movie, 13), (5, 5))
-        self.assertEqual(struct.unpack_from("<Q", movie, 237)[0], 100_000_000_000)
+        # (HWI-081) the largest tick count: Dolphin never ends playback on time, only when the states run out
+        self.assertEqual(struct.unpack_from("<Q", movie, 237)[0], 2 ** 64 - 1)
         untouched = bytearray(movie[:256])
         for start, end in ((0, 13), (13, 29), (237, 245)):
             untouched[start:end] = bytes(end - start)
@@ -155,6 +156,120 @@ class MovieTests(unittest.TestCase):
         labels = [step["label"] for step in script["steps"]]
         self.assertLess(labels.index("a_trigger_l_stick_right"), labels.index("start_press"))
         self.assertEqual(len(rd.pad_entries(script)) % 8, 0)
+
+
+def pad_line(scan, connected=1, buttons="0000", stick="0,0", triggers="0,0", port2=False):
+    return (f"BOOT_PAD{'2' if port2 else ''} scan={scan} clock_ms={scan * 33} connected={connected:x} "
+            f"buttons={buttons} stick={stick} cstick=0,0 triggers={triggers}")
+
+
+# HWI-033's campaign script, shortened: a wait, then three A presses, then a neutral tail
+CAMPAIGN = {"port": 1, "steps": [{"label": "wait", "polls": 300}, {"label": "A", "polls": 6, "buttons": ["A"]},
+                                 {"label": "gap", "polls": 50}, {"label": "A", "polls": 6, "buttons": ["A"]},
+                                 {"label": "gap", "polls": 50}, {"label": "A", "polls": 6, "buttons": ["A"]},
+                                 {"label": "tail", "polls": 2000}]}
+
+
+def campaign_movie(script=CAMPAIGN, ports=1):
+    return rd.author_dtm(b"ID-eng", rd.pad_entries(script), ports=ports)
+
+
+class InputIntegrityTests(unittest.TestCase):
+    """(HWI-081) the guest's BOOT_PAD lines against the DTM that drove it."""
+
+    CLEAN = [pad_line(0), pad_line(787, buttons="0100"), pad_line(788), pad_line(1015, buttons="0100"),
+             pad_line(1017), pad_line(1194, buttons="0100"), pad_line(1197)]
+
+    def check(self, lines, movie=None, script=CAMPAIGN):
+        movie = campaign_movie(script) if movie is None else movie
+        return rd.check_input_integrity(movie, ["noise line\n" + "\n".join(lines) + "\n"])
+
+    def test_dtm_buttons_map_to_the_guests_libogc_bits(self):
+        expected = {"START": 0x1000, "A": 0x0100, "B": 0x0200, "X": 0x0400, "Y": 0x0800, "Z": 0x0010,
+                    "UP": 0x0008, "DOWN": 0x0004, "LEFT": 0x0001, "RIGHT": 0x0002, "L": 0x0040, "R": 0x0020}
+        for name, bit in expected.items():
+            state = rd.pad_state({"buttons": [name]})
+            self.assertEqual(rd.dtm_pad_key(state), f"{bit:04x}", name)
+        self.assertEqual(rd.dtm_pad_key(rd.pad_state({})), rd.NEUTRAL)
+        self.assertEqual(rd.dtm_pad_key(rd.pad_state({"buttons": ["L"], "trigger_l": 200, "stick": [0x80, 0xff]})),
+                         "0040+stick+l")
+        self.assertEqual(rd.dtm_pad_key(bytes.fromhex("0000000080808080")), rd.UNPLUGGED)
+
+    def test_scripted_runs_collapse_equal_states_per_port(self):
+        runs = rd.scripted_pad_runs(campaign_movie())
+        self.assertEqual(runs, {0: [["0000", 300], ["0100", 6], ["0000", 50], ["0100", 6], ["0000", 50],
+                                    ["0100", 6], ["0000", 2000]]})
+        two = {"port": 1, "ports": 2, "steps": [{"polls": 3}, {"polls": 2, "buttons2": ["START"]}, {"polls": 4}]}
+        runs = rd.scripted_pad_runs(campaign_movie(two, ports=2))
+        self.assertEqual(runs, {0: [["0000", 9]], 1: [["0000", 3], ["1000", 2], ["0000", 4]]})
+        self.assertEqual(rd.scripted_pad_runs(None), {0: [["0000", 0]]})
+
+    def test_the_campaign_path_as_the_old_runner_saw_it_passes(self):
+        result = self.check(self.CLEAN)
+        self.assertTrue(result["applicable"])
+        self.assertEqual(result["failures"], [])
+        port = result["ports"]["1"]
+        self.assertEqual((port["observed_states"], port["matched"], port["missed_count"]), (7, 7, 0))
+        self.assertEqual(port["unplugged_scans"], [])
+
+    def test_hwi033_unplug_at_scan_1485_fails_the_run(self):
+        """HWI-033's focus-safe campaign launches: the pad read no controller at scan 1,485."""
+        result = self.check(self.CLEAN + [pad_line(1485, connected=0)])
+        self.assertEqual(result["failures"], ["pad_unplugged:port1:scan1485:unplugged"])
+        self.assertEqual(result["ports"]["1"]["unplugged_scans"], [1485])
+
+    def test_unscripted_or_out_of_order_input_is_a_desync(self):
+        result = self.check(self.CLEAN + [pad_line(1300, buttons="0200"), pad_line(1302)])
+        self.assertEqual(result["failures"], ["input_desync:port1:scan1300:0200"])
+        result = self.check([pad_line(0), pad_line(10, stick="40,0"), pad_line(12)])
+        self.assertEqual(result["failures"], ["input_desync:port1:scan10:0000+stick"])
+
+    def test_a_scripted_press_passed_over_is_missed(self):
+        script = {"steps": [{"polls": 100}, {"polls": 6, "buttons": ["A"]}, {"polls": 50},
+                            {"polls": 6, "buttons": ["B"]}, {"polls": 500}]}
+        result = self.check([pad_line(0), pad_line(40, buttons="0200"), pad_line(42)], script=script)
+        self.assertEqual(result["failures"], ["input_missed:port1:1_scripted_states"])
+        self.assertEqual(result["ports"]["1"]["missed"], [{"run": 1, "state": "0100", "after_scan": 40}])
+
+    def test_presses_not_reached_and_neutral_after_the_script_pass(self):
+        result = self.check(self.CLEAN[:3])  # the launch ended before the last two presses
+        self.assertEqual(result["failures"], [])
+        self.assertEqual(result["ports"]["1"]["scripted_states_not_reached"], 2)
+        short = {"steps": [{"polls": 10}, {"polls": 6, "buttons": ["A"]}]}  # ends on a press
+        result = self.check([pad_line(0), pad_line(2, buttons="0100"), pad_line(4)], script=short)
+        self.assertEqual(result["failures"], [])
+        self.assertEqual(result["ports"]["1"]["neutral_after_script"], 1)
+
+    def test_guests_without_pad_lines_are_not_applicable(self):
+        result = rd.check_input_integrity(campaign_movie(), ["END build=x frames=600 connected=1\n"])
+        self.assertEqual(result, {"applicable": False, "reason": "the guest logged no BOOT_PAD lines",
+                                  "failures": []})
+
+    def test_without_a_movie_the_pad_is_plugged_in_and_idle(self):
+        self.assertEqual(rd.check_input_integrity(None, [pad_line(0)])["failures"], [])
+        self.assertEqual(rd.check_input_integrity(None, [pad_line(0), pad_line(9, buttons="1000")])["failures"],
+                         ["input_desync:port1:scan9:1000"])
+        self.assertEqual(rd.check_input_integrity(None, [pad_line(0, connected=0)])["failures"],
+                         ["pad_unplugged:port1:scan0:unplugged"])
+
+    def test_second_port_must_follow_its_own_script(self):
+        two = {"port": 1, "ports": 2, "steps": [{"polls": 30}, {"polls": 6, "buttons2": ["START"]}, {"polls": 300}]}
+        movie = campaign_movie(two, ports=2)
+        lines = [pad_line(0, connected=3), pad_line(0, connected=3, port2=True),
+                 pad_line(9, connected=3, buttons="1000", port2=True), pad_line(11, connected=3, port2=True)]
+        self.assertEqual(rd.check_input_integrity(movie, ["\n".join(lines)])["failures"], [])
+        lines.append(pad_line(400, connected=1, port2=True))
+        self.assertEqual(rd.check_input_integrity(movie, ["\n".join(lines)])["failures"],
+                         ["pad_unplugged:port2:scan400:unplugged"])
+        # a port the DTM does not drive must not be connected
+        self.assertEqual(rd.check_input_integrity(campaign_movie(), [pad_line(0, connected=3, port2=True),
+                                                                     pad_line(0)])["failures"],
+                         ["input_desync:port2:not_driven_but_connected"])
+
+    def test_playback_end_is_recorded(self):
+        self.assertEqual(rd.dtm_playback_end(campaign_movie()), "when its pad states run out")
+        old = rd.author_dtm(b"ID-eng", rd.pad_entries(CAMPAIGN), tick_count=100_000_000_000)
+        self.assertIn("137.17 s of the Wii's 729 MHz clock", rd.dtm_playback_end(old))
 
 
 class ProfileTests(unittest.TestCase):

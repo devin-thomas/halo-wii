@@ -73,7 +73,13 @@ DTM_HEADER_BYTES = 256
 # Offsets in Dolphin's packed DTMHeader (Source/Core/Core/Movie.h).
 DTM_GAME_ID, DTM_IS_WII, DTM_CONTROLLERS = 4, 10, 11
 DTM_FRAME_COUNT, DTM_INPUT_COUNT, DTM_TICK_COUNT = 13, 21, 237
-DEFAULT_TICK_COUNT = 100_000_000_000
+# Dolphin ends playback once the emulated CPU passes the header's tick count
+# (MovieManager::CheckInputEnd, Movie.cpp). The former 100,000,000,000 ticks
+# are 137.17 s of a Wii's 729 MHz clock: any later scripted input was dropped
+# and live input took over (HWI-081). The largest count never ends playback;
+# the script then ends only when its pad states run out.
+DEFAULT_TICK_COUNT = 0xFFFF_FFFF_FFFF_FFFF
+WII_TICKS_PER_SECOND = 729_000_000
 
 # ControllerState: LE16 button bits, then trigger L/R, stick X/Y, C-stick X/Y.
 PAD_BUTTONS = {"START": 0x0001, "A": 0x0002, "B": 0x0004, "X": 0x0008, "Y": 0x0010,
@@ -148,6 +154,15 @@ def author_dtm(game_id, body, tick_count=DEFAULT_TICK_COUNT, ports=1):
     return bytes(header) + body
 
 
+def dtm_playback_end(data):
+    """When Dolphin stops playing this DTM (MovieManager::CheckInputEnd): its states, or its tick count."""
+    ticks = struct.unpack_from("<Q", data, DTM_TICK_COUNT)[0]
+    if ticks == DEFAULT_TICK_COUNT:
+        return "when its pad states run out"
+    return (f"at {ticks} CPU ticks ({ticks / WII_TICKS_PER_SECOND:.2f} s of the Wii's 729 MHz clock) "
+            f"or when its pad states run out, whichever is first")
+
+
 def dtm_game_id(data):
     if len(data) < DTM_HEADER_BYTES or data[:4] != DTM_MAGIC:
         raise ValueError("not a DTM movie")
@@ -165,6 +180,138 @@ def check_movie_matches(data, executable_name):
 
 
 # ---------------------------------------------------------------------------
+# Input integrity (HWI-081): what the guest saw of its pad against the DTM
+# ---------------------------------------------------------------------------
+
+# libogc PAD_BUTTON_* bit for each DTM ControllerState bit (MovieManager::PlayController)
+DTM_TO_GUEST_BUTTONS = {0x0001: 0x1000, 0x0002: 0x0100, 0x0004: 0x0200, 0x0008: 0x0400, 0x0010: 0x0800,
+                        0x0020: 0x0010, 0x0040: 0x0008, 0x0080: 0x0004, 0x0100: 0x0001, 0x0200: 0x0002,
+                        0x0400: 0x0040, 0x0800: 0x0020}
+UNPLUGGED = "unplugged"
+NEUTRAL = "0000"
+# the boot mode's pad lines (port/wii/engine/boot_main.c pad_scan): one per change of a port's state
+PAD_STATE_LINE = re.compile(r"^BOOT_PAD(2?) scan=(\d+) clock_ms=\d+ connected=([0-9a-f]+) buttons=([0-9a-f]+) "
+                            r"stick=(-?\d+),(-?\d+) cstick=(-?\d+),(-?\d+) triggers=(\d+),(\d+)")
+
+
+def pad_key(connected, buttons, stick_active, cstick_active, trigger_l_active, trigger_r_active):
+    """one comparable pad state: the guest's button bits and which analog inputs are off neutral
+    (analog values are compared as neutral or not: the guest sees them after libogc's origin and clamping)"""
+    if not connected:
+        return UNPLUGGED
+    analog = "".join(name for name, on in (("+stick", stick_active), ("+cstick", cstick_active),
+                                           ("+l", trigger_l_active), ("+r", trigger_r_active)) if on)
+    return f"{buttons:04x}{analog}"
+
+
+def dtm_pad_key(state):
+    bits, trigger_l, trigger_r, sx, sy, cx, cy = struct.unpack("<H6B", state)
+    buttons = 0
+    for dtm_bit, guest_bit in DTM_TO_GUEST_BUTTONS.items():
+        if bits & dtm_bit:
+            buttons |= guest_bit
+    return pad_key(bits & PAD_CONNECTED, buttons, (sx, sy) != (0x80, 0x80), (cx, cy) != (0x80, 0x80),
+                   trigger_l != 0, trigger_r != 0)
+
+
+def scripted_pad_runs(movie):
+    """Per GC port the DTM drives (0-based), its states as runs: [[key, polls], ...] in playback order.
+
+    Without a movie, port 1 is a standard controller with nothing on it: one neutral run."""
+    if movie is None:
+        return {0: [[NEUTRAL, 0]]}
+    ports = [port for port in range(4) if movie[DTM_CONTROLLERS] >> port & 1]
+    body, stride = movie[DTM_HEADER_BYTES:], 8 * len(ports)
+    runs = {port: [] for port in ports}
+    for offset in range(0, len(body) - stride + 1, stride):
+        for index, port in enumerate(ports):
+            key = dtm_pad_key(body[offset + 8 * index:offset + 8 * index + 8])
+            port_runs = runs[port]
+            if port_runs and port_runs[-1][0] == key:
+                port_runs[-1][1] += 1
+            else:
+                port_runs.append([key, 1])
+    return runs
+
+
+def observed_pad_states(texts):
+    """Per port (0-based), the guest's logged pad states in order: [(scan, key), ...]."""
+    observed = {}
+    for text in texts:
+        for line in text.splitlines():
+            match = PAD_STATE_LINE.match(line)
+            if not match:
+                continue
+            port = 1 if match.group(1) else 0
+            scan, mask = int(match.group(2)), int(match.group(3), 16)
+            sx, sy, cx, cy, tl, tr = (int(v) for v in match.groups()[4:])
+            key = pad_key(mask >> port & 1, int(match.group(4), 16), (sx, sy) != (0, 0), (cx, cy) != (0, 0),
+                          tl != 0, tr != 0)
+            observed.setdefault(port, []).append((scan, key))
+    return observed
+
+
+def match_pad_states(runs, observed):
+    """Walk the guest's states through the scripted runs in order.
+
+    Each observed state must be a scripted state at or after the current
+    run; once the script's states run out, Dolphin gives the live pad, which
+    the focus-safe profile keeps plugged in with nothing pressed (neutral).
+    A scripted press passed over between two observed states was missed (a
+    lower bound: an identical later press can stand in for a missed one).
+    """
+    position, matched, missed, unmatched, after_end = 0, 0, [], [], 0
+    for scan, key in observed:
+        found = next((j for j in range(position, len(runs)) if runs[j][0] == key), None)
+        if found is None:
+            if key == NEUTRAL:
+                position, after_end = len(runs), after_end + 1
+                continue
+            unmatched.append({"scan": scan, "state": key})
+            continue
+        if matched:
+            missed += [{"run": j, "state": runs[j][0], "after_scan": scan}
+                       for j in range(position + 1, found) if runs[j][0] not in (NEUTRAL, UNPLUGGED)]
+        position, matched = found, matched + 1
+    not_reached = sum(1 for j in range(position + 1, len(runs)) if runs[j][0] != NEUTRAL)
+    return {"observed_states": len(observed), "scripted_runs": len(runs), "matched": matched,
+            "neutral_after_script": after_end, "unmatched": unmatched[:20], "unmatched_count": len(unmatched),
+            "missed": missed[:20], "missed_count": len(missed), "scripted_states_not_reached": not_reached}
+
+
+def check_input_integrity(movie, texts):
+    """Did the guest see its pad as the DTM drives it? (HWI-081)
+
+    A driven port the guest saw unplugged, or a state the script never gives
+    at that point (an input desync), or a scripted press the guest passed
+    over, fails the run: a host replay of the guest's own pad would follow
+    any of them and still compare equal. Applies to guests that log their pad
+    (the boot mode's BOOT_PAD lines); others are reported not applicable.
+    """
+    observed = observed_pad_states(texts)
+    if not observed:
+        return {"applicable": False, "reason": "the guest logged no BOOT_PAD lines", "failures": []}
+    runs = scripted_pad_runs(movie)
+    result = {"applicable": True, "source": "authored or supplied DTM" if movie else "no DTM: live pad, nothing bound",
+              "ports": {}, "failures": []}
+    for port in sorted(set(runs) | set(observed)):
+        states = observed.get(port, [])
+        if port not in runs:
+            if any(key != UNPLUGGED for _, key in states):
+                result["failures"].append(f"input_desync:port{port + 1}:not_driven_but_connected")
+            continue
+        check = match_pad_states(runs[port], states)
+        check["unplugged_scans"] = [scan for scan, key in states if key == UNPLUGGED][:20]
+        result["ports"][str(port + 1)] = check
+        for item in check["unmatched"]:
+            kind = "pad_unplugged" if item["state"] == UNPLUGGED else "input_desync"
+            result["failures"].append(f"{kind}:port{port + 1}:scan{item['scan']}:{item['state']}")
+        if check["missed_count"]:
+            result["failures"].append(f"input_missed:port{port + 1}:{check['missed_count']}_scripted_states")
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Isolated stock-limit profile
 # ---------------------------------------------------------------------------
 
@@ -179,7 +326,9 @@ def profile_files(backend="D3D", efb_access=False, dump_frames=False, safe_textu
 
     focus_safe adds the focus- and keyboard-safe settings (HWI-077): every
     input config bound to an absent device with every default control empty,
-    background input off, no pause on focus loss. audio=False selects no audio
+    background input off, no pause on focus loss. Its GC pads are always
+    connected (HWI-081): with no device bound Dolphin would otherwise report
+    a pad unplugged whenever the DTM is not playing. audio=False selects no audio
     output. Neither changes what the guest is given: input comes from the DTM,
     and the guest's DSP is emulated either way. dump_audio (HWI-074) writes the
     DSP's mixed output to Dump/Audio as WAV.
@@ -253,6 +402,18 @@ MACOS_LAUNCH_ENV = {"QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM": "1", "QT_
 DEFAULT_AUDIO = {"windows": True, "macos": False}
 
 
+# (HWI-081) GCPadNew.ini's per-pad option. Without it, a pad whose device is
+# absent reads unplugged whenever the DTM is not playing (GCPadEmu.cpp,
+# GCPad::GetInput); dolphin_controls.json sets it for every GC pad.
+ALWAYS_CONNECTED = "Options/Always Connected"
+
+
+def pads_kept_plugged(audit, controls=None):
+    """After a focus-safe launch: did Dolphin keep Always Connected on every GC pad it saved?"""
+    controls = load_controls() if controls is None else controls
+    return set(controls["files"]["GCPadNew.ini"]["sections"]) <= set(audit.get("gc_pads_always_connected", []))
+
+
 def load_controls(path=CONTROLS_FILE):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -291,7 +452,7 @@ def input_binding_audit(config_dir, controls=None):
     """
     controls = load_controls() if controls is None else controls
     device = controls["absent_device"]
-    audit = {"files_present": [], "devices_bound": [], "controls_bound": []}
+    audit = {"files_present": [], "devices_bound": [], "controls_bound": [], "gc_pads_always_connected": []}
     for name, spec in controls["files"].items():
         path = Path(config_dir) / name
         if not path.is_file():
@@ -299,6 +460,8 @@ def input_binding_audit(config_dir, controls=None):
         audit["files_present"].append(name)
         known = set(spec["controls"])
         for (section, key), value in parse_ini(path.read_text(encoding="utf-8", errors="replace")).items():
+            if name == "GCPadNew.ini" and key == ALWAYS_CONNECTED and value.lower() == "true":
+                audit["gc_pads_always_connected"].append(section)
             if key == "Device":
                 if value not in ("", device):
                     audit["devices_bound"].append(f"{name}:{section}")
@@ -1961,7 +2124,7 @@ def main(argv=None):
     (profile / "Load").mkdir()
     for name, text in files.items():
         (profile / "Config" / name).write_text(text, encoding="ascii")
-    movie_path, input_record = None, {"kind": "none"}
+    movie_path, movie_data, input_record = None, None, {"kind": "none"}
     if args.input_script:
         data = author_dtm(game_id_for_executable(dol.name), pad_entries(script), ports=gc_ports)
         movie_path = out / "input.dtm"
@@ -1977,8 +2140,11 @@ def main(argv=None):
         movie_path.write_bytes(data)
         input_record = {"kind": "supplied DTM; virtual input"}
     if movie_path:
+        movie_data = data
         input_record.update(movie_sha256=sha256(movie_path), game_id=dtm_game_id(movie_path.read_bytes()).decode(),
-                            polls=(movie_path.stat().st_size - DTM_HEADER_BYTES) // 8)
+                            polls=(movie_path.stat().st_size - DTM_HEADER_BYTES) // 8,
+                            tick_count=struct.unpack_from("<Q", data, DTM_TICK_COUNT)[0],
+                            playback_ends=dtm_playback_end(data))
 
     sd = profile / "Load" / "WiiSD.raw"
     staging = {"used": False}
@@ -2059,7 +2225,9 @@ def main(argv=None):
                     "backend": backend, "efb_access": args.efb_access, "dump_frames": args.dump_frames,
                     "safe_texture_cache": args.safe_texture_cache,
                     "config_sha256": {n: hashlib.sha256(t.encode()).hexdigest() for n, t in files.items()},
-                    "controllers": "GC port 1 standard controller; Wii remotes disabled",
+                    "controllers": ("GC port 1 standard controller" + (" and port 2" if gc_ports == 2 else "") +
+                                    ("; GC pads always connected (no device bound)" if args.focus_safe else "") +
+                                    "; Wii remotes disabled"),
                     "host_input": ("none: every input config bound to an absent device, every default control empty"
                                    if args.focus_safe else "Dolphin defaults (pre-HWI-077 profile)"),
                     "audio_output": audio},
@@ -2174,6 +2342,14 @@ def main(argv=None):
             missing = [p for p, d in read.items() if d is None] if sd.is_file() else read_paths
             persistence = {"failures": [f"missing:{p}" for p in missing]}
         persistence["failures"] += staged_file_failures(staged_hashes, read)
+        # (HWI-081) the guest's pad against the DTM: an unplug, a desync or a missed press fails the run
+        run["input_integrity"] = check_input_integrity(
+            movie_data, [d.decode("ascii", "replace") for d in read.values() if d is not None])
+        if args.focus_safe:
+            run["input_integrity"]["gc_pads_always_connected"] = pads_kept_plugged(run["input_binding_audit"])
+            if not run["input_integrity"]["gc_pads_always_connected"]:
+                run["input_integrity"]["failures"].append("gc_pad_always_connected_not_kept")
+        guest["failures"] += run["input_integrity"]["failures"]
         if forced:
             guest["failures"].append("forced_stop_before_natural_exit")
         if guard_stop:

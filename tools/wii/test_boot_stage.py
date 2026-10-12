@@ -184,6 +184,14 @@ class HostReplayTests(unittest.TestCase):
         self.assertEqual(run_boot_host.pad_lines(log), ["0 0 1 0000 0 0 0 0 0 0", "0 498 1 0104 -3 7 0 0 0 255"])
         self.assertEqual(run_boot_host.arena_of(log), ("0x90002000", "0x933db7e0", "4096"))
 
+    def test_an_unplugged_wii_pad_is_reported(self):
+        """(HWI-081) the replay follows the Wii's pad, unplug included; the scans are listed for host.json"""
+        import run_boot_host
+        lines = ["0 0 3 0000 0 0 0 0 0 0", "1 0 3 0000 0 0 0 0 0 0", "0 1485 2 0000 0 0 0 0 0 0",
+                 "1 1600 0 0000 0 0 0 0 0 0"]
+        self.assertEqual(run_boot_host.unplugged_scans(lines), [{"port": 1, "scan": 1485}, {"port": 2, "scan": 1600}])
+        self.assertEqual(run_boot_host.unplugged_scans(lines[:2]), [])
+
     def test_maps_manifest_from_the_little_endian_lines(self):
         import run_boot_host
         with tempfile.TemporaryDirectory() as temporary:
