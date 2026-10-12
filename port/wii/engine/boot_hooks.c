@@ -355,6 +355,18 @@ static boolean boot_nibble_first_high(
 	return probe.value == 0x10;
 }
 
+unsigned long wii_boot_state_digest_raw(
+	unsigned long *per_allocation,
+	long count)
+{
+	int was = real_map_digest_words_raw(1);
+	unsigned long crc = wii_boot_state_digest(per_allocation, count);
+
+	real_map_digest_words_raw(was);
+
+	return crc;
+}
+
 unsigned long wii_boot_state_digest(
 	unsigned long *per_allocation,
 	long count)
@@ -383,7 +395,16 @@ unsigned long wii_boot_state_digest(
 		low-field-first, as real_map_scenario.c's digest reads it: swapped in
 		place for the digest on a compiler that allocates the first field high,
 		then put back */
-		if (!csstrcmp(real_map_allocation_name(index), "players globals") && size > 0x2F && boot_nibble_first_high())
+		if (!csstrcmp(real_map_allocation_name(index), "hs thread"))
+		{
+			/* HWI-033: the script threads by their decoded fields. Their
+			stacks hold the same values at the same offsets on every port
+			(HWI-016C's cells), but a frame's long at a 2-byte offset can
+			straddle two of the digest's 8-byte groups, which then take
+			different halves of it in each byte order */
+			digest = real_map_digest_hs_threads(address, real_map_allocation_bytes(index));
+		}
+		else if (!csstrcmp(real_map_allocation_name(index), "players globals") && size > 0x2F && boot_nibble_first_high())
 		{
 			byte *unit = (byte *)address + 0x2F;
 

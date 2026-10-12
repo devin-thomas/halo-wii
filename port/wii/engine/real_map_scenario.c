@@ -526,6 +526,136 @@ static void digest_add_hs_thread(
 	return;
 }
 
+/* (HWI-033) the boot mode's script threads (real_map_digest_hs_threads):
+stronger than the map run's one group a thread (above), still independent of
+byte order. Every field of a known type is hashed as its value, four
+little-endian bytes in a group of its own: the thread's identifier, type,
+flags, script, sleep times and result, and each live frame's previous frame,
+expression, result and size (pointers into the thread as offsets there).
+A frame's values, whose types only the script functions know, are one group
+a frame: the multiset of its bytes. Popped frames' bytes above the top frame
+are left out: nothing reads them (hs_stack_push zeroes a frame's values). */
+static void digest_group_begin(
+	struct digest_state *state,
+	unsigned long group)
+{
+	if (state->group_low || state->group_high)
+		digest_group_end(state);
+	state->group = group;
+
+	return;
+}
+
+static void digest_group_value(
+	struct digest_state *state,
+	unsigned long group,
+	unsigned long value)
+{
+	byte bytes[4];
+
+	bytes[0] = (byte)value;
+	bytes[1] = (byte)(value >> 8);
+	bytes[2] = (byte)(value >> 16);
+	bytes[3] = (byte)(value >> 24);
+	digest_group_begin(state, group);
+	digest_group_bytes(state, bytes, 4);
+	digest_group_end(state);
+
+	return;
+}
+
+/* a pointer the thread holds: inside the thread, its offset there */
+static unsigned long digest_thread_pointer_value(
+	byte const *datum,
+	void const *pointer)
+{
+	unsigned long word = (unsigned long)pointer;
+
+	if (word - (unsigned long)datum < sizeof(struct real_map_hs_thread))
+		return 0x20000000UL | (word - (unsigned long)datum);
+
+	return digest_words_raw ? word : digest_canonical_word(word);
+}
+
+static void digest_add_hs_thread_frames(
+	struct digest_state *state,
+	byte const *datum,
+	unsigned long index)
+{
+	struct real_map_hs_thread const *thread = (struct real_map_hs_thread const *)datum;
+	struct real_map_hs_stack_frame const *frame = thread->stack;
+	unsigned long group = 0x80000000UL | (index << 12);
+	short frames = 0;
+
+	digest_group_value(state, group++, (unsigned long)(unsigned short)thread->identifier);
+	digest_group_value(state, group++, ((unsigned long)thread->type << 8) | thread->flags);
+	digest_group_value(state, group++, (unsigned long)thread->script_index);
+	digest_group_value(state, group++, (unsigned long)thread->sleep_until);
+	digest_group_value(state, group++, (unsigned long)thread->previous_sleep_until);
+	digest_group_value(state, group++, digest_thread_pointer_value(datum, thread->stack));
+	digest_group_value(state, group++, (unsigned long)thread->result);
+	if (!thread->identifier)
+		return;
+	while (frame && frames++ < HS_THREAD_MAXIMUM_FRAMES)
+	{
+		unsigned long at = (unsigned long)((byte const *)frame - thread->stack_data);
+
+		if ((byte const *)frame < thread->stack_data || at > sizeof(thread->stack_data) - HS_FRAME_HEADER_BYTES ||
+			frame->size < 0 || (unsigned long)frame->size > sizeof(thread->stack_data) - HS_FRAME_HEADER_BYTES - at)
+		{
+			digest_group_value(state, group++, 0xBAD0F00DUL);
+			break;
+		}
+		digest_group_value(state, group++, at);
+		digest_group_value(state, group++, digest_thread_pointer_value(datum, frame->previous));
+		digest_group_value(state, group++, (unsigned long)frame->expression_index);
+		digest_group_value(state, group++, digest_thread_pointer_value(datum, frame->result));
+		digest_group_value(state, group++, (unsigned long)(unsigned short)frame->size);
+		digest_group_begin(state, group++);
+		digest_group_bytes(state, frame->data, (unsigned long)frame->size);
+		digest_group_end(state);
+		frame = frame->previous;
+	}
+
+	return;
+}
+
+int real_map_digest_words_raw(
+	int raw)
+{
+	int was = digest_words_raw ? 1 : 0;
+
+	digest_words_raw = raw ? TRUE : FALSE;
+
+	return was;
+}
+
+unsigned long real_map_digest_hs_threads(
+	const void *address,
+	unsigned long size)
+{
+	struct data_array const *data = (struct data_array const *)address;
+	struct digest_state state;
+	long index;
+
+	digest_tables_initialize();
+	csmemset(&state, 0, sizeof(state));
+	if (size < sizeof(struct data_array) || data->signature != 'd@t@' ||
+		data->size != sizeof(struct real_map_hs_thread))
+	{
+		digest_add(&state, address, size);
+		return digest_finish(&state);
+	}
+	digest_add(&state, address, sizeof(struct data_array));
+	for (index = 0; index < data->count &&
+		sizeof(struct data_array) + (unsigned long)(index + 1) * data->size <= size; index++)
+	{
+		digest_add_hs_thread_frames(&state, (byte const *)data->data + index * data->size, (unsigned long)index);
+	}
+
+	return digest_finish(&state);
+}
+
 static unsigned long allocation_digest(
 	struct real_map_allocation const *allocation)
 {

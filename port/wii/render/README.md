@@ -30,10 +30,35 @@ draws, and the boot hooks route its rasterizer backend here:
 | [`render_ui.c`](render_ui.c) | engine unit | `render_frame` for main_loop's windows (the environment from each window's own camera, then `render_ui_widgets`); the screen quads (each bitmap by its tag and index in its tag); the engine's own text and glyph cache; which screen is up (BOOT_SCREEN: EFB CRC and game-state digest once it has stood); the manifest line and the map's label; the end of the launch |
 | [`render_ui_gx.c`](render_ui_gx.c) | libogc | 2D GX state, the engine's framebuffer blend functions, the menus' HWT1 textures from the card in a bounded cache (split-alpha CMPR with its I4/I8 plane on a second TEV stage), the glyph cache's A4R4G4B4 bitmap as an IA4 texture, a built-in 5x7 diagnostic font, the frame copy |
 
-Approximations, each counted: the menus' plasma effect is not composited
-(the widget's own bitmap is drawn); GX has no component min or max blend
-(drawn as the alpha blend). The console window, the HUD and the game
-engine's overlays are not drawn in the boot mode. Textures are read from
+HWI-033 completes the interface's drawing:
+
+- **Plasma:** the menus' plasma effect is composited as the Xbox's register
+  combiners compute it (`rasterizer_xbox_dynavobgeom.c`, map0_to_1 = min with
+  the plasma bit), as a TEV program of 12 stages (15 with alpha planes):
+  `wii_ui_gx_plasma`. `tools/wii/ui_combiners.py` holds both programs as
+  models; the TEV's 8-bit result is within 2 of the combiners' float result
+  for 89% of inputs and within 8 for 99.5% (the rest lie on the program's
+  own threshold, `y >= 1/2`, where a step of input precision flips it).
+- **Min and max:** GX's blender has neither, and its logic operations are
+  bitwise. The destination is copied from the EFB to a texture and compared
+  per channel in three TEV compare stages; the result replaces the pixel.
+  Exact on the RGB8 EFB.
+- **Texture coordinates:** each map's, as the Xbox's screen-geometry vertex
+  shader makes them: anchored to the screen or the vertex's, times the map's
+  scale, plus its offset, times its texture scale.
+- **Self-test:** `boot.txt` `selftest=1` draws authored plasma and min/max
+  cases before the engine starts and logs each EFB result
+  (`BOOT_UI_SELFTEST`; `ui_combiners.py check-log`).
+- **A campaign map** loaded from the menus (a scenario of type solo) draws
+  its environment through HWI-030's path, labelled as the campaign's
+  environment only (objects, the sky, effects and the HUD are not drawn
+  yet). If a BSP cannot be drawn, the frame says so under a panel
+  (`CAMPAIGN ENVIRONMENT NOT DRAWN`, `BOOT_ENVIRONMENT_NOT_DRAWN` in the
+  log) and the game runs on.
+
+Still approximated, counted: other map combinations (none in the menus) and
+meters. The console window, the HUD and the game engine's overlays are not
+drawn in the boot mode. Textures are read from
 `data/render/<map>/textures/<tag>-<bitmap>.hwt` (`tools/wii/boot_stage.py`).
 
 ## What is drawn
@@ -69,7 +94,9 @@ engine's overlays are not drawn in the boot mode. Textures are read from
 Objects and models, first-person weapons, the sky, decals, particles,
 contrails and weather, effects, lights, lens flares and shadows, water and
 fog, environment detail maps, bump maps, specular, reflections and
-self-illumination, mirrors, the HUD, interface, widgets, menus and text.
+self-illumination, mirrors and the HUD. The interface's widgets, menus and
+text are drawn in the boot mode (above); the map run draws none of them and
+reports them.
 The camera effect matrix (impulses and shakes) is not applied: the engine's
 `player_effect_get_camera_effect_matrix` writes the game state (player
 effects), which a render path may not.

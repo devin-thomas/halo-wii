@@ -98,8 +98,13 @@ void wii_boot_frame_clock_advance_on_read(int on);
 /* The game state's digests at a boot-mode checkpoint, through the recorded
 allocations (real_map_scenario.h): each allocation's live bytes (a data
 array's header and its elements below its count; anything else whole) by
-real_map_digest_bytes, which does not depend on byte order. Returns the
-CRC of all of them; per_allocation (count entries) may be NULL. */
+real_map_digest_bytes, which does not depend on byte order; the script
+threads (hs thread) by their decoded fields, real_map_digest_hs_threads
+(HWI-033). Returns the CRC of all of them; per_allocation (count entries)
+may be NULL. */
 unsigned long wii_boot_state_digest(unsigned long *per_allocation, long count);
+/* (HWI-033) the same with words read as they are (real_map_digest_words_raw):
+the Wii against its host replay at the same addresses */
+unsigned long wii_boot_state_digest_raw(unsigned long *per_allocation, long count);
 
 #endif

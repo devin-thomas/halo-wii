@@ -16,6 +16,10 @@
  *      texture_budget=<bytes>    the interface's resident HWT1 bytes (3 MiB)
  *      clock=frame|real          the frame clock (boot_hooks.h; default frame)
  *      error_frames=<n>          a boot error screen stays n frames (240)
+ *      selftest=1                HWI-033: GX self-test of the plasma program and min/max blends
+ *                                before the engine starts (BOOT_UI_SELFTEST lines)
+ *      tick_digests=<n>          HWI-033: the game state's digest after each of the first n
+ *                                ticks of the map the menus load (BOOT_TICK; default 0)
  *      expect=refusal            a load-failure test: max_frames passes when a map
  *                                was refused and the menus' map is loaded again
  * 2. manifest.txt (written by tools/wii/boot_stage.py on the host): the
@@ -85,6 +89,9 @@ static struct {
     int frame_clock;
     int expect_refusal;
     long dump_allocation;
+    long tick_digests;
+    long tick_allocations;
+    int selftest;
     /* manifest.txt */
     char source[40], generation[40], stager[40];
     struct boot_manifest_file files[BOOT_MAX_MANIFEST_FILES];
@@ -143,6 +150,12 @@ static void read_config(void)
             boot.texture_budget = strtoul(line + 15, NULL, 10);
         else if (!strncmp(line, "dump_allocation=", 16))
             boot.dump_allocation = strtol(line + 16, NULL, 10);
+        else if (!strcmp(line, "selftest=1"))
+            boot.selftest = 1;
+        else if (!strncmp(line, "tick_allocations=", 17))
+            boot.tick_allocations = strtol(line + 17, NULL, 10);
+        else if (!strncmp(line, "tick_digests=", 13))
+            boot.tick_digests = strtol(line + 13, NULL, 10);
         else if (!strcmp(line, "expect=refusal"))
             boot.expect_refusal = 1;
         else if (!strcmp(line, "clock=real"))
@@ -164,21 +177,30 @@ static void hex_of(const unsigned char digest[32], char out[65])
 /* the SHA-256 of a file on the card, streamed; 0 if it cannot be read */
 static int file_sha256(const char *path, unsigned long *bytes, char out[65])
 {
-    static unsigned char chunk[64 * 1024] __attribute__((aligned(32)));
+    /* (HWI-033: a heap block for the hash only, given back: a static 64 KiB
+    stayed out of the menus' MEM1 for the whole launch) */
+    enum { CHUNK = 64 * 1024 };
+    unsigned char *chunk;
     struct content_sha256 context;
     unsigned char digest[32];
     FILE *file = fopen(path, "rb");
     size_t got;
     if (!file)
         return 0;
+    chunk = memalign(32, CHUNK);
+    if (!chunk) {
+        fclose(file);
+        return 0;
+    }
     content_sha256_init(&context);
     *bytes = 0;
-    while ((got = fread(chunk, 1, sizeof(chunk), file)) > 0) {
+    while ((got = fread(chunk, 1, CHUNK, file)) > 0) {
         content_sha256_update(&context, chunk, got);
         *bytes += (unsigned long)got;
     }
     int ok = !ferror(file);
     fclose(file);
+    free(chunk);
     content_sha256_final(&context, digest);
     hex_of(digest, out);
     return ok;
@@ -473,6 +495,12 @@ static void boot_end(int result, const char *reason)
     wii_xinput_report_get(&input);
     wii_log("BOOT_INPUT scans=%lu reads=%lu packets=%lu last_buttons=%04x\n", input.scans, input.reads, input.packets,
             input.last_xbox_buttons);
+    {
+        unsigned long stack_bytes = 0;
+        int exhausted = 0;
+        unsigned long peak = wii_main_stack_peak(&stack_bytes, &exhausted);
+        wii_log("STACK main_stack=%lu peak_below_entry=%lu window_exhausted=%d\n", stack_bytes, peak, exhausted);
+    }
     wii_log("UNSUPPORTED names=%lu calls=%lu\n", wii_unsupported_names(), wii_unsupported_calls());
     for (unsigned long index = 0; index < wii_unsupported_names(); index++)
         wii_log("UNSUPPORTED_NAME %s\n", wii_unsupported_name(index));
@@ -577,12 +605,15 @@ int wii_boot_run(const struct wii_boot_driver *driver)
     read_config();
     read_previous_result();
     wii_log("BOOT begin mode=%s max_frames=%ld environment_frames=%ld settle_frames=%ld texture_budget=%lu clock=%s "
-            "previous_result=\"%s\"\n",
+            "tick_digests=%ld previous_result=\"%s\"\n",
             boot.menu ? "menu" : "unknown", boot.max_frames, boot.environment_frames, boot.settle_frames,
-            boot.texture_budget, boot.frame_clock ? "frame" : "real", boot.have_previous ? boot.previous_result : "");
+            boot.texture_budget, boot.frame_clock ? "frame" : "real", boot.tick_digests,
+            boot.have_previous ? boot.previous_result : "");
     wii_ui_gx_configure(&driver->video, boot.texture_budget);
     read_manifest();
     verify_manifest();
+    if (boot.selftest)
+        wii_ui_gx_selftest();
     if (!boot.menu) {
         wii_log("BOOT_FAIL boot.txt has no mode=menu\n");
         return 0;
@@ -599,6 +630,8 @@ int wii_boot_run(const struct wii_boot_driver *driver)
     config.screen_settle_frames = boot.settle_frames;
     config.expect_refusal = boot.expect_refusal;
     config.dump_allocation = boot.dump_allocation;
+    config.tick_digests = boot.tick_digests;
+    config.tick_allocations = boot.tick_allocations;
     config.overlay = boot.overlay;
     config.finish = engine_finish;
     config.map_check = map_check;

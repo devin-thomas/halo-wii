@@ -67,9 +67,18 @@ One launch:
 #define CYCLES 3
 #define MAP_PATH WII_ENGINE_ROOT "/map.txt"
 #define PLAN_BYTES 4096
-#define PAINT_BYTES (112u * 1024u)
+/* HWI-033: the main thread's stack. libogc's default is 128 KiB
+(default_stacks.o, s_mainStack), placed just above the boot mode's state and
+libfat's in .bss: entering a campaign map from the menus went past it and
+wrote over them (the boot mode's manifest line was found zeroed). The stack
+is this one instead, through libogc's weak __ppc_main_sp (crt0 loads r1 from
+it), and is painted below the entry frame to measure its peak. */
+#define MAIN_STACK_BYTES 0x40000u
+#define PAINT_BYTES (MAIN_STACK_BYTES - 0x4000u)
 #define PAINT ((uint32_t)0x5a17c0deu)
-#define MAIN_STACK_BYTES 0x20000u
+
+static u8 wii_main_stack[MAIN_STACK_BYTES] __attribute__((aligned(64)));
+u8 *__ppc_main_sp __attribute__((section(".sdata"))) = wii_main_stack + MAIN_STACK_BYTES;
 
 int wii_platform_checks(void);
 int wii_platform_configure(void);
@@ -111,6 +120,19 @@ static uintptr_t stack_low_water(void)
 	while ((uintptr_t)word < paint_top && *word == PAINT)
 		++word;
 	return (uintptr_t)word;
+}
+
+/* (boot_main.h) the main stack's peak below the entry frame so far, its size,
+and whether the painted window was used up */
+unsigned long wii_main_stack_peak(unsigned long *stack_bytes, int *exhausted)
+{
+	uintptr_t low_water = stack_low_water();
+
+	if (stack_bytes)
+		*stack_bytes = MAIN_STACK_BYTES;
+	if (exhausted)
+		*exhausted = low_water <= paint_bottom;
+	return (unsigned long)(paint_top - low_water + 512);
 }
 
 /* ---------- storage */

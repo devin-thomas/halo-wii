@@ -91,6 +91,32 @@ class StageTests(unittest.TestCase):
             with self.assertRaises(boot_stage.StageError):
                 boot_stage.stage(generation, stage_dir, "ui", [], {}, base / "out2")
 
+    def test_a_texture_two_bsps_share_is_staged_once(self):
+        """HWI-033: render_stage lists a campaign map's shared texture once per BSP"""
+        import render_stage
+
+        def fake_stage(generation, map_path, name, scratch):
+            files = [{"path": f"render/{name}/textures/00007-000.hwt"}, {"path": f"render/{name}/lightmaps/00003.hwl"},
+                     {"path": f"render/{name}/textures/00007-000.hwt"}]
+            for item in files:
+                write(scratch / item["path"], b"x")
+            return {"files": files, "totals": {"base": 1}}
+
+        original = render_stage.stage
+        render_stage.stage = fake_stage
+        try:
+            with tempfile.TemporaryDirectory() as temporary:
+                base = Path(temporary)
+                generation = self.generation(base)
+                stage_dir = self.stage_dir(base, {"ui": b"HWIMAP02 ui", "a10": b"HWIMAP02 a10"})
+                out = base / "out"
+                record = boot_stage.stage(generation, stage_dir, "ui", [], {"a10": base / "a10.map"}, out)
+                self.assertEqual(record["environments"]["a10"]["files"], 2)
+                self.assertEqual(record["environments"]["a10"]["listed"], 3)
+                self.assertTrue((out / "data/render/a10/textures/00007-000.hwt").is_file())
+        finally:
+            render_stage.stage = original
+
     def test_a_map_the_manifest_does_not_list_is_refused(self):
         with tempfile.TemporaryDirectory() as temporary:
             base = Path(temporary)
