@@ -1,0 +1,1894 @@
+{
+ "ticket": "HWI-033",
+ "date": "2026-10-12",
+ "build": {
+  "evidence": {
+   "source_commit": "57b4fe165aacf0cfa25bbbba6240e8017c44314b",
+   "source_dirty": false,
+   "wii_merged": "bae56603",
+   "build_id": "10dcb04d7f3d53dd",
+   "engine.dol": {
+    "bytes": 4201280,
+    "sha256": "ca21c6a4c591acf48bfa9e984235ac40beacbeb03a2d44fcad14c065229ac16c"
+   },
+   "engine.elf": {
+    "bytes": 37893908,
+    "sha256": "800557308d8920c90064f79b94ffacb265e166981fecbe5cf61d7e51b15a6636"
+   },
+   "host_reference_sha256": "d9fc83facd47a9d3ff48213c416a18aec137d0c70b3333713f7fe66b3d6a7746"
+  },
+  "packaged": {
+   "source_commit": "e64d8ad42b539869e554f136416933956e60de2c",
+   "source_dirty": false,
+   "note": "merges wii 7f23a821 (HWI-077, tools only); engine sources as the evidence build",
+   "build_id": "5050666d77d40bd7",
+   "package_artifacts": "stage + inspect --require-clean: PASS, 33 files, 0 problems, 0 findings"
+  },
+  "compiler": "powerpc-eabi-gcc (devkitPPC) 16.1.0",
+  "tests": {
+   "python_3_14": "594 OK (1 skipped)",
+   "python_3_11": "594 OK (1 skipped)"
+  }
+ },
+ "content": {
+  "maps": "HWIMAP02 ui, prisoner, a10 (HWI-026/HWI-028 stagings)",
+  "generation": "6e7b87372c08e3fa",
+  "render_files_a10": "boot_stage.py --environment a10 (shared textures staged once)"
+ },
+ "launches": [
+  {
+   "label": "campaign 1",
+   "host": "Titan",
+   "backend": "D3D",
+   "host_os_version": "10.0.26200",
+   "build_id": "10dcb04d7f3d53dd",
+   "source_commit": "57b4fe165aacf0cfa25bbbba6240e8017c44314b",
+   "source_dirty": false,
+   "dol_sha256": "ca21c6a4c591acf48bfa9e984235ac40beacbeb03a2d44fcad14c065229ac16c",
+   "input_script_sha256": "d88712f51fc544efb6147545da6b7bbac9a0d9b2b70dcef6883ef9a71f5ac6e6",
+   "runner": "HWI-073 (before HWI-077)",
+   "host_shared": true,
+   "guest": {
+    "end_reason": "campaign_reached",
+    "end_result": "pass",
+    "elapsed_ms_frame_clock": 446608
+   },
+   "persistence": "passed",
+   "host_exit": "0x00000000",
+   "host_outcome": "exit_zero",
+   "forced_stop": false,
+   "os_stability": "no_instability_events_observed",
+   "dolphin_seconds": 452.487,
+   "main_stack_peak": 155952,
+   "environment_first": {
+    "frame": "1225",
+    "map": "a10",
+    "state": "cba7e8c3",
+    "state_raw": "af67045d",
+    "drawing": "drawn",
+    "efb_crc": "c8ccd340",
+    "game_time": "1"
+   },
+   "environment_end": {
+    "frames": "3800",
+    "state": "5f41047f",
+    "state_raw": "33f6fbaf",
+    "ticks": "3803",
+    "tick_digests": "900"
+   },
+   "screens": [
+    {
+     "frame": "44",
+     "screen_tag": "271",
+     "efb_crc": "6e0f6169",
+     "state": "3d799c4e",
+     "state_without_scripts": "51699f2d",
+     "state_raw": "74f01923"
+    },
+    {
+     "frame": "830",
+     "screen_tag": "279",
+     "efb_crc": "976804f2",
+     "state": "8ae42ac1",
+     "state_without_scripts": "45a7c60a",
+     "state_raw": "d3b686f9"
+    },
+    {
+     "frame": "1059",
+     "screen_tag": "280",
+     "efb_crc": "0b5bd8dd",
+     "state": "6e74d500",
+     "state_without_scripts": "4909c39d",
+     "state_raw": "20c14b25"
+    },
+    {
+     "frame": "1181",
+     "screen_tag": "281",
+     "efb_crc": "d27b2712",
+     "state": "c27a0131",
+     "state_without_scripts": "4ba6b8fd",
+     "state_raw": "a2851229"
+    },
+    {
+     "frame": "1269",
+     "screen_tag": "-1",
+     "efb_crc": "b0920af0",
+     "state": "5017a669",
+     "state_without_scripts": "2fa49bcc",
+     "state_raw": "c78eb260"
+    }
+   ],
+   "ticks": {
+    "digested": 900,
+    "bsps_in_window": [
+     "0",
+     "7"
+    ]
+   },
+   "maps": [
+    {
+     "frame": 0,
+     "map": "ui",
+     "kind": "menus"
+    },
+    {
+     "frame": 1225,
+     "map": "a10",
+     "kind": "campaign"
+    }
+   ],
+   "selftest": {
+    "cases": 112,
+    "failures": 0,
+    "minmax_cases": 64,
+    "plasma_cases": 48,
+    "plasma_error_vs_combiners": {
+     "1": 32,
+     "0": 9,
+     "2": 6,
+     "3": 1
+    },
+    "efb_crc": "b3a13762"
+   },
+   "ui_totals": {
+    "screen_quads": 5769,
+    "plasma_composited": 5738,
+    "plasma_missing": 0,
+    "multimap_approximated": 0,
+    "meter_approximated": 0,
+    "missing_bitmaps": 0
+   },
+   "gx_totals": {
+    "loads": 21,
+    "load_failures": 0,
+    "evictions": 0,
+    "plasma_quads": 5786,
+    "plasma_stages": 15,
+    "minmax_quads": 64,
+    "minmax_tiles": 64,
+    "failed_draws": 0
+   },
+   "host_replay": {
+    "exit": 0,
+    "seconds": 19.5,
+    "screens": 5,
+    "screens_state_equal": 5,
+    "screens_without_scripts_equal": 5,
+    "screens_state_raw_equal": 5,
+    "ticks": 900,
+    "ticks_equal": 900,
+    "first_unequal_tick": null,
+    "environment": {
+     "first": true,
+     "end": true
+    },
+    "allocations": {
+     "first_screen": "77/77",
+     "first_environment": "77/77"
+    }
+   }
+  },
+  {
+   "label": "campaign 2",
+   "host": "Titan",
+   "backend": "D3D",
+   "host_os_version": "10.0.26200",
+   "build_id": "10dcb04d7f3d53dd",
+   "source_commit": "57b4fe165aacf0cfa25bbbba6240e8017c44314b",
+   "source_dirty": false,
+   "dol_sha256": "ca21c6a4c591acf48bfa9e984235ac40beacbeb03a2d44fcad14c065229ac16c",
+   "input_script_sha256": "3d02d614d2de19ef15132823ff49dc82b44e2f84d06856172e4bb2746587d953",
+   "runner": "HWI-077 focus-safe",
+   "host_shared": false,
+   "guest": {
+    "end_reason": "campaign_reached",
+    "end_result": "pass",
+    "elapsed_ms_frame_clock": 446608
+   },
+   "persistence": "passed",
+   "host_exit": "0x00000000",
+   "host_outcome": "exit_zero",
+   "forced_stop": false,
+   "os_stability": "no_instability_events_observed",
+   "dolphin_seconds": 450.883,
+   "main_stack_peak": 155952,
+   "environment_first": {
+    "frame": "1225",
+    "map": "a10",
+    "state": "cba7e8c3",
+    "state_raw": "af67045d",
+    "drawing": "drawn",
+    "efb_crc": "c8ccd340",
+    "game_time": "1"
+   },
+   "environment_end": {
+    "frames": "3800",
+    "state": "1b0ea632",
+    "state_raw": "77b959e2",
+    "ticks": "3803",
+    "tick_digests": "900"
+   },
+   "screens": [
+    {
+     "frame": "44",
+     "screen_tag": "271",
+     "efb_crc": "6e0f6169",
+     "state": "3d799c4e",
+     "state_without_scripts": "51699f2d",
+     "state_raw": "74f01923"
+    },
+    {
+     "frame": "830",
+     "screen_tag": "279",
+     "efb_crc": "976804f2",
+     "state": "8ae42ac1",
+     "state_without_scripts": "45a7c60a",
+     "state_raw": "d3b686f9"
+    },
+    {
+     "frame": "1059",
+     "screen_tag": "280",
+     "efb_crc": "0b5bd8dd",
+     "state": "6e74d500",
+     "state_without_scripts": "4909c39d",
+     "state_raw": "20c14b25"
+    },
+    {
+     "frame": "1181",
+     "screen_tag": "281",
+     "efb_crc": "d27b2712",
+     "state": "c27a0131",
+     "state_without_scripts": "4ba6b8fd",
+     "state_raw": "a2851229"
+    },
+    {
+     "frame": "1269",
+     "screen_tag": "-1",
+     "efb_crc": "b0920af0",
+     "state": "5017a669",
+     "state_without_scripts": "2fa49bcc",
+     "state_raw": "c78eb260"
+    }
+   ],
+   "ticks": {
+    "digested": 900,
+    "bsps_in_window": [
+     "0",
+     "7"
+    ]
+   },
+   "maps": [
+    {
+     "frame": 0,
+     "map": "ui",
+     "kind": "menus"
+    },
+    {
+     "frame": 1225,
+     "map": "a10",
+     "kind": "campaign"
+    }
+   ],
+   "selftest": {
+    "cases": 112,
+    "failures": 0,
+    "minmax_cases": 64,
+    "plasma_cases": 48,
+    "plasma_error_vs_combiners": {
+     "1": 32,
+     "0": 9,
+     "2": 6,
+     "3": 1
+    },
+    "efb_crc": "b3a13762"
+   },
+   "ui_totals": {
+    "screen_quads": 5769,
+    "plasma_composited": 5738,
+    "plasma_missing": 0,
+    "multimap_approximated": 0,
+    "meter_approximated": 0,
+    "missing_bitmaps": 0
+   },
+   "gx_totals": {
+    "loads": 21,
+    "load_failures": 0,
+    "evictions": 0,
+    "plasma_quads": 5786,
+    "plasma_stages": 15,
+    "minmax_quads": 64,
+    "minmax_tiles": 64,
+    "failed_draws": 0
+   },
+   "host_replay": {
+    "exit": 0,
+    "seconds": 17.8,
+    "screens": 5,
+    "screens_state_equal": 5,
+    "screens_without_scripts_equal": 5,
+    "screens_state_raw_equal": 5,
+    "ticks": 900,
+    "ticks_equal": 900,
+    "first_unequal_tick": null,
+    "environment": {
+     "first": true,
+     "end": true
+    },
+    "allocations": {
+     "first_screen": "77/77",
+     "first_environment": "77/77"
+    }
+   }
+  },
+  {
+   "label": "campaign 1",
+   "host": "Research",
+   "backend": "Vulkan",
+   "host_os_version": "27.0",
+   "build_id": "10dcb04d7f3d53dd",
+   "source_commit": "57b4fe165aacf0cfa25bbbba6240e8017c44314b",
+   "source_dirty": false,
+   "dol_sha256": "ca21c6a4c591acf48bfa9e984235ac40beacbeb03a2d44fcad14c065229ac16c",
+   "input_script_sha256": "d88712f51fc544efb6147545da6b7bbac9a0d9b2b70dcef6883ef9a71f5ac6e6",
+   "runner": "HWI-073 (before HWI-077)",
+   "host_shared": true,
+   "guest": {
+    "end_reason": "campaign_reached",
+    "end_result": "pass",
+    "elapsed_ms_frame_clock": 446608
+   },
+   "persistence": "passed",
+   "host_exit": "0x00000000",
+   "host_outcome": "exit_zero",
+   "forced_stop": false,
+   "os_stability": "no_instability_events_observed",
+   "dolphin_seconds": 447.891,
+   "main_stack_peak": 155952,
+   "environment_first": {
+    "frame": "1225",
+    "map": "a10",
+    "state": "cba7e8c3",
+    "state_raw": "af67045d",
+    "drawing": "drawn",
+    "efb_crc": "f8619d98",
+    "game_time": "1"
+   },
+   "environment_end": {
+    "frames": "3800",
+    "state": "5f41047f",
+    "state_raw": "33f6fbaf",
+    "ticks": "3803",
+    "tick_digests": "900"
+   },
+   "screens": [
+    {
+     "frame": "44",
+     "screen_tag": "271",
+     "efb_crc": "c89dccfc",
+     "state": "3d799c4e",
+     "state_without_scripts": "51699f2d",
+     "state_raw": "74f01923"
+    },
+    {
+     "frame": "830",
+     "screen_tag": "279",
+     "efb_crc": "dcf09d1c",
+     "state": "8ae42ac1",
+     "state_without_scripts": "45a7c60a",
+     "state_raw": "d3b686f9"
+    },
+    {
+     "frame": "1059",
+     "screen_tag": "280",
+     "efb_crc": "5647e80b",
+     "state": "6e74d500",
+     "state_without_scripts": "4909c39d",
+     "state_raw": "20c14b25"
+    },
+    {
+     "frame": "1181",
+     "screen_tag": "281",
+     "efb_crc": "6d0ecb6d",
+     "state": "c27a0131",
+     "state_without_scripts": "4ba6b8fd",
+     "state_raw": "a2851229"
+    },
+    {
+     "frame": "1269",
+     "screen_tag": "-1",
+     "efb_crc": "b0920af0",
+     "state": "5017a669",
+     "state_without_scripts": "2fa49bcc",
+     "state_raw": "c78eb260"
+    }
+   ],
+   "ticks": {
+    "digested": 900,
+    "bsps_in_window": [
+     "0",
+     "7"
+    ]
+   },
+   "maps": [
+    {
+     "frame": 0,
+     "map": "ui",
+     "kind": "menus"
+    },
+    {
+     "frame": 1225,
+     "map": "a10",
+     "kind": "campaign"
+    }
+   ],
+   "selftest": {
+    "cases": 112,
+    "failures": 0,
+    "minmax_cases": 64,
+    "plasma_cases": 48,
+    "plasma_error_vs_combiners": {
+     "1": 32,
+     "0": 9,
+     "2": 6,
+     "3": 1
+    },
+    "efb_crc": "b3a13762"
+   },
+   "ui_totals": {
+    "screen_quads": 5769,
+    "plasma_composited": 5738,
+    "plasma_missing": 0,
+    "multimap_approximated": 0,
+    "meter_approximated": 0,
+    "missing_bitmaps": 0
+   },
+   "gx_totals": {
+    "loads": 21,
+    "load_failures": 0,
+    "evictions": 0,
+    "plasma_quads": 5786,
+    "plasma_stages": 15,
+    "minmax_quads": 64,
+    "minmax_tiles": 64,
+    "failed_draws": 0
+   },
+   "host_replay": {
+    "exit": 0,
+    "seconds": 19.8,
+    "screens": 5,
+    "screens_state_equal": 5,
+    "screens_without_scripts_equal": 5,
+    "screens_state_raw_equal": 5,
+    "ticks": 900,
+    "ticks_equal": 900,
+    "first_unequal_tick": null,
+    "environment": {
+     "first": true,
+     "end": true
+    },
+    "allocations": {
+     "first_screen": "77/77",
+     "first_environment": "77/77"
+    }
+   }
+  },
+  {
+   "label": "campaign 2",
+   "host": "Research",
+   "backend": "Vulkan",
+   "host_os_version": "27.0",
+   "build_id": "10dcb04d7f3d53dd",
+   "source_commit": "57b4fe165aacf0cfa25bbbba6240e8017c44314b",
+   "source_dirty": false,
+   "dol_sha256": "ca21c6a4c591acf48bfa9e984235ac40beacbeb03a2d44fcad14c065229ac16c",
+   "input_script_sha256": "d88712f51fc544efb6147545da6b7bbac9a0d9b2b70dcef6883ef9a71f5ac6e6",
+   "runner": "HWI-073 (before HWI-077)",
+   "host_shared": true,
+   "guest": {
+    "end_reason": "campaign_reached",
+    "end_result": "pass",
+    "elapsed_ms_frame_clock": 446608
+   },
+   "persistence": "passed",
+   "host_exit": "0x00000000",
+   "host_outcome": "exit_zero",
+   "forced_stop": false,
+   "os_stability": "no_instability_events_observed",
+   "dolphin_seconds": 447.632,
+   "main_stack_peak": 155952,
+   "environment_first": {
+    "frame": "1225",
+    "map": "a10",
+    "state": "cba7e8c3",
+    "state_raw": "af67045d",
+    "drawing": "drawn",
+    "efb_crc": "f8619d98",
+    "game_time": "1"
+   },
+   "environment_end": {
+    "frames": "3800",
+    "state": "5f41047f",
+    "state_raw": "33f6fbaf",
+    "ticks": "3803",
+    "tick_digests": "900"
+   },
+   "screens": [
+    {
+     "frame": "44",
+     "screen_tag": "271",
+     "efb_crc": "c89dccfc",
+     "state": "3d799c4e",
+     "state_without_scripts": "51699f2d",
+     "state_raw": "74f01923"
+    },
+    {
+     "frame": "830",
+     "screen_tag": "279",
+     "efb_crc": "dcf09d1c",
+     "state": "8ae42ac1",
+     "state_without_scripts": "45a7c60a",
+     "state_raw": "d3b686f9"
+    },
+    {
+     "frame": "1059",
+     "screen_tag": "280",
+     "efb_crc": "5647e80b",
+     "state": "6e74d500",
+     "state_without_scripts": "4909c39d",
+     "state_raw": "20c14b25"
+    },
+    {
+     "frame": "1181",
+     "screen_tag": "281",
+     "efb_crc": "6d0ecb6d",
+     "state": "c27a0131",
+     "state_without_scripts": "4ba6b8fd",
+     "state_raw": "a2851229"
+    },
+    {
+     "frame": "1269",
+     "screen_tag": "-1",
+     "efb_crc": "b0920af0",
+     "state": "5017a669",
+     "state_without_scripts": "2fa49bcc",
+     "state_raw": "c78eb260"
+    }
+   ],
+   "ticks": {
+    "digested": 900,
+    "bsps_in_window": [
+     "0",
+     "7"
+    ]
+   },
+   "maps": [
+    {
+     "frame": 0,
+     "map": "ui",
+     "kind": "menus"
+    },
+    {
+     "frame": 1225,
+     "map": "a10",
+     "kind": "campaign"
+    }
+   ],
+   "selftest": {
+    "cases": 112,
+    "failures": 0,
+    "minmax_cases": 64,
+    "plasma_cases": 48,
+    "plasma_error_vs_combiners": {
+     "1": 32,
+     "0": 9,
+     "2": 6,
+     "3": 1
+    },
+    "efb_crc": "b3a13762"
+   },
+   "ui_totals": {
+    "screen_quads": 5769,
+    "plasma_composited": 5738,
+    "plasma_missing": 0,
+    "multimap_approximated": 0,
+    "meter_approximated": 0,
+    "missing_bitmaps": 0
+   },
+   "gx_totals": {
+    "loads": 21,
+    "load_failures": 0,
+    "evictions": 0,
+    "plasma_quads": 5786,
+    "plasma_stages": 15,
+    "minmax_quads": 64,
+    "minmax_tiles": 64,
+    "failed_draws": 0
+   },
+   "host_replay": {
+    "exit": 0,
+    "seconds": 17.7,
+    "screens": 5,
+    "screens_state_equal": 5,
+    "screens_without_scripts_equal": 5,
+    "screens_state_raw_equal": 5,
+    "ticks": 900,
+    "ticks_equal": 900,
+    "first_unequal_tick": null,
+    "environment": {
+     "first": true,
+     "end": true
+    },
+    "allocations": {
+     "first_screen": "77/77",
+     "first_environment": "77/77"
+    }
+   }
+  },
+  {
+   "label": "split screen 1",
+   "host": "Titan",
+   "backend": "D3D",
+   "host_os_version": "10.0.26200",
+   "build_id": "10dcb04d7f3d53dd",
+   "source_commit": "57b4fe165aacf0cfa25bbbba6240e8017c44314b",
+   "source_dirty": false,
+   "dol_sha256": "ca21c6a4c591acf48bfa9e984235ac40beacbeb03a2d44fcad14c065229ac16c",
+   "input_script_sha256": "238561d1db0c4205a1639d170bbdaf3524b6fe648a0221e1f463284bcffcda5f",
+   "runner": "HWI-077 focus-safe",
+   "host_shared": true,
+   "guest": {
+    "end_reason": "environment_reached",
+    "end_result": "pass",
+    "elapsed_ms_frame_clock": 127447
+   },
+   "persistence": "passed",
+   "host_exit": "0x00000000",
+   "host_outcome": "exit_zero",
+   "forced_stop": false,
+   "os_stability": "no_instability_events_observed",
+   "dolphin_seconds": 132.192,
+   "main_stack_peak": 97200,
+   "environment_first": {
+    "frame": "5787",
+    "map": "prisoner",
+    "state": "bf0caac3",
+    "state_raw": "b255896a",
+    "drawing": "drawn",
+    "efb_crc": "05ba6395",
+    "game_time": "3"
+   },
+   "environment_end": {
+    "frames": "150",
+    "state": "3423415d",
+    "state_raw": "ba564a6f",
+    "ticks": "152",
+    "tick_digests": "0"
+   },
+   "screens": [
+    {
+     "frame": "44",
+     "screen_tag": "271",
+     "efb_crc": "6e0f6169",
+     "state": "3d799c4e",
+     "state_without_scripts": "51699f2d",
+     "state_raw": "74f01923"
+    },
+    {
+     "frame": "830",
+     "screen_tag": "271",
+     "efb_crc": "379b5aa2",
+     "state": "91a20770",
+     "state_without_scripts": "3eca8f45",
+     "state_raw": "c8f0ab48"
+    },
+    {
+     "frame": "910",
+     "screen_tag": "271",
+     "efb_crc": "f966fdc8",
+     "state": "822ae057",
+     "state_without_scripts": "2afb5c4d",
+     "state_raw": "3824bfe8"
+    },
+    {
+     "frame": "990",
+     "screen_tag": "904",
+     "efb_crc": "4183cd3e",
+     "state": "73410307",
+     "state_without_scripts": "54390e1a",
+     "state_raw": "88787c79"
+    },
+    {
+     "frame": "1068",
+     "screen_tag": "482",
+     "efb_crc": "a8cd3661",
+     "state": "f733946d",
+     "state_without_scripts": "6203c144",
+     "state_raw": "9a317539"
+    },
+    {
+     "frame": "1147",
+     "screen_tag": "395",
+     "efb_crc": "976804f2",
+     "state": "21641d9e",
+     "state_without_scripts": "7dec31b1",
+     "state_raw": "54be38e0"
+    },
+    {
+     "frame": "1551",
+     "screen_tag": "395",
+     "efb_crc": "80729e65",
+     "state": "ce4a5687",
+     "state_without_scripts": "d881f351",
+     "state_raw": "829241ae"
+    },
+    {
+     "frame": "1631",
+     "screen_tag": "395",
+     "efb_crc": "77c29155",
+     "state": "24bc5b8a",
+     "state_without_scripts": "cfd03aad",
+     "state_raw": "e9a97cce"
+    },
+    {
+     "frame": "1711",
+     "screen_tag": "395",
+     "efb_crc": "72f365f9",
+     "state": "2848ab03",
+     "state_without_scripts": "5561e09c",
+     "state_raw": "b4ab89b4"
+    },
+    {
+     "frame": "1791",
+     "screen_tag": "395",
+     "efb_crc": "4fd702b4",
+     "state": "35aae157",
+     "state_without_scripts": "1a16ee20",
+     "state_raw": "1e97c91b"
+    },
+    {
+     "frame": "1871",
+     "screen_tag": "904",
+     "efb_crc": "14f4a5af",
+     "state": "65a031c5",
+     "state_without_scripts": "40ee0252",
+     "state_raw": "679607d6"
+    },
+    {
+     "frame": "2100",
+     "screen_tag": "271",
+     "efb_crc": "615976dc",
+     "state": "26a31bf7",
+     "state_without_scripts": "4169321e",
+     "state_raw": "fe99d134"
+    },
+    {
+     "frame": "2508",
+     "screen_tag": "271",
+     "efb_crc": "654fab92",
+     "state": "a78505e4",
+     "state_without_scripts": "794f66b8",
+     "state_raw": "950c5c3e"
+    },
+    {
+     "frame": "2588",
+     "screen_tag": "383",
+     "efb_crc": "636f5306",
+     "state": "c60f04b4",
+     "state_without_scripts": "7580f142",
+     "state_raw": "3935309b"
+    },
+    {
+     "frame": "2668",
+     "screen_tag": "383",
+     "efb_crc": "afc82b8c",
+     "state": "90b63d71",
+     "state_without_scripts": "119357be",
+     "state_raw": "9812c96a"
+    },
+    {
+     "frame": "2748",
+     "screen_tag": "489",
+     "efb_crc": "eea91158",
+     "state": "dfa551c8",
+     "state_without_scripts": "b72ac97b",
+     "state_raw": "7bdc63fe"
+    },
+    {
+     "frame": "4295",
+     "screen_tag": "496",
+     "efb_crc": "c509b953",
+     "state": "9d7d4cfc",
+     "state_without_scripts": "43062981",
+     "state_raw": "6a8d99dd"
+    },
+    {
+     "frame": "4524",
+     "screen_tag": "496",
+     "efb_crc": "75b7ba69",
+     "state": "2805bcda",
+     "state_without_scripts": "ffad7244",
+     "state_raw": "dff569fb"
+    },
+    {
+     "frame": "4604",
+     "screen_tag": "496",
+     "efb_crc": "6968f0e2",
+     "state": "2805bcda",
+     "state_without_scripts": "ffad7244",
+     "state_raw": "dff569fb"
+    },
+    {
+     "frame": "5040",
+     "screen_tag": "497",
+     "efb_crc": "e49e0190",
+     "state": "0c5d1598",
+     "state_without_scripts": "34fa8bab",
+     "state_raw": "fbadc0b9"
+    },
+    {
+     "frame": "5267",
+     "screen_tag": "498",
+     "efb_crc": "16991219",
+     "state": "0c5d1598",
+     "state_without_scripts": "34fa8bab",
+     "state_raw": "fbadc0b9"
+    },
+    {
+     "frame": "5831",
+     "screen_tag": "-1",
+     "efb_crc": "64e0ec89",
+     "state": "90e3cb08",
+     "state_without_scripts": "6507946f",
+     "state_raw": "b278413b"
+    }
+   ],
+   "ticks": {
+    "digested": 0,
+    "bsps_in_window": null
+   },
+   "maps": [
+    {
+     "frame": 0,
+     "map": "ui",
+     "kind": "menus"
+    },
+    {
+     "frame": 5787,
+     "map": "prisoner",
+     "kind": "multiplayer"
+    }
+   ],
+   "selftest": {
+    "cases": 112,
+    "failures": 0,
+    "minmax_cases": 64,
+    "plasma_cases": 48,
+    "plasma_error_vs_combiners": {
+     "1": 32,
+     "0": 9,
+     "2": 6,
+     "3": 1
+    },
+    "efb_crc": "b3a13762"
+   },
+   "ui_totals": {
+    "screen_quads": 67818,
+    "plasma_composited": 61630,
+    "plasma_missing": 0,
+    "multimap_approximated": 0,
+    "meter_approximated": 0,
+    "missing_bitmaps": 0
+   },
+   "gx_totals": {
+    "loads": 67,
+    "load_failures": 0,
+    "evictions": 8,
+    "plasma_quads": 61678,
+    "plasma_stages": 15,
+    "minmax_quads": 64,
+    "minmax_tiles": 64,
+    "failed_draws": 0
+   },
+   "host_replay": {
+    "exit": 0,
+    "seconds": 5.0,
+    "screens": 22,
+    "screens_state_equal": 22,
+    "screens_without_scripts_equal": 22,
+    "screens_state_raw_equal": 22,
+    "ticks": 0,
+    "ticks_equal": 0,
+    "first_unequal_tick": null,
+    "environment": {
+     "first": true,
+     "end": true
+    },
+    "allocations": {
+     "first_screen": "77/77",
+     "first_environment": "77/77"
+    }
+   }
+  },
+  {
+   "label": "split screen 2",
+   "host": "Titan",
+   "backend": "D3D",
+   "host_os_version": "10.0.26200",
+   "build_id": "10dcb04d7f3d53dd",
+   "source_commit": "57b4fe165aacf0cfa25bbbba6240e8017c44314b",
+   "source_dirty": false,
+   "dol_sha256": "ca21c6a4c591acf48bfa9e984235ac40beacbeb03a2d44fcad14c065229ac16c",
+   "input_script_sha256": "238561d1db0c4205a1639d170bbdaf3524b6fe648a0221e1f463284bcffcda5f",
+   "runner": "HWI-077 focus-safe",
+   "host_shared": false,
+   "guest": {
+    "end_reason": "environment_reached",
+    "end_result": "pass",
+    "elapsed_ms_frame_clock": 127447
+   },
+   "persistence": "passed",
+   "host_exit": "0x00000000",
+   "host_outcome": "exit_zero",
+   "forced_stop": false,
+   "os_stability": "no_instability_events_observed",
+   "dolphin_seconds": 131.329,
+   "main_stack_peak": 97200,
+   "environment_first": {
+    "frame": "5787",
+    "map": "prisoner",
+    "state": "bf0caac3",
+    "state_raw": "b255896a",
+    "drawing": "drawn",
+    "efb_crc": "05ba6395",
+    "game_time": "3"
+   },
+   "environment_end": {
+    "frames": "150",
+    "state": "3423415d",
+    "state_raw": "ba564a6f",
+    "ticks": "152",
+    "tick_digests": "0"
+   },
+   "screens": [
+    {
+     "frame": "44",
+     "screen_tag": "271",
+     "efb_crc": "6e0f6169",
+     "state": "3d799c4e",
+     "state_without_scripts": "51699f2d",
+     "state_raw": "74f01923"
+    },
+    {
+     "frame": "830",
+     "screen_tag": "271",
+     "efb_crc": "379b5aa2",
+     "state": "91a20770",
+     "state_without_scripts": "3eca8f45",
+     "state_raw": "c8f0ab48"
+    },
+    {
+     "frame": "910",
+     "screen_tag": "271",
+     "efb_crc": "f966fdc8",
+     "state": "822ae057",
+     "state_without_scripts": "2afb5c4d",
+     "state_raw": "3824bfe8"
+    },
+    {
+     "frame": "990",
+     "screen_tag": "904",
+     "efb_crc": "4183cd3e",
+     "state": "73410307",
+     "state_without_scripts": "54390e1a",
+     "state_raw": "88787c79"
+    },
+    {
+     "frame": "1068",
+     "screen_tag": "482",
+     "efb_crc": "a8cd3661",
+     "state": "f733946d",
+     "state_without_scripts": "6203c144",
+     "state_raw": "9a317539"
+    },
+    {
+     "frame": "1147",
+     "screen_tag": "395",
+     "efb_crc": "976804f2",
+     "state": "21641d9e",
+     "state_without_scripts": "7dec31b1",
+     "state_raw": "54be38e0"
+    },
+    {
+     "frame": "1551",
+     "screen_tag": "395",
+     "efb_crc": "80729e65",
+     "state": "ce4a5687",
+     "state_without_scripts": "d881f351",
+     "state_raw": "829241ae"
+    },
+    {
+     "frame": "1631",
+     "screen_tag": "395",
+     "efb_crc": "77c29155",
+     "state": "24bc5b8a",
+     "state_without_scripts": "cfd03aad",
+     "state_raw": "e9a97cce"
+    },
+    {
+     "frame": "1711",
+     "screen_tag": "395",
+     "efb_crc": "72f365f9",
+     "state": "2848ab03",
+     "state_without_scripts": "5561e09c",
+     "state_raw": "b4ab89b4"
+    },
+    {
+     "frame": "1791",
+     "screen_tag": "395",
+     "efb_crc": "4fd702b4",
+     "state": "35aae157",
+     "state_without_scripts": "1a16ee20",
+     "state_raw": "1e97c91b"
+    },
+    {
+     "frame": "1871",
+     "screen_tag": "904",
+     "efb_crc": "14f4a5af",
+     "state": "65a031c5",
+     "state_without_scripts": "40ee0252",
+     "state_raw": "679607d6"
+    },
+    {
+     "frame": "2100",
+     "screen_tag": "271",
+     "efb_crc": "615976dc",
+     "state": "26a31bf7",
+     "state_without_scripts": "4169321e",
+     "state_raw": "fe99d134"
+    },
+    {
+     "frame": "2508",
+     "screen_tag": "271",
+     "efb_crc": "654fab92",
+     "state": "a78505e4",
+     "state_without_scripts": "794f66b8",
+     "state_raw": "950c5c3e"
+    },
+    {
+     "frame": "2588",
+     "screen_tag": "383",
+     "efb_crc": "636f5306",
+     "state": "c60f04b4",
+     "state_without_scripts": "7580f142",
+     "state_raw": "3935309b"
+    },
+    {
+     "frame": "2668",
+     "screen_tag": "383",
+     "efb_crc": "afc82b8c",
+     "state": "90b63d71",
+     "state_without_scripts": "119357be",
+     "state_raw": "9812c96a"
+    },
+    {
+     "frame": "2748",
+     "screen_tag": "489",
+     "efb_crc": "eea91158",
+     "state": "dfa551c8",
+     "state_without_scripts": "b72ac97b",
+     "state_raw": "7bdc63fe"
+    },
+    {
+     "frame": "4295",
+     "screen_tag": "496",
+     "efb_crc": "c509b953",
+     "state": "9d7d4cfc",
+     "state_without_scripts": "43062981",
+     "state_raw": "6a8d99dd"
+    },
+    {
+     "frame": "4524",
+     "screen_tag": "496",
+     "efb_crc": "75b7ba69",
+     "state": "2805bcda",
+     "state_without_scripts": "ffad7244",
+     "state_raw": "dff569fb"
+    },
+    {
+     "frame": "4604",
+     "screen_tag": "496",
+     "efb_crc": "6968f0e2",
+     "state": "2805bcda",
+     "state_without_scripts": "ffad7244",
+     "state_raw": "dff569fb"
+    },
+    {
+     "frame": "5040",
+     "screen_tag": "497",
+     "efb_crc": "e49e0190",
+     "state": "0c5d1598",
+     "state_without_scripts": "34fa8bab",
+     "state_raw": "fbadc0b9"
+    },
+    {
+     "frame": "5267",
+     "screen_tag": "498",
+     "efb_crc": "16991219",
+     "state": "0c5d1598",
+     "state_without_scripts": "34fa8bab",
+     "state_raw": "fbadc0b9"
+    },
+    {
+     "frame": "5831",
+     "screen_tag": "-1",
+     "efb_crc": "64e0ec89",
+     "state": "90e3cb08",
+     "state_without_scripts": "6507946f",
+     "state_raw": "b278413b"
+    }
+   ],
+   "ticks": {
+    "digested": 0,
+    "bsps_in_window": null
+   },
+   "maps": [
+    {
+     "frame": 0,
+     "map": "ui",
+     "kind": "menus"
+    },
+    {
+     "frame": 5787,
+     "map": "prisoner",
+     "kind": "multiplayer"
+    }
+   ],
+   "selftest": {
+    "cases": 112,
+    "failures": 0,
+    "minmax_cases": 64,
+    "plasma_cases": 48,
+    "plasma_error_vs_combiners": {
+     "1": 32,
+     "0": 9,
+     "2": 6,
+     "3": 1
+    },
+    "efb_crc": "b3a13762"
+   },
+   "ui_totals": {
+    "screen_quads": 67818,
+    "plasma_composited": 61630,
+    "plasma_missing": 0,
+    "multimap_approximated": 0,
+    "meter_approximated": 0,
+    "missing_bitmaps": 0
+   },
+   "gx_totals": {
+    "loads": 67,
+    "load_failures": 0,
+    "evictions": 8,
+    "plasma_quads": 61678,
+    "plasma_stages": 15,
+    "minmax_quads": 64,
+    "minmax_tiles": 64,
+    "failed_draws": 0
+   },
+   "host_replay": {
+    "exit": 0,
+    "seconds": 8.6,
+    "screens": 22,
+    "screens_state_equal": 22,
+    "screens_without_scripts_equal": 22,
+    "screens_state_raw_equal": 22,
+    "ticks": 0,
+    "ticks_equal": 0,
+    "first_unequal_tick": null,
+    "environment": {
+     "first": true,
+     "end": true
+    },
+    "allocations": {
+     "first_screen": "77/77",
+     "first_environment": "77/77"
+    }
+   }
+  },
+  {
+   "label": "split screen 1",
+   "host": "Research",
+   "backend": "Vulkan",
+   "host_os_version": "27.0",
+   "build_id": "10dcb04d7f3d53dd",
+   "source_commit": "57b4fe165aacf0cfa25bbbba6240e8017c44314b",
+   "source_dirty": false,
+   "dol_sha256": "ca21c6a4c591acf48bfa9e984235ac40beacbeb03a2d44fcad14c065229ac16c",
+   "input_script_sha256": "238561d1db0c4205a1639d170bbdaf3524b6fe648a0221e1f463284bcffcda5f",
+   "runner": "HWI-073 (before HWI-077)",
+   "host_shared": true,
+   "guest": {
+    "end_reason": "environment_reached",
+    "end_result": "pass",
+    "elapsed_ms_frame_clock": 127447
+   },
+   "persistence": "passed",
+   "host_exit": "0x00000000",
+   "host_outcome": "exit_zero",
+   "forced_stop": false,
+   "os_stability": "no_instability_events_observed",
+   "dolphin_seconds": 128.386,
+   "main_stack_peak": 97200,
+   "environment_first": {
+    "frame": "5787",
+    "map": "prisoner",
+    "state": "bf0caac3",
+    "state_raw": "b255896a",
+    "drawing": "drawn",
+    "efb_crc": "d3849319",
+    "game_time": "3"
+   },
+   "environment_end": {
+    "frames": "150",
+    "state": "3423415d",
+    "state_raw": "ba564a6f",
+    "ticks": "152",
+    "tick_digests": "0"
+   },
+   "screens": [
+    {
+     "frame": "44",
+     "screen_tag": "271",
+     "efb_crc": "c89dccfc",
+     "state": "3d799c4e",
+     "state_without_scripts": "51699f2d",
+     "state_raw": "74f01923"
+    },
+    {
+     "frame": "830",
+     "screen_tag": "271",
+     "efb_crc": "9109f737",
+     "state": "91a20770",
+     "state_without_scripts": "3eca8f45",
+     "state_raw": "c8f0ab48"
+    },
+    {
+     "frame": "910",
+     "screen_tag": "271",
+     "efb_crc": "5ff4505d",
+     "state": "822ae057",
+     "state_without_scripts": "2afb5c4d",
+     "state_raw": "3824bfe8"
+    },
+    {
+     "frame": "990",
+     "screen_tag": "904",
+     "efb_crc": "24ee8573",
+     "state": "73410307",
+     "state_without_scripts": "54390e1a",
+     "state_raw": "88787c79"
+    },
+    {
+     "frame": "1068",
+     "screen_tag": "482",
+     "efb_crc": "678a3b04",
+     "state": "f733946d",
+     "state_without_scripts": "6203c144",
+     "state_raw": "9a317539"
+    },
+    {
+     "frame": "1147",
+     "screen_tag": "395",
+     "efb_crc": "dcf09d1c",
+     "state": "21641d9e",
+     "state_without_scripts": "7dec31b1",
+     "state_raw": "54be38e0"
+    },
+    {
+     "frame": "1551",
+     "screen_tag": "395",
+     "efb_crc": "509880d0",
+     "state": "ce4a5687",
+     "state_without_scripts": "d881f351",
+     "state_raw": "829241ae"
+    },
+    {
+     "frame": "1631",
+     "screen_tag": "395",
+     "efb_crc": "90d5d421",
+     "state": "24bc5b8a",
+     "state_without_scripts": "cfd03aad",
+     "state_raw": "e9a97cce"
+    },
+    {
+     "frame": "1711",
+     "screen_tag": "395",
+     "efb_crc": "0d7dec9f",
+     "state": "2848ab03",
+     "state_without_scripts": "5561e09c",
+     "state_raw": "b4ab89b4"
+    },
+    {
+     "frame": "1791",
+     "screen_tag": "395",
+     "efb_crc": "d76bd7e3",
+     "state": "35aae157",
+     "state_without_scripts": "1a16ee20",
+     "state_raw": "1e97c91b"
+    },
+    {
+     "frame": "1871",
+     "screen_tag": "904",
+     "efb_crc": "3410385a",
+     "state": "65a031c5",
+     "state_without_scripts": "40ee0252",
+     "state_raw": "679607d6"
+    },
+    {
+     "frame": "2100",
+     "screen_tag": "271",
+     "efb_crc": "c7cbdb49",
+     "state": "26a31bf7",
+     "state_without_scripts": "4169321e",
+     "state_raw": "fe99d134"
+    },
+    {
+     "frame": "2508",
+     "screen_tag": "271",
+     "efb_crc": "c3dd0607",
+     "state": "a78505e4",
+     "state_without_scripts": "794f66b8",
+     "state_raw": "950c5c3e"
+    },
+    {
+     "frame": "2588",
+     "screen_tag": "383",
+     "efb_crc": "a67f1b17",
+     "state": "c60f04b4",
+     "state_without_scripts": "7580f142",
+     "state_raw": "3935309b"
+    },
+    {
+     "frame": "2668",
+     "screen_tag": "383",
+     "efb_crc": "22513261",
+     "state": "90b63d71",
+     "state_without_scripts": "119357be",
+     "state_raw": "9812c96a"
+    },
+    {
+     "frame": "2748",
+     "screen_tag": "489",
+     "efb_crc": "1d357ca5",
+     "state": "dfa551c8",
+     "state_without_scripts": "b72ac97b",
+     "state_raw": "7bdc63fe"
+    },
+    {
+     "frame": "4295",
+     "screen_tag": "496",
+     "efb_crc": "67cdcb1c",
+     "state": "9d7d4cfc",
+     "state_without_scripts": "43062981",
+     "state_raw": "6a8d99dd"
+    },
+    {
+     "frame": "4524",
+     "screen_tag": "496",
+     "efb_crc": "a05566a4",
+     "state": "2805bcda",
+     "state_without_scripts": "ffad7244",
+     "state_raw": "dff569fb"
+    },
+    {
+     "frame": "4604",
+     "screen_tag": "496",
+     "efb_crc": "d6e2449a",
+     "state": "2805bcda",
+     "state_without_scripts": "ffad7244",
+     "state_raw": "dff569fb"
+    },
+    {
+     "frame": "5040",
+     "screen_tag": "497",
+     "efb_crc": "66b91819",
+     "state": "0c5d1598",
+     "state_without_scripts": "34fa8bab",
+     "state_raw": "fbadc0b9"
+    },
+    {
+     "frame": "5267",
+     "screen_tag": "498",
+     "efb_crc": "e312612f",
+     "state": "0c5d1598",
+     "state_without_scripts": "34fa8bab",
+     "state_raw": "fbadc0b9"
+    },
+    {
+     "frame": "5831",
+     "screen_tag": "-1",
+     "efb_crc": "68b50ad9",
+     "state": "90e3cb08",
+     "state_without_scripts": "6507946f",
+     "state_raw": "b278413b"
+    }
+   ],
+   "ticks": {
+    "digested": 0,
+    "bsps_in_window": null
+   },
+   "maps": [
+    {
+     "frame": 0,
+     "map": "ui",
+     "kind": "menus"
+    },
+    {
+     "frame": 5787,
+     "map": "prisoner",
+     "kind": "multiplayer"
+    }
+   ],
+   "selftest": {
+    "cases": 112,
+    "failures": 0,
+    "minmax_cases": 64,
+    "plasma_cases": 48,
+    "plasma_error_vs_combiners": {
+     "1": 32,
+     "0": 9,
+     "2": 6,
+     "3": 1
+    },
+    "efb_crc": "b3a13762"
+   },
+   "ui_totals": {
+    "screen_quads": 67818,
+    "plasma_composited": 61630,
+    "plasma_missing": 0,
+    "multimap_approximated": 0,
+    "meter_approximated": 0,
+    "missing_bitmaps": 0
+   },
+   "gx_totals": {
+    "loads": 67,
+    "load_failures": 0,
+    "evictions": 8,
+    "plasma_quads": 61678,
+    "plasma_stages": 15,
+    "minmax_quads": 64,
+    "minmax_tiles": 64,
+    "failed_draws": 0
+   },
+   "host_replay": {
+    "exit": 0,
+    "seconds": 4.6,
+    "screens": 22,
+    "screens_state_equal": 22,
+    "screens_without_scripts_equal": 22,
+    "screens_state_raw_equal": 22,
+    "ticks": 0,
+    "ticks_equal": 0,
+    "first_unequal_tick": null,
+    "environment": {
+     "first": true,
+     "end": true
+    },
+    "allocations": {
+     "first_screen": "77/77",
+     "first_environment": "77/77"
+    }
+   }
+  },
+  {
+   "label": "split screen 2",
+   "host": "Research",
+   "backend": "Vulkan",
+   "host_os_version": "27.0",
+   "build_id": "10dcb04d7f3d53dd",
+   "source_commit": "57b4fe165aacf0cfa25bbbba6240e8017c44314b",
+   "source_dirty": false,
+   "dol_sha256": "ca21c6a4c591acf48bfa9e984235ac40beacbeb03a2d44fcad14c065229ac16c",
+   "input_script_sha256": "238561d1db0c4205a1639d170bbdaf3524b6fe648a0221e1f463284bcffcda5f",
+   "runner": "HWI-073 (before HWI-077)",
+   "host_shared": true,
+   "guest": {
+    "end_reason": "environment_reached",
+    "end_result": "pass",
+    "elapsed_ms_frame_clock": 127447
+   },
+   "persistence": "passed",
+   "host_exit": "0x00000000",
+   "host_outcome": "exit_zero",
+   "forced_stop": false,
+   "os_stability": "no_instability_events_observed",
+   "dolphin_seconds": 128.406,
+   "main_stack_peak": 97200,
+   "environment_first": {
+    "frame": "5787",
+    "map": "prisoner",
+    "state": "bf0caac3",
+    "state_raw": "b255896a",
+    "drawing": "drawn",
+    "efb_crc": "d3849319",
+    "game_time": "3"
+   },
+   "environment_end": {
+    "frames": "150",
+    "state": "3423415d",
+    "state_raw": "ba564a6f",
+    "ticks": "152",
+    "tick_digests": "0"
+   },
+   "screens": [
+    {
+     "frame": "44",
+     "screen_tag": "271",
+     "efb_crc": "c89dccfc",
+     "state": "3d799c4e",
+     "state_without_scripts": "51699f2d",
+     "state_raw": "74f01923"
+    },
+    {
+     "frame": "830",
+     "screen_tag": "271",
+     "efb_crc": "9109f737",
+     "state": "91a20770",
+     "state_without_scripts": "3eca8f45",
+     "state_raw": "c8f0ab48"
+    },
+    {
+     "frame": "910",
+     "screen_tag": "271",
+     "efb_crc": "5ff4505d",
+     "state": "822ae057",
+     "state_without_scripts": "2afb5c4d",
+     "state_raw": "3824bfe8"
+    },
+    {
+     "frame": "990",
+     "screen_tag": "904",
+     "efb_crc": "24ee8573",
+     "state": "73410307",
+     "state_without_scripts": "54390e1a",
+     "state_raw": "88787c79"
+    },
+    {
+     "frame": "1068",
+     "screen_tag": "482",
+     "efb_crc": "678a3b04",
+     "state": "f733946d",
+     "state_without_scripts": "6203c144",
+     "state_raw": "9a317539"
+    },
+    {
+     "frame": "1147",
+     "screen_tag": "395",
+     "efb_crc": "dcf09d1c",
+     "state": "21641d9e",
+     "state_without_scripts": "7dec31b1",
+     "state_raw": "54be38e0"
+    },
+    {
+     "frame": "1551",
+     "screen_tag": "395",
+     "efb_crc": "509880d0",
+     "state": "ce4a5687",
+     "state_without_scripts": "d881f351",
+     "state_raw": "829241ae"
+    },
+    {
+     "frame": "1631",
+     "screen_tag": "395",
+     "efb_crc": "90d5d421",
+     "state": "24bc5b8a",
+     "state_without_scripts": "cfd03aad",
+     "state_raw": "e9a97cce"
+    },
+    {
+     "frame": "1711",
+     "screen_tag": "395",
+     "efb_crc": "0d7dec9f",
+     "state": "2848ab03",
+     "state_without_scripts": "5561e09c",
+     "state_raw": "b4ab89b4"
+    },
+    {
+     "frame": "1791",
+     "screen_tag": "395",
+     "efb_crc": "d76bd7e3",
+     "state": "35aae157",
+     "state_without_scripts": "1a16ee20",
+     "state_raw": "1e97c91b"
+    },
+    {
+     "frame": "1871",
+     "screen_tag": "904",
+     "efb_crc": "3410385a",
+     "state": "65a031c5",
+     "state_without_scripts": "40ee0252",
+     "state_raw": "679607d6"
+    },
+    {
+     "frame": "2100",
+     "screen_tag": "271",
+     "efb_crc": "c7cbdb49",
+     "state": "26a31bf7",
+     "state_without_scripts": "4169321e",
+     "state_raw": "fe99d134"
+    },
+    {
+     "frame": "2508",
+     "screen_tag": "271",
+     "efb_crc": "c3dd0607",
+     "state": "a78505e4",
+     "state_without_scripts": "794f66b8",
+     "state_raw": "950c5c3e"
+    },
+    {
+     "frame": "2588",
+     "screen_tag": "383",
+     "efb_crc": "a67f1b17",
+     "state": "c60f04b4",
+     "state_without_scripts": "7580f142",
+     "state_raw": "3935309b"
+    },
+    {
+     "frame": "2668",
+     "screen_tag": "383",
+     "efb_crc": "22513261",
+     "state": "90b63d71",
+     "state_without_scripts": "119357be",
+     "state_raw": "9812c96a"
+    },
+    {
+     "frame": "2748",
+     "screen_tag": "489",
+     "efb_crc": "1d357ca5",
+     "state": "dfa551c8",
+     "state_without_scripts": "b72ac97b",
+     "state_raw": "7bdc63fe"
+    },
+    {
+     "frame": "4295",
+     "screen_tag": "496",
+     "efb_crc": "67cdcb1c",
+     "state": "9d7d4cfc",
+     "state_without_scripts": "43062981",
+     "state_raw": "6a8d99dd"
+    },
+    {
+     "frame": "4524",
+     "screen_tag": "496",
+     "efb_crc": "a05566a4",
+     "state": "2805bcda",
+     "state_without_scripts": "ffad7244",
+     "state_raw": "dff569fb"
+    },
+    {
+     "frame": "4604",
+     "screen_tag": "496",
+     "efb_crc": "d6e2449a",
+     "state": "2805bcda",
+     "state_without_scripts": "ffad7244",
+     "state_raw": "dff569fb"
+    },
+    {
+     "frame": "5040",
+     "screen_tag": "497",
+     "efb_crc": "66b91819",
+     "state": "0c5d1598",
+     "state_without_scripts": "34fa8bab",
+     "state_raw": "fbadc0b9"
+    },
+    {
+     "frame": "5267",
+     "screen_tag": "498",
+     "efb_crc": "e312612f",
+     "state": "0c5d1598",
+     "state_without_scripts": "34fa8bab",
+     "state_raw": "fbadc0b9"
+    },
+    {
+     "frame": "5831",
+     "screen_tag": "-1",
+     "efb_crc": "68b50ad9",
+     "state": "90e3cb08",
+     "state_without_scripts": "6507946f",
+     "state_raw": "b278413b"
+    }
+   ],
+   "ticks": {
+    "digested": 0,
+    "bsps_in_window": null
+   },
+   "maps": [
+    {
+     "frame": 0,
+     "map": "ui",
+     "kind": "menus"
+    },
+    {
+     "frame": 5787,
+     "map": "prisoner",
+     "kind": "multiplayer"
+    }
+   ],
+   "selftest": {
+    "cases": 112,
+    "failures": 0,
+    "minmax_cases": 64,
+    "plasma_cases": 48,
+    "plasma_error_vs_combiners": {
+     "1": 32,
+     "0": 9,
+     "2": 6,
+     "3": 1
+    },
+    "efb_crc": "b3a13762"
+   },
+   "ui_totals": {
+    "screen_quads": 67818,
+    "plasma_composited": 61630,
+    "plasma_missing": 0,
+    "multimap_approximated": 0,
+    "meter_approximated": 0,
+    "missing_bitmaps": 0
+   },
+   "gx_totals": {
+    "loads": 67,
+    "load_failures": 0,
+    "evictions": 8,
+    "plasma_quads": 61678,
+    "plasma_stages": 15,
+    "minmax_quads": 64,
+    "minmax_tiles": 64,
+    "failed_draws": 0
+   },
+   "host_replay": {
+    "exit": 0,
+    "seconds": 7.3,
+    "screens": 22,
+    "screens_state_equal": 22,
+    "screens_without_scripts_equal": 22,
+    "screens_state_raw_equal": 22,
+    "ticks": 0,
+    "ticks_equal": 0,
+    "first_unequal_tick": null,
+    "environment": {
+     "first": true,
+     "end": true
+    },
+    "allocations": {
+     "first_screen": "77/77",
+     "first_environment": "77/77"
+    }
+   }
+  }
+ ],
+ "titan_campaign_pad_unplug": {
+  "what": "both Titan campaign launches under the HWI-077 runner saw the GameCube pad report no controller at pad scan 1485 (a10 tick about 260): BOOT_PAD connected=0. The pad script's length (24,068 or 304,068 polls) did not move it; the runner's focus guard logged no action. The game then followed another path (its host replay too, equal at every tick). The HWI-073-runner launches (Titan campaign 1, both Research campaigns) saw no such event and agree with each other.",
+  "first_launch": {
+   "end_state_raw": "77b959e2",
+   "host_replay": {
+    "screens": 5,
+    "screens_state_equal": 5,
+    "screens_without_scripts_equal": 5,
+    "screens_state_raw_equal": 5,
+    "ticks": 900,
+    "ticks_equal": 900,
+    "first_unequal_tick": null,
+    "environment": {
+     "first": true,
+     "end": true
+    },
+    "allocations": {
+     "first_screen": "77/77",
+     "first_environment": "77/77"
+    }
+   }
+  },
+  "second_launch_end_state_raw": "77b959e2"
+ },
+ "script_threads": {
+  "digest": "real_map_digest_hs_threads: typed fields as values, each live frame's values one group",
+  "storage_check": {
+   "tool": "compare_hs_threads.py",
+   "dumps": 22,
+   "live_storage_same_values_same_places": true,
+   "byte_identical_dumps": 1,
+   "build": "development build before HWI-030/034 were merged (hs runtime unchanged since)"
+  },
+  "hwi028_whole_state_equal": "6 of 22",
+  "now_whole_state_equal": "22 of 22 (canonical and raw)",
+  "canonical_digest_effect": {
+   "ticks_differing_in_a_development_launch": [
+    486,
+    487,
+    586,
+    587,
+    836,
+    837
+   ],
+   "raw_digest_ticks_equal": "900 of 900",
+   "allocations_raw_equal_at_tick_486": "77/77"
+  }
+ },
+ "ui_bitmap_1642_1": {
+  "converter_dropped_it": false,
+  "what_it_is": "Prisoner's lightmap group, page 1",
+  "generation_holds": [
+   "textures/prisoner/01642-000.hwt",
+   "textures/prisoner/01642-001.hwt"
+  ],
+  "cause": "the boot mode's texture-cache answer used the menus' map name during the map change",
+  "fix": "render_ui.c checks the loaded map first",
+  "texture_fail_lines_in_evidence": 0,
+  "fixture_test": "test_content_pipeline.EveryBitmapIndexTests"
+ },
+ "plasma_and_minmax": {
+  "tev_stages": "12 (15 with three alpha planes)",
+  "random_model_comparison": {
+   "cases": 30000,
+   "within_2": 0.8929,
+   "within_4": 0.9709,
+   "within_8": 0.9952
+  },
+  "selftest_efb": "112 cases a launch: 64 min/max exact, 48 plasma equal to the TEV model, every launch"
+ },
+ "main_stack": {
+  "bytes": 262144,
+  "default_was": 131072,
+  "peak_campaign_from_menus": 155952,
+  "peak_split_screen": 97200,
+  "peak_map_run": 136760,
+  "mem1_after_gx": 1105920
+ },
+ "regressions": {
+  "map_run_research": {
+   "build_id": "10dcb04d7f3d53dd",
+   "runner": "HWI-077 focus-safe",
+   "fixed_step": "c1ad6ae6",
+   "prisoner_simulation_hwi015b": "127656ef",
+   "prisoner_simulation": "961a5ec5",
+   "prisoner_whole_state_60hz": "7eb53576",
+   "a10_simulation_by_cadence": {
+    "30hz": "f752db70",
+    "60hz": "f752db70",
+    "vsync_measured": "f752db70"
+   },
+   "load_failures_pass": 6,
+   "end": "END target=engine build=10dcb04d7f3d53dd cycles=3 cadences=6 failures=0",
+   "dolphin_seconds": 1125.121,
+   "host_exit": "0x00000000",
+   "persistence": "passed"
+  }
+ },
+ "timings": {
+  "wii_build_full_seconds_titan": 77,
+  "host_reference_build_seconds_titan_wsl": 151,
+  "boot_stage_seconds_titan": 6,
+  "host_replay_seconds": "4.6-19.8",
+  "note": "Dolphin seconds were measured under concurrent lanes (host_shared); compare only with such runs"
+ },
+ "physical_wii": "untested"
+}
