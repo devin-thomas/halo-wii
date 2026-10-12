@@ -1920,6 +1920,12 @@ def main(argv=None):
         print("another Dolphin process is running; exclusive ownership required "
               "(--allow-concurrent runs a PID-scoped lane beside it)", file=sys.stderr)
         return 2
+    try:
+        probe = focus_probe(host) if args.focus_guard != "off" else None
+    except (OSError, AttributeError) as error:
+        print(f"focus guard unavailable ({error}); refusing to launch unguarded (--focus-guard off to override)",
+              file=sys.stderr)
+        return 2
 
     profile = out / "profile"
     (profile / "Config").mkdir(parents=True)
@@ -2038,7 +2044,6 @@ def main(argv=None):
         (out / "runtime.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
 
     save()
-    probe = focus_probe(host) if args.focus_guard != "off" else None
     window_start = utc_now()
     own_pids = set()
     for number in range(1, args.runs + 1):

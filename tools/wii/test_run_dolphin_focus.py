@@ -296,6 +296,18 @@ class ProbeTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             failed.front_pid()
 
+    @unittest.skipUnless(rd.host_platform() == "macos", "lsappinfo and AppKit exist only on macOS")
+    def test_real_macos_probe_answers_read_only(self):
+        import os
+        probe = rd.MacFocusProbe()
+        front = probe.front_pid()
+        self.assertTrue(front is None or isinstance(front, int))
+        self.assertIsNotNone(probe.objc)
+        self.assertIsNone(probe.app_state(os.getpid()))  # this Python has no application record
+        if front:
+            state = probe.app_state(front)  # hide=False: only read
+            self.assertTrue(state is None or set(state) == {"hidden", "active"})
+
     @unittest.skipUnless(rd.host_platform() == "windows", "user32 exists only on Windows")
     def test_real_windows_probe_answers(self):
         probe = rd.WindowsFocusProbe()
@@ -389,6 +401,21 @@ class MainTests(unittest.TestCase):
         self.assertTrue(all(kwargs["env"] is None for kwargs in popen))
         self.assertFalse(record["focus_safety"]["enabled"])
         self.assertTrue(all("focus_guard" not in run for run in record["runs"]))
+
+    def test_unavailable_guard_refuses_to_launch(self):
+        temp = Path(tempfile.mkdtemp())
+        self.addCleanup(lambda: __import__("shutil").rmtree(temp, ignore_errors=True))
+        (temp / "Dolphin").write_bytes(b"dolphin")
+        (temp / "x.dol").write_bytes(b"dol")
+        argv = ["--dolphin", str(temp / "Dolphin"), "--dol", str(temp / "x.dol"), "--out", str(temp / "out")]
+        with mock.patch.object(rd, "host_platform", return_value="macos"), \
+                mock.patch.object(rd, "process_table", return_value={1: (0, "init")}), \
+                mock.patch.object(rd, "focus_probe", side_effect=OSError("no AppKit")), \
+                mock.patch.object(rd.subprocess, "Popen") as popen, \
+                mock.patch("builtins.print"):
+            self.assertEqual(rd.main(argv), 2)
+        popen.assert_not_called()
+        self.assertFalse((temp / "out").exists())
 
     def test_guard_stop_fails_the_run_and_skips_later_launches(self):
         probe = FakeProbe(front=[500])  # the first launch's own PID is frontmost
