@@ -187,6 +187,26 @@ static int init_storage(unsigned *previous)
 	return wii_log_open(LOG_PATH) ? 1 : -1;
 }
 
+/* (HWI-079) placement.txt: "offset=<bytes>", a whole number of 4 KiB pages
+by which the arena's regions are placed lower, on top of each second
+launch's 4 KiB; with none, or anything else, they are placed as before. It
+tests that the game and its digests do not follow where the arena lies. */
+#define PLACEMENT_PATH WII_ENGINE_ROOT "/placement.txt"
+#define PLACEMENT_MAXIMUM_BYTES 0x100000UL
+
+static unsigned long read_placement(void)
+{
+	FILE *file = fopen(PLACEMENT_PATH, "rb");
+	unsigned long offset = 0;
+
+	if (!file)
+		return 0;
+	if (fscanf(file, "offset=%lu", &offset) != 1 || offset % 0x1000 || offset > PLACEMENT_MAXIMUM_BYTES)
+		offset = 0;
+	fclose(file);
+	return offset;
+}
+
 /* the previous launch's digest (result.txt), if any */
 static int read_previous_result(unsigned long *digest, unsigned long *chain)
 {
@@ -339,6 +359,7 @@ int __wrap_main(void)
 	struct wii_arena_report arena;
 	char scenario_path[256];
 	unsigned previous_runs = 0;
+	unsigned long placement;
 	int storage;
 	unsigned long previous_digest = 0, previous_chain = 0;
 	int have_previous;
@@ -409,13 +430,14 @@ int __wrap_main(void)
 
 	/* ---------- platform services */
 	stage = "arena";
-	if (!wii_arena_open((size_t)(previous_runs & 1) * 0x1000, GENERAL_BYTES, &arena))
+	placement = read_placement() + (previous_runs & 1) * 0x1000UL;
+	if (!wii_arena_open((size_t)placement, GENERAL_BYTES, &arena))
 	{
 		wii_log("FAIL arena_open required=%lu\n", (unsigned long)arena.required);
 		check(0, "arena_open");
 	}
 	wii_log("ARENA open offset=%u low=%p high_before=%p high_during=%p required=%lu spare=%lu state=%p+%lu "
-		"tags=%p+%lu sound=%p+%lu general=%p+%lu\n", (previous_runs & 1) * 0x1000u, (void *)arena.arena_low_before,
+		"tags=%p+%lu sound=%p+%lu general=%p+%lu\n", (unsigned)placement, (void *)arena.arena_low_before,
 		(void *)arena.arena_high_before, (void *)arena.arena_high_during, (unsigned long)arena.required,
 		(unsigned long)arena.spare, (void *)arena.region_base[_wii_arena_game_state],
 		(unsigned long)arena.region_size[_wii_arena_game_state], (void *)arena.region_base[_wii_arena_tag_cache],
