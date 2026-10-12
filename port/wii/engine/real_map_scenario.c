@@ -659,7 +659,7 @@ static unsigned long digest_thread_pointer_value(
 	if (word - (unsigned long)datum < sizeof(struct real_map_hs_thread))
 		return 0x20000000UL | (word - (unsigned long)datum);
 
-	return digest_words_raw ? word : digest_canonical_word(word);
+	return digest_words_raw ? word : digest_pointer_word(word);
 }
 
 static void digest_add_hs_thread_frames(
