@@ -18,6 +18,7 @@ unchanged. Compiled as an engine unit.
 #include "boot_hooks.h"
 #include "wii_platform.h"
 #include "real_map_scenario.h"
+#include "../sound/wii_sound.h"
 
 /* the engine's own (render.c, rasterizer_xbox*.c), reached through the link's
 --wrap; engine-typed arguments are passed through as they came */
@@ -272,6 +273,8 @@ void __stdcall __real_Sleep(unsigned long milliseconds);
 static boolean boot_frame_clock;
 static unsigned long boot_clock;
 static unsigned long boot_clock_thread;
+/* (HWI-074) each read of the frame clock moves it a millisecond on */
+static boolean boot_clock_advancing;
 
 void wii_boot_set_frame_clock(
 	int on)
@@ -287,11 +290,34 @@ unsigned long wii_boot_clock_milliseconds(
 	return boot_clock;
 }
 
+void wii_boot_advance_frame_clock(
+	unsigned long milliseconds)
+{
+	if (boot_frame_clock)
+		boot_clock += milliseconds;
+}
+
+int wii_boot_frame_clock_on(
+	void)
+{
+	return boot_frame_clock;
+}
+
+void wii_boot_frame_clock_advance_on_read(
+	int on)
+{
+	boot_clock_advancing = on ? TRUE : FALSE;
+}
+
 unsigned long __wrap_system_milliseconds(
 	void)
 {
 	if (boot_frame_clock)
+	{
+		if (boot_clock_advancing)
+			boot_clock++;
 		return boot_clock;
+	}
 	return __real_system_milliseconds();
 }
 
@@ -388,14 +414,16 @@ arrays and then fails in its platform's start-up, leaving the looping
 sounds' array allocated and never made valid; the first map change then
 asserts in data_delete_all. The Wii has no sound yet (HWI-015B never
 started it): in the boot mode it is reported unsupported and not started,
-so the arrays stay NULL, which every sound path tests. */
+so the arrays stay NULL, which every sound path tests. HWI-074: unless
+the Wii's sound was asked for (port/wii/sound: boot.txt sound=1, or the map
+run's sound line), which starts the engine's own. */
 
 void __real_sound_initialize(void);
 
 void __wrap_sound_initialize(
 	void)
 {
-	if (boot_hooks_registered)
+	if (boot_hooks_registered && !wii_sound_wanted())
 	{
 		wii_unsupported("dsound", "sound_initialize (no DirectSound: sound not started)");
 		return;
@@ -433,7 +461,7 @@ void __real_sound_cache_idle(void);
 void __wrap_sound_cache_idle(
 	void)
 {
-	if (boot_hooks_registered)
+	if (boot_hooks_registered && !wii_sound_started())
 		return;
 	__real_sound_cache_idle();
 }

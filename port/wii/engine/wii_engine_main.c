@@ -55,6 +55,7 @@ One launch:
 #include "engine_map_run.h"
 #include "../runtime/runtime_start.h"
 #include "../render/wii_render.h"
+#include "../sound/wii_sound.h"
 #include "boot_main.h"
 
 #define LOG_PATH WII_ENGINE_ROOT "/engine.log"
@@ -380,6 +381,9 @@ int __wrap_main(void)
 		wii_render_configure(&video);
 		wii_render_register_hooks();
 	}
+	/* HWI-074: the sound's mix goes to an ASND voice, once the engine's sound
+	starts (the plan's sound line, or boot.txt's) */
+	wii_sound_use_asnd();
 
 	/* ---------- platform services */
 	stage = "arena";

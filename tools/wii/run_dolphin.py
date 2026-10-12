@@ -174,14 +174,15 @@ STOCK_REQUIRED = {("Core", "EnableCheats"): "False", ("Core", "OverclockEnable")
 
 
 def profile_files(backend="D3D", efb_access=False, dump_frames=False, safe_texture_cache=False, gc_ports=1,
-                  focus_safe=False, host="windows", audio=True):
+                  focus_safe=False, host="windows", audio=True, dump_audio=False):
     """Config files for a new Wii-mode profile: stock clock/memory, no cheats.
 
     focus_safe adds the focus- and keyboard-safe settings (HWI-077): every
     input config bound to an absent device with every default control empty,
     background input off, no pause on focus loss. audio=False selects no audio
     output. Neither changes what the guest is given: input comes from the DTM,
-    and the guest's DSP is emulated either way.
+    and the guest's DSP is emulated either way. dump_audio (HWI-074) writes the
+    DSP's mixed output to Dump/Audio as WAV.
     """
     dolphin = {
         "Core": [("CPUThread", "False"), ("EnableCheats", "False"), ("OverclockEnable", "False"),
@@ -191,6 +192,8 @@ def profile_files(backend="D3D", efb_access=False, dump_frames=False, safe_textu
                  ("WiiSDCardAllowWrites", "True"), ("WiiSDCardEnableFolderSync", "False")],
         "Interface": [("ConfirmStop", "False"), ("UsePanicHandlers", "False")],
         "Movie": [("DumpFrames", str(dump_frames)), ("DumpFramesSilent", "True")],
+        # (HWI-074) the DSP's mixed output to Dump/Audio as WAV, without asking
+        **({"DSP": [("DumpAudio", "True"), ("DumpAudioSilent", "True")]} if dump_audio else {}),
         "Analytics": [("PermissionAsked", "True"), ("Enabled", "False")],
     }
     gfx = {"Settings": [("InternalResolution", "1")]}
@@ -1826,6 +1829,8 @@ def parse_args(argv):
     parser.add_argument("--safe-texture-cache", action="store_true",
                         help="hash every texel of a texture (textures the guest rewrites in place)")
     parser.add_argument("--dump-frames", action="store_true", help="dump rendered frames as PNG")
+    parser.add_argument("--dump-audio", action="store_true",
+                        help="dump the emulated audio output as WAV (run<N>-audio/; game audio: private)")
     movie = parser.add_mutually_exclusive_group()
     movie.add_argument("--input-script", type=Path, help="JSON pad script to author into a DTM")
     movie.add_argument("--movie", type=Path, help="existing DTM; its game ID must match the DOL name")
@@ -1909,7 +1914,8 @@ def main(argv=None):
     # --no-focus-safe keeps the pre-HWI-077 profile, which wrote no audio setting
     audio = args.audio if args.audio is not None else (DEFAULT_AUDIO[host] if args.focus_safe else True)
     files = profile_files(backend, args.efb_access, args.dump_frames, args.safe_texture_cache, gc_ports,
-                          focus_safe=args.focus_safe, host=host, audio=audio)
+                          focus_safe=args.focus_safe, host=host, audio=audio,
+                          dump_audio=args.dump_audio)
     check_stock_limits(files)
     added_env = launch_environment(host, args.focus_safe)
     query = lambda: process_table(host)
@@ -2099,6 +2105,12 @@ def main(argv=None):
             run["frame_dump"] = {"count": len(pngs),
                                  "first_sha256": sha256(pngs[0]) if pngs else None,
                                  "last_sha256": sha256(pngs[-1]) if pngs else None}
+        audio_dir = profile / "Dump" / "Audio"
+        if audio_dir.is_dir():
+            target = out / f"run{number}-audio"
+            shutil.move(str(audio_dir), str(target))
+            run["audio_dump"] = {wav.name: {"bytes": wav.stat().st_size, "sha256": sha256(wav)}
+                                 for wav in sorted(target.glob("*.wav"))}
         read = {}
         if sd.is_file():
             fat = Fat32(sd.read_bytes())

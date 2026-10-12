@@ -194,6 +194,20 @@ unsigned long *get_tick_local_random_seed_address(
 	return tick_local_random_depth ? &random_math_globals.global_local_random_seed : &tick_local_random_seed;
 }
 
+/* port (HWI-074): the sound manager's own stream (real_math.h,
+HALO_SOUND_RANDOM_STREAM). A sound a tick starts draws a skip and a pitch
+whether or not anything hears it, so with the sound on, the ticks' stream
+moved with every footstep and shot (HWI-016F's principle: presentation does
+not move the numbers the simulation draws). Seeded from the clock as the
+others are; the draws themselves are unchanged. */
+static unsigned long sound_local_random_seed;
+
+unsigned long *get_sound_local_random_seed_address(
+	void)
+{
+	return &sound_local_random_seed;
+}
+
 void
 random_seed_debug_log(
 	boolean log)
@@ -216,6 +230,9 @@ random_math_initialize(
 
 	random_math_globals.global_local_random_seed= get_number_suitable_for_initializing_random_seed();
 	tick_local_random_seed= get_number_suitable_for_initializing_random_seed(); /* port (HWI-016F) */
+#if defined(HALO_SOUND_RANDOM_STREAM) && HALO_SOUND_RANDOM_STREAM
+	sound_local_random_seed= get_number_suitable_for_initializing_random_seed(); /* port (HWI-074) */
+#endif
 	random_direction_geosphere= geosphere_new(RANDOM_DIRECTION_TABLE_GEOSPHERE_SEGMENT_COUNT);
 	match_assert("c:\\halo\\SOURCE\\math\\random_math.c", 174, random_direction_geosphere);
 	random_math_globals.random_direction_table= match_malloc(
