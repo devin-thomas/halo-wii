@@ -174,8 +174,16 @@ STOCK_REQUIRED = {("Core", "EnableCheats"): "False", ("Core", "OverclockEnable")
 
 
 def profile_files(backend="D3D", efb_access=False, dump_frames=False, safe_texture_cache=False, gc_ports=1,
-                  dump_audio=False):
-    """Config files for a new Wii-mode profile: stock clock/memory, no cheats."""
+                  focus_safe=False, host="windows", audio=True, dump_audio=False):
+    """Config files for a new Wii-mode profile: stock clock/memory, no cheats.
+
+    focus_safe adds the focus- and keyboard-safe settings (HWI-077): every
+    input config bound to an absent device with every default control empty,
+    background input off, no pause on focus loss. audio=False selects no audio
+    output. Neither changes what the guest is given: input comes from the DTM,
+    and the guest's DSP is emulated either way. dump_audio (HWI-074) writes the
+    DSP's mixed output to Dump/Audio as WAV.
+    """
     dolphin = {
         "Core": [("CPUThread", "False"), ("EnableCheats", "False"), ("OverclockEnable", "False"),
                  ("Overclock", "1.0"), ("VIOverclockEnable", "False"), ("RAMOverrideEnable", "False"),
@@ -199,9 +207,135 @@ def profile_files(backend="D3D", efb_access=False, dump_frames=False, safe_textu
         gfx["Hacks"] = [("EFBAccessEnable", "True")]
     wiimotes = {name: [("Source", "0")] for name in
                 ("Wiimote1", "Wiimote2", "Wiimote3", "Wiimote4", "BalanceBoard")}
-    render = lambda sections: "".join(f"[{s}]\n" + "".join(f"{k} = {v}\n" for k, v in items)
+    additions = focus_safe_settings(host) if focus_safe else {}
+    if not audio:
+        additions.update(NO_AUDIO_SETTINGS)
+    for section, items in additions.items():
+        dolphin.setdefault(section, []).extend(items)
+    render = lambda sections: "".join(f"[{s}]\n" + "".join(f"{k} = {v}".rstrip() + "\n" for k, v in items)
                                       for s, items in sections.items())
-    return {"Dolphin.ini": render(dolphin), "GFX.ini": render(gfx), "WiimoteNew.ini": render(wiimotes)}
+    files = {"Dolphin.ini": render(dolphin), "GFX.ini": render(gfx), "WiimoteNew.ini": render(wiimotes)}
+    if focus_safe:
+        files.update(unbound_input_files())
+    return files
+
+
+# ---------------------------------------------------------------------------
+# Focus- and keyboard-safe launch (HWI-077): Dolphin never becomes the
+# frontmost application, never takes keyboard focus and never maps a host
+# input device. All emulated input comes from the DTM.
+# ---------------------------------------------------------------------------
+
+CONTROLS_FILE = Path(__file__).with_name("dolphin_controls.json")
+
+# Dolphin.ini settings added to a focus-safe profile on every host.
+FOCUS_SAFE_SETTINGS = {
+    "Core": [("WiiKeyboard", "False"), ("PauseOnFocusLost", "False")],
+    "Interface": [("PauseOnFocusLost", "False")],
+    "Input": [("BackgroundInput", "False")],
+    "Display": [("RenderToMain", "False"), ("Fullscreen", "False"), ("KeepWindowOnTop", "False")],
+    "AutoUpdate": [("UpdateTrack", "")],
+}
+# SDL's MFi joystick driver starts Apple's GameController HID client (macOS).
+MACOS_SETTINGS = {"SDL_Hints": [("SDL_JOYSTICK_MFI", "0")]}
+NO_AUDIO_SETTINGS = {"DSP": [("Backend", "No Audio Output"), ("Volume", "0")]}
+SETTING_VALUE = re.compile(r"(?i)true|false|[-+0-9.e ]+")
+
+# Launch environment added on macOS. Qt's cocoa plugin otherwise activates the
+# process when launching finishes ([NSApp activateIgnoringOtherApps:YES]), and
+# QWindow::raise() activates it too; SDL's MFi driver opens a HID client.
+MACOS_LAUNCH_ENV = {"QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM": "1", "QT_MAC_SET_RAISE_PROCESS": "0",
+                    "SDL_JOYSTICK_MFI": "0"}
+
+# Audio: off by default on macOS, where the lanes run on Macs that people use
+# at the same time (calls, music). The guest's DSP is emulated either way;
+# only the host output backend changes.
+DEFAULT_AUDIO = {"windows": True, "macos": False}
+
+
+def load_controls(path=CONTROLS_FILE):
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def focus_safe_settings(host):
+    """Dolphin.ini additions per section for a focus-safe profile on this host."""
+    settings = {section: list(items) for section, items in FOCUS_SAFE_SETTINGS.items()}
+    if host == "macos":
+        settings.update(MACOS_SETTINGS)
+    return settings
+
+
+def unbound_input_files(controls=None):
+    """Every Dolphin input config: each section bound to an absent device, every default control empty.
+
+    A Device line alone is not relied on: each control Dolphin binds by
+    default is also written empty, so nothing falls back to a default mapping.
+    """
+    controls = load_controls() if controls is None else controls
+    device = controls["absent_device"]
+    files = {}
+    for name, spec in controls["files"].items():
+        body = "".join(f"{k} = {v}\n" for k, v in spec.get("settings", []))
+        body += f"Device = {device}\n" + "".join(f"{k} =\n" for k in spec["controls"])
+        files[name] = "".join(f"[{section}]\n" + body for section in spec["sections"])
+    return files
+
+
+def input_binding_audit(config_dir, controls=None):
+    """Read Dolphin's input configs back after a launch: any mapped device or non-empty control is listed.
+
+    Dolphin rewrites its input configs, so this is what it actually used. A
+    known control with any expression is bound; any other key is bound unless
+    its value is a plain setting (numbers or True/False: dead zones,
+    calibration, Wii remote Source 0).
+    """
+    controls = load_controls() if controls is None else controls
+    device = controls["absent_device"]
+    audit = {"files_present": [], "devices_bound": [], "controls_bound": []}
+    for name, spec in controls["files"].items():
+        path = Path(config_dir) / name
+        if not path.is_file():
+            continue
+        audit["files_present"].append(name)
+        known = set(spec["controls"])
+        for (section, key), value in parse_ini(path.read_text(encoding="utf-8", errors="replace")).items():
+            if key == "Device":
+                if value not in ("", device):
+                    audit["devices_bound"].append(f"{name}:{section}")
+            elif value and (key in known or not SETTING_VALUE.fullmatch(value)):
+                audit["controls_bound"].append(f"{name}:{section}:{key}")
+    audit["result"] = "no_input_bound" if not (audit["devices_bound"] or audit["controls_bound"]) else "input_bound"
+    return audit
+
+
+def launch_environment(host, focus_safe):
+    """Variables added to Dolphin's environment (the rest is inherited unchanged)."""
+    return dict(MACOS_LAUNCH_ENV) if focus_safe and host == "macos" else {}
+
+
+def focus_safety_record(host, focus_safe, guard_mode, audio, added_env):
+    """What this batch did to keep Dolphin out of the user's way; names and values only, no paths."""
+    settings = focus_safe_settings(host) if focus_safe else {}
+    if not audio:
+        settings.update(NO_AUDIO_SETTINGS)
+    window = {"windows": "STARTUPINFO wShowWindow SW_HIDE (window never shown)",
+              "macos": ("hidden by the focus guard (NSRunningApplication hide) as soon as it registers"
+                        if guard_mode == "enforce" else "shown on the logged-in desktop")}[host]
+    return {
+        "enabled": focus_safe,
+        "launch_environment_added": dict(sorted(added_env.items())),
+        "dolphin_ini_added": {section: [f"{k} = {v}".rstrip() for k, v in items]
+                              for section, items in settings.items()},
+        "input_configs": (sorted(load_controls()["files"]) if focus_safe else []),
+        "controls_sha256": hashlib.sha256(CONTROLS_FILE.read_bytes()).hexdigest() if focus_safe else None,
+        "audio_output": audio,
+        "window": window,
+        "focus_guard": {"mode": guard_mode, "interval_seconds": FOCUS_GUARD_INTERVAL if guard_mode != "off" else None,
+                        "frontmost_query": {"macos": "lsappinfo front", "windows": "GetForegroundWindow"}[host],
+                        "keyboard_focus_query": {"macos": "follows the frontmost application",
+                                                 "windows": "GetGUIThreadInfo"}[host],
+                        "acts_on": "this run's own Dolphin process tree only"},
+    }
 
 
 def parse_ini(text):
@@ -537,6 +671,7 @@ class OwnedDolphin:
         self.poll, self.clock = poll, clock
         self.owned = {process.pid: image_name}
         self.others_max, self.query_errors = 0, 0
+        self.others_seen = set()  # other lanes' Dolphin PIDs, only ever counted
 
     def snapshot(self):
         try:
@@ -548,6 +683,7 @@ class OwnedDolphin:
             observe_tree(table, self.process.pid, self.owned)
         others = dolphin_pids(table, self.image, self.host) - set(self.owned)
         self.others_max = max(self.others_max, len(others))
+        self.others_seen |= others
         return table
 
     def wait(self, timeout):
@@ -597,6 +733,251 @@ class OwnedDolphin:
         return result
 
 
+# ---------------------------------------------------------------------------
+# Focus guard (HWI-077): a helper thread owned by the runner samples which
+# process is frontmost and which holds keyboard focus. It hides this run's own
+# Dolphin (macOS) and stops it if it ever becomes frontmost or takes focus.
+# It acts only on PIDs of this runner's own tree; another lane's Dolphin, or
+# any other application, is only counted, never hidden, raised or stopped.
+# ---------------------------------------------------------------------------
+
+FOCUS_GUARD_INTERVAL = 0.25
+FOCUS_GUARD_MODES = ("enforce", "observe", "off")
+
+
+class MacFocusProbe:
+    """Frontmost PID from LaunchServices (lsappinfo); per-PID hidden/active state and hide() through
+    NSRunningApplication, called with ctypes (no helper binary, no permission: hiding an application
+    of the same user never needs Accessibility and never changes the active application)."""
+
+    def __init__(self, run=subprocess.run):
+        self.run = run
+        self.objc = None
+        try:
+            import ctypes
+            objc = ctypes.cdll.LoadLibrary("/usr/lib/libobjc.A.dylib")
+            ctypes.cdll.LoadLibrary("/System/Library/Frameworks/AppKit.framework/AppKit")
+            objc.objc_getClass.restype = objc.sel_registerName.restype = ctypes.c_void_p
+            objc.objc_getClass.argtypes = objc.sel_registerName.argtypes = [ctypes.c_char_p]
+            objc.objc_autoreleasePoolPush.restype = ctypes.c_void_p
+            objc.objc_autoreleasePoolPop.argtypes = [ctypes.c_void_p]
+            self.ctypes, self.objc = ctypes, objc
+            self.cls = objc.objc_getClass(b"NSRunningApplication")
+            self.send = ctypes.cast(objc.objc_msgSend, ctypes.c_void_p).value
+        except (OSError, AttributeError):
+            self.objc = None
+
+    def front_pid(self):
+        """PID of the frontmost application, None when there is none; raises when the query fails."""
+        front = self.run(["/usr/bin/lsappinfo", "front"], capture_output=True, text=True, timeout=5)
+        asn = front.stdout.strip()
+        if front.returncode != 0:
+            raise RuntimeError("lsappinfo front failed")
+        if not asn.startswith("ASN:"):
+            return None
+        info = self.run(["/usr/bin/lsappinfo", "info", "-only", "pid", asn], capture_output=True, text=True,
+                        timeout=5)
+        match = re.search(r"pid = (\d+)", info.stdout)
+        return int(match.group(1)) if match else None
+
+    def focus_pid(self):
+        return None  # keyboard focus follows the frontmost application; the WindowServer log is the audit
+
+    def _msg(self, restype, obj, selector, *args, argtypes=()):
+        ctypes = self.ctypes
+        function = ctypes.CFUNCTYPE(restype, ctypes.c_void_p, ctypes.c_void_p, *argtypes)(self.send)
+        return function(obj, self.objc.sel_registerName(selector), *args)
+
+    def app_state(self, pid, hide=False):
+        """{'hidden', 'active', 'hide_requested'} for a PID with an application record, else None."""
+        if self.objc is None:
+            return None
+        ctypes = self.ctypes
+        pool = self.objc.objc_autoreleasePoolPush()
+        try:
+            app = self._msg(ctypes.c_void_p, self.cls, b"runningApplicationWithProcessIdentifier:", pid,
+                            argtypes=(ctypes.c_int,))
+            if not app:
+                return None
+            state = {"hidden": bool(self._msg(ctypes.c_bool, app, b"isHidden")),
+                     "active": bool(self._msg(ctypes.c_bool, app, b"isActive"))}
+            if hide and not state["hidden"]:
+                state["hide_requested"] = bool(self._msg(ctypes.c_bool, app, b"hide"))
+            return state
+        finally:
+            self.objc.objc_autoreleasePoolPop(pool)
+
+    def visible_windows(self, pids):
+        return None
+
+
+class WindowsFocusProbe:
+    """Foreground window and keyboard-focus window owners (user32); visible top-level windows of a PID set."""
+
+    def __init__(self):
+        import ctypes
+        from ctypes import wintypes
+        self.ctypes, self.wintypes = ctypes, wintypes
+        self.user32 = ctypes.WinDLL("user32", use_last_error=True)
+        self.user32.GetForegroundWindow.restype = wintypes.HWND
+        self.user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+        self.user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+        self.user32.IsWindowVisible.argtypes = [wintypes.HWND]
+
+        class GuiThreadInfo(ctypes.Structure):
+            _fields_ = [("cbSize", wintypes.DWORD), ("flags", wintypes.DWORD), ("hwndActive", wintypes.HWND),
+                        ("hwndFocus", wintypes.HWND), ("hwndCapture", wintypes.HWND),
+                        ("hwndMenuOwner", wintypes.HWND), ("hwndMoveSize", wintypes.HWND),
+                        ("hwndCaret", wintypes.HWND), ("rcCaret", wintypes.RECT)]
+        self.GuiThreadInfo = GuiThreadInfo
+
+    def _pid(self, hwnd):
+        if not hwnd:
+            return None
+        pid = self.wintypes.DWORD()
+        self.user32.GetWindowThreadProcessId(hwnd, self.ctypes.byref(pid))
+        return pid.value or None
+
+    def front_pid(self):
+        return self._pid(self.user32.GetForegroundWindow())
+
+    def focus_pid(self):
+        info = self.GuiThreadInfo(cbSize=self.ctypes.sizeof(self.GuiThreadInfo))
+        if not self.user32.GetGUIThreadInfo(0, self.ctypes.byref(info)):
+            return None
+        return self._pid(info.hwndFocus or info.hwndActive)
+
+    def app_state(self, pid, hide=False):
+        return None  # the window is hidden at creation (STARTUPINFO SW_HIDE); nothing to hide later
+
+    def visible_windows(self, pids):
+        ctypes, wintypes = self.ctypes, self.wintypes
+        count = [0]
+        callback_type = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+
+        def each(hwnd, _):
+            if self.user32.IsWindowVisible(hwnd) and self._pid(hwnd) in pids:
+                count[0] += 1
+            return True
+
+        self.user32.EnumWindows(callback_type(each), 0)
+        return count[0]
+
+
+def focus_probe(host):
+    return MacFocusProbe() if host == "macos" else WindowsFocusProbe()
+
+
+class FocusGuard:
+    """Samples focus for one launched Dolphin (an OwnedDolphin) until stopped.
+
+    enforce: hide this run's Dolphin on macOS whenever it is unhidden, and stop it if it is frontmost,
+    active or holds keyboard focus. The root is stopped through its own process handle, a descendant
+    only through kill_owned (which refuses any PID outside the tree). observe: sample only.
+    """
+
+    def __init__(self, owned, probe, mode="enforce", interval=FOCUS_GUARD_INTERVAL, clock=time.monotonic):
+        if mode not in ("enforce", "observe"):
+            raise ValueError(f"focus guard mode {mode!r}")
+        self.owned, self.probe, self.mode, self.interval, self.clock = owned, probe, mode, interval, clock
+        self.started = clock()
+        self.counts = {"samples": 0, "own_frontmost": 0, "own_active": 0, "own_keyboard_focus": 0,
+                       "own_visible": 0, "own_unhidden": 0, "hide_requests": 0, "hide_unacknowledged": 0,
+                       "other_dolphin_frontmost": 0, "no_frontmost": 0, "query_errors": 0}
+        self.stop_event, self.thread, self.stopped = None, None, None
+
+    def own_pids(self):
+        for _ in range(3):
+            try:
+                return set(self.owned.owned)
+            except RuntimeError:  # the tree grew while being copied
+                continue
+        return {self.owned.process.pid}
+
+    def sample(self):
+        """One sample; returns the violation reason if this run's Dolphin had focus, else None."""
+        counts = self.counts
+        counts["samples"] += 1
+        own = self.own_pids()
+        reason = None
+        try:
+            front = self.probe.front_pid()
+            focus = self.probe.focus_pid()
+        except (RuntimeError, OSError, subprocess.SubprocessError):
+            counts["query_errors"] += 1
+            front = focus = None
+        if front is None:
+            counts["no_frontmost"] += 1
+        elif front in own:
+            counts["own_frontmost"] += 1
+            reason = "frontmost"
+        elif front in self.owned.others_seen:
+            counts["other_dolphin_frontmost"] += 1
+        if focus is not None and focus in own:
+            counts["own_keyboard_focus"] += 1
+            reason = reason or "keyboard_focus"
+        if self.owned.process.poll() is None:
+            state = None
+            try:
+                state = self.probe.app_state(self.owned.process.pid, hide=self.mode == "enforce")
+            except (RuntimeError, OSError):
+                counts["query_errors"] += 1
+            if state:
+                counts["own_unhidden"] += not state["hidden"]
+                counts["own_active"] += state["active"]
+                if state["active"]:
+                    reason = reason or "active"
+                if "hide_requested" in state:
+                    counts["hide_requests"] += 1
+                    # AppKit often answers NO for a launching app yet hides it; own_unhidden is the effect
+                    counts["hide_unacknowledged"] += not state["hide_requested"]
+            try:
+                visible = self.probe.visible_windows(own)
+            except (RuntimeError, OSError):
+                visible = None
+            if visible:
+                counts["own_visible"] += 1
+        if reason and self.mode == "enforce" and self.stopped is None:
+            culprit = front if front in own else focus if focus in own else self.owned.process.pid
+            self.stop_own(culprit, reason)
+        return reason
+
+    def stop_own(self, pid, reason):
+        """Stop this run's Dolphin: the root through its handle; a descendant only if it is in the tree."""
+        owned = self.owned
+        if pid == owned.process.pid:
+            owned.process.kill()
+        else:
+            kill_owned([pid], owned.owned, owned.host, owned.kill)
+        self.stopped = {"reason": reason, "pid_role": "root" if pid == owned.process.pid else "descendant",
+                        "after_seconds": round(self.clock() - self.started, 2)}
+
+    def _loop(self):
+        while not self.stop_event.is_set():
+            begin = self.clock()
+            self.sample()
+            self.stop_event.wait(max(0.0, self.interval - (self.clock() - begin)))
+
+    def start(self):
+        import threading
+        self.stop_event = threading.Event()
+        self.thread = threading.Thread(target=self._loop, name="focus-guard", daemon=True)
+        self.thread.start()
+        return self
+
+    def finish(self):
+        if self.thread is not None:
+            self.stop_event.set()
+            self.thread.join(timeout=10)
+        return self.summary()
+
+    def summary(self):
+        counts = dict(self.counts)
+        return {"mode": self.mode, "interval_seconds": self.interval, **counts,
+                "violation": bool(counts["own_frontmost"] or counts["own_active"] or counts["own_keyboard_focus"]),
+                "stopped_dolphin": self.stopped}
+
+
 def exit_fields(status, posix=False):
     """Exit status as recorded; on POSIX a negative status names the killing signal."""
     unsigned = status & 0xFFFFFFFF
@@ -607,9 +988,11 @@ def exit_fields(status, posix=False):
     return fields
 
 
-def host_outcome(status, forced_stop, tolerated):
+def host_outcome(status, forced_stop, tolerated, focus_guard_stop=False):
     if forced_stop:
         return "forced_stop_timeout"
+    if focus_guard_stop:
+        return "focus_guard_stop"
     if status & 0xFFFFFFFF == 0:
         return "exit_zero"
     if status & 0xFFFFFFFF in tolerated:
@@ -1466,9 +1849,22 @@ def parse_args(argv):
     parser.add_argument("--allow-concurrent", action="store_true",
                         help="run beside other Dolphin processes (another lane); ownership, teardown checks and "
                              "forced stops are PID-scoped in either mode, and each run records host_shared")
+    parser.add_argument("--no-focus-safe", dest="focus_safe", action="store_false",
+                        help="the pre-HWI-077 profile and launch: no unbound input configs, no added environment "
+                             "or settings, no focus guard (comparison only)")
+    parser.add_argument("--focus-guard", choices=FOCUS_GUARD_MODES, default="enforce",
+                        help="enforce (default): hide this run's Dolphin (macOS) and stop it if it is ever "
+                             "frontmost or takes keyboard focus; observe: sample only; off: no guard")
+    audio = parser.add_mutually_exclusive_group()
+    audio.add_argument("--no-audio", dest="audio", action="store_const", const=False,
+                       help="no audio output (default on macOS)")
+    audio.add_argument("--audio", dest="audio", action="store_const", const=True,
+                       help="audio output on (default on Windows)")
     parser.add_argument("--event-settle", type=float, default=10.0,
                         help="seconds to wait after the last launch before querying event logs")
     args = parser.parse_args(argv)
+    if not args.focus_safe:
+        args.focus_guard = "off"
     if args.runs < 1:
         parser.error("--runs must be positive")
     if args.stage and not args.sd_image:
@@ -1515,9 +1911,13 @@ def main(argv=None):
                         compiler=info.get("compiler"), auto_exit_frames=info.get("probe_auto_exit_frames"))
     script = json.loads(args.input_script.read_text(encoding="utf-8")) if args.input_script else None
     gc_ports = script_ports(script) if script else 1
+    # --no-focus-safe keeps the pre-HWI-077 profile, which wrote no audio setting
+    audio = args.audio if args.audio is not None else (DEFAULT_AUDIO[host] if args.focus_safe else True)
     files = profile_files(backend, args.efb_access, args.dump_frames, args.safe_texture_cache, gc_ports,
-                          args.dump_audio)
+                          focus_safe=args.focus_safe, host=host, audio=audio,
+                          dump_audio=args.dump_audio)
     check_stock_limits(files)
+    added_env = launch_environment(host, args.focus_safe)
     query = lambda: process_table(host)
     try:
         others_at_start = len(dolphin_pids(query(), exe.name, host))
@@ -1527,6 +1927,12 @@ def main(argv=None):
     if others_at_start and not args.allow_concurrent:
         print("another Dolphin process is running; exclusive ownership required "
               "(--allow-concurrent runs a PID-scoped lane beside it)", file=sys.stderr)
+        return 2
+    try:
+        probe = focus_probe(host) if args.focus_guard != "off" else None
+    except (OSError, AttributeError) as error:
+        print(f"focus guard unavailable ({error}); refusing to launch unguarded (--focus-guard off to override)",
+              file=sys.stderr)
         return 2
 
     profile = out / "profile"
@@ -1622,7 +2028,11 @@ def main(argv=None):
                     "backend": backend, "efb_access": args.efb_access, "dump_frames": args.dump_frames,
                     "safe_texture_cache": args.safe_texture_cache,
                     "config_sha256": {n: hashlib.sha256(t.encode()).hexdigest() for n, t in files.items()},
-                    "controllers": "GC port 1 standard controller; Wii remotes disabled"},
+                    "controllers": "GC port 1 standard controller; Wii remotes disabled",
+                    "host_input": ("none: every input config bound to an absent device, every default control empty"
+                                   if args.focus_safe else "Dolphin defaults (pre-HWI-077 profile)"),
+                    "audio_output": audio},
+        "focus_safety": focus_safety_record(host, args.focus_safe, args.focus_guard, audio, added_env),
         "input": input_record, "staging": staging, "initial_sd": initial,
         "launch_shape": launch, "timeout_seconds": args.timeout,
         "tolerated_host_exits": sorted(f"0x{c:08x}" for c in tolerated),
@@ -1659,15 +2069,23 @@ def main(argv=None):
         run = {"number": number, "cold_process": True, "started_utc": utc_now()}
         begin = time.monotonic()
         with (out / f"run{number}.stdout.txt").open("wb") as so, (out / f"run{number}.stderr.txt").open("wb") as se:
-            owned = OwnedDolphin(subprocess.Popen(argv, stdout=so, stderr=se, **launch_options(host)),
+            env = {**os.environ, **added_env} if added_env else None
+            owned = OwnedDolphin(subprocess.Popen(argv, stdout=so, stderr=se, env=env, **launch_options(host)),
                                  exe.name, host, query)
-            status, forced = owned.wait(args.timeout)
+            guard = None
+            if args.focus_guard != "off":
+                guard = FocusGuard(owned, probe, args.focus_guard).start()
+            try:
+                status, forced = owned.wait(args.timeout)
+            finally:
+                guard_summary = guard.finish() if guard else None
         elapsed = round(time.monotonic() - begin, 3)
         teardown = owned.teardown()
         own_pids.update(owned.owned)
         others_max = max(others, owned.others_max, teardown["other_dolphin_processes_at_end"] or 0)
+        guard_stop = bool(guard_summary and guard_summary["stopped_dolphin"])
         run["host"] = {**exit_fields(status, posix=host != "windows"), "forced_stop": forced,
-                       "elapsed_seconds": elapsed, "outcome": host_outcome(status, forced, tolerated),
+                       "elapsed_seconds": elapsed, "outcome": host_outcome(status, forced, tolerated, guard_stop),
                        **teardown,
                        "other_dolphin_processes_at_start": others,
                        "other_dolphin_processes_max": others_max,
@@ -1675,6 +2093,9 @@ def main(argv=None):
                        "process_query_errors": owned.query_errors}
         if forced:
             run["host"]["forced_stop_scope"] = "own_process_tree"
+        if guard_summary is not None:
+            run["focus_guard"] = guard_summary
+        run["input_binding_audit"] = input_binding_audit(profile / "Config")
         run["ended_utc"] = utc_now()
         frames_dir = profile / "Dump" / "Frames"
         if frames_dir.is_dir():
@@ -1724,6 +2145,8 @@ def main(argv=None):
         persistence["failures"] += staged_file_failures(staged_hashes, read)
         if forced:
             guest["failures"].append("forced_stop_before_natural_exit")
+        if guard_stop:
+            guest["failures"].append("focus_guard_stop_before_natural_exit")
         evaluated = args.scenario != "none" and not invalid_control
         guest["result"] = "failed" if guest["failures"] else ("passed" if evaluated else "not_evaluated")
         persistence["result"] = "failed" if persistence["failures"] else ("passed" if read_paths else "not_evaluated")
@@ -1735,6 +2158,9 @@ def main(argv=None):
               f"elapsed={elapsed}s", flush=True)
         if guest["failures"] and any(f.startswith("forced_stop") for f in guest["failures"]):
             record["aborted"] = f"run {number} was force-stopped; later runs skipped"
+            break
+        if guard_stop:
+            record["aborted"] = f"run {number}: Dolphin took focus and the focus guard stopped it; later runs skipped"
             break
     time.sleep(args.event_settle)
     window_end = utc_now()

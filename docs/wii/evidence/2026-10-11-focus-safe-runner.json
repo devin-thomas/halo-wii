@@ -1,0 +1,2096 @@
+{
+ "ticket": "HWI-077",
+ "date": "2026-10-11",
+ "batches": [
+  {
+   "scenario": "gx_materials",
+   "dol_sha256": "05263aee165efd761984c3bf4ec4ff24dc17b65934539f556758dff1b46805c9",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+   "movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+   "focus_safe": false,
+   "audio_output": true,
+   "launch_environment_added": {},
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "0",
+    "lanes_max": 2,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+      "halo-wii-gxm/materials.log": "52997d07f3e72f4b1855bf7bc1348e859a67cf88e2b65b37481812d14926efb1"
+     },
+     "elapsed_seconds": 14.874,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": null,
+     "input_binding_audit": null,
+     "input_bound_count": null
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+      "halo-wii-gxm/materials.log": "10c92872460dd0f9121a956ca5f2fc83ce8b6a829990af7d025d58fc3ade9461"
+     },
+     "elapsed_seconds": 14.621,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": null,
+     "input_binding_audit": null,
+     "input_bound_count": null
+    }
+   ],
+   "host": "titan",
+   "label": "titan-base-gxm",
+   "runner_commit": "bae56603",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 613,
+    "samples_with_own_dolphin": 117,
+    "own_foreground": 0,
+    "own_keyboard_focus": 0,
+    "own_visible_window": 0,
+    "any_dolphin_foreground": 0,
+    "user_idle_seconds_min": 31754
+   }
+  },
+  {
+   "scenario": "probe",
+   "dol_sha256": "0e19586c51e0f4f366157170ddb23220d293d7ac752d8ef91247efd07eef306f",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+   "movie_sha256": "829e51ed1cfac0f9620a691f84a48734f5602071a62d3817c08783bad0dfb229",
+   "focus_safe": false,
+   "audio_output": true,
+   "launch_environment_added": {},
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "0",
+    "lanes_max": 2,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "b8be899fb8dd8c529e33f339be87f61d1306782abddc67c4a83f24a6f0230ee9",
+      "halo-wii-probe/probe.log": "13ef4b3a3bd67ec008cc98346ebec5c832bfee0b522672254c9f93ea68a550d8"
+     },
+     "elapsed_seconds": 6.533,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": null,
+     "input_binding_audit": null,
+     "input_bound_count": null
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "09d554bd625ce2522ab6cd72e021b8a20d1438f30f0992520a44ffc0b9de619b",
+      "halo-wii-probe/probe.log": "d452ab15be9f81cdaca91b8ffc64617d1ff343a7cfa7ce1ee02289f44cfbfce9"
+     },
+     "elapsed_seconds": 7.002,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": null,
+     "input_binding_audit": null,
+     "input_bound_count": null
+    }
+   ],
+   "host": "titan",
+   "label": "titan-base-probe",
+   "runner_commit": "bae56603",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 110,
+    "samples_with_own_dolphin": 52,
+    "own_foreground": 0,
+    "own_keyboard_focus": 0,
+    "own_visible_window": 0,
+    "any_dolphin_foreground": 0,
+    "user_idle_seconds_min": 31908
+   }
+  },
+  {
+   "scenario": "gx_materials",
+   "dol_sha256": "05263aee165efd761984c3bf4ec4ff24dc17b65934539f556758dff1b46805c9",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+   "movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+   "focus_safe": true,
+   "audio_output": true,
+   "launch_environment_added": {},
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "0",
+    "lanes_max": 2,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+      "halo-wii-gxm/materials.log": "52997d07f3e72f4b1855bf7bc1348e859a67cf88e2b65b37481812d14926efb1"
+     },
+     "elapsed_seconds": 18.55,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 71,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 0,
+      "hide_requests": 0,
+      "other_dolphin_frontmost": 0,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null,
+      "hide_unacknowledged": 0
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+      "halo-wii-gxm/materials.log": "10c92872460dd0f9121a956ca5f2fc83ce8b6a829990af7d025d58fc3ade9461"
+     },
+     "elapsed_seconds": 17.142,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 66,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 0,
+      "hide_requests": 0,
+      "other_dolphin_frontmost": 0,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null,
+      "hide_unacknowledged": 0
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    }
+   ],
+   "host": "titan",
+   "label": "titan-new-gxm",
+   "runner_commit": "a8818e1d",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 4508,
+    "samples_with_own_dolphin": 140,
+    "own_foreground": 0,
+    "own_keyboard_focus": 0,
+    "own_visible_window": 0,
+    "any_dolphin_foreground": 0,
+    "user_idle_seconds_min": 32800
+   }
+  },
+  {
+   "scenario": "probe",
+   "dol_sha256": "0e19586c51e0f4f366157170ddb23220d293d7ac752d8ef91247efd07eef306f",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+   "movie_sha256": "829e51ed1cfac0f9620a691f84a48734f5602071a62d3817c08783bad0dfb229",
+   "focus_safe": true,
+   "audio_output": true,
+   "launch_environment_added": {},
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "0",
+    "lanes_max": 2,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "b8be899fb8dd8c529e33f339be87f61d1306782abddc67c4a83f24a6f0230ee9",
+      "halo-wii-probe/probe.log": "13ef4b3a3bd67ec008cc98346ebec5c832bfee0b522672254c9f93ea68a550d8"
+     },
+     "elapsed_seconds": 13.617,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 52,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 0,
+      "hide_requests": 0,
+      "other_dolphin_frontmost": 0,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null,
+      "hide_unacknowledged": 0
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "09d554bd625ce2522ab6cd72e021b8a20d1438f30f0992520a44ffc0b9de619b",
+      "halo-wii-probe/probe.log": "d452ab15be9f81cdaca91b8ffc64617d1ff343a7cfa7ce1ee02289f44cfbfce9"
+     },
+     "elapsed_seconds": 17.782,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 68,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 0,
+      "hide_requests": 0,
+      "other_dolphin_frontmost": 0,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null,
+      "hide_unacknowledged": 0
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    }
+   ],
+   "host": "titan",
+   "label": "titan-new-probe",
+   "runner_commit": "a8818e1d",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 189,
+    "samples_with_own_dolphin": 110,
+    "own_foreground": 0,
+    "own_keyboard_focus": 0,
+    "own_visible_window": 0,
+    "any_dolphin_foreground": 0,
+    "user_idle_seconds_min": 33937
+   }
+  },
+  {
+   "scenario": "gx_materials",
+   "dol_sha256": "05263aee165efd761984c3bf4ec4ff24dc17b65934539f556758dff1b46805c9",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+   "movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+   "focus_safe": true,
+   "audio_output": false,
+   "launch_environment_added": {
+    "QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM": "1",
+    "QT_MAC_SET_RAISE_PROCESS": "0",
+    "SDL_JOYSTICK_MFI": "0"
+   },
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "1",
+    "lanes_max": 2,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+      "halo-wii-gxm/materials.log": "52997d07f3e72f4b1855bf7bc1348e859a67cf88e2b65b37481812d14926efb1"
+     },
+     "elapsed_seconds": 12.148,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 48,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 1,
+      "hide_requests": 1,
+      "other_dolphin_frontmost": 47,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null,
+      "hide_unacknowledged": 1
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+      "halo-wii-gxm/materials.log": "10c92872460dd0f9121a956ca5f2fc83ce8b6a829990af7d025d58fc3ade9461"
+     },
+     "elapsed_seconds": 12.119,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 48,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 1,
+      "hide_requests": 1,
+      "other_dolphin_frontmost": 47,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null,
+      "hide_unacknowledged": 1
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    }
+   ],
+   "host": "research",
+   "label": "research-gxm",
+   "runner_commit": "e7a2d3c3",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 152,
+    "samples_with_own_dolphin": 96,
+    "own_frontmost": 0,
+    "own_active": 0,
+    "own_unhidden": 3,
+    "own_windows_onscreen": 0,
+    "other_dolphin_frontmost": 152,
+    "front_is_user_app": 0
+   },
+   "window_server_audit": {
+    "log_lines": 1145,
+    "own_pids": 2,
+    "own_pids_with_window_server_process": 2,
+    "other_dolphin_processes_in_window": 0,
+    "setfront": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "keyboard_focus_records": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "deferring_to_frontmost": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "hid_connections": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "keyboard_focus_targets_by_kind": {
+     "Dolphin": 4,
+     "other application": 4
+    }
+   }
+  },
+  {
+   "scenario": "probe",
+   "dol_sha256": "0e19586c51e0f4f366157170ddb23220d293d7ac752d8ef91247efd07eef306f",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+   "movie_sha256": "829e51ed1cfac0f9620a691f84a48734f5602071a62d3817c08783bad0dfb229",
+   "focus_safe": true,
+   "audio_output": false,
+   "launch_environment_added": {
+    "QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM": "1",
+    "QT_MAC_SET_RAISE_PROCESS": "0",
+    "SDL_JOYSTICK_MFI": "0"
+   },
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "1",
+    "lanes_max": 2,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "b8be899fb8dd8c529e33f339be87f61d1306782abddc67c4a83f24a6f0230ee9",
+      "halo-wii-probe/probe.log": "13ef4b3a3bd67ec008cc98346ebec5c832bfee0b522672254c9f93ea68a550d8"
+     },
+     "elapsed_seconds": 3.127,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 13,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 1,
+      "hide_requests": 1,
+      "other_dolphin_frontmost": 12,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null,
+      "hide_unacknowledged": 1
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "09d554bd625ce2522ab6cd72e021b8a20d1438f30f0992520a44ffc0b9de619b",
+      "halo-wii-probe/probe.log": "d452ab15be9f81cdaca91b8ffc64617d1ff343a7cfa7ce1ee02289f44cfbfce9"
+     },
+     "elapsed_seconds": 3.31,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 13,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 1,
+      "hide_requests": 1,
+      "other_dolphin_frontmost": 12,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null,
+      "hide_unacknowledged": 1
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    }
+   ],
+   "host": "research",
+   "label": "research-probe",
+   "runner_commit": "e7a2d3c3",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 81,
+    "samples_with_own_dolphin": 24,
+    "own_frontmost": 0,
+    "own_active": 0,
+    "own_unhidden": 1,
+    "own_windows_onscreen": 0,
+    "other_dolphin_frontmost": 81,
+    "front_is_user_app": 0
+   },
+   "window_server_audit": {
+    "log_lines": 571,
+    "own_pids": 2,
+    "own_pids_with_window_server_process": 2,
+    "other_dolphin_processes_in_window": 0,
+    "setfront": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "keyboard_focus_records": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "deferring_to_frontmost": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "hid_connections": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "keyboard_focus_targets_by_kind": {
+     "Dolphin": 4,
+     "other application": 4
+    }
+   }
+  },
+  {
+   "scenario": "gx_materials",
+   "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+   "build_id": "6958875983abf052",
+   "source_commit": "4a4aa208a7a7fb1e05d73d74f31d93e8081b88e2",
+   "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+   "movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+   "focus_safe": true,
+   "audio_output": false,
+   "launch_environment_added": {
+    "QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM": "1",
+    "QT_MAC_SET_RAISE_PROCESS": "0",
+    "SDL_JOYSTICK_MFI": "0"
+   },
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "1",
+    "lanes_max": 2,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+      "halo-wii-gxm/materials.log": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c"
+     },
+     "elapsed_seconds": 12.101,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 48,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 1,
+      "hide_requests": 1,
+      "other_dolphin_frontmost": 47,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null,
+      "hide_unacknowledged": 1
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+      "halo-wii-gxm/materials.log": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318"
+     },
+     "elapsed_seconds": 12.081,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 47,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 1,
+      "hide_requests": 1,
+      "other_dolphin_frontmost": 46,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null,
+      "hide_unacknowledged": 1
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    }
+   ],
+   "host": "research",
+   "label": "research-gxm073",
+   "runner_commit": "e7a2d3c3",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 152,
+    "samples_with_own_dolphin": 96,
+    "own_frontmost": 0,
+    "own_active": 0,
+    "own_unhidden": 4,
+    "own_windows_onscreen": 0,
+    "other_dolphin_frontmost": 152,
+    "front_is_user_app": 0
+   },
+   "window_server_audit": {
+    "log_lines": 1134,
+    "own_pids": 2,
+    "own_pids_with_window_server_process": 2,
+    "other_dolphin_processes_in_window": 0,
+    "setfront": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "keyboard_focus_records": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "deferring_to_frontmost": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "hid_connections": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "keyboard_focus_targets_by_kind": {
+     "Dolphin": 4,
+     "other application": 4
+    }
+   }
+  },
+  {
+   "scenario": "gx_materials",
+   "dol_sha256": "05263aee165efd761984c3bf4ec4ff24dc17b65934539f556758dff1b46805c9",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+   "movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+   "focus_safe": true,
+   "audio_output": false,
+   "launch_environment_added": {
+    "QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM": "1",
+    "QT_MAC_SET_RAISE_PROCESS": "0",
+    "SDL_JOYSTICK_MFI": "0"
+   },
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "2",
+    "lanes_max": 3,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+      "halo-wii-gxm/materials.log": "52997d07f3e72f4b1855bf7bc1348e859a67cf88e2b65b37481812d14926efb1"
+     },
+     "elapsed_seconds": 12.096,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 2,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 48,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 1,
+      "hide_requests": 1,
+      "hide_unacknowledged": 1,
+      "other_dolphin_frontmost": 47,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+      "halo-wii-gxm/materials.log": "10c92872460dd0f9121a956ca5f2fc83ce8b6a829990af7d025d58fc3ade9461"
+     },
+     "elapsed_seconds": 11.805,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 2,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 47,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 1,
+      "hide_requests": 1,
+      "hide_unacknowledged": 1,
+      "other_dolphin_frontmost": 46,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    }
+   ],
+   "host": "research",
+   "label": "research-conc-a",
+   "runner_commit": "283719a6",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 150,
+    "samples_with_own_dolphin": 93,
+    "own_frontmost": 0,
+    "own_active": 0,
+    "own_unhidden": 1,
+    "own_windows_onscreen": 0,
+    "other_dolphin_frontmost": 150,
+    "front_is_user_app": 0
+   },
+   "window_server_audit": {
+    "log_lines": 2162,
+    "own_pids": 2,
+    "own_pids_with_window_server_process": 2,
+    "other_dolphin_processes_in_window": 1,
+    "setfront": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "keyboard_focus_records": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "deferring_to_frontmost": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "hid_connections": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "keyboard_focus_targets_by_kind": {
+     "Dolphin": 8,
+     "other application": 8
+    }
+   }
+  },
+  {
+   "scenario": "gx_materials",
+   "dol_sha256": "194c63aef341ac0b814549516e74ffbfa4032794d6f15f1fdfc2e1482b8c1e19",
+   "build_id": "6958875983abf052",
+   "source_commit": "4a4aa208a7a7fb1e05d73d74f31d93e8081b88e2",
+   "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+   "movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+   "focus_safe": true,
+   "audio_output": false,
+   "launch_environment_added": {
+    "QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM": "1",
+    "QT_MAC_SET_RAISE_PROCESS": "0",
+    "SDL_JOYSTICK_MFI": "0"
+   },
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "1",
+    "lanes_max": 3,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+      "halo-wii-gxm/materials.log": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c"
+     },
+     "elapsed_seconds": 12.131,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 2,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 48,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 1,
+      "hide_requests": 1,
+      "hide_unacknowledged": 1,
+      "other_dolphin_frontmost": 47,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+      "halo-wii-gxm/materials.log": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318"
+     },
+     "elapsed_seconds": 12.115,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 2,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 48,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 1,
+      "hide_requests": 1,
+      "hide_unacknowledged": 1,
+      "other_dolphin_frontmost": 47,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    }
+   ],
+   "host": "research",
+   "label": "research-conc-b",
+   "runner_commit": "283719a6",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 152,
+    "samples_with_own_dolphin": 94,
+    "own_frontmost": 0,
+    "own_active": 0,
+    "own_unhidden": 2,
+    "own_windows_onscreen": 0,
+    "other_dolphin_frontmost": 152,
+    "front_is_user_app": 0
+   },
+   "window_server_audit": {
+    "log_lines": 2249,
+    "own_pids": 2,
+    "own_pids_with_window_server_process": 2,
+    "other_dolphin_processes_in_window": 2,
+    "setfront": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "keyboard_focus_records": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "deferring_to_frontmost": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "hid_connections": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "keyboard_focus_targets_by_kind": {
+     "Dolphin": 8,
+     "other application": 8
+    }
+   }
+  },
+  {
+   "scenario": "gx_materials",
+   "dol_sha256": "05263aee165efd761984c3bf4ec4ff24dc17b65934539f556758dff1b46805c9",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+   "movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+   "focus_safe": true,
+   "audio_output": false,
+   "launch_environment_added": {
+    "QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM": "1",
+    "QT_MAC_SET_RAISE_PROCESS": "0",
+    "SDL_JOYSTICK_MFI": "0"
+   },
+   "concurrency": {
+    "mode": "exclusive",
+    "lock_slot": "0",
+    "lanes_max": 1,
+    "host_shared": false
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": false
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+      "halo-wii-gxm/materials.log": "52997d07f3e72f4b1855bf7bc1348e859a67cf88e2b65b37481812d14926efb1"
+     },
+     "elapsed_seconds": 12.275,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 0,
+     "host_shared": false,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 49,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 1,
+      "hide_requests": 1,
+      "hide_unacknowledged": 1,
+      "other_dolphin_frontmost": 0,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+      "halo-wii-gxm/materials.log": "10c92872460dd0f9121a956ca5f2fc83ce8b6a829990af7d025d58fc3ade9461"
+     },
+     "elapsed_seconds": 12.112,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 0,
+     "host_shared": false,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 48,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 1,
+      "hide_requests": 1,
+      "hide_unacknowledged": 1,
+      "other_dolphin_frontmost": 0,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    }
+   ],
+   "host": "command",
+   "label": "command-gxm",
+   "runner_commit": "283719a6",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 148,
+    "samples_with_own_dolphin": 95,
+    "own_frontmost": 0,
+    "own_active": 0,
+    "own_unhidden": 4,
+    "own_windows_onscreen": 0,
+    "other_dolphin_frontmost": 0,
+    "front_is_user_app": 148
+   },
+   "window_server_audit": {
+    "log_lines": 1196,
+    "own_pids": 2,
+    "own_pids_with_window_server_process": 2,
+    "other_dolphin_processes_in_window": 0,
+    "setfront": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "keyboard_focus_records": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "deferring_to_frontmost": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "hid_connections": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "keyboard_focus_targets_by_kind": {
+     "other application": 8
+    }
+   }
+  },
+  {
+   "scenario": "probe",
+   "dol_sha256": "0e19586c51e0f4f366157170ddb23220d293d7ac752d8ef91247efd07eef306f",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "b3c369bca21c298e4bf56a567e060efeace1836a40d3a39546150d171d5d3ccf",
+   "movie_sha256": "829e51ed1cfac0f9620a691f84a48734f5602071a62d3817c08783bad0dfb229",
+   "focus_safe": true,
+   "audio_output": false,
+   "launch_environment_added": {
+    "QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM": "1",
+    "QT_MAC_SET_RAISE_PROCESS": "0",
+    "SDL_JOYSTICK_MFI": "0"
+   },
+   "concurrency": {
+    "mode": "exclusive",
+    "lock_slot": "0",
+    "lanes_max": 1,
+    "host_shared": false
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": false
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "b8be899fb8dd8c529e33f339be87f61d1306782abddc67c4a83f24a6f0230ee9",
+      "halo-wii-probe/probe.log": "13ef4b3a3bd67ec008cc98346ebec5c832bfee0b522672254c9f93ea68a550d8"
+     },
+     "elapsed_seconds": 3.414,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 0,
+     "host_shared": false,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 14,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 1,
+      "hide_requests": 1,
+      "hide_unacknowledged": 1,
+      "other_dolphin_frontmost": 0,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "09d554bd625ce2522ab6cd72e021b8a20d1438f30f0992520a44ffc0b9de619b",
+      "halo-wii-probe/probe.log": "d452ab15be9f81cdaca91b8ffc64617d1ff343a7cfa7ce1ee02289f44cfbfce9"
+     },
+     "elapsed_seconds": 3.342,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 0,
+     "host_shared": false,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 14,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 1,
+      "hide_requests": 1,
+      "hide_unacknowledged": 1,
+      "other_dolphin_frontmost": 0,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    }
+   ],
+   "host": "command",
+   "label": "command-probe",
+   "runner_commit": "283719a6",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 78,
+    "samples_with_own_dolphin": 25,
+    "own_frontmost": 0,
+    "own_active": 0,
+    "own_unhidden": 2,
+    "own_windows_onscreen": 0,
+    "other_dolphin_frontmost": 0,
+    "front_is_user_app": 78
+   },
+   "window_server_audit": {
+    "log_lines": 569,
+    "own_pids": 2,
+    "own_pids_with_window_server_process": 2,
+    "other_dolphin_processes_in_window": 0,
+    "setfront": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "keyboard_focus_records": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "deferring_to_frontmost": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "hid_connections": {
+     "own": 0,
+     "other_dolphin": 0
+    },
+    "keyboard_focus_targets_by_kind": {
+     "other application": 8
+    }
+   }
+  }
+ ],
+ "titan_ab_batches": [
+  {
+   "scenario": "probe",
+   "dol_sha256": "0e19586c51e0f4f366157170ddb23220d293d7ac752d8ef91247efd07eef306f",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+   "movie_sha256": "829e51ed1cfac0f9620a691f84a48734f5602071a62d3817c08783bad0dfb229",
+   "focus_safe": false,
+   "audio_output": true,
+   "launch_environment_added": {},
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "0",
+    "lanes_max": 2,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "b8be899fb8dd8c529e33f339be87f61d1306782abddc67c4a83f24a6f0230ee9",
+      "halo-wii-probe/probe.log": "13ef4b3a3bd67ec008cc98346ebec5c832bfee0b522672254c9f93ea68a550d8"
+     },
+     "elapsed_seconds": 7.75,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": null,
+     "input_binding_audit": null,
+     "input_bound_count": null
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "09d554bd625ce2522ab6cd72e021b8a20d1438f30f0992520a44ffc0b9de619b",
+      "halo-wii-probe/probe.log": "d452ab15be9f81cdaca91b8ffc64617d1ff343a7cfa7ce1ee02289f44cfbfce9"
+     },
+     "elapsed_seconds": 7.113,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": null,
+     "input_binding_audit": null,
+     "input_bound_count": null
+    }
+   ],
+   "host": "titan",
+   "label": "titan-ab1-base-probe",
+   "runner_commit": "bae56603",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 118,
+    "samples_with_own_dolphin": 58,
+    "own_foreground": 0,
+    "own_keyboard_focus": 0,
+    "own_visible_window": 0,
+    "any_dolphin_foreground": 0,
+    "user_idle_seconds_min": 34208
+   }
+  },
+  {
+   "scenario": "probe",
+   "dol_sha256": "0e19586c51e0f4f366157170ddb23220d293d7ac752d8ef91247efd07eef306f",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+   "movie_sha256": "829e51ed1cfac0f9620a691f84a48734f5602071a62d3817c08783bad0dfb229",
+   "focus_safe": true,
+   "audio_output": true,
+   "launch_environment_added": {},
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "0",
+    "lanes_max": 2,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "b8be899fb8dd8c529e33f339be87f61d1306782abddc67c4a83f24a6f0230ee9",
+      "halo-wii-probe/probe.log": "13ef4b3a3bd67ec008cc98346ebec5c832bfee0b522672254c9f93ea68a550d8"
+     },
+     "elapsed_seconds": 7.371,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 29,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 0,
+      "hide_requests": 0,
+      "hide_unacknowledged": 0,
+      "other_dolphin_frontmost": 0,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "09d554bd625ce2522ab6cd72e021b8a20d1438f30f0992520a44ffc0b9de619b",
+      "halo-wii-probe/probe.log": "d452ab15be9f81cdaca91b8ffc64617d1ff343a7cfa7ce1ee02289f44cfbfce9"
+     },
+     "elapsed_seconds": 9.037,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 35,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 0,
+      "hide_requests": 0,
+      "hide_unacknowledged": 0,
+      "other_dolphin_frontmost": 0,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    }
+   ],
+   "host": "titan",
+   "label": "titan-ab1-new-probe",
+   "runner_commit": "283719a6",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 136,
+    "samples_with_own_dolphin": 63,
+    "own_foreground": 0,
+    "own_keyboard_focus": 0,
+    "own_visible_window": 0,
+    "any_dolphin_foreground": 0,
+    "user_idle_seconds_min": 34238
+   }
+  },
+  {
+   "scenario": "gx_materials",
+   "dol_sha256": "05263aee165efd761984c3bf4ec4ff24dc17b65934539f556758dff1b46805c9",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+   "movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+   "focus_safe": false,
+   "audio_output": true,
+   "launch_environment_added": {},
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "1",
+    "lanes_max": 2,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+      "halo-wii-gxm/materials.log": "52997d07f3e72f4b1855bf7bc1348e859a67cf88e2b65b37481812d14926efb1"
+     },
+     "elapsed_seconds": 24.886,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 0,
+     "host_shared": false,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": null,
+     "input_binding_audit": null,
+     "input_bound_count": null
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+      "halo-wii-gxm/materials.log": "10c92872460dd0f9121a956ca5f2fc83ce8b6a829990af7d025d58fc3ade9461"
+     },
+     "elapsed_seconds": 21.614,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": null,
+     "input_binding_audit": null,
+     "input_bound_count": null
+    }
+   ],
+   "host": "titan",
+   "label": "titan-ab1-base-gxm",
+   "runner_commit": "bae56603",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 400,
+    "samples_with_own_dolphin": 171,
+    "own_foreground": 0,
+    "own_keyboard_focus": 0,
+    "own_visible_window": 0,
+    "any_dolphin_foreground": 0,
+    "user_idle_seconds_min": 34274
+   }
+  },
+  {
+   "scenario": "gx_materials",
+   "dol_sha256": "05263aee165efd761984c3bf4ec4ff24dc17b65934539f556758dff1b46805c9",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+   "movie_sha256": "cd06b35c36851d7b8096eb6ea260bcfd51055b9a4f20a3c08c296b34d334befc",
+   "focus_safe": true,
+   "audio_output": true,
+   "launch_environment_added": {},
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "1",
+    "lanes_max": 2,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787",
+      "halo-wii-gxm/materials.log": "52997d07f3e72f4b1855bf7bc1348e859a67cf88e2b65b37481812d14926efb1"
+     },
+     "elapsed_seconds": 23.137,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 88,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 0,
+      "hide_requests": 0,
+      "hide_unacknowledged": 0,
+      "other_dolphin_frontmost": 0,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/runs.txt": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d",
+      "halo-wii-gxm/materials.log": "10c92872460dd0f9121a956ca5f2fc83ce8b6a829990af7d025d58fc3ade9461"
+     },
+     "elapsed_seconds": 18.247,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 70,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 0,
+      "hide_requests": 0,
+      "hide_unacknowledged": 0,
+      "other_dolphin_frontmost": 0,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    }
+   ],
+   "host": "titan",
+   "label": "titan-ab1-new-gxm",
+   "runner_commit": "283719a6",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 234,
+    "samples_with_own_dolphin": 157,
+    "own_foreground": 0,
+    "own_keyboard_focus": 0,
+    "own_visible_window": 0,
+    "any_dolphin_foreground": 0,
+    "user_idle_seconds_min": 34378
+   }
+  },
+  {
+   "scenario": "probe",
+   "dol_sha256": "0e19586c51e0f4f366157170ddb23220d293d7ac752d8ef91247efd07eef306f",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+   "movie_sha256": "829e51ed1cfac0f9620a691f84a48734f5602071a62d3817c08783bad0dfb229",
+   "focus_safe": false,
+   "audio_output": true,
+   "launch_environment_added": {},
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "1",
+    "lanes_max": 2,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "b8be899fb8dd8c529e33f339be87f61d1306782abddc67c4a83f24a6f0230ee9",
+      "halo-wii-probe/probe.log": "13ef4b3a3bd67ec008cc98346ebec5c832bfee0b522672254c9f93ea68a550d8"
+     },
+     "elapsed_seconds": 7.78,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": null,
+     "input_binding_audit": null,
+     "input_bound_count": null
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "09d554bd625ce2522ab6cd72e021b8a20d1438f30f0992520a44ffc0b9de619b",
+      "halo-wii-probe/probe.log": "d452ab15be9f81cdaca91b8ffc64617d1ff343a7cfa7ce1ee02289f44cfbfce9"
+     },
+     "elapsed_seconds": 8.443,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": null,
+     "input_binding_audit": null,
+     "input_bound_count": null
+    }
+   ],
+   "host": "titan",
+   "label": "titan-ab2-base-probe",
+   "runner_commit": "bae56603",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 124,
+    "samples_with_own_dolphin": 64,
+    "own_foreground": 0,
+    "own_keyboard_focus": 0,
+    "own_visible_window": 0,
+    "any_dolphin_foreground": 0,
+    "user_idle_seconds_min": 34438
+   }
+  },
+  {
+   "scenario": "probe",
+   "dol_sha256": "0e19586c51e0f4f366157170ddb23220d293d7ac752d8ef91247efd07eef306f",
+   "build_id": "aec6deaa87979658",
+   "source_commit": "6d898c7ccf18a5f38f8284f61b1a97219aa70f90",
+   "dolphin_sha256": "1ed5e3f63f08b672133dade2c570e87ea4fa7fac2f6a65a118cc300a18dc0dac",
+   "movie_sha256": "829e51ed1cfac0f9620a691f84a48734f5602071a62d3817c08783bad0dfb229",
+   "focus_safe": true,
+   "audio_output": true,
+   "launch_environment_added": {},
+   "concurrency": {
+    "mode": "concurrent",
+    "lock_slot": "0",
+    "lanes_max": 2,
+    "host_shared": true
+   },
+   "outcomes": {
+    "guest": "passed",
+    "persistence": "passed",
+    "host": [
+     "exit_zero"
+    ],
+    "os_stability": "no_instability_events_observed",
+    "physical_wii": "untested",
+    "host_shared": true
+   },
+   "tool_exit": 0,
+   "runs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "b8be899fb8dd8c529e33f339be87f61d1306782abddc67c4a83f24a6f0230ee9",
+      "halo-wii-probe/probe.log": "13ef4b3a3bd67ec008cc98346ebec5c832bfee0b522672254c9f93ea68a550d8"
+     },
+     "elapsed_seconds": 6.099,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 24,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 0,
+      "hide_requests": 0,
+      "hide_unacknowledged": 0,
+      "other_dolphin_frontmost": 0,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    },
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/sentinel.txt": "09d554bd625ce2522ab6cd72e021b8a20d1438f30f0992520a44ffc0b9de619b",
+      "halo-wii-probe/probe.log": "d452ab15be9f81cdaca91b8ffc64617d1ff343a7cfa7ce1ee02289f44cfbfce9"
+     },
+     "elapsed_seconds": 5.778,
+     "outcome": "exit_zero",
+     "exit_code_hex": "0x00000000",
+     "teardown_check": "own_process_tree_exited",
+     "own_tree_size": 1,
+     "other_dolphin_processes_max": 1,
+     "host_shared": true,
+     "guest": "passed",
+     "persistence": "passed",
+     "focus_guard": {
+      "mode": "enforce",
+      "interval_seconds": 0.25,
+      "samples": 23,
+      "own_frontmost": 0,
+      "own_active": 0,
+      "own_keyboard_focus": 0,
+      "own_visible": 0,
+      "own_unhidden": 0,
+      "hide_requests": 0,
+      "hide_unacknowledged": 0,
+      "other_dolphin_frontmost": 0,
+      "no_frontmost": 0,
+      "query_errors": 0,
+      "violation": false,
+      "stopped_dolphin": null
+     },
+     "input_binding_audit": "no_input_bound",
+     "input_bound_count": 0
+    }
+   ],
+   "host": "titan",
+   "label": "titan-ab2-new-probe",
+   "runner_commit": "283719a6",
+   "independent_sampler": {
+    "interval_seconds": 0.25,
+    "samples": 7188,
+    "samples_with_own_dolphin": 0,
+    "own_foreground": 0,
+    "own_keyboard_focus": 0,
+    "own_visible_window": 0,
+    "any_dolphin_foreground": 0,
+    "user_idle_seconds_min": 34470
+   }
+  }
+ ],
+ "guest_identity": {
+  "gx_materials dol 05263aee launch 1": {
+   "distinct_outputs": 1,
+   "batches": 7,
+   "outputs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/materials.log": "52997d07f3e72f4b1855bf7bc1348e859a67cf88e2b65b37481812d14926efb1",
+      "halo-wii-gxm/runs.txt": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787"
+     },
+     "batches": [
+      "titan:titan-base-gxm",
+      "titan:titan-new-gxm",
+      "research:research-gxm",
+      "research:research-conc-a",
+      "command:command-gxm",
+      "titan:titan-ab1-base-gxm",
+      "titan:titan-ab1-new-gxm"
+     ]
+    }
+   ]
+  },
+  "gx_materials dol 05263aee launch 2": {
+   "distinct_outputs": 1,
+   "batches": 7,
+   "outputs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/materials.log": "10c92872460dd0f9121a956ca5f2fc83ce8b6a829990af7d025d58fc3ade9461",
+      "halo-wii-gxm/runs.txt": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d"
+     },
+     "batches": [
+      "titan:titan-base-gxm",
+      "titan:titan-new-gxm",
+      "research:research-gxm",
+      "research:research-conc-a",
+      "command:command-gxm",
+      "titan:titan-ab1-base-gxm",
+      "titan:titan-ab1-new-gxm"
+     ]
+    }
+   ]
+  },
+  "probe dol 0e19586c launch 1": {
+   "distinct_outputs": 1,
+   "batches": 8,
+   "outputs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/probe.log": "13ef4b3a3bd67ec008cc98346ebec5c832bfee0b522672254c9f93ea68a550d8",
+      "halo-wii-probe/sentinel.txt": "b8be899fb8dd8c529e33f339be87f61d1306782abddc67c4a83f24a6f0230ee9"
+     },
+     "batches": [
+      "titan:titan-base-probe",
+      "titan:titan-new-probe",
+      "research:research-probe",
+      "command:command-probe",
+      "titan:titan-ab1-base-probe",
+      "titan:titan-ab1-new-probe",
+      "titan:titan-ab2-base-probe",
+      "titan:titan-ab2-new-probe"
+     ]
+    }
+   ]
+  },
+  "probe dol 0e19586c launch 2": {
+   "distinct_outputs": 1,
+   "batches": 8,
+   "outputs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-probe/probe.log": "d452ab15be9f81cdaca91b8ffc64617d1ff343a7cfa7ce1ee02289f44cfbfce9",
+      "halo-wii-probe/sentinel.txt": "09d554bd625ce2522ab6cd72e021b8a20d1438f30f0992520a44ffc0b9de619b"
+     },
+     "batches": [
+      "titan:titan-base-probe",
+      "titan:titan-new-probe",
+      "research:research-probe",
+      "command:command-probe",
+      "titan:titan-ab1-base-probe",
+      "titan:titan-ab1-new-probe",
+      "titan:titan-ab2-base-probe",
+      "titan:titan-ab2-new-probe"
+     ]
+    }
+   ]
+  },
+  "gx_materials dol 194c63ae launch 1": {
+   "distinct_outputs": 1,
+   "batches": 2,
+   "outputs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/materials.log": "b66f7922d7abece8ca7810a1660e87f1592c7f957628baf3de85e4c79b2d6e0c",
+      "halo-wii-gxm/runs.txt": "899715aac4320a6278ad2db224237191bc8d08bd0b3773d94de5efff3d2b5787"
+     },
+     "batches": [
+      "research:research-gxm073",
+      "research:research-conc-b"
+     ]
+    }
+   ]
+  },
+  "gx_materials dol 194c63ae launch 2": {
+   "distinct_outputs": 1,
+   "batches": 2,
+   "outputs": [
+    {
+     "read_back_sha256": {
+      "halo-wii-gxm/materials.log": "2d5b5cbe2d18abae5a71013d6055a4b06a2e0cf01a5e4d97284abf241a4f6318",
+      "halo-wii-gxm/runs.txt": "773b5336626ec21c0fd76918f386349623e9fd8e6486d6fc694e64917731e01d"
+     },
+     "batches": [
+      "research:research-gxm073",
+      "research:research-conc-b"
+     ]
+    }
+   ]
+  }
+ },
+ "titan_ab_timing_seconds": {
+  "gx_materials base": {
+   "runs": 2,
+   "mean": 23.25,
+   "min": 21.614,
+   "max": 24.886
+  },
+  "gx_materials new": {
+   "runs": 2,
+   "mean": 20.692,
+   "min": 18.247,
+   "max": 23.137
+  },
+  "probe base": {
+   "runs": 4,
+   "mean": 7.771,
+   "min": 7.113,
+   "max": 8.443
+  },
+  "probe new": {
+   "runs": 4,
+   "mean": 7.071,
+   "min": 5.778,
+   "max": 9.037
+  }
+ }
+}

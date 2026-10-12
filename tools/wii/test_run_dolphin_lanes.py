@@ -70,6 +70,22 @@ class Host:
         self.others.pop(pid, None)
 
 
+class QuietProbe:
+    """Focus queries for main(): another application is always frontmost (HWI-077 guard)."""
+
+    def front_pid(self):
+        return 42
+
+    def focus_pid(self):
+        return None
+
+    def app_state(self, pid, hide=False):
+        return None
+
+    def visible_windows(self, pids):
+        return None
+
+
 class ProcessQueryTests(unittest.TestCase):
     def test_macos_ps_parsing_keeps_base_names_and_skips_noise(self):
         text = ("  PID  PPID COMM\n    1     0 /sbin/launchd\n  500     1 /Users/x/Applications/Dolphin.app/"
@@ -265,6 +281,7 @@ class ConcurrentStartTests(unittest.TestCase):
                 mock.patch.object(rd.subprocess, "Popen", side_effect=popen), \
                 mock.patch.object(rd, "launch_options", return_value={}), \
                 mock.patch.object(rd, "host_record", return_value={"os": host_name}), \
+                mock.patch.object(rd, "focus_probe", return_value=QuietProbe()), \
                 mock.patch.object(rd, "kill_pid") as kill, \
                 mock.patch.object(rd, "query_host_os", return_value=stability), \
                 mock.patch("builtins.print"):
