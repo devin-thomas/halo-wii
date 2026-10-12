@@ -321,7 +321,8 @@ def focus_safety_record(host, focus_safe, guard_mode, audio, added_env):
     return {
         "enabled": focus_safe,
         "launch_environment_added": dict(sorted(added_env.items())),
-        "dolphin_ini_added": {section: [f"{k} = {v}".rstrip() for k, v in items] for section, items in settings.items()},
+        "dolphin_ini_added": {section: [f"{k} = {v}".rstrip() for k, v in items]
+                              for section, items in settings.items()},
         "input_configs": (sorted(load_controls()["files"]) if focus_safe else []),
         "controls_sha256": hashlib.sha256(CONTROLS_FILE.read_bytes()).hexdigest() if focus_safe else None,
         "audio_output": audio,
@@ -878,7 +879,7 @@ class FocusGuard:
         self.owned, self.probe, self.mode, self.interval, self.clock = owned, probe, mode, interval, clock
         self.started = clock()
         self.counts = {"samples": 0, "own_frontmost": 0, "own_active": 0, "own_keyboard_focus": 0,
-                       "own_visible": 0, "own_unhidden": 0, "hide_requests": 0, "hide_failures": 0,
+                       "own_visible": 0, "own_unhidden": 0, "hide_requests": 0, "hide_unacknowledged": 0,
                        "other_dolphin_frontmost": 0, "no_frontmost": 0, "query_errors": 0}
         self.stop_event, self.thread, self.stopped = None, None, None
 
@@ -925,7 +926,8 @@ class FocusGuard:
                     reason = reason or "active"
                 if "hide_requested" in state:
                     counts["hide_requests"] += 1
-                    counts["hide_failures"] += not state["hide_requested"]
+                    # AppKit often answers NO for a launching app yet hides it; own_unhidden is the effect
+                    counts["hide_unacknowledged"] += not state["hide_requested"]
             try:
                 visible = self.probe.visible_windows(own)
             except (RuntimeError, OSError):

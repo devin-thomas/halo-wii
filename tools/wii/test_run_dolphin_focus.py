@@ -237,7 +237,7 @@ class FocusGuardTests(unittest.TestCase):
         guard.sample()
         self.assertEqual(probe.hidden_requests, [500])
         summary = guard.summary()
-        self.assertEqual((summary["hide_requests"], summary["hide_failures"], summary["own_unhidden"]), (1, 0, 1))
+        self.assertEqual((summary["hide_requests"], summary["hide_unacknowledged"], summary["own_unhidden"]), (1, 0, 1))
         self.assertFalse(process.killed)
         probe.states[500] = {"hidden": True, "active": True}
         self.assertEqual(guard.sample(), "active")
