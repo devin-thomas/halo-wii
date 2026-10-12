@@ -30,6 +30,7 @@ bounded here exhaustively over the differences that drive it
 (test_ui_combiners.py).
 """
 import argparse
+import json
 import re
 import sys
 
@@ -267,34 +268,38 @@ def _values(text):
     return {key: tuple(int(x, 16) for x in value.split(",")) for key, value in re.findall(r"(\w+)=([0-9a-f,]+)", text)}
 
 
-def check_log(text, tolerance=2):
-    """the self-test cases of a boot launch's log against the reference: (cases, failures, worst error)"""
-    cases = failures = worst = 0
+def check_log(text):
+    """the self-test cases of a boot launch's log: min/max against the exact per-channel result, the plasma
+    against the TEV model (the EFB must hold exactly its result: the GX program is the modelled one) and,
+    reported apart, against the combiners' reference. Returns a dict of counts"""
+    result = {"cases": 0, "failures": 0, "minmax": 0, "plasma": 0, "plasma_reference_errors": {}}
     for line in text.splitlines():
         match = SELFTEST.match(line)
         if not match:
             continue
         kind, _, rest = match.groups()
         values = _values(rest)
-        cases += 1
         if kind in ("min", "max"):
-            expected = tev_min_max(values["src"], values["dst"], kind == "max")
             exact = tuple(min(s, d) if kind == "min" else max(s, d) for s, d in zip(values["src"], values["dst"]))
-            error = max(abs(x - y) for x, y in zip(values["efb"], exact))
-            if expected != exact or error:
-                failures += 1
+            failed = values["efb"] != exact or tev_min_max(values["src"], values["dst"], kind == "max") != exact
+            result["minmax"] += 1
         elif kind == "plasma":
+            m0, m1, m2 = values["m0"], values["m1"], values["m2"]
+            tev = tev_plasma(values["t0"], values["t1"], values["t2"], values["v0"], (m0[3], m0[2]), (m1[3], m1[2]),
+                             m2, values["pf"])
+            failed = tuple(values["efb"]) != tev[:3]
             t = [tuple(x / 255.0 for x in values[name]) for name in ("t0", "t1", "t2", "v0")]
             colours = [tuple(x / 255.0 for x in values[name]) for name in ("m0", "m1", "m2")]
-            fade = tuple(x / 255.0 for x in values["pf"]) + (1.0,)
-            reference = tuple(to_byte(x) for x in nv2a_plasma(*t, colours, fade))
-            error = max(abs(x - y) for x, y in zip(values["efb"], reference[:3]))
-            if error > tolerance:
-                failures += 1
+            reference = nv2a_plasma(*t, colours, tuple(x / 255.0 for x in values["pf"]) + (1.0,))
+            error = max(abs(x - to_byte(y)) for x, y in zip(values["efb"], reference[:3]))
+            errors = result["plasma_reference_errors"]
+            errors[error] = errors.get(error, 0) + 1
+            result["plasma"] += 1
         else:
             continue
-        worst = max(worst, error)
-    return cases, failures, worst
+        result["cases"] += 1
+        result["failures"] += bool(failed)
+    return result
 
 
 def main(argv=None):
@@ -302,12 +307,12 @@ def main(argv=None):
     sub = parser.add_subparsers(dest="command", required=True)
     check = sub.add_parser("check-log", help="compare a boot launch's BOOT_UI_SELFTEST lines with the reference")
     check.add_argument("log")
-    check.add_argument("--tolerance", type=int, default=2, help="plasma: the largest 8-bit difference accepted")
     args = parser.parse_args(argv)
     with open(args.log, encoding="ascii", errors="replace") as stream:
-        cases, failures, worst = check_log(stream.read(), args.tolerance)
-    print(f"cases={cases} failures={failures} worst={worst}")
-    return 0 if cases and not failures else 1
+        result = check_log(stream.read())
+    result["plasma_reference_errors"] = dict(sorted(result["plasma_reference_errors"].items()))
+    print(json.dumps(result))
+    return 0 if result["cases"] and not result["failures"] else 1
 
 
 if __name__ == "__main__":

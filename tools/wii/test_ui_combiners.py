@@ -102,20 +102,18 @@ class MinMaxTests(unittest.TestCase):
 
 class LogCheckTests(unittest.TestCase):
     def test_check_log(self):
-        reference = uc.nv2a_plasma(*(tuple(x / 255.0 for x in v) for v in
-                                     ((1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12), (255, 255, 255, 255))),
-                                   [tuple(x / 255.0 for x in v) for v in ((255,) * 4,) * 3],
-                                   (0.5, 0.5, 0.5, 1.0))
-        efb = ",".join("%02x" % uc.to_byte(x) for x in reference[:3])
-        log = "\n".join([
+        t0, t1, t2, v0 = (1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12), (255, 255, 255, 255)
+        tev = uc.tev_plasma(t0, t1, t2, v0, (255, 255), (255, 255), (255, 255, 255, 255), (128, 128, 128))
+        efb = ",".join("%02x" % x for x in tev[:3])
+        log = chr(10).join([
             "BOOT_UI_SELFTEST min case=0 src=10,80,ff dst=20,80,00 efb=10,80,00",
             "BOOT_UI_SELFTEST max case=1 src=10,80,ff dst=20,80,00 efb=20,80,ff",
             "BOOT_UI_SELFTEST plasma case=2 t0=01,02,03,04 t1=05,06,07,08 t2=09,0a,0b,0c v0=ff,ff,ff,ff "
             "m0=ff,ff,ff,ff m1=ff,ff,ff,ff m2=ff,ff,ff,ff pf=80,80,80 efb=" + efb,
             "BOOT_UI_SELFTEST_END cases=3"])
-        self.assertEqual(uc.check_log(log), (3, 0, 0))
-        bad = log.replace("efb=10,80,00", "efb=10,80,01")
-        self.assertEqual(uc.check_log(bad)[1], 1)
+        result = uc.check_log(log)
+        self.assertEqual((result["cases"], result["failures"], result["minmax"], result["plasma"]), (3, 0, 2, 1))
+        self.assertEqual(uc.check_log(log.replace("efb=10,80,00", "efb=10,80,01"))["failures"], 1)
 
 
 if __name__ == "__main__":
