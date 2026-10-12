@@ -44,7 +44,11 @@ What one invocation does:
    Dolphin derives a DOL's game ID from its file name (`ID-` plus the stem,
    compared on six bytes) and silently ignores a movie whose ID differs, so
    the runner writes the matching ID. A supplied `--movie` is refused if its
-   ID does not match.
+   ID does not match. The authored header carries the largest tick count, so
+   Dolphin plays the script until its states run out. Dolphin also ends
+   playback once the emulated CPU passes the header's tick count; the earlier
+   100,000,000,000 ticks were 137.17 s of the Wii's clock (HWI-081). The record's
+   `input.playback_ends` says which applies, also for a supplied `--movie`.
 4. Optionally copies a FAT32 image (`--sd-image`, never modified) into the
    profile and stages files with `--stage LOCAL=sd:/path`, using mtools
    (`mmd`, `mcopy -n`) in a WSL distribution on Windows, or natively on macOS.
@@ -97,6 +101,13 @@ hosts:
   Dolphin maps the keyboard to GC pad 1 and to its hotkeys.
   `BackgroundInput`, pause-on-focus-loss, always-on-top and fullscreen are
   off. All emulated input comes from the DTM.
+- **GC pads always connected (HWI-081):** each GC pad has
+  `Options/Always Connected = True`, a setting rather than a binding. With no
+  device bound, Dolphin otherwise reports the pad unplugged whenever the DTM
+  is not playing: before a movie starts, after it ends, or in a launch with
+  no movie. The old profile's keyboard device kept the pad plugged in. After
+  the script ends the guest sees a plugged-in pad with nothing pressed, as it
+  did with the old profile.
 - **macOS launch environment:** `QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM=1`
   and `QT_MAC_SET_RAISE_PROCESS=0` stop Qt from activating the process.
   `SDL_JOYSTICK_MFI=0` stops SDL from opening a GameController HID client.
@@ -129,6 +140,33 @@ The batch's `focus_safety` object lists the added environment variables and
 
 A guard stop is host outcome `focus_guard_stop` and guest failure
 `focus_guard_stop_before_natural_exit`, and later launches are skipped.
+
+### Input integrity (HWI-081)
+
+A host replay of a launch replays the guest's own pad, so an unplugged pad
+or a lost press would still compare equal. The runner therefore checks what
+the guest saw against the DTM, for every guest that logs its pad (the boot
+mode's `BOOT_PAD` and `BOOT_PAD2` lines in any read-back file). Each run
+records `input_integrity`, and each of these fails the guest outcome:
+
+- `pad_unplugged`: a port the DTM drives read no controller;
+- `input_desync`: a state the script does not give at that point, such as an
+  unscripted press or input on a port the DTM does not drive;
+- `input_missed`: a scripted press the guest passed over between two states
+  it did see (a lower bound);
+- `gc_pad_always_connected_not_kept`: Dolphin's saved `GCPadNew.ini` lacks the
+  setting above.
+
+Buttons are compared bit for bit. Sticks and triggers are compared as
+neutral or not, because the guest sees them after libogc's origin and
+clamping. Once the script's states run out, a plugged-in pad with nothing
+pressed is expected. Presses the launch ended before reaching are counted
+(`scripted_states_not_reached`), not failed. A guest without pad lines is
+reported as not applicable.
+
+`run_boot_host.py` records the Wii launch's unplugs in `host.json`
+(`wii_pad_unplugged`) and exits 5 after an otherwise successful replay that
+followed one. `--allow-unplugged-pad` accepts it.
 
 `--no-focus-safe` writes the earlier profile byte for byte, for comparison
 only. Guest output is byte-identical with and without these changes; see
