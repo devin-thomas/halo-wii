@@ -174,4 +174,15 @@ They include:
 
 The live lock files are unchanged. The proof batches used a `.local` copy.
 
+## Checks
+
+- Unit tests under `tools/wii`: 537 pass with Python 3.14 and 3.11 on
+  Windows. The 18 new lane tests mock the process queries for both hosts.
+  `test_run_dolphin_lanes` and `test_run_dolphin` also pass with Python 3.12
+  on Research.
+- Build-only package at `ec33defb`, built from a clean tree with all eight
+  Wii targets: `package_artifacts.py stage`, then `inspect --require-clean`.
+  Result: 33 allowlisted files, `source_dirty: false`, 0 problems,
+  0 findings.
+
 Physical Wii: untested.
