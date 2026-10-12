@@ -86,6 +86,8 @@ static const char *current_map = "";
 static int progress_logging;
 /* (HWI-074) the plan's sound line, if it has one */
 static int plan_sound;
+/* the plan's line before which the sound starts (the lines above it run without) */
+static int plan_sound_line;
 static struct wii_sound_map_options plan_sound_options;
 
 /* the frame times of a run paced by the vertical retrace, logged so the host
@@ -510,6 +512,7 @@ static int parse_plan(const char *plan, int default_cycles)
 			continue;
 		if (!strncmp(line, "sound", 5) && (line[5] == 0 || line[5] == ' ' || line[5] == '\t'))
 		{
+			plan_sound_line = count;
 			if (!parse_sound_line(line))
 			{
 				wii_log("PLAN error line=%d (sound)\n", count + 1);
@@ -953,16 +956,17 @@ int engine_map_run(
 		wii_log("FAIL plan lines=%d\n", lines);
 		return 0;
 	}
-	/* (HWI-074) the engine's sound, once, before the first map */
-	if (plan_sound && !wii_sound_map_start(&plan_sound_options))
-	{
-		report->failures++;
-		wii_log("FAIL sound_start\n");
-	}
 	for (int index = 0; index < lines; index++)
 	{
 		const struct map_line *line = &plan_lines[index];
 
+		/* (HWI-074) the engine's sound, once, before the line the plan's
+		sound line precedes: the lines above it run without sound */
+		if (plan_sound && index == plan_sound_line && !wii_sound_map_start(&plan_sound_options))
+		{
+			report->failures++;
+			wii_log("FAIL sound_start\n");
+		}
 		if (line->failure)
 			run_failure(line, report);
 		else if (!run_map(config, line, maps++ == 0, report))

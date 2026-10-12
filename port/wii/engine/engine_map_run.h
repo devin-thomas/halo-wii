@@ -49,6 +49,11 @@ print the same report lines (through wii_log):
    switch_bsp is refused with that kind (a damaged structure bsp): the run
    must keep the bsp it had.
 
+   sound [listener=player|observer] [verify=0|1] [events=0|1]
+       [couplings=presentation|original]
+     (HWI-074) The engine's sound starts here, once, and every line after it
+     runs with it (port/wii/sound/README.md); the lines above run without.
+
    The heap must stay flat across a map's cycles (the driver measures it).
 
 Only C types: the drivers include it beside libogc or the host's C library.

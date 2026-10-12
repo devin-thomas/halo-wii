@@ -31,6 +31,7 @@ struct wii_sound_output_report
 	unsigned long buffer_frames;      /* one output buffer */
 	unsigned long buffers;            /* in the ring */
 	unsigned long latency_target_frames;
+	unsigned long samples_per_tick;   /* the voice's mixing tick (ASND) */
 	unsigned long frames_written;     /* by the mixer */
 	unsigned long frames_dropped;     /* the ring was full: the newest dropped */
 	unsigned long frames_played;      /* handed to the voice */

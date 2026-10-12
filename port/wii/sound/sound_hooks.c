@@ -890,10 +890,10 @@ void wii_sound_map_run_end(
 	}
 	if (output.buffers)
 	{
-		wii_log("SOUND_OUTPUT map=%s cycle=%d cadence=%s buffer_frames=%lu buffers=%lu latency_target=%lu written=%lu "
+		wii_log("SOUND_OUTPUT map=%s cycle=%d cadence=%s buffer_frames=%lu buffers=%lu latency_target=%lu tick=%lu written=%lu "
 			"dropped=%lu played=%lu underruns=%lu underrun_runs=%lu longest_underrun=%lu silent_start=%lu fill_min=%lu "
 			"fill_max=%lu\n", map, cycle, cadence, output.buffer_frames, output.buffers, output.latency_target_frames,
-			output.frames_written, output.frames_dropped, output.frames_played, output.underruns, output.underrun_runs,
+			output.samples_per_tick, output.frames_written, output.frames_dropped, output.frames_played, output.underruns, output.underrun_runs,
 			output.longest_underrun, output.silent_start_buffers, output.fill_minimum, output.fill_maximum);
 	}
 }

@@ -12,7 +12,7 @@ Xbox's DirectSound is implemented here.
 | [`dsound_wii.c`](dsound_wii.c) | platform unit (engine.dol and the i686 host reference) | DirectSound's streams on an integer software mixer: Xbox ADPCM decoded a 64-frame block at a time, linear resampling, 2D mix bins, DirectSound's 3D distance rolloff and equal-power pan, the I3DL2 direct path's obstruction/occlusion low pass, clipping |
 | [`xbox_adpcm.c`](xbox_adpcm.c) | platform unit | HWI-022's bit-exact Xbox ADPCM decoder, per block |
 | [`sound_pack.c`](sound_pack.c) | platform unit | a map's samples on the card (`d:\maps\<name>.wsnd`), served to the engine's sound cache through the cache layer (`port/wii/engine/cache_files_wii.c`) |
-| [`sound_hooks.c`](sound_hooks.c) | engine unit | the map run's sound, its listener, its report lines, and the three guards that keep sound out of the simulation |
+| [`sound_hooks.c`](sound_hooks.c) | engine unit | the map run's sound, its listener, its report lines, and the guards that keep the sound out of the game state |
 | [`sound_out_asnd.c`](sound_out_asnd.c) | libogc, engine.dol only | the mix out through one ASND voice |
 | [`sound_check.c`](sound_check.c) | host test program | the pack reader and decoder against the host reference (`tools/wii/test_sound.py`) |
 
@@ -27,8 +27,9 @@ Xbox's DirectSound is implemented here.
   same frames and complete the same packets at the same frames.
 - **Bounded buffers.** A stream holds at most the engine's 4 packets (6
   slots) and decodes one 64-frame ADPCM block at a time. The mix goes out in
-  256-frame chunks. The output ring holds 16 buffers of 512 frames (170 ms).
-  The voice starts once 4 buffers are full (about 43 ms of latency).
+  256-frame chunks. The output ring holds 8 buffers of 1024 frames (170 ms),
+  each one of ASND's mixing ticks. The voice starts once 2 buffers are full
+  (about 43 ms of latency).
 - **Underruns.** If the voice asks for a buffer that the mixer has not
   filled, it plays a silent one, which is counted. The game never waits on
   the sound. If the mixer writes into a full ring, the newest frames are
@@ -41,37 +42,53 @@ Xbox's DirectSound is implemented here.
   reverb is not modelled either; the Linux port has one, and HWI-040 decides
   whether the Wii can afford it.
 
-## Sound changes no simulation state
+## Sound changes no game state
 
-Turning the engine's sound on reaches the game state in three ways, and each
-is closed:
+Turning the engine's sound on reaches the game state in several ways. Each
+one is closed, so with the sound on the whole game state is the same as
+without it:
 
 1. **Random numbers.** A sound that a tick starts draws a skip chance, a
    pitch and a permutation from the tick's local random stream, whether or
    not anything hears it. With `HALO_SOUND_RANDOM_STREAM` (the Wii build and
    its host reference only), the sound manager draws from a stream of its own
    (`source/math/random_math.c`).
-2. **Collision marks.** A source's obstruction is a collision test, and each
-   such test marks the objects it visits (`magic_number`, from
-   `global_object_marker`). `sound_hooks.c` restores the marker and every
-   object's mark after the sound's tests.
-3. **The sound's own fields.** The sound keeps fields in the sound tags:
-   promotion, played permutations and cache places. The map run's tag-slot
-   digest reads them as zeros while the sound runs.
+2. **Collision marks.** The sound's collision tests (each source's
+   obstruction, the listener's camera) mark the objects they visit
+   (`magic_number`, from `global_object_marker`). `sound_hooks.c` puts the
+   marker and every object's mark back when the sound's code returns.
+3. **The sound's own tag fields.** Promotion, played permutations and
+   cache places live in the sound tags. The map run's tag-slot digest reads
+   them as zeros while the sound runs.
+4. **The game's reactions to its sounds** (`couplings=presentation`, the
+   default). The Xbox's game did five things because a sound played:
+   - a unit is notified that its scripted line plays, so it speaks;
+   - its mouth follows the line's mouth data once a frame (on the Wii,
+     frames are not ticks);
+   - scripted class fades move the class gains in the game state;
+   - an unattached looping sound's datum is freed only when its stop has
+     played out;
+   - two callers keep a started sound's index.
 
-What remains is the sound's own state, which the whole-state digest still
-holds and the simulation digest leaves out (HWI-016F's classification). This
-covers the object looping sounds, the game sound globals, the first-person
-weapon's current sound, and the scenario's sound environment.
+   With `presentation`, the game sees what it sees without sound: the sound
+   plays, and the fades move a copy of the gains. `couplings=original` runs
+   the Xbox's behaviour. With it, a10 is no longer cadence-invariant
+   (measured: the mouth). Which behaviour the game should have is HWI-040's
+   decision. With `presentation`, scripted lines' mouths do not move.
+
+The game's own sound bookkeeping (`game_sound_update`: the background sound
+and environment of the camera's cluster, which looping sounds can be heard)
+keeps the run's observer. Its choices are game state.
 
 ## The map run's `sound` line
 
 ```text
-sound [listener=player|observer] [verify=0|1] [events=0|1]
+sound [listener=player|observer] [verify=0|1] [events=0|1] [couplings=presentation|original]
 ```
 
-This line goes first in `map.txt` (`port/wii/engine/engine_map_run.h`). It
-starts the engine's sound once, before the first map. Each run's frame then
+This line goes in `map.txt` (`port/wii/engine/engine_map_run.h`). It starts
+the engine's sound once, before the line that follows it; the lines above it
+run without sound. Each run's frame then
 renders it. `listener=player` (the default) gives the sound's code the
 engine's deterministic camera of the player's unit. The run's observer, which
 the simulation reads, never moves. `verify=1` logs each permutation's decoded

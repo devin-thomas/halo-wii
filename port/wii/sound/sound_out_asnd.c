@@ -10,6 +10,9 @@ The mixer (dsound_wii.c) writes on the game's thread, as much as the game's
 clock has moved; the voice takes a buffer at a time from the DSP's interrupt
 (ASND's voice callback). Between them, a ring of OUTPUT_BUFFERS buffers of
 OUTPUT_BUFFER_FRAMES frames:
+- a buffer is one of ASND's mixing ticks (ASND_GetSamplesPerTick, 1024
+  frames): the voice asks for its next buffer once a tick, so a smaller
+  buffer starves it (measured: 512 frames played at half the rate);
 - the voice starts once OUTPUT_START_BUFFERS are full (the latency, about
   43 ms), and from then on is always given a buffer: the next full one, or,
   when the mixer has not filled one (an underrun: the game's frame came late),
@@ -27,9 +30,9 @@ Nothing here waits on the other side; the game never blocks on the sound.
 #include "wii_sound.h"
 
 #define OUTPUT_VOICE 0
-#define OUTPUT_BUFFER_FRAMES 512
-#define OUTPUT_BUFFERS 16
-#define OUTPUT_START_BUFFERS 4
+#define OUTPUT_BUFFER_FRAMES 1024
+#define OUTPUT_BUFFERS 8
+#define OUTPUT_START_BUFFERS 2
 #define OUTPUT_BUFFER_BYTES (OUTPUT_BUFFER_FRAMES * 4)
 
 static short output_ring[OUTPUT_BUFFERS][OUTPUT_BUFFER_FRAMES * 2] __attribute__((aligned(32)));
@@ -101,8 +104,9 @@ static int output_open(unsigned long rate)
 	output.report.fill_minimum = (unsigned long)-1;
 	ASND_Init();
 	ASND_Pause(0);
+	output.report.samples_per_tick = ASND_GetSamplesPerTick();
 	output.open = 1;
-	return 1;
+	return output.report.samples_per_tick <= OUTPUT_BUFFER_FRAMES;
 }
 
 static void output_write(const short *frames, unsigned long count)
@@ -175,13 +179,15 @@ static void output_mark(void)
 {
 	u32 level = IRQ_Disable();
 	unsigned long frames = output.report.buffer_frames, buffers = output.report.buffers;
-	unsigned long latency = output.report.latency_target_frames;
+	unsigned long latency = output.report.latency_target_frames, tick = output.report.samples_per_tick;
 
 	memset(&output.report, 0, sizeof(output.report));
 	output.report.buffer_frames = frames;
 	output.report.buffers = buffers;
 	output.report.latency_target_frames = latency;
+	output.report.samples_per_tick = tick;
 	output.report.fill_minimum = (unsigned long)-1;
+	output.underrun_run = 0;
 	IRQ_Restore(level);
 }
 
