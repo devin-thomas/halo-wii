@@ -22,6 +22,7 @@ import engine_build  # noqa: E402
 import engine_unsupported  # noqa: E402
 import halo_cache as hc  # noqa: E402
 import media_formats as mf  # noqa: E402
+import run_dolphin  # noqa: E402
 import sound_stage as ss  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -213,6 +214,12 @@ def ss_container(codec, rate, channels, payload):
 
 
 class SoundBuildTests(unittest.TestCase):
+    def test_audio_dump_option(self):
+        files = run_dolphin.profile_files("D3D", dump_audio=True)
+        self.assertIn("[DSP]\nDumpAudio = True\nDumpAudioSilent = True\n", files["Dolphin.ini"])
+        self.assertNotIn("DumpAudio", run_dolphin.profile_files("D3D")["Dolphin.ini"])
+        run_dolphin.check_stock_limits(files)
+
     def test_units_and_wraps(self):
         names = {path.name for path in engine_build.WII_PLATFORM}
         self.assertTrue({"dsound_wii.c", "sound_pack.c", "xbox_adpcm.c"} <= names)
@@ -220,7 +227,9 @@ class SoundBuildTests(unittest.TestCase):
         self.assertEqual(engine_build.SOUND_OUTPUT, (Path("port/wii/sound/sound_out_asnd.c"),))
         self.assertNotIn(Path("port/wii/sound/sound_out_asnd.c"), engine_build.WII_PLATFORM)
         for name in ("observer_get_camera", "sound_render", "sound_idle", "game_sound_update", "sound_new_impulse",
-                     "sound_dispose_from_old_map", "compute_sound_obstruction"):
+                     "sound_dispose_from_old_map", "compute_sound_obstruction", "object_type_notify_impulse_sound",
+                     "game_sound_set_mouth_aperture", "sound_classes_update", "sound_class_get_gain",
+                     "sound_refresh_looping", "object_impulse_sound_new"):
             self.assertIn(f"-Wl,--wrap={name}", engine_build.LINK_FLAGS)
             self.assertIn(f"__wrap_{name}(", (SOUND / "sound_hooks.c").read_text(encoding="utf-8"), name)
         for path in (*engine_build.SOUND_OUTPUT, *(SOUND / name for name in ("wii_sound.h", "xbox_adpcm.h"))):
@@ -249,7 +258,7 @@ class SoundBuildTests(unittest.TestCase):
     def test_the_plan_takes_a_sound_line(self):
         text = (ROOT / "port/wii/engine/engine_map_run.c").read_text(encoding="utf-8")
         self.assertIn('!strncmp(line, "sound", 5)', text)
-        for option in ('"listener"', '"verify"', '"events"'):
+        for option in ('"listener"', '"verify"', '"events"', '"couplings"'):
             self.assertIn(option, text)
 
 

@@ -13,13 +13,14 @@ host reference, which run it alike.
   everything; the Wii's DirectSound (dsound_wii.c) mixes on that clock.
 - The listener (listener=player, the default). main_loop moves the
   observer every frame (director_update, observer_update), and the sound
-  reads its camera: the listener (refresh_listener), each source's
-  obstruction (compute_sound_obstruction), the clusters a looping sound can
-  be heard in (compute_combined_pas) and the sound environment. The map run
+  reads its camera: the listener (refresh_listener) and each source's
+  obstruction (compute_sound_obstruction); the game's own sound bookkeeping
+  reads it too (the clusters a looping sound can be heard in, the sound
+  environment: game_sound_update, game state). The map run
   never moves the observer, because the simulation reads it too (aim
   assist, the activation PVS: port/wii/render/render_engine.c). So while the
-  sound's own code runs (sound_render, sound_new_impulse, game_sound_update,
-  sound_idle), observer_get_camera answers with the engine's deterministic
+  sound manager's code runs (sound_render, sound_new_impulse,
+  sound_refresh_looping, sound_idle), observer_get_camera answers with the engine's deterministic
   camera of the local player's unit (director_camera_deterministic, as the
   Wii renderer's camera), in the cluster it is in; everywhere else with the
   run's observer, as before. Neither writes anything.
@@ -90,11 +91,92 @@ static struct
 	unsigned long events_logged;
 	long sounds_peak, looping_sounds_peak;
 	unsigned long obstruction_tests;
+	unsigned long marks_not_restored;
+	unsigned long notifications_withheld, mouth_updates_withheld, indices_withheld;
 	unsigned long frames;
 	struct sound_hook_class classes[SOUND_HOOK_CLASSES];
 	/* each stream's sound class while it plays */
 	short stream_class[SOUND_HOOK_STREAMS];
 } sound_hooks;
+
+/* ---------- the objects' collision marks, as the sound found them
+
+Every collision test that can hit objects marks the objects it visits so it
+visits each once (object_marker_begin: global_object_marker counts on; each
+object visited keeps it, in its magic_number). The mark is the test's
+scratch: nothing reads it but the marking itself, against the marker of the
+test running. But it is in the objects' state, and the next test's marker
+follows from how many tests ran. The sound tests too: each source's
+obstruction from the listener (compute_sound_obstruction, game_sound.c), as
+many as there are sounds to hear, and the listener's camera (a following
+camera's own test, director_camera_deterministic). Those moved every later
+mark of the simulation's own tests, and with them the objects' bytes. So
+the sound's code leaves the marks as it found them: the marker, and each
+object's mark, are put back when it returns (the outermost of the sound's
+entry points below, and the listener's camera inside game_sound_update). */
+
+extern long global_object_marker;
+
+static struct
+{
+	long depth;
+	long marker;
+	long count;
+	long *marks;
+	long capacity;
+} object_marks;
+
+static void object_marks_save(
+	void)
+{
+	long index;
+
+	if (!sound_hooks.active || object_marks.depth++ > 0)
+		return;
+	object_marks.marker = global_object_marker;
+	object_marks.count = object_header_data ? object_header_data->count : 0;
+	if (object_marks.count > object_marks.capacity)
+	{
+		long *grown = (long *)realloc(object_marks.marks, (size_t)object_header_data->maximum_count * sizeof(long));
+
+		if (!grown)
+		{
+			/* (not restorable: said by the report's count) */
+			object_marks.count = -1;
+			return;
+		}
+		object_marks.marks = grown;
+		object_marks.capacity = object_header_data->maximum_count;
+	}
+	for (index = 0; index < object_marks.count; index++)
+	{
+		struct object_header_datum const *header = (struct object_header_datum const *)object_header_data->data + index;
+
+		object_marks.marks[index] = header->identifier && header->datum ? header->datum->object.magic_number : 0;
+	}
+}
+
+static void object_marks_restore(
+	void)
+{
+	long index;
+
+	if (!sound_hooks.active || object_marks.depth <= 0 || --object_marks.depth > 0)
+		return;
+	if (object_marks.count < 0)
+	{
+		sound_hooks.marks_not_restored++;
+		return;
+	}
+	for (index = 0; index < object_marks.count; index++)
+	{
+		struct object_header_datum const *header = (struct object_header_datum const *)object_header_data->data + index;
+
+		if (header->identifier && header->datum)
+			header->datum->object.magic_number = object_marks.marks[index];
+	}
+	global_object_marker = object_marks.marker;
+}
 
 /* ---------- the listener */
 
@@ -117,6 +199,7 @@ struct observer_result const *__wrap_observer_get_camera(
 	if (!player || player->unit_index == NONE)
 		return observer;
 	sound_hooks.computing_camera = TRUE;
+	object_marks_save();
 	{
 		real_point3d position;
 		real_vector3d forward;
@@ -137,6 +220,7 @@ struct observer_result const *__wrap_observer_get_camera(
 		sound_hooks.listener.up = up;
 		scenario_location_from_point(&sound_hooks.listener.location, &position);
 	}
+	object_marks_restore();
 	sound_hooks.computing_camera = FALSE;
 
 	return &sound_hooks.listener;
@@ -154,17 +238,21 @@ long __real_sound_new_impulse(long definition_index, struct sound_source *source
 void __wrap_sound_render(
 	void)
 {
+	object_marks_save();
 	sound_hooks.depth++;
 	__real_sound_render();
 	sound_hooks.depth--;
+	object_marks_restore();
 }
 
 void __wrap_sound_idle(
 	void)
 {
+	object_marks_save();
 	sound_hooks.depth++;
 	__real_sound_idle();
 	sound_hooks.depth--;
+	object_marks_restore();
 }
 
 /* (a map's end: game_dispose_from_old_map) the sound manager fades every
@@ -181,19 +269,42 @@ void __wrap_sound_dispose_from_old_map(
 
 	if (advancing)
 		wii_boot_frame_clock_advance_on_read(TRUE);
+	object_marks_save();
 	sound_hooks.depth++;
 	__real_sound_dispose_from_old_map();
 	sound_hooks.depth--;
+	object_marks_restore();
 	if (advancing)
 		wii_boot_frame_clock_advance_on_read(FALSE);
 }
 
+/* (game_frame's) the game's own sound bookkeeping: which looping sounds can be
+heard (the camera's clusters), the background sound and environment of the
+camera's cluster. Its decisions are game state (object looping sounds,
+scenario globals), so it keeps the run's observer, as without sound; only
+what it asks of the sound manager (sound_refresh_looping, below) hears with
+the listener */
 void __wrap_game_sound_update(
 	real dt)
 {
-	sound_hooks.depth++;
 	__real_game_sound_update(dt);
+}
+
+/* (game_sound.c, from game_sound_update and from the sound manager) */
+void __real_compute_sound_obstruction(short local_player_index, struct sound_source *source, real distance);
+
+void __wrap_compute_sound_obstruction(
+	short local_player_index,
+	struct sound_source *source,
+	real distance)
+{
+	object_marks_save();
+	sound_hooks.depth++;
+	__real_compute_sound_obstruction(local_player_index, source, distance);
 	sound_hooks.depth--;
+	object_marks_restore();
+	if (sound_hooks.active)
+		sound_hooks.obstruction_tests++;
 }
 
 long __wrap_sound_new_impulse(
@@ -206,73 +317,14 @@ long __wrap_sound_new_impulse(
 {
 	long sound_index;
 
+	object_marks_save();
 	sound_hooks.depth++;
 	sound_index = __real_sound_new_impulse(definition_index, source, source_identifier, track_proc, track_data,
 		track_data_size);
 	sound_hooks.depth--;
+	object_marks_restore();
 
 	return sound_index;
-}
-
-/* ---------- the sound's obstruction test, without its marks
-
-A source's obstruction is a collision test from the listener
-(compute_sound_obstruction, game_sound.c), and every collision test that can
-hit objects marks the objects it visits so it visits each once
-(object_marker_begin: global_object_marker counts on; each object visited
-keeps it, in its magic_number). The mark is the test's scratch: nothing reads
-it but the marking itself, against the marker of the test running. But it is
-in the objects' state, and the next test's marker follows from how many tests
-ran, so the sound's tests (as many as there are sounds to hear) moved every
-later mark of the simulation's own tests, and with them the objects' bytes.
-So the sound's test leaves the marks as it found them: the marker, and each
-object's mark, are put back after it. */
-
-void __real_compute_sound_obstruction(short local_player_index, struct sound_source *source, real distance);
-extern long global_object_marker;
-
-static long *object_marks;
-static long object_mark_capacity;
-
-void __wrap_compute_sound_obstruction(
-	short local_player_index,
-	struct sound_source *source,
-	real distance)
-{
-	long marker = global_object_marker;
-	long count = object_header_data ? object_header_data->count : 0;
-	long index;
-
-	if (count > object_mark_capacity)
-	{
-		long *grown = (long *)realloc(object_marks, (size_t)object_header_data->maximum_count * sizeof(long));
-
-		if (!grown)
-		{
-			__real_compute_sound_obstruction(local_player_index, source, distance);
-			return;
-		}
-		object_marks = grown;
-		object_mark_capacity = object_header_data->maximum_count;
-	}
-	for (index = 0; index < count; index++)
-	{
-		struct object_header_datum const *header = (struct object_header_datum const *)object_header_data->data + index;
-
-		object_marks[index] = header->identifier && header->datum ? header->datum->object.magic_number : 0;
-	}
-	sound_hooks.depth++;
-	__real_compute_sound_obstruction(local_player_index, source, distance);
-	sound_hooks.depth--;
-	for (index = 0; index < count; index++)
-	{
-		struct object_header_datum const *header = (struct object_header_datum const *)object_header_data->data + index;
-
-		if (header->identifier && header->datum)
-			header->datum->object.magic_number = object_marks[index];
-	}
-	global_object_marker = marker;
-	sound_hooks.obstruction_tests++;
 }
 
 /* ---------- the sound's fields in the tags, left out of the tag slot's digest
@@ -379,6 +431,210 @@ void wii_sound_tags_mask_end(
 	sound_tags_walk(TRUE);
 	free(sound_tag_fields.saved);
 	sound_tag_fields.saved = NULL;
+}
+
+/* ---------- the game's reactions to its sounds (couplings=presentation)
+
+Five things the Xbox's game did because a sound played, which are game
+state, and which the game without sound never does (the Wii's until now,
+and the map run's reference digests):
+- a scripted line a unit speaks makes the unit speak (scripted_sound_new:
+  object_type_notify_impulse_sound, only if the sound manager started the
+  sound: unit_speak, the unit's speech state, which its dialogue and the AI
+  then follow);
+- the unit's mouth follows the line's mouth data, once a frame
+  (sound_manager.c update_channels: game_sound_set_mouth_aperture, the unit's
+  mouth aperture, an object function its animation and attachments read);
+  frames are not ticks on the Wii, so this follows the render cadence;
+- scripted sound class fades move the classes' gains, once a frame, in the
+  game state (sound_classes_update from sound_render);
+- a looping sound is deleted when its stop has played out (below);
+- a sound's index is kept where it was started (below).
+With couplings=presentation (the default) the game stays as without sound:
+the unit is not notified, its mouth is not moved, and the fades move a copy
+of the gains outside the game state, which the sound manager reads
+(sound_class_get_gain). couplings=original runs the Xbox's own. Which the
+game should do is HWI-040's to decide (the lines' mouths do not move with
+presentation; with original, a10 is not cadence-invariant: the mouth). */
+
+void __real_object_type_notify_impulse_sound(long object_index, long sound_index, long source_object_index);
+void __real_game_sound_set_mouth_aperture(long object_index, real mouth_aperture);
+void __real_sound_classes_update(long ticks);
+real __real_sound_class_get_gain(short class_index);
+
+static boolean sound_hooks_presentation(
+	void)
+{
+	return sound_hooks.active && !sound_hooks.options.game_couplings;
+}
+
+void __wrap_object_type_notify_impulse_sound(
+	long object_index,
+	long sound_index,
+	long source_object_index)
+{
+	if (sound_hooks_presentation())
+	{
+		sound_hooks.notifications_withheld++;
+		return;
+	}
+	__real_object_type_notify_impulse_sound(object_index, sound_index, source_object_index);
+}
+
+void __wrap_game_sound_set_mouth_aperture(
+	long object_index,
+	real mouth_aperture)
+{
+	if (sound_hooks_presentation())
+	{
+		sound_hooks.mouth_updates_withheld++;
+		return;
+	}
+	__real_game_sound_set_mouth_aperture(object_index, mouth_aperture);
+}
+
+/* (the fourth) game_sound_update keeps an object's looping sound, or deletes
+an unattached one, by what the sound manager answers (game_sound.c
+update_potentially_audible_looping_sound): with no sound, a sound stopping
+has stopped at once; with sound, only once its stop has played out. Which
+frame a looping sound's datum is freed then decides the index the next one
+takes, and objects keep those indices (their attachments). With
+couplings=presentation the sound plays its stop, and the game hears the
+answer it hears without sound. */
+boolean __real_sound_refresh_looping(long definition_index, long looping_sound_index, struct sound_source *source,
+	short refresh_state, boolean alternate, real fade_time);
+
+boolean __wrap_sound_refresh_looping(
+	long definition_index,
+	long looping_sound_index,
+	struct sound_source *source,
+	short refresh_state,
+	boolean alternate,
+	real fade_time)
+{
+	boolean finished;
+
+	object_marks_save();
+	sound_hooks.depth++;
+	finished = __real_sound_refresh_looping(definition_index, looping_sound_index, source, refresh_state, alternate,
+		fade_time);
+	sound_hooks.depth--;
+	object_marks_restore();
+
+	if (!sound_hooks_presentation())
+		return finished;
+	return refresh_state == _looping_sound_refresh_stop;
+}
+
+/* (the fifth) two callers keep the index of the sound they started, in the
+game state: the first-person weapon (to stop it when the view changes state)
+and a unit's dialogue (unit_dialogue.c: never read again). Without sound the
+index is NONE. With couplings=presentation they keep NONE: the sound plays
+on, and a first-person sound is not cut short when the view's state changes */
+long __real_object_impulse_sound_new(long object_index, long definition_index, short node_index,
+	real_point3d const *position, real_vector3d const *forward, real scale);
+
+long __wrap_object_impulse_sound_new(
+	long object_index,
+	long definition_index,
+	short node_index,
+	real_point3d const *position,
+	real_vector3d const *forward,
+	real scale)
+{
+	long sound_index = __real_object_impulse_sound_new(object_index, definition_index, node_index, position, forward,
+		scale);
+
+	if (sound_hooks_presentation() && sound_index != NONE)
+	{
+		sound_hooks.indices_withheld++;
+		return NONE;
+	}
+	return sound_index;
+}
+
+/* the sound classes' gains (sound_classes.c's struct sound_class_datum: the
+game state's, which scripts set the fade of) */
+struct sound_class_gain
+{
+	real desired_gain;
+	real gain;
+	short ticks;
+};
+
+enum
+{
+	SOUND_HOOK_SOUND_CLASSES = 51,
+};
+
+extern struct sound_class_gain *sound_class_data;
+
+static struct
+{
+	boolean valid;
+	struct sound_class_gain seen;   /* the game state's, as last adopted */
+	struct sound_class_gain gain;   /* the copy the sound fades */
+} sound_class_copies[SOUND_HOOK_SOUND_CLASSES];
+
+/* the copy adopts what a script set in the game state since */
+static struct sound_class_gain *sound_class_copy(
+	short class_index)
+{
+	struct sound_class_gain const *state = &sound_class_data[class_index];
+
+	if (!sound_class_copies[class_index].valid ||
+		state->desired_gain != sound_class_copies[class_index].seen.desired_gain ||
+		state->ticks != sound_class_copies[class_index].seen.ticks ||
+		state->gain != sound_class_copies[class_index].seen.gain)
+	{
+		sound_class_copies[class_index].seen = *state;
+		sound_class_copies[class_index].gain.desired_gain = state->desired_gain;
+		sound_class_copies[class_index].gain.ticks = state->ticks;
+		if (!sound_class_copies[class_index].valid || !state->ticks)
+			sound_class_copies[class_index].gain.gain = state->ticks ? state->gain : state->desired_gain;
+		sound_class_copies[class_index].valid = TRUE;
+	}
+
+	return &sound_class_copies[class_index].gain;
+}
+
+void __wrap_sound_classes_update(
+	long ticks)
+{
+	short class_index;
+
+	if (!sound_hooks_presentation() || !sound_class_data)
+	{
+		__real_sound_classes_update(ticks);
+		return;
+	}
+	/* sound_classes_update's interpolation, on the copies */
+	for (class_index = 0; ticks > 0 && class_index < SOUND_HOOK_SOUND_CLASSES; class_index++)
+	{
+		struct sound_class_gain *copy = sound_class_copy(class_index);
+
+		if (copy->ticks > ticks)
+		{
+			copy->gain = (real)ticks / copy->ticks * (copy->desired_gain - copy->gain) + copy->gain;
+			copy->ticks -= (short)ticks;
+		}
+		else
+		{
+			copy->gain = copy->desired_gain;
+			copy->ticks = 0;
+		}
+	}
+}
+
+real __wrap_sound_class_get_gain(
+	short class_index)
+{
+	if (!sound_hooks_presentation() || !sound_class_data || class_index < 0 ||
+		class_index >= SOUND_HOOK_SOUND_CLASSES)
+	{
+		return __real_sound_class_get_gain(class_index);
+	}
+	return sound_class_copy(class_index)->gain;
 }
 
 /* ---------- stream events */
@@ -524,9 +780,9 @@ int wii_sound_map_start(
 	sound_hooks.active = sound_is_active() ? TRUE : FALSE;
 	if (!sound_hooks.active)
 		sound_hooks.started = FALSE;
-	wii_log("SOUND_MAP start=%d listener=%s verify_decode=%d events=%d sounds_capacity=%ld looping_capacity=%ld\n",
-		sound_hooks.active, options->listener_follows_player ? "player" : "observer", options->verify_decode,
-		options->events, sound_data ? (long)sound_data->maximum_count : 0L,
+	wii_log("SOUND_MAP start=%d listener=%s verify_decode=%d events=%d couplings=%s sounds_capacity=%ld "
+		"looping_capacity=%ld\n", sound_hooks.active, options->listener_follows_player ? "player" : "observer",
+		options->verify_decode, options->events, options->game_couplings ? "original" : "presentation", sound_data ? (long)sound_data->maximum_count : 0L,
 		looping_sound_data ? (long)looping_sound_data->maximum_count : 0L);
 
 	return sound_hooks.active;
@@ -569,6 +825,11 @@ void wii_sound_map_run_begin(
 	sound_hooks.sounds_peak = 0;
 	sound_hooks.looping_sounds_peak = 0;
 	sound_hooks.obstruction_tests = 0;
+	sound_hooks.marks_not_restored = 0;
+	sound_hooks.notifications_withheld = 0;
+	sound_hooks.mouth_updates_withheld = 0;
+	sound_hooks.indices_withheld = 0;
+	csmemset(sound_class_copies, 0, sizeof(sound_class_copies));
 	sound_hooks.events_logged = 0;
 	sound_hooks.log_events = TRUE;
 	csmemset(sound_hooks.classes, 0, sizeof(sound_hooks.classes));
@@ -601,12 +862,14 @@ void wii_sound_map_run_end(
 	wii_log("SOUND_RUN map=%s cycle=%d cadence=%s frames=%lu clock_ms=%lu work_calls=%lu frames_mixed=%lu "
 		"skipped_frames=%lu voices_max=%lu voice_frames=%lu voices_by_calls=%s sounds_peak=%ld looping_sounds_peak=%ld "
 		"streams=%lu packets_queued=%lu packets_completed=%lu packets_flushed=%lu blocks_decoded=%lu starts=%lu ends=%lu "
-		"stops=%lu obstruction_tests=%lu clipped=%lu mix_us=%lu mix_peak_us=%lu mix_crc=%08lx events_crc=%08lx pack_reads=%lu pack_bytes=%lu "
+		"stops=%lu obstruction_tests=%lu marks_unrestored=%lu notifications_withheld=%lu mouth_withheld=%lu indices_withheld=%lu clipped=%lu mix_us=%lu mix_peak_us=%lu mix_crc=%08lx events_crc=%08lx pack_reads=%lu pack_bytes=%lu "
 		"pack_pcm=%lu pack_failures=%lu pack_us=%lu decode_checks=%lu\n",
 		map, cycle, cadence, sound_hooks.frames, sound_hooks.run_milliseconds, report.work_calls, report.frames_mixed,
 		report.clock_skipped_frames, report.voices_maximum, report.voice_frames, histogram, sound_hooks.sounds_peak,
 		sound_hooks.looping_sounds_peak, report.streams, report.packets_queued, report.packets_completed,
 		report.packets_flushed, report.blocks_decoded, report.starts, report.ends, report.stops, sound_hooks.obstruction_tests,
+		sound_hooks.marks_not_restored, sound_hooks.notifications_withheld, sound_hooks.mouth_updates_withheld,
+		sound_hooks.indices_withheld,
 		report.clipped_samples,
 		(unsigned long)report.mix_microseconds, (unsigned long)report.mix_microseconds_peak, report.mix_crc,
 		report.events_crc, pack.reads, pack.bytes, pack.pcm_reads, pack.failures, (unsigned long)pack.read_microseconds,

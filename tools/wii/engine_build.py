@@ -154,7 +154,9 @@ WRAPPED = ("main", "halt_and_catch_fire", "game_tick", "game_frame", "update_cli
            # HWI-074: the sound's own code, for its listener and the frame clock
            # (port/wii/sound/sound_hooks.c; each passes through unless the sound runs)
            "observer_get_camera", "sound_render", "sound_idle", "game_sound_update", "sound_new_impulse",
-           "sound_dispose_from_old_map", "compute_sound_obstruction",
+           "sound_dispose_from_old_map", "compute_sound_obstruction", "object_type_notify_impulse_sound",
+           "game_sound_set_mouth_aperture", "sound_classes_update", "sound_class_get_gain",
+           "sound_refresh_looping", "object_impulse_sound_new",
            # HWI-016D: the boot mode (boot_hooks.c): the rasterizer backend the
            # menus and main_loop's frame reach, the menus' map selection, and
            # the frame clock; each passes through unless the boot mode registered

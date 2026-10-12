@@ -135,6 +135,9 @@ struct wii_sound_map_options
 	int listener_follows_player;     /* 1: as above; 0: the run's observer */
 	int verify_decode;               /* log each permutation's decoded PCM CRC as it loads */
 	int events;                      /* log each stream event (the first ones of each class) */
+	/* the game's reactions to its sounds playing (sound_hooks.c): 0 (the
+	default) keeps them as with no sound, 1 is the Xbox's */
+	int game_couplings;
 };
 
 /* 1 if the engine's sound started */

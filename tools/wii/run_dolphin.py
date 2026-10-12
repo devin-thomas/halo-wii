@@ -173,7 +173,8 @@ STOCK_REQUIRED = {("Core", "EnableCheats"): "False", ("Core", "OverclockEnable")
                   ("Core", "RAMOverrideEnable"): "False", ("Core", "EmulationSpeed"): "1.0"}
 
 
-def profile_files(backend="D3D", efb_access=False, dump_frames=False, safe_texture_cache=False, gc_ports=1):
+def profile_files(backend="D3D", efb_access=False, dump_frames=False, safe_texture_cache=False, gc_ports=1,
+                  dump_audio=False):
     """Config files for a new Wii-mode profile: stock clock/memory, no cheats."""
     dolphin = {
         "Core": [("CPUThread", "False"), ("EnableCheats", "False"), ("OverclockEnable", "False"),
@@ -183,6 +184,8 @@ def profile_files(backend="D3D", efb_access=False, dump_frames=False, safe_textu
                  ("WiiSDCardAllowWrites", "True"), ("WiiSDCardEnableFolderSync", "False")],
         "Interface": [("ConfirmStop", "False"), ("UsePanicHandlers", "False")],
         "Movie": [("DumpFrames", str(dump_frames)), ("DumpFramesSilent", "True")],
+        # (HWI-074) the DSP's mixed output to Dump/Audio as WAV, without asking
+        **({"DSP": [("DumpAudio", "True"), ("DumpAudioSilent", "True")]} if dump_audio else {}),
         "Analytics": [("PermissionAsked", "True"), ("Enabled", "False")],
     }
     gfx = {"Settings": [("InternalResolution", "1")]}
@@ -1443,6 +1446,8 @@ def parse_args(argv):
     parser.add_argument("--safe-texture-cache", action="store_true",
                         help="hash every texel of a texture (textures the guest rewrites in place)")
     parser.add_argument("--dump-frames", action="store_true", help="dump rendered frames as PNG")
+    parser.add_argument("--dump-audio", action="store_true",
+                        help="dump the emulated audio output as WAV (run<N>-audio/; game audio: private)")
     movie = parser.add_mutually_exclusive_group()
     movie.add_argument("--input-script", type=Path, help="JSON pad script to author into a DTM")
     movie.add_argument("--movie", type=Path, help="existing DTM; its game ID must match the DOL name")
@@ -1510,7 +1515,8 @@ def main(argv=None):
                         compiler=info.get("compiler"), auto_exit_frames=info.get("probe_auto_exit_frames"))
     script = json.loads(args.input_script.read_text(encoding="utf-8")) if args.input_script else None
     gc_ports = script_ports(script) if script else 1
-    files = profile_files(backend, args.efb_access, args.dump_frames, args.safe_texture_cache, gc_ports)
+    files = profile_files(backend, args.efb_access, args.dump_frames, args.safe_texture_cache, gc_ports,
+                          args.dump_audio)
     check_stock_limits(files)
     query = lambda: process_table(host)
     try:
@@ -1678,6 +1684,12 @@ def main(argv=None):
             run["frame_dump"] = {"count": len(pngs),
                                  "first_sha256": sha256(pngs[0]) if pngs else None,
                                  "last_sha256": sha256(pngs[-1]) if pngs else None}
+        audio_dir = profile / "Dump" / "Audio"
+        if audio_dir.is_dir():
+            target = out / f"run{number}-audio"
+            shutil.move(str(audio_dir), str(target))
+            run["audio_dump"] = {wav.name: {"bytes": wav.stat().st_size, "sha256": sha256(wav)}
+                                 for wav in sorted(target.glob("*.wav"))}
         read = {}
         if sd.is_file():
             fat = Fat32(sd.read_bytes())

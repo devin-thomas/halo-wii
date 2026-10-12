@@ -454,7 +454,8 @@ static int parse_line(char *text, int default_cycles, struct map_line *line)
 		(line->core_save_tick >= 0 && line->core_save_tick < line->ticks);
 }
 
-/* (HWI-074) "sound [listener=player|observer] [verify=0|1] [events=0|1]":
+/* (HWI-074) "sound [listener=player|observer] [verify=0|1] [events=0|1]
+[couplings=presentation|original]":
 the engine's sound for the whole plan (wii_sound.h); 0 if not understood */
 static int parse_sound_line(char *text)
 {
@@ -477,6 +478,8 @@ static int parse_sound_line(char *text)
 			plan_sound_options.verify_decode = (int)strtol(value, NULL, 10);
 		else if (!strcmp(word, "events"))
 			plan_sound_options.events = (int)strtol(value, NULL, 10);
+		else if (!strcmp(word, "couplings") && (!strcmp(value, "presentation") || !strcmp(value, "original")))
+			plan_sound_options.game_couplings = !strcmp(value, "original");
 		else
 			return 0;
 	}
