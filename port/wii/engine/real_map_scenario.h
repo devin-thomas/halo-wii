@@ -110,6 +110,13 @@ struct real_map_result
 	long most_ticks_carried;
 	long queue_resets;
 	long core_saved_tick;                        /* when the harness saved a core (real_map_set_core_save), or -1 */
+	/* (HWI-079) the canonical digest's pointer places: the most found at a
+	tick, the ticks without them (a failure: every address-like word then
+	read as a pointer), and the address-like words read as values (not
+	pointers) at the last tick */
+	long pointer_places_most;
+	long pointer_places_failures;
+	long address_like_values;
 };
 
 /* the game's state at a tick, for the log (engine_map_run.c's PROGRESS lines) */

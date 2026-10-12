@@ -69,6 +69,10 @@ boolean game_state_port_image_check(
 	boolean check_header);
 boolean game_state_port_image_digest(
 	unsigned long digest[8]);
+/* port (HWI-079): game_state_image_pointer_places of this game state */
+long game_state_port_image_pointer_places(
+	long *offsets,
+	long capacity);
 void game_state_save_core(
 	const char *name);
 boolean game_state_reverted(

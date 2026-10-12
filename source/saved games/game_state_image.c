@@ -2221,3 +2221,144 @@ void game_state_image_set_observer(
 {
 	image_observer = observer;
 }
+
+/* ---------- port (HWI-079): the image's pointer places
+
+The places (game-state offsets) of the words the image writes as places,
+found as the writer finds them (above), so that a harness's digest of the
+game state makes exactly these pointers canonical and reads every other word
+as the value it is: a datum handle or a bit vector can hold a number that
+reads as an address in the game state, and only at some bases. One more
+than the image's: a declared pointer field of every element below a data
+array's count, in use or not (a deleted element keeps its last pointer,
+which a digest of the elements below the count reads). Script threads'
+pointers into their own stacks are listed too (at two-byte offsets). */
+
+static boolean places_add(
+	long *offsets,
+	long capacity,
+	long *count,
+	long offset)
+{
+	if (*count >= capacity)
+	{
+		(*count)++;
+		return FALSE;
+	}
+	offsets[(*count)++] = offset;
+
+	return TRUE;
+}
+
+static void places_data_array(
+	struct game_state_image_layout const *layout,
+	struct game_state_image_allocation const *allocation,
+	long offset,
+	long *offsets,
+	long capacity,
+	long *count)
+{
+	struct data_array const *live = (struct data_array const *)(layout->base + offset);
+	long elements = offset + (long)sizeof(struct data_array);
+	long index;
+
+	places_add(offsets, capacity, count, offset + (long)offsetof(struct data_array, data));
+	for (index = 0; allocation && allocation->pointer_field_count && index < live->count &&
+		index < live->maximum_count; index++)
+	{
+		short field;
+
+		for (field = 0; field < allocation->pointer_field_count; field++)
+			places_add(offsets, capacity, count, elements + index * live->size + allocation->pointer_fields[field]);
+	}
+	if (!allocation || allocation->encoding != _game_state_image_encoding_script_threads)
+		return;
+	for (index = 0; index < live->count && index < live->maximum_count; index++)
+	{
+		long thread_offset = elements + index * SCRIPT_THREAD_BYTES;
+		byte const *thread = layout->base + thread_offset;
+		byte const *frame;
+		short identifier;
+		long frames = 0;
+
+		csmemcpy(&identifier, thread, sizeof(identifier));
+		if (!identifier)
+			continue;
+		places_add(offsets, capacity, count, thread_offset + SCRIPT_THREAD_STACK);
+		csmemcpy(&frame, thread + SCRIPT_THREAD_STACK, sizeof(frame));
+		while (frame && frames++ < SCRIPT_THREAD_MAXIMUM_FRAMES)
+		{
+			unsigned long at = (unsigned long)(frame - (thread + SCRIPT_THREAD_STACK_DATA));
+			short size;
+
+			if (at > SCRIPT_THREAD_STACK_BYTES - SCRIPT_FRAME_HEADER_BYTES)
+				break;
+			csmemcpy(&size, frame + SCRIPT_FRAME_SIZE, sizeof(size));
+			if (size < 0 || (unsigned long)size > SCRIPT_THREAD_STACK_BYTES - SCRIPT_FRAME_HEADER_BYTES - at)
+				break;
+			places_add(offsets, capacity, count, thread_offset + SCRIPT_THREAD_STACK_DATA + (long)at + SCRIPT_FRAME_PREVIOUS);
+			places_add(offsets, capacity, count, thread_offset + SCRIPT_THREAD_STACK_DATA + (long)at + SCRIPT_FRAME_RESULT);
+			csmemcpy(&frame, frame + SCRIPT_FRAME_PREVIOUS, sizeof(frame));
+		}
+	}
+}
+
+long game_state_image_pointer_places(
+	struct game_state_image_layout const *layout,
+	long *offsets,
+	long capacity)
+{
+	long count = 0;
+	long index;
+
+	if (!image_layout_valid(layout))
+		return NONE;
+	for (index = 0; index < layout->pointer_word_count; index++)
+		places_add(offsets, capacity, &count, layout->pointer_words[index].offset);
+	for (index = 0; index < layout->allocation_count; index++)
+	{
+		struct game_state_image_allocation const *allocation = &layout->allocations[index];
+
+		switch (allocation->kind)
+		{
+		case _game_state_image_data:
+			places_data_array(layout, allocation, allocation->offset, offsets, capacity, &count);
+			break;
+		case _game_state_image_memory_pool:
+		{
+			struct memory_pool const *pool = (struct memory_pool const *)(layout->base + allocation->offset);
+			long end = allocation->offset + (long)sizeof(struct memory_pool) + allocation->pool_size;
+			struct memory_pool_block const *block = pool->first_block;
+			long blocks = 0;
+
+			places_add(offsets, capacity, &count, allocation->offset + (long)offsetof(struct memory_pool, base_address));
+			places_add(offsets, capacity, &count, allocation->offset + (long)offsetof(struct memory_pool, first_block));
+			places_add(offsets, capacity, &count, allocation->offset + (long)offsetof(struct memory_pool, last_block));
+			while (block && blocks++ < MAXIMUM_POOL_BLOCKS)
+			{
+				long at = (long)((byte const *)block - layout->base);
+				unsigned long reference = (unsigned long)block->reference - (unsigned long)layout->base;
+
+				if (at < allocation->offset || at > end - (long)sizeof(*block) || (at & 3))
+					break;
+				places_add(offsets, capacity, &count, at + (long)offsetof(struct memory_pool_block, reference));
+				places_add(offsets, capacity, &count, at + (long)offsetof(struct memory_pool_block, next_block));
+				places_add(offsets, capacity, &count, at + (long)offsetof(struct memory_pool_block, previous_block));
+				/* the element's field the block's reference points to */
+				if (reference < (unsigned long)layout->size)
+					places_add(offsets, capacity, &count, (long)reference);
+				block = block->next_block;
+			}
+			break;
+		}
+		case _game_state_image_lruv_cache:
+			places_add(offsets, capacity, &count, allocation->offset + (long)offsetof(struct lruv_cache, blocks));
+			places_data_array(layout, NULL, allocation->offset + (long)sizeof(struct lruv_cache), offsets, capacity, &count);
+			break;
+		}
+	}
+	if (count <= capacity)
+		qsort(offsets, (size_t)count, sizeof(long), image_compare_offsets);
+
+	return count;
+}

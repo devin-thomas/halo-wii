@@ -226,4 +226,13 @@ boolean game_state_image_digest(
 	struct game_state_header const *header,
 	unsigned long digest[8]);
 
+/* port (HWI-079): the game-state offsets of the pointers the image makes
+places (and the declared fields of deleted elements below a data array's
+count), ascending, in offsets; how many there are (more than capacity: not
+all were stored, nor sorted), or NONE if the layout is not valid */
+long game_state_image_pointer_places(
+	struct game_state_image_layout const *layout,
+	long *offsets,
+	long capacity);
+
 #endif // __GAME_STATE_IMAGE_H

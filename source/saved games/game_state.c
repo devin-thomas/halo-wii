@@ -805,6 +805,19 @@ boolean game_state_port_image_digest(
 	return game_state_image_digest(&layout, game_state_globals.header, digest);
 }
 
+/* port (HWI-079): the places of the game state's pointers, as the image
+finds them (game_state_image_pointer_places), for a harness's digest */
+long game_state_port_image_pointer_places(
+	long *offsets,
+	long capacity)
+{
+	struct game_state_image_layout layout;
+
+	game_state_image_layout_get(&layout);
+
+	return game_state_image_pointer_places(&layout, offsets, capacity);
+}
+
 /* port (HWI-076): whether an image would be taken (nothing is) */
 boolean game_state_port_image_check(
 	struct game_state_image_file const *file,

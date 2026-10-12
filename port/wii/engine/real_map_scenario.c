@@ -221,9 +221,9 @@ static void digest_tables_initialize(
 	return;
 }
 
-/* a word that points into the game state or the tag slot, as its region and
-offset (native order) */
-static unsigned long digest_canonical_word(
+/* a pointer into the game state or the tag slot, as its region and offset
+(native order); any other word as it is */
+static unsigned long digest_pointer_word(
 	unsigned long word)
 {
 	unsigned long game_state = (unsigned long)physical_memory_get_game_state_base_address();
@@ -233,6 +233,91 @@ static unsigned long digest_canonical_word(
 		return 0x40000000UL | (word - game_state);
 	if (word - tags < TAG_SLOT_BYTES)
 		return 0x80000000UL | (word - tags);
+
+	return word;
+}
+
+/* (HWI-079) the places of the game state's pointers. Until HWI-079 the
+canonical digest took every word whose value lay in the game state or the
+tag slot for a pointer. Values do too: a cluster bit vector (object
+globals' active_cluster_bits, players globals' combined_pvs: a10's first
+word, 0x910007f9, from its first tick) or a datum handle whose salt is in
+the range (effects', lights', particles'). Such a value then became an
+offset from the base, a different number at each placement, and the
+simulation's digest followed where the arena lay (a10: f752db70 at the base
+of launch 1, 03181654 at 4 KiB below it), though every byte of the game
+state was the same but its pointers (HWI-079's evidence). Now only the
+words the saved game's canonical image (game_state_image.c, ADR-015,
+HWI-076) writes as places are made places, found again before each
+canonical digest; every other word is digested as the value it is. A
+pointer field nobody declared stays as it is, and shows as a digest that
+differs between placements (tools/wii/run_engine_map_host.py --offset). */
+enum
+{
+	REAL_MAP_MAXIMUM_POINTER_PLACES = 0x4000,
+};
+
+static long *pointer_places;
+static long pointer_place_count = NONE; /* NONE: not known, every address-like word taken for a pointer */
+static long pointer_places_most;        /* the most found this run */
+static long pointer_places_failures;    /* digests without them this run */
+static long address_like_values;        /* address-like words read as values, in the last tick's canonical digests */
+/* whether the canonical digest goes by the places: game_state_digest's
+does; real_map_digest_bytes's (the boot mode's and the drawing checks')
+keeps reading every address-like word as a pointer, its values unchanged */
+static boolean digest_by_places;
+
+static void pointer_places_find(
+	void)
+{
+	long count;
+
+	if (!pointer_places)
+		pointer_places = malloc(sizeof(long) * REAL_MAP_MAXIMUM_POINTER_PLACES);
+	count = pointer_places ? game_state_port_image_pointer_places(pointer_places, REAL_MAP_MAXIMUM_POINTER_PLACES) : NONE;
+	if (count > pointer_places_most)
+		pointer_places_most = count;
+	if (count < 0 || count > REAL_MAP_MAXIMUM_POINTER_PLACES)
+	{
+		pointer_places_failures++;
+		count = NONE;
+	}
+	pointer_place_count = count;
+	address_like_values = 0;
+}
+
+static boolean pointer_place(
+	byte const *address)
+{
+	long offset = (long)(address - (byte const *)physical_memory_get_game_state_base_address());
+	long low = 0;
+	long high = pointer_place_count;
+
+	if (pointer_place_count == NONE)
+		return TRUE;
+	while (low < high)
+	{
+		long middle = low + (high - low) / 2;
+
+		if (pointer_places[middle] < offset)
+			low = middle + 1;
+		else
+			high = middle;
+	}
+
+	return low < pointer_place_count && pointer_places[low] == offset;
+}
+
+/* the word at address in the game state: a pointer there made canonical */
+static unsigned long digest_canonical_word(
+	unsigned long word,
+	byte const *address)
+{
+	unsigned long canonical = digest_pointer_word(word);
+
+	if (canonical == word || !digest_by_places || pointer_place(address))
+		return canonical;
+	address_like_values++;
 
 	return word;
 }
@@ -281,7 +366,7 @@ static void digest_add_at(
 	for (offset = 0; offset + 4 <= size; offset += 4)
 	{
 		unsigned long word = digest_words_raw ? *(unsigned long const *)(data + offset) :
-			digest_canonical_word(*(unsigned long const *)(data + offset));
+			digest_canonical_word(*(unsigned long const *)(data + offset), address + offset);
 		byte bytes[4];
 		unsigned long group = ((unsigned long)(address + offset) - base) >> 3;
 		short index;
@@ -483,7 +568,7 @@ static void digest_group_thread_pointer(
 	if (word - (unsigned long)datum < sizeof(struct real_map_hs_thread))
 		word = 0x20000000UL | (word - (unsigned long)datum);
 	else if (!digest_words_raw)
-		word = digest_canonical_word(word);
+		word = digest_pointer_word(word);
 	digest_group_bytes(state, &word, sizeof(word));
 
 	return;
@@ -939,6 +1024,9 @@ static unsigned long game_state_digest(
 	real_map_set_canonical_every_tick) */
 	boolean canonical = real_map_globals.canonical_every_tick || checkpoint >= 0;
 
+	if (canonical)
+		pointer_places_find();
+	digest_by_places = canonical;
 	crc_new(&crc);
 	crc_new(simulation);
 	crc_new(simulation_raw);
@@ -982,6 +1070,7 @@ static unsigned long game_state_digest(
 			allocation->raw_at[checkpoint] = raw;
 		}
 	}
+	digest_by_places = FALSE;
 
 	return crc;
 }
@@ -1656,6 +1745,9 @@ int real_map_begin(
 	real_map_globals.ticks_after_request = 0;
 	real_map_globals.frames_stopped = 0;
 	real_map_globals.ticks_carried_total = 0;
+	pointer_places_most = 0;
+	pointer_places_failures = 0;
+	address_like_values = 0;
 	real_map_globals.most_ticks_carried = 0;
 	real_map_globals.queue_resets = 0;
 	real_map_globals.core_saved_tick = NONE;
@@ -1817,6 +1909,9 @@ void real_map_end(
 	result->most_ticks_carried = real_map_globals.most_ticks_carried;
 	result->queue_resets = real_map_globals.queue_resets;
 	result->core_saved_tick = real_map_globals.core_saved_tick;
+	result->pointer_places_most = pointer_places_most;
+	result->pointer_places_failures = pointer_places_failures;
+	result->address_like_values = address_like_values;
 	real_map_globals.armed = FALSE;
 	game_time_end();
 

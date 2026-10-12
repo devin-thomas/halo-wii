@@ -682,7 +682,7 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 		"sim_raw_chain=%08lx raw=%08lx raw_chain=%08lx sim_hwi015b=%08lx sim_hwi015b_raw=%08lx "
 		"sim_hwi015b_raw_chain=%08lx frame_effects=%ld frame_sounds=%ld requests=%lx request_tick=%ld "
 		"ticks_after_request=%ld clock_ticks=%ld ticks_run=%ld carried=%ld frames_stopped=%ld carried_total=%ld "
-		"most_carried=%ld queue_resets=%ld core_saved_tick=%ld ms=%lu\n",
+		"most_carried=%ld queue_resets=%ld core_saved_tick=%ld places=%ld places_failed=%ld address_values=%ld ms=%lu\n",
 		line->name, cycle, cadence_names[cadence], result->ticks, result->frames, result->frames_without_ticks,
 		result->most_ticks_in_a_frame, result->digest, result->chain, result->digest_at[0], result->digest_at[1],
 		result->digest_at[2], result->digest_at[3], result->simulation_digest, result->simulation_chain,
@@ -697,7 +697,7 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 		result->frame_made_looping_sounds, result->requests_seen, result->request_tick, result->ticks_after_request,
 		result->clock_ticks, result->ticks_run, result->ticks_carried, result->frames_stopped,
 		result->ticks_carried_total, result->most_ticks_carried, result->queue_resets, result->core_saved_tick,
-		*milliseconds);
+		result->pointer_places_most, result->pointer_places_failures, result->address_like_values, *milliseconds);
 	if (line->more_switches)
 	{
 		wii_log("RUN_SWITCHES map=%s cycle=%d cadence=%s asked=%d ran=%ld bsp_after_last=%d bsp_at_end=%d "
