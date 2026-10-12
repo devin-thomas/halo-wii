@@ -183,6 +183,14 @@ static void save_image_observer(
 
 	if (!save_image_globals.observer)
 		return;
+	/* (the save, load or check ends here: the checks below are the harness's) */
+	if (kind != 3)
+	{
+		csmemset(&event, 0, sizeof(event));
+		event.kind = SAVE_IMAGE_EVENT_END;
+		event.tick = save_image_globals.tick;
+		save_image_globals.observer(&event);
+	}
 	switch (kind)
 	{
 	case 0:

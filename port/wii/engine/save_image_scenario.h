@@ -21,6 +21,7 @@ enum
 	SAVE_IMAGE_EVENT_BEGIN,   /* a save, load or check begins (for timing) */
 	SAVE_IMAGE_EVENT_TEST,    /* an image test's case: a damaged image loaded */
 	SAVE_IMAGE_EVENT_SUMMARY, /* an image test's cases, all of them */
+	SAVE_IMAGE_EVENT_END,     /* a save, load or check has ended, before the harness's own checks (for timing) */
 };
 
 struct save_image_event
