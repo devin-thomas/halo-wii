@@ -133,6 +133,11 @@ struct wii_stream
 	ramps from, and the low pass's state */
 	BOOL gains_valid;
 	long gain_left, gain_right;
+	/* the gains and low pass this call's mix goes to (stream_targets, once a
+	DirectSoundDoWork) */
+	long target_left, target_right, target_lowpass;
+	/* the packet the frames come from, while it has frames left */
+	struct wii_packet *reading;
 	long lowpass_coefficient;
 	long lowpass[2];
 };
@@ -168,6 +173,7 @@ static long mix_buffer[WII_SOUND_CHUNK_FRAMES * 2];
 static short mix_output[WII_SOUND_CHUNK_FRAMES * 2];
 
 static struct wii_sound_report report;
+static unsigned long frames_total;
 static unsigned long crc_table[256];
 
 /* ---------- CRC-32 (the zlib polynomial), over bytes as given */
@@ -346,6 +352,21 @@ static unsigned long packet_frames(const struct wii_stream *stream, unsigned lon
 finishing the packets it passes; 0 once they run out */
 static int stream_take_frame(struct wii_stream *stream, long *frame)
 {
+	/* (most frames: the packet being read, the block decoded last) */
+	struct wii_packet *reading = stream->reading;
+
+	if (reading && stream->cursor < reading->frames && stream->adpcm &&
+		stream->block_buffer == reading->packet.pvBuffer &&
+		stream->block_index == stream->cursor / XBOX_ADPCM_BLOCK_FRAMES)
+	{
+		unsigned long within = (stream->cursor % XBOX_ADPCM_BLOCK_FRAMES) * stream->channels;
+
+		frame[0] = stream->block[within];
+		frame[1] = stream->block[within + stream->channels - 1];
+		stream->cursor++;
+		return 1;
+	}
+	stream->reading = NULL;
 	for (;;)
 	{
 		struct wii_packet *packet = NULL;
@@ -366,6 +387,8 @@ static int stream_take_frame(struct wii_stream *stream, long *frame)
 		if (stream->cursor < packet->frames)
 		{
 			const unsigned char *bytes = (const unsigned char *)packet->packet.pvBuffer;
+
+			stream->reading = packet;
 			unsigned int last = stream->channels - 1;
 
 			if (stream->adpcm)
@@ -402,6 +425,7 @@ static int stream_take_frame(struct wii_stream *stream, long *frame)
 
 static void stream_restart(struct wii_stream *stream)
 {
+	stream->reading = NULL;
 	stream->cursor = 0;
 	stream->block_buffer = NULL;
 	stream->primed = FALSE;
@@ -413,14 +437,18 @@ static void stream_restart(struct wii_stream *stream)
 /* ---------- mixing */
 
 /* mixes a voice into mix_buffer's frames; ramp: its gains move from where
-they were to the target over these frames */
+they were to this call's targets over these frames. A mono voice's sample
+is worked out once and goes to both sides at their gains. */
 static void mix_voice(struct wii_stream *stream, unsigned long frames, int ramp)
 {
-	long target_left, target_right, target_lowpass;
+	long target_left = stream->target_left, target_right = stream->target_right;
 	long left, right, step_left = 0, step_right = 0;
+	long coefficient = stream->target_lowpass;
+	long frame0[2], frame1[2], lowpass[2];
+	unsigned long phase, step = stream->step;
+	long *out = mix_buffer;
 	unsigned long frame;
 
-	stream_targets(stream, &target_left, &target_right, &target_lowpass);
 	if (!stream->gains_valid)
 	{
 		stream->gain_left = target_left;
@@ -432,7 +460,7 @@ static void mix_voice(struct wii_stream *stream, unsigned long frames, int ramp)
 		stream->gain_left = target_left;
 		stream->gain_right = target_right;
 	}
-	stream->lowpass_coefficient = target_lowpass;
+	stream->lowpass_coefficient = coefficient;
 	left = stream->gain_left << RAMP_BITS;
 	right = stream->gain_right << RAMP_BITS;
 	if (ramp && frames)
@@ -449,43 +477,82 @@ static void mix_voice(struct wii_stream *stream, unsigned long frames, int ramp)
 		stream->phase = 0;
 		stream->primed = TRUE;
 	}
-	for (frame = 0; frame < frames; frame++)
+	frame0[0] = stream->frame0[0];
+	frame0[1] = stream->frame0[1];
+	frame1[0] = stream->frame1[0];
+	frame1[1] = stream->frame1[1];
+	lowpass[0] = stream->lowpass[0];
+	lowpass[1] = stream->lowpass[1];
+	phase = stream->phase;
+	if (stream->channels == 1)
 	{
-		long fraction = (long)(stream->phase >> 1);
-		long sample[2];
-		long gain_left = left >> RAMP_BITS, gain_right = right >> RAMP_BITS;
-		int channel;
-
-		for (channel = 0; channel < 2; channel++)
+		for (frame = 0; frame < frames; frame++)
 		{
-			long from = stream->frame0[channel];
+			long sample = frame0[0] + (((frame1[0] - frame0[0]) * (long)(phase >> 1)) >> 15);
 
-			sample[channel] = from + (((stream->frame1[channel] - from) * fraction) >> 15);
-			if (stream->lowpass_coefficient)
+			if (coefficient)
+				sample = lowpass[0] = sample + (((lowpass[0] - sample) * coefficient) >> 15);
+			else
+				lowpass[0] = sample;
+			out[0] += (sample * (left >> RAMP_BITS)) >> GAIN_BITS;
+			out[1] += (sample * (right >> RAMP_BITS)) >> GAIN_BITS;
+			out += 2;
+			left += step_left;
+			right += step_right;
+			phase += step;
+			while (phase >= PHASE_ONE)
 			{
-				stream->lowpass[channel] = sample[channel] +
-					(((stream->lowpass[channel] - sample[channel]) * stream->lowpass_coefficient) >> 15);
-				sample[channel] = stream->lowpass[channel];
+				phase -= PHASE_ONE;
+				frame0[0] = frame1[0];
+				if (!stream_take_frame(stream, frame1))
+					frame1[0] = 0;
+			}
+		}
+		lowpass[1] = lowpass[0];
+		frame0[1] = frame0[0];
+		frame1[1] = frame1[0];
+	}
+	else
+	{
+		for (frame = 0; frame < frames; frame++)
+		{
+			long fraction = (long)(phase >> 1);
+			long sample_left = frame0[0] + (((frame1[0] - frame0[0]) * fraction) >> 15);
+			long sample_right = frame0[1] + (((frame1[1] - frame0[1]) * fraction) >> 15);
+
+			if (coefficient)
+			{
+				sample_left = lowpass[0] = sample_left + (((lowpass[0] - sample_left) * coefficient) >> 15);
+				sample_right = lowpass[1] = sample_right + (((lowpass[1] - sample_right) * coefficient) >> 15);
 			}
 			else
 			{
-				stream->lowpass[channel] = sample[channel];
+				lowpass[0] = sample_left;
+				lowpass[1] = sample_right;
+			}
+			out[0] += (sample_left * (left >> RAMP_BITS)) >> GAIN_BITS;
+			out[1] += (sample_right * (right >> RAMP_BITS)) >> GAIN_BITS;
+			out += 2;
+			left += step_left;
+			right += step_right;
+			phase += step;
+			while (phase >= PHASE_ONE)
+			{
+				phase -= PHASE_ONE;
+				frame0[0] = frame1[0];
+				frame0[1] = frame1[1];
+				if (!stream_take_frame(stream, frame1))
+					frame1[0] = frame1[1] = 0;
 			}
 		}
-		mix_buffer[frame * 2] += (sample[0] * gain_left) >> GAIN_BITS;
-		mix_buffer[frame * 2 + 1] += (sample[1] * gain_right) >> GAIN_BITS;
-		left += step_left;
-		right += step_right;
-		stream->phase += stream->step;
-		while (stream->phase >= PHASE_ONE)
-		{
-			stream->phase -= PHASE_ONE;
-			stream->frame0[0] = stream->frame1[0];
-			stream->frame0[1] = stream->frame1[1];
-			if (!stream_take_frame(stream, stream->frame1))
-				stream->frame1[0] = stream->frame1[1] = 0;
-		}
 	}
+	stream->frame0[0] = frame0[0];
+	stream->frame0[1] = frame0[1];
+	stream->frame1[0] = frame1[0];
+	stream->frame1[1] = frame1[1];
+	stream->lowpass[0] = lowpass[0];
+	stream->lowpass[1] = lowpass[1];
+	stream->phase = phase;
 	stream->gain_left = target_left;
 	stream->gain_right = target_right;
 	report.voice_frames += frames;
@@ -539,6 +606,7 @@ static void mix(unsigned long frames)
 		if (output_open && output->write)
 			output->write(mix_output, count);
 		report.frames_mixed += count;
+		frames_total += count;
 		frames -= count;
 		first = 0;
 	}
@@ -567,6 +635,8 @@ static void stream_complete_head(struct wii_stream *stream, DWORD status, DWORD 
 	XMEDIAPACKET packet = entry->packet;
 
 	entry->finished = FALSE;
+	if (stream->reading == entry)
+		stream->reading = NULL;
 	stream->packet_head = (stream->packet_head + 1) % STREAM_PACKETS;
 	stream->packet_count--;
 	if (status == XMEDIAPACKET_STATUS_SUCCESS)
@@ -643,6 +713,7 @@ void wii_sound_report_get(struct wii_sound_report *result)
 {
 	*result = report;
 	result->streams = (unsigned long)stream_count;
+	result->frames_total = frames_total;
 	result->started = mixer_started;
 }
 
@@ -854,6 +925,13 @@ VOID WINAPI DirectSoundDoWork(void)
 	}
 	report.voice_calls[playing < WII_SOUND_VOICE_HISTOGRAM - 1 ? playing : WII_SOUND_VOICE_HISTOGRAM - 1]++;
 	started = wii_time_microseconds();
+	for (index = 0; index < stream_count; index++)
+	{
+		struct wii_stream *stream = streams[index];
+
+		if (stream && stream_playing(stream))
+			stream_targets(stream, &stream->target_left, &stream->target_right, &stream->target_lowpass);
+	}
 	mix(frames);
 	streams_complete_finished();
 	spent = wii_time_microseconds() - started;

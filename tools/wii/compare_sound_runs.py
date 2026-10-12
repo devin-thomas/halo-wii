@@ -14,7 +14,15 @@
   (media_formats.decode_xbox_adpcm, through sound_stage.decoded_crc) for the
   same permutation of the same pack.
 
+A launch whose plan runs lines without sound and then with it (the plan's
+sound line, engine_map_run.h) logs the same runs twice; --split writes the
+part before the sound started and the part after as two logs
+(<out>.without.log and <out>.with.log, each with the launch's own start), for
+tools/wii/compare_map_runs.py to compare the Wii with the host, or the runs
+without sound with the runs with it.
+
     python tools/wii/compare_sound_runs.py --wii <engine.log> [--host <engine.log>] [--packs <dir> ...] [--json <out>]
+    python tools/wii/compare_sound_runs.py --split <engine.log> --out <prefix>
 """
 
 import argparse
@@ -27,7 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import sound_stage as ss  # noqa: E402
 
-DETERMINISTIC = ("frames", "clock_ms", "work_calls", "frames_mixed", "skipped_frames", "voices_max", "voice_frames",
+DETERMINISTIC = ("frames", "clock_ms", "work_calls", "frames_mixed", "mix_end_frame", "skipped_frames", "voices_max", "voice_frames",
                  "voices_by_calls", "sounds_peak", "looping_sounds_peak", "streams", "packets_queued",
                  "packets_completed", "packets_flushed", "blocks_decoded", "starts", "ends", "stops",
                  "obstruction_tests", "marks_unrestored", "notifications_withheld", "mouth_withheld", "indices_withheld", "clipped", "mix_crc", "events_crc", "pack_reads", "pack_bytes", "pack_pcm",
@@ -53,9 +61,12 @@ def fields(line):
 
 
 def parse(path):
+    return parse_text(Path(path).read_text(encoding="ascii", errors="replace"))
+
+
+def parse_text(text):
     """{"runs": {(map, cycle, cadence): fields}, "classes": {...}, "decodes": [fields],
-    "kinds": {...}, "outputs": {...}, "launches": n}"""
-    text = Path(path).read_text(encoding="ascii", errors="replace")
+    "kinds": {...}, "outputs": {...}, "digests": {...}}"""
     result = {"runs": {}, "classes": {}, "decodes": [], "kinds": {}, "outputs": {}, "digests": {}}
     for line in text.splitlines():
         kind = line.split(" ", 1)[0]
@@ -135,13 +146,38 @@ def check_decodes(decodes, pack_dirs):
     return results, mismatches
 
 
+def split(text):
+    """(the log up to the sound's start, the launch's opening and the rest):
+    the run lines before SOUND_MAP and after it, each after the lines that
+    came before the plan's first map line"""
+    lines = text.splitlines(keepends=True)
+    at = next((index for index, line in enumerate(lines) if line.startswith(("SOUND_START ", "SOUND_MAP "))), None)
+    if at is None:
+        return text, ""
+    opening_end = next((index for index, line in enumerate(lines) if line.startswith("MAP_LINE ")), at)
+    opening = lines[:opening_end]
+    return "".join(lines[:at]), "".join(opening + lines[at:])
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--wii", type=Path, required=True)
+    parser.add_argument("--split", type=Path)
+    parser.add_argument("--out", type=Path)
+    parser.add_argument("--wii", type=Path)
     parser.add_argument("--host", type=Path)
     parser.add_argument("--packs", type=Path, nargs="*", default=[])
     parser.add_argument("--json", type=Path)
     args = parser.parse_args(argv)
+    if args.split:
+        if not args.out:
+            parser.error("--split needs --out")
+        without, with_sound = split(args.split.read_text(encoding="ascii", errors="replace"))
+        Path(str(args.out) + ".without.log").write_text(without, encoding="ascii", newline=chr(10))
+        Path(str(args.out) + ".with.log").write_text(with_sound, encoding="ascii", newline=chr(10))
+        print(f"without={len(without.splitlines())} lines with={len(with_sound.splitlines())} lines")
+        return 0
+    if not args.wii:
+        parser.error("--wii is required")
     wii = parse(args.wii)
     summary = {"runs": len(wii["runs"]), "decodes_logged": len(wii["decodes"])}
     failures = 0

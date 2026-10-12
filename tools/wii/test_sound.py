@@ -213,6 +213,42 @@ def ss_container(codec, rate, channels, payload):
     return header + bytes(32 - len(header)) + payload
 
 
+class CompareSoundRunsTests(unittest.TestCase):
+    RUN = ("SOUND_RUN map=prisoner cycle=0 cadence=30hz frames=300 clock_ms=10000 work_calls=300 frames_mixed=480096 "
+           "mix_end_frame=960000 skipped_frames=0 voices_max=14 voice_frames=2046672 voices_by_calls=1,2 sounds_peak=14 "
+           "looping_sounds_peak=0 streams=81 packets_queued=465 packets_completed=207 packets_flushed=220 "
+           "blocks_decoded=14388 starts=134 ends=53 stops=68 obstruction_tests=1763 marks_unrestored=0 "
+           "notifications_withheld=0 mouth_withheld=0 indices_withheld=42 clipped=0 mix_us={us} mix_peak_us=900 "
+           "mix_crc={crc} events_crc=11111111 pack_reads=46 pack_bytes=907416 pack_pcm=0 pack_failures=0 pack_us=5 "
+           "decode_checks=46")
+
+    def logs(self, wii_crc, wii_us=100, host_us=7):
+        import compare_sound_runs as csr
+        return csr, csr.parse_text(self.RUN.format(us=wii_us, crc=wii_crc)), \
+            csr.parse_text(self.RUN.format(us=host_us, crc="aaaaaaaa"))
+
+    def test_timings_are_reported_and_decisions_compared(self):
+        csr, wii, host = self.logs("aaaaaaaa")
+        rows, mismatches = csr.compare_runs(wii, host)
+        self.assertEqual(mismatches, 0)
+        self.assertEqual(rows[0]["wii_timings"]["mix_us"], "100")
+        csr, wii, host = self.logs("bbbbbbbb")
+        rows, mismatches = csr.compare_runs(wii, host)
+        self.assertEqual(mismatches, 1)
+        self.assertEqual(rows[0]["different"], ["mix_crc"])
+
+    def test_split_at_the_sound_start(self):
+        import compare_sound_runs as csr
+        text = ("BEGIN target=engine\nFIXED_STEP pass=1\nMAP_LINE map=prisoner\nRUN map=prisoner cycle=0 cadence=30hz\n"
+                "SOUND_START rate=48000\nSOUND_MAP start=1\nMAP_LINE map=prisoner\nRUN map=prisoner cycle=0 cadence=30hz\n"
+                "END target=engine\n")
+        without, with_sound = csr.split(text)
+        self.assertTrue(without.endswith("RUN map=prisoner cycle=0 cadence=30hz\n"))
+        self.assertTrue(with_sound.startswith("BEGIN target=engine\nFIXED_STEP pass=1\nSOUND_START rate=48000\n"))
+        self.assertEqual(with_sound.count("RUN map="), 1)
+        self.assertEqual(csr.split("no sound\n"), ("no sound\n", ""))
+
+
 class SoundBuildTests(unittest.TestCase):
     def test_audio_dump_option(self):
         files = run_dolphin.profile_files("D3D", dump_audio=True)

@@ -27,9 +27,9 @@ Xbox's DirectSound is implemented here.
   same frames and complete the same packets at the same frames.
 - **Bounded buffers.** A stream holds at most the engine's 4 packets (6
   slots) and decodes one 64-frame ADPCM block at a time. The mix goes out in
-  256-frame chunks. The output ring holds 8 buffers of 1024 frames (170 ms),
-  each one of ASND's mixing ticks. The voice starts once 2 buffers are full
-  (about 43 ms of latency).
+  256-frame chunks. The output ring holds 12 buffers of 1024 frames (256 ms),
+  each one of ASND's mixing ticks. The voice starts once 3 buffers are full
+  (about 64 ms of latency).
 - **Underruns.** If the voice asks for a buffer that the mixer has not
   filled, it plays a silent one, which is counted. The game never waits on
   the sound. If the mixer writes into a full ring, the newest frames are

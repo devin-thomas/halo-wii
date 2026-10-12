@@ -78,6 +78,7 @@ struct wii_sound_report
 	unsigned long streams;             /* created (the engine's actual channels) */
 	unsigned long work_calls;          /* DirectSoundDoWork */
 	unsigned long frames_mixed;
+	unsigned long frames_total;        /* since the mixer started (not reset by a mark) */
 	unsigned long clock_skipped_frames;/* a gap over the most one call mixes */
 	unsigned long voices_maximum;      /* voices playing in one call */
 	unsigned long voices_maximum_by_kind[NUMBER_OF_WII_SOUND_VOICE_KINDS];

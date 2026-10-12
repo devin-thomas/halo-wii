@@ -859,12 +859,13 @@ void wii_sound_map_run_end(
 	histogram[0] = 0;
 	for (index = 0; index < WII_SOUND_VOICE_HISTOGRAM; index++)
 		used += sprintf(histogram + used, "%s%lu", index ? "," : "", report.voice_calls[index]);
-	wii_log("SOUND_RUN map=%s cycle=%d cadence=%s frames=%lu clock_ms=%lu work_calls=%lu frames_mixed=%lu "
+	wii_log("SOUND_RUN map=%s cycle=%d cadence=%s frames=%lu clock_ms=%lu work_calls=%lu frames_mixed=%lu mix_end_frame=%lu "
 		"skipped_frames=%lu voices_max=%lu voice_frames=%lu voices_by_calls=%s sounds_peak=%ld looping_sounds_peak=%ld "
 		"streams=%lu packets_queued=%lu packets_completed=%lu packets_flushed=%lu blocks_decoded=%lu starts=%lu ends=%lu "
 		"stops=%lu obstruction_tests=%lu marks_unrestored=%lu notifications_withheld=%lu mouth_withheld=%lu indices_withheld=%lu clipped=%lu mix_us=%lu mix_peak_us=%lu mix_crc=%08lx events_crc=%08lx pack_reads=%lu pack_bytes=%lu "
 		"pack_pcm=%lu pack_failures=%lu pack_us=%lu decode_checks=%lu\n",
 		map, cycle, cadence, sound_hooks.frames, sound_hooks.run_milliseconds, report.work_calls, report.frames_mixed,
+		report.frames_total,
 		report.clock_skipped_frames, report.voices_maximum, report.voice_frames, histogram, sound_hooks.sounds_peak,
 		sound_hooks.looping_sounds_peak, report.streams, report.packets_queued, report.packets_completed,
 		report.packets_flushed, report.blocks_decoded, report.starts, report.ends, report.stops, sound_hooks.obstruction_tests,

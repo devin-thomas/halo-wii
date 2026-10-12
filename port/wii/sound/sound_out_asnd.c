@@ -14,7 +14,8 @@ OUTPUT_BUFFER_FRAMES frames:
   frames): the voice asks for its next buffer once a tick, so a smaller
   buffer starves it (measured: 512 frames played at half the rate);
 - the voice starts once OUTPUT_START_BUFFERS are full (the latency, about
-  43 ms), and from then on is always given a buffer: the next full one, or,
+  64 ms: a frame of two ticks, 67 ms, then drains no more than is waiting),
+  and from then on is always given a buffer: the next full one, or,
   when the mixer has not filled one (an underrun: the game's frame came late),
   a silent one, counted, so the voice never stops and the game's sound
   resumes on its next buffer;
@@ -31,8 +32,8 @@ Nothing here waits on the other side; the game never blocks on the sound.
 
 #define OUTPUT_VOICE 0
 #define OUTPUT_BUFFER_FRAMES 1024
-#define OUTPUT_BUFFERS 8
-#define OUTPUT_START_BUFFERS 2
+#define OUTPUT_BUFFERS 12
+#define OUTPUT_START_BUFFERS 3
 #define OUTPUT_BUFFER_BYTES (OUTPUT_BUFFER_FRAMES * 4)
 
 static short output_ring[OUTPUT_BUFFERS][OUTPUT_BUFFER_FRAMES * 2] __attribute__((aligned(32)));
