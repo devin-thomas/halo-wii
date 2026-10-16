@@ -77,6 +77,17 @@ wchar_t *saved_game_file_get_display_name(
 boolean saved_game_file_open(
 	struct file_reference *saved_game_file,
 	long profile_index);
+/* port (HWI-046): a profile's or gametype's block (its first signed_bytes
+followed by their signature), kept in generations (game_state_generations.h) */
+boolean saved_game_file_read_block(
+	long profile_index,
+	void *block,
+	word signed_bytes,
+	boolean *found);
+boolean saved_game_file_write_block(
+	long profile_index,
+	void const *block,
+	word signed_bytes);
 boolean synchronize_metadata_display_name_with_profile_name(
 	long profile_index,
 	wchar_t *game_display_name);
