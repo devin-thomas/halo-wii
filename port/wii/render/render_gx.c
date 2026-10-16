@@ -123,6 +123,7 @@ enum draw_mode { DRAW_FULL, DRAW_LIGHTMAP_ONLY, DRAW_BASE_ONLY, DRAW_BASE_ALPHA,
 struct texture {
     long tag;
     long bitmap;
+    int lightmap;            /* pinned/clamped lightmaps and evictable/repeated bases are distinct */
     unsigned char *data;     /* in the render pool */
     uint32_t file_bytes;
     struct hwt_header header;
@@ -1166,10 +1167,10 @@ static int geometry_check(void)
 
 /* ---------- per BSP: textures */
 
-static int texture_find(long tag, long bitmap)
+static int texture_find(long tag, long bitmap, int lightmap)
 {
     for (int i = 0; i < gx.texture_count; ++i)
-        if (gx.textures[i].tag == tag && gx.textures[i].bitmap == bitmap)
+        if (gx.textures[i].tag == tag && gx.textures[i].bitmap == bitmap && gx.textures[i].lightmap == lightmap)
             return i;
     return -1;
 }
@@ -1642,7 +1643,7 @@ int wii_gx_textures_load(long lightmap_tag_index)
             no_base++;
             continue;
         }
-        int t = texture_find(m->base_tag, m->base_bitmap);
+        int t = texture_find(m->base_tag, m->base_bitmap, 0);
         if (t < 0) {
             if (gx.texture_count == gx.texture_capacity)
                 return 0;
@@ -1671,7 +1672,7 @@ int wii_gx_textures_load(long lightmap_tag_index)
         const struct wii_gx_material *m = &gx.materials[i].engine;
         if (m->lightmap_page < 0 || lightmap_tag_index < 0 || gx.materials[i].lightmap_vertex_count == 0)
             continue;
-        if (texture_find(lightmap_tag_index, m->lightmap_page) >= 0)
+        if (texture_find(lightmap_tag_index, m->lightmap_page, 1) >= 0)
             continue;
         if (gx.texture_count == gx.texture_capacity)
             return 0;
@@ -1680,6 +1681,7 @@ int wii_gx_textures_load(long lightmap_tag_index)
         unsigned long size;
         t->tag = lightmap_tag_index;
         t->bitmap = m->lightmap_page;
+        t->lightmap = 1;
         t->coverage = -1;
         lightmap_pages++;
         size = file_size(t->tag, t->bitmap, &found);
@@ -1797,12 +1799,12 @@ int wii_gx_textures_load(long lightmap_tag_index)
         int t;
         m->lightmap_texture = m->base_texture = -1;
         if (m->engine.lightmap_page >= 0 && m->lightmap_vertex_count &&
-            (t = texture_find(lightmap_tag_index, m->engine.lightmap_page)) >= 0 && gx.textures[t].resident)
+            (t = texture_find(lightmap_tag_index, m->engine.lightmap_page, 1)) >= 0 && gx.textures[t].resident)
             m->lightmap_texture = t;
         /* streaming, a material keeps its base map's entry, and each draw
         asks whether it is resident (base_of) */
         if (m->engine.kind == _wii_gx_material_environment && m->engine.base_tag >= 0 &&
-            (t = texture_find(m->engine.base_tag, m->engine.base_bitmap)) >= 0 &&
+            (t = texture_find(m->engine.base_tag, m->engine.base_bitmap, 0)) >= 0 &&
             (gx.streaming ? t < gx.base_total : gx.textures[t].resident))
             m->base_texture = t;
         const struct texture *base = base_of(m);

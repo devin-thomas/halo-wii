@@ -40,6 +40,36 @@ def function_body(text, signature):
 
 @unittest.skipUnless(compiler(), "no host C compiler")
 class CacheOnTheHost(unittest.TestCase):
+    def test_pinned_lightmaps_do_not_alias_evictable_base_maps(self):
+        text = RENDER_GX.read_text(encoding="utf-8")
+        signature = "static int texture_find(long tag, long bitmap, int lightmap)"
+        function = signature + "\n" + function_body(text, signature) + "\n}\n"
+        # The same bitmap may be referenced in both roles. Evicting its base
+        # must never clear the pinned lightmap's object or change its wrap mode.
+        source = r'''
+#include <assert.h>
+#include <stddef.h>
+struct texture { long tag, bitmap; int lightmap; };
+static struct texture entries[] = {{7, 2, 0}, {7, 2, 1}, {8, 0, 0}};
+static struct { struct texture *textures; int texture_count; } gx = {entries, 3};
+''' + function + r'''
+int main(void) {
+    assert(texture_find(7, 2, 0) == 0);
+    assert(texture_find(7, 2, 1) == 1);
+    assert(texture_find(8, 0, 1) == -1);
+    assert(texture_find(8, 0, 0) == 2);
+    return 0;
+}
+'''
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "role.c"
+            exe = Path(temp) / ("role.exe" if sys.platform == "win32" else "role")
+            path.write_text(source, encoding="utf-8")
+            build = subprocess.run([compiler(), "-std=c11", "-Wall", "-Wextra", "-Werror", str(path), "-o",
+                                    str(exe)], capture_output=True, text=True)
+            self.assertEqual(build.returncode, 0, build.stderr)
+            self.assertEqual(subprocess.run([str(exe)]).returncode, 0)
+
     def test_the_production_cache_keeps_every_rule(self):
         with tempfile.TemporaryDirectory() as temp:
             exe = Path(temp) / ("texture_cache_check.exe" if sys.platform == "win32" else "texture_cache_check")
