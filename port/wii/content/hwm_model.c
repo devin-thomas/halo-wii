@@ -192,3 +192,10 @@ const char *hwm_skin_result_name(enum hwm_skin_result result)
                                                                   "position"};
     return (unsigned)result < NUMBER_OF_HWM_SKIN_RESULTS ? names[result] : "unknown";
 }
+
+void hwm_texcoord_decode_le(const unsigned char *in, int16_t st[2])
+{
+    const unsigned char *p = in + HWM_SKIN_TEXCOORD_OFFSET;
+    st[0] = (int16_t)(uint16_t)((uint16_t)p[0] | (uint16_t)p[1] << 8);
+    st[1] = (int16_t)(uint16_t)((uint16_t)p[2] | (uint16_t)p[3] << 8);
+}

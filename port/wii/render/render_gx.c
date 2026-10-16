@@ -187,6 +187,10 @@ static struct {
     unsigned long model_skin_bytes;
     void *model_skin;
     uint32_t model_skin_taken;
+    /* HWI-086: the bitmap reserve of the models, from the same store after
+    the skinning buffer (render_models_gx.c manages it) */
+    void *model_textures;
+    uint32_t model_textures_taken;
     long run_pose_ticks[MAX_POSE_TICKS];
     int run_pose_count;
     char pose_map[MAX_POSE_PHASES][64];
@@ -569,10 +573,10 @@ int wii_render_configure(const struct wii_render_video *video)
         GX_DrawDone();
     }
     wii_log("RENDER_CONFIG enabled=%d poses_only=%d base_budget=%lu base_limit=%ld pool_max=%lu pool_keep=%lu,%lu "
-            "geometry=tag_slot geometry_check=%d models=%d model_skin_bytes=%lu run_pose_ticks=%d pose_phases=%d "
+            "geometry=tag_slot geometry_check=%d models=%d model_skin_bytes=%lu model_texture_bytes=%lu run_pose_ticks=%d pose_phases=%d "
             "efb=%ux%u xfb=%ux%u\n",
             gx.enabled, gx.poses_only, gx.base_budget, gx.base_limit, gx.pool_max, gx.pool_keep[0], gx.pool_keep[1],
-            gx.geometry_check, wii_gx_models_enabled(), wii_gx_models_skin_bytes(), gx.run_pose_count, gx.pose_phases, gx.mode->fbWidth, gx.mode->efbHeight,
+            gx.geometry_check, wii_gx_models_enabled(), wii_gx_models_skin_bytes(), wii_gx_model_textures_bytes(), gx.run_pose_count, gx.pose_phases, gx.mode->fbWidth, gx.mode->efbHeight,
             gx.mode->fbWidth, gx.mode->xfbHeight);
     wii_log("RENDER_STREAM_CONFIG texture_stream=%d limit=base_budget:%lu stream_loads=%d stream_frame_bytes=%lu "
             "stream_keep_frames=%lu\n", gx.texture_stream, gx.base_budget, gx.stream_loads, gx.stream_frame_bytes,
@@ -816,6 +820,11 @@ void wii_gx_map_end(void)
         store_give(gx.model_skin, gx.model_skin_taken);
     gx.model_skin = NULL;
     gx.model_skin_taken = 0;
+    /* HWI-086: wii_gx_models_unbind unbound the bitmap reserve (GX done with it) */
+    if (gx.model_textures)
+        store_give(gx.model_textures, gx.model_textures_taken);
+    gx.model_textures = NULL;
+    gx.model_textures_taken = 0;
     if (gx.ready || gx.materials) {
         stats_log("RENDER_MAP_STATS", gx.loads, &gx.map_stats);
         stats_merge(&gx.totals, &gx.map_stats);
@@ -922,6 +931,22 @@ int wii_gx_map_begin(unsigned long bsp_tag_index, long material_count, long surf
             gx.model_skin_taken = 0;
         }
         wii_gx_models_bind(gx.model_skin, gx.model_skin_taken);
+    }
+    /* HWI-086: the bitmap reserve of the models, a bounded block of the same
+    store, before the textures of the environment fill it (without it every
+    model part draws the diagnostic material, and that is logged) */
+    if (gx.model_skin && wii_gx_model_textures_bytes()) {
+        char directory[160];
+        gx.model_textures_taken = (uint32_t)wii_gx_model_textures_bytes();
+        gx.model_textures = store_take(gx.model_textures_taken);
+        if (!gx.model_textures) {
+            wii_log("RENDER_MODEL_TEXTURES_NOT_RESIDENT bsp_tag=%lu bytes=%lu pool=%lu used=%lu (diagnostic material)\n",
+                    bsp_tag_index, (unsigned long)gx.model_textures_taken, (unsigned long)pool_bytes(),
+                    (unsigned long)pool_used());
+            gx.model_textures_taken = 0;
+        }
+        snprintf(directory, sizeof(directory), RENDER_ROOT "/%s/textures", gx.map);
+        wii_gx_model_textures_bind(gx.model_textures, gx.model_textures_taken, directory);
     }
     gx.material_count = material_count;
     gx.surface_count = surface_count;

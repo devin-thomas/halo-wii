@@ -41,6 +41,17 @@ Configuration: WII_ENGINE_ROOT/render.txt, optional, "key=value" lines:
                        the environment-only frame of before)
   model_skin_bytes=<bytes>  HWI-082: the models' skinning buffer, from the
                        BSP's store (default WII_RENDER_DEFAULT_MODEL_SKIN_BYTES)
+  model_textures=0|1   HWI-086: the models' shader_model base maps (default 1;
+                       0 draws every part in the diagnostic material)
+  model_texture_bytes=<bytes>  HWI-086: their reserve, tables included, from
+                       the BSP's store after the skinning buffer (default
+                       WII_RENDER_DEFAULT_MODEL_TEXTURE_BYTES)
+  model_texture_entries=<n>  HWI-086: distinct model bitmaps a BSP may name
+                       (default WII_RENDER_DEFAULT_MODEL_TEXTURE_ENTRIES)
+  model_texture_loads=<n>, model_texture_frame_bytes=<bytes>,
+  model_texture_keep_frames=<n>  HWI-086: a frame's loads and bytes, and the
+                       frames an unwanted model bitmap stays (defaults 2,
+                       524288, 30)
   first_person=0|1     HWI-084: draw the first-person weapon and hands
                        (default 1, while models are drawn)
   first_person_store_pose=0|1  HWI-084: keep each drawn frame's first-person
@@ -251,11 +262,24 @@ tag slot into a bounded buffer (hwm_skin_decode_le, hwm_skin_apply) and
 draws it. Only the game state is read: no render state cache
 (cached_render_state_index), no lighting cache, no camera effects.
 
-Material (diagnostic, labelled): no textures, no shader; one fixed
-directional light over the skinned normal. Solid parts opaque grey, the
-alpha-blended decal parts of model shaders light blue without depth writes,
-transparent parts a 50% magenta blend without depth writes, drawn after
-every opaque part in object order (unsorted). */
+Material (HWI-086): a shader_model part (type 4) whose base map is a 2D
+bitmap draws it (wii_gx_model_material, render_model_material.h's rules):
+the base map's colour times the diagnostic light below, its alpha the
+output alpha; alpha-tested (alpha > 0x7F) unless not_alpha_tested or an
+alpha-blended decal; decals blend source alpha without depth writes;
+two-sided shaders both faces. Its bitmap is read from the staged HWT1 into
+the models' own bounded reserve once a draw wants it, and drawn from the
+next frame it is resident. Not drawn, counted (features): the detail,
+multipurpose and reflection cube maps, self-illumination, change colours,
+texture animation, the engine's lighting and fog, the decal z bias.
+
+Diagnostic, labelled, for every other part (counted by reason): one fixed
+directional light over the skinned normal, no texture. Solid parts opaque
+grey, the alpha-blended decal parts of model shaders light blue without
+depth writes, transparent parts a 50% magenta blend without depth writes,
+drawn after every opaque part in object order (unsorted). The light is the
+textured parts' too: object_get_cached_render_lighting writes the render
+state cache, so the engine's lighting is not read. */
 
 enum wii_gx_model_pass
 {
@@ -267,6 +291,44 @@ enum wii_gx_model_pass
 
 #define WII_GX_MODEL_MAXIMUM_NODES 64
 #define WII_RENDER_DEFAULT_MODEL_SKIN_BYTES 524288UL
+#define WII_RENDER_DEFAULT_MODEL_TEXTURE_BYTES 1048576UL
+#define WII_RENDER_DEFAULT_MODEL_TEXTURE_ENTRIES 128
+
+/* HWI-086: what a part's shader asks of its base map */
+enum wii_gx_model_base
+{
+	_wii_gx_model_base_not_model_shader,  /* not a shader_model: no base map path here */
+	_wii_gx_model_base_bitmap,            /* base_tag/base_bitmap name a 2D bitmap */
+	_wii_gx_model_base_default,           /* NONE or no bitmaps: the Xbox binds the default 2D texture */
+	_wii_gx_model_base_not_2d,            /* not a 2D bitmap: the Xbox binds the default 2D texture */
+	_wii_gx_model_base_bad_bitmap,        /* the permutation names no bitmap of the group */
+	NUMBER_OF_WII_GX_MODEL_BASES
+};
+
+/* the shader_model features this path does not draw (counted, per part) */
+enum
+{
+	WII_GX_MODEL_FEATURE_DETAIL_MAP = 1 << 0,
+	WII_GX_MODEL_FEATURE_MULTIPURPOSE_MAP = 1 << 1,
+	WII_GX_MODEL_FEATURE_REFLECTION_CUBE_MAP = 1 << 2,
+	WII_GX_MODEL_FEATURE_SELF_ILLUMINATION = 1 << 3,   /* a nonzero animation colour bound */
+	WII_GX_MODEL_FEATURE_CHANGE_COLOR = 1 << 4,        /* change_color_source 1..4 */
+	WII_GX_MODEL_FEATURE_TEXTURE_ANIMATION = 1 << 5,   /* a nonzero u, v or rotation animation scale */
+	NUMBER_OF_WII_GX_MODEL_FEATURES = 6
+};
+
+struct wii_gx_model_material
+{
+	int base;                 /* enum wii_gx_model_base */
+	unsigned shader_flags;    /* shader_model flags as stored */
+	long base_tag;            /* the bitmap tag's absolute index, or -1 */
+	int base_bitmap;          /* (forced or the reference's permutation) % bitmap count */
+	int base_width, base_height; /* the engine's bitmap_data, checked against the HWT1 */
+	/* the base texcoord rows over (s / 32767, t / 32767, 1): u then v
+	(render_model_material.h: the static shader_texture_animation_evaluate) */
+	float texcoord[2][3];
+	unsigned features;        /* WII_GX_MODEL_FEATURE_*: present, not drawn */
+};
 
 struct wii_gx_model_part
 {
@@ -282,6 +344,7 @@ struct wii_gx_model_part
 	int strip;
 	int shader_type;
 	int two_sided;          /* shader_model's two-sided flag: both faces drawn */
+	struct wii_gx_model_material material;
 };
 
 typedef void (*wii_gx_objects_proc)(int pass);
@@ -309,6 +372,13 @@ int wii_gx_models_enabled(void);
 unsigned long wii_gx_models_skin_bytes(void);
 void wii_gx_models_bind(void *buffer, unsigned long bytes);
 void wii_gx_models_unbind(void);
+/* HWI-086: the models' bitmap reserve (render.txt model_texture_bytes; 0
+when model_textures=0 or models are off), taken from the BSP's store after
+the skinning buffer: bound with the directory of the map's staged HWT1
+files (copied), unbound (GX done reading it first) before the store goes
+back. wii_gx_models_unbind unbinds it too */
+unsigned long wii_gx_model_textures_bytes(void);
+void wii_gx_model_textures_bind(void *memory, unsigned long bytes, const char *texture_directory);
 unsigned long wii_gx_models_draw(void);
 void wii_gx_models_last(unsigned long *parts, unsigned long *refused, unsigned long *triangles);
 void wii_gx_models_report(void);
@@ -334,10 +404,12 @@ frame as the objects (render_first_person_engine.c, engine side):
   drawn as render_model draws them (level of detail 0 pixels, every region's
   permutation 0, each part in its pass) through the objects' model walk
   (render_models_engine.h) and the GX side's parts: the first-person passes
-  (wii_render_first_person_draw), after the objects', in the diagnostic
-  material, with the projection of the first-person near and far clip
-  distances (rasterizer_set_frustum_z's) in the front depth slice.
-Not drawn: the weapon's and hands' shaders, lighting
+  (wii_render_first_person_draw), after the objects', in the objects'
+  material (HWI-086: the shader_model base map, its shader permutation the
+  reference's, render_model's forced permutation 0 for both), with the
+  projection of the first-person near and far clip distances
+  (rasterizer_set_frustum_z's) in the front depth slice.
+Not drawn: what the objects' material leaves out (above), lighting
 (object_get_cached_render_lighting writes the render state cache), change
 colours, function values and active camouflage; first-person effects and
 particles (the view model's visible flag, which starts them, is not

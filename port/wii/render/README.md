@@ -4,7 +4,8 @@
 `game_frame`, from the engine's own render camera and with the engine's own
 visibility. This replaces the `rasterizer_initialize` the Wii build skipped
 (HWI-015B) with what the environment path needs. HWI-082 adds the objects'
-models over it (real geometry and poses, diagnostic material: below).
+models over it (real geometry and poses), and HWI-086 their shader_model
+base maps (below); everything else of their shaders stays diagnostic, counted.
 Everything else the renderer draws stays unsupported and reports itself.
 [Evidence](../../../docs/wii/evidence/2026-10-10-engine-environment-render.md)
 
@@ -13,6 +14,7 @@ Everything else the renderer draws stays unsupported and reports itself.
 | [`wii_render.h`](wii_render.h) | interface | C types only; the three parts below and `render.txt` |
 | [`render_engine.c`](render_engine.c) | engine unit | the rasterizer's start-up and per-map hooks; each frame's camera (`director_update`, `observer_update`, the window camera of `set_window_camera_values`) and visibility (`structure_visibility_find_camera`, `render_camera_build_frustum`, `structure_visibility_compute`); what each BSP material is; the fixed-pose checks |
 | [`render_gx.c`](render_gx.c) | libogc | converted geometry (HWL1) and textures (HWT1) from the card, GX state, the draw, EFB samples, the frame copy, timings and memory |
+| [`render_model_material.c`](render_model_material.c) | strict C11 | HWI-086: the shader_model base map rules (alpha test, blend, depth, faces, texcoord matrix) and the models' bounded bitmap reserve over a texture cache of its own (tested on the host: `tools/wii/test_model_materials.py`) |
 | [`render_texture_cache.c`](render_texture_cache.c) | strict C11 | HWI-083: where streamed base maps live in their arena, which may be evicted, and when the GPU no longer reads their bytes (tested on the host: `tools/wii/test_texture_cache.py`) |
 
 The hooks are registered with `port/wii/engine/engine_hooks.c` by the Wii
@@ -162,7 +164,8 @@ not the renderer's.
 Every frame, in the map run, the boot mode and each pose check, the objects
 in the rendered clusters are drawn over the environment, inside the same GX
 draw, as models: the engine's real geometry, node matrices and permutations,
-with a diagnostic material.
+with the shader_model base map where the shader has one (HWI-086) and a
+diagnostic material otherwise.
 
 | File | Side | What |
 |---|---|---|
@@ -203,7 +206,8 @@ than the skinning buffer holds, is refused whole and counted
 never drawn with another node.
 
 **Memory and GX.** The skinning buffer (`model_skin_bytes`, default
-512 KiB: 32,768 vertices of 16 bytes, position F32 and colour RGBA8) is
+512 KiB: 26,214 vertices of 20 bytes, position F32, colour RGBA8 and, since
+HWI-086, the stored base texcoord S16) is
 taken from the BSP's store after the material tables, before the textures
 fill it, and given back at the BSP's end; without it the models are not
 drawn (`RENDER_MODEL_SKIN_NOT_RESIDENT`). A frame fills it from its start; a
@@ -211,13 +215,67 @@ part that does not fit what is left waits for GX and starts it again
 (`wraps`). Each draw ends with a draw sync token; the next draw and the
 buffer's release wait for it unless GX has passed it.
 
-**Material (diagnostic, labelled).** No texture, shader or lighting of the
-engine's: one fixed directional light over the skinned normal. Solid parts
-grey and opaque; the alpha-blended decals of model shaders light blue,
-depth-tested without depth writes; transparent shaders' parts a 50% magenta
-blend without depth writes, after every opaque part, in object order (not
-sorted by distance). `GX_CULL_BACK` (the Xbox's `D3DCULL_CCW`, as for the
-environment); two-sided model shaders draw both faces.
+**Material (HWI-086).** A part whose shader is a `shader_model` with a 2D
+base map draws that bitmap as `_rasterizer_model_draw` binds it
+([`render_model_material.c`](render_model_material.c), rules tested on the
+host by `tools/wii/test_model_materials.py`):
+
+- the bitmap: `(forced or reference permutation) % bitmap count`, the
+  forced permutation an object's (`render_model_parts`; the first-person
+  models force none); a base map of `NONE`, without bitmaps or not 2D would
+  bind the globals' default texture, which is not staged: diagnostic,
+  counted (`base_default`, `base_not_2d`, `base_bad_bitmap`);
+- the texcoord: the vertex's NORMSHORT2 (`s / 32767`, declaration
+  `0x78 / 4` register 4) through the rows `shader_texture_animation_evaluate`
+  gives a static shader: `model.base_map_scale` times the shader's
+  `map_u_scale` and `map_v_scale`, as one GX texture matrix (`GX_TEXMTX1`;
+  the environment's lightmap matrix is `GX_TEXMTX0`);
+- sampled wrapped, trilinear; colour the base map times the light colour
+  below (white), alpha the base map's (RGBA8's own, CMPR's 1-bit alpha, or a
+  split HWT1 plane on a second TEV stage); RGB written, not alpha;
+- alpha test `alpha > 0x7F` (`D3DCMP_GREATER`, depth compared after
+  texturing so discarded texels write no depth) unless `not_alpha_tested`
+  or an alpha-blended decal; decals blend source alpha over inverse source
+  alpha without depth writes; others write depth; two-sided shaders both
+  faces (the Xbox's second `D3DCULL_CW` draw).
+
+Not drawn, counted per base-map part (`RENDER_MODEL_MATERIALS`
+`not_drawn_*`): detail maps, multipurpose maps (self-illumination,
+change-colour and reflection masks), reflection cube maps,
+self-illumination, change colours, texture animation (drawn at its rest
+transform), and, for every part, the engine's lighting and fog and the
+decals' z bias. Environment shaders on models, transparent shaders, and a
+base map not resident yet are the diagnostic material, by reason.
+
+**Diagnostic material (labelled).** No texture: one fixed directional light
+over the skinned normal (also the textured parts' light: the engine's
+lighting is read through `object_get_cached_render_lighting`, which writes
+the render state cache). Solid parts grey and opaque; the alpha-blended
+decals of model shaders light blue, depth-tested without depth writes;
+transparent shaders' parts a 50% magenta blend without depth writes, after
+every opaque part, in object order (not sorted by distance). `GX_CULL_BACK`
+(the Xbox's `D3DCULL_CCW`, as for the environment); two-sided model shaders
+draw both faces.
+
+**The models' bitmaps.** One bounded reserve a BSP (`model_texture_bytes`,
+default 1 MiB, tables included), taken from the same store as the skinning
+buffer, right after it and before the environment's textures fill the
+store, and given back at the BSP's end after GX is done with it; without it
+(`RENDER_MODEL_TEXTURES_NOT_RESIDENT`, `model_textures=0`) every part is
+diagnostic. It is a texture cache of its own: no model bitmap shares an
+entry, key, arena or wrap/filter convention with the pinned lightmap pages
+or the environment's base maps (pinned or streamed). A draw wants each
+part's bitmap; before the next draw, at most 8 new keys are looked up (a
+missing, oversize or invalid file is refused for the BSP; a failed read
+retried after the cache's backoff) and the most wanted absent bitmaps are
+read from the staged HWT1 (checked against the engine's dimensions) within
+`model_texture_loads` and `model_texture_frame_bytes`, evicting only bitmaps
+nobody wanted for `model_texture_keep_frames` frames. Each draw that binds a
+bitmap is a GPU sequence, fenced by its draw sync token; bytes a draw may
+still read are reused only after GX is done. Nothing is allocated per
+frame. A newly wanted bitmap draws from the frame after it loads.
+`RENDER_MODEL_TEXTURES_BEGIN` and `RENDER_MODEL_TEXTURE_STATS` log each
+BSP's reserve and its loads, refusals, evictions and waits.
 
 **Logs.** `RENDER_POSE` and `RENDER_RUN_POSE` add the model parts drawn,
 refused and their triangles, and (poses) `object_samples`: the samples the
@@ -276,7 +334,7 @@ never drawn in its place.
 **The draw.** Each model as `render_model` draws a first-person model:
 level of detail at 0 pixels, every region's permutation 0, each part in its
 pass, through the objects' own walk (`render_models_engine.h`) and the same
-skinning buffer, fence and diagnostic material: the weapon, then the hands,
+skinning buffer, fence and material (HWI-086): the weapon, then the hands,
 in the three passes after the objects'. The Xbox draws the weapon first with
 the first-person near and far clip distances (`rasterizer_set_frustum_z`)
 and writes the stencil, which rejects the world drawn after it. GX has no
@@ -296,10 +354,11 @@ counted in `RENDER_MODEL_TOTALS`), and `first_person_parts` in
 
 ## What is not drawn (each reported `UNSUPPORTED render ...`)
 
-Object models' shaders, textures and lighting (the material above),
+Of the object and first-person models' shaders, all but the shader_model
+base map (the material above: counted, not reported), and their lighting;
 transparent sorting, model effects (active camouflage, modifiers), change
-colours, object shadows and widgets, the first-person weapon's shaders,
-lighting, change colours, active camouflage, effects and particles, and its
+colours, object shadows and widgets, the first-person weapon's lighting,
+change colours, active camouflage, effects and particles, and its
 sway inputs (render facing: the turning and moving sway stay at rest), the
 sky, decals, particles,
 contrails and weather, effects, lights, lens flares and shadows, water and
@@ -316,7 +375,9 @@ effects), which a render path may not.
 `tools/wii/render_stage.py` copies a map's files from one content pipeline
 generation (private; never in Git) to the card:
 `data/render/<map>/lightmaps/<bsp tag>.hwl` and
-`data/render/<map>/textures/<bitmap tag>-<bitmap>.hwt`.
+`data/render/<map>/textures/<bitmap tag>-<bitmap>.hwt`. Since HWI-086 it
+also stages every bitmap of each `shader_model` base map the map's model
+tags name (`model_base` in `render-stage.json`).
 
 **Geometry (HWI-030)** costs nothing beyond the tag slot. GX draws each BSP
 material's vertices where the staged map already holds them for the game:
@@ -407,7 +468,12 @@ default 0, the baseline), `stream_loads=<n>` (maps a frame, default 2,
 `stream_keep_frames=<n>` (default 30),
 `geometry_check`, `models=0|1` (HWI-082: the object models; 0 draws the
 environment alone, as before), `model_skin_bytes=<bytes>` (their skinning
-buffer), `first_person=0|1` and `first_person_store_pose=0|1` (HWI-084: the
+buffer), `model_textures=0|1` (HWI-086: the models' base maps; default 1),
+`model_texture_bytes=<bytes>` (their reserve, default 1048576),
+`model_texture_entries=<n>` (distinct bitmaps a BSP, default 128, 4–1024),
+`model_texture_loads=<n>`, `model_texture_frame_bytes=<bytes>`,
+`model_texture_keep_frames=<n>` (defaults 2, 524288, 30),
+`first_person=0|1` and `first_person_store_pose=0|1` (HWI-084: the
 first-person weapon, and keeping its last pose drawn; both default 1, and
 the weapon is drawn only while the models are), `run_pose_ticks=<t>,...`
 (the map run's sampled frames)

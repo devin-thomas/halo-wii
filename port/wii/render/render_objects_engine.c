@@ -55,6 +55,8 @@ render_models_engine.h.
 #include "cutscene/cinematics.h"
 #include "rasterizer/rasterizer_geometry.h"
 #include "tag_files/tag_files.h"
+#include "bitmaps/bitmap_group.h"
+#include "bitmaps/bitmap_group_lookup.h"
 
 #include "wii_render.h"
 #include "render_models_engine.h"
@@ -80,6 +82,10 @@ enum
 	RENDER_OBJECTS_SHADER_TYPE_MODEL = 4,
 	RENDER_OBJECTS_SHADER_MODEL_TWO_SIDED_BIT = 1,
 	RENDER_OBJECTS_SHADER_MODEL_DECAL_BIT = 3,
+	/* rasterizer_set_texture(0, 0, ...): the base map bitmap type, 2D */
+	RENDER_OBJECTS_BITMAP_TYPE_2D = 0,
+	/* NUMBER_OF_SHADER_ANIMATION_SOURCES of rasterizer_xbox_models.c */
+	RENDER_OBJECTS_SHADER_ANIMATION_SOURCES = 5,
 	/* object children deeper than this are not walked (counted): the
 	engine's own walk recurses without a bound */
 	RENDER_OBJECTS_MAXIMUM_DEPTH = 32,
@@ -120,11 +126,47 @@ struct render_objects_shader_reference
 	long unused[3];
 };
 
+/* HWI-086: shader_model_definition of rasterizer_xbox_models.c (the
+offsets it asserts, asserted again below) */
 struct render_objects_shader_model
 {
 	struct shader shader;
 	word flags;
 	short type;
+	byte reserved04[0xC];
+	real translucency;
+	byte reserved14[0x10];
+	short change_color_source;
+	byte reserved26[0x1E];
+	word self_illumination_flags;
+	short pad46;
+	short self_illumination_color_source;
+	short self_illumination_animation_function;
+	real self_illumination_animation_period;
+	real_rgb_color self_illumination_animation_color_lower_bound;
+	real_rgb_color self_illumination_animation_color_upper_bound;
+	byte reserved68[0xC];
+	real map_u_scale;
+	real map_v_scale;
+	struct tag_reference base_map;
+	byte reserved8C[8];
+	struct tag_reference multipurpose_map;
+	byte reservedA4[8];
+	short detail_function;
+	short detail_mask;
+	real detail_map_scale;
+	struct tag_reference detail_map;
+	real detail_map_v_scale;
+	byte reservedC8[0xC];
+	struct shader_texture_animation texture_animation;
+	byte reserved10C[8];
+	real reflection_falloff_distance;
+	real reflection_cutoff_distance;
+	real perpendicular_brightness;
+	real_rgb_color perpendicular_tint_color;
+	real parallel_brightness;
+	real_rgb_color parallel_tint_color;
+	struct tag_reference reflection_cube_map;
 };
 
 /* a cache map's vertex and index buffer descriptor (the XDK's D3DResource:
@@ -145,6 +187,23 @@ typedef char render_objects_part_vertices[
 	offsetof(struct render_objects_model_geometry_part, vertex_buffer) == 0x54 ? 1 : -1];
 typedef char render_objects_shader_reference_size[sizeof(struct render_objects_shader_reference) == 0x20 ? 1 : -1];
 typedef char render_objects_pointer_size[sizeof(void *) == sizeof(unsigned long) ? 1 : -1];
+typedef char render_objects_shader_model_flags[offsetof(struct render_objects_shader_model, flags) == 0x28 ? 1 : -1];
+typedef char render_objects_shader_model_change_color[
+	offsetof(struct render_objects_shader_model, change_color_source) == 0x4C ? 1 : -1];
+typedef char render_objects_shader_model_self_illumination[
+	offsetof(struct render_objects_shader_model, self_illumination_animation_color_upper_bound) == 0x84 ? 1 : -1];
+typedef char render_objects_shader_model_map_scale[
+	offsetof(struct render_objects_shader_model, map_u_scale) == 0x9C ? 1 : -1];
+typedef char render_objects_shader_model_base_map[
+	offsetof(struct render_objects_shader_model, base_map.index) == 0xB0 ? 1 : -1];
+typedef char render_objects_shader_model_multipurpose_map[
+	offsetof(struct render_objects_shader_model, multipurpose_map.index) == 0xC8 ? 1 : -1];
+typedef char render_objects_shader_model_detail_map[
+	offsetof(struct render_objects_shader_model, detail_map.index) == 0xE8 ? 1 : -1];
+typedef char render_objects_shader_model_texture_animation[
+	offsetof(struct render_objects_shader_model, texture_animation) == 0xFC ? 1 : -1];
+typedef char render_objects_shader_model_reflection_cube_map[
+	offsetof(struct render_objects_shader_model, reflection_cube_map.index) == 0x170 ? 1 : -1];
 
 struct render_objects_globals
 {
@@ -262,6 +321,86 @@ static short render_objects_part_pass(
 	return _wii_gx_model_pass_solid;
 }
 
+static boolean render_objects_colour_nonzero(
+	real_rgb_color const *colour)
+{
+	return colour->red != 0.0f || colour->green != 0.0f || colour->blue != 0.0f;
+}
+
+/* HWI-086: what _rasterizer_model_draw binds and computes for the base map
+of a shader_model (stage 0), and the features none of this draws */
+static void render_objects_part_material(
+	struct model const *model,
+	struct shader *shader,
+	short shader_permutation_index,
+	struct wii_gx_model_material *material)
+{
+	struct render_objects_shader_model const *shader_model;
+	struct shader_texture_animation const *animation;
+
+	material->base = _wii_gx_model_base_not_model_shader;
+	material->base_tag = -1;
+	if (shader->base.type != RENDER_OBJECTS_SHADER_TYPE_MODEL)
+		return;
+	shader_model = (struct render_objects_shader_model const *)shader;
+	material->shader_flags = shader_model->flags;
+	material->base = _wii_gx_model_base_default;
+	if (shader_model->base_map.index != NONE)
+	{
+		long bitmap_count = bitmap_group_get(shader_model->base_map.index)->bitmaps.count;
+
+		if (bitmap_count > 0)
+		{
+			/* rasterizer_set_texture: bitmap_sequence_index % bitmap_count */
+			long bitmap_index = shader_permutation_index % bitmap_count;
+			struct bitmap_data *bitmap = bitmap_index >= 0 ?
+				bitmap_group_try_and_get_bitmap(shader_model->base_map.index, (short)bitmap_index) : NULL;
+
+			if (!bitmap)
+				material->base = _wii_gx_model_base_bad_bitmap;
+			else if (bitmap->type != RENDER_OBJECTS_BITMAP_TYPE_2D)
+				material->base = _wii_gx_model_base_not_2d;
+			else
+			{
+				material->base = _wii_gx_model_base_bitmap;
+				material->base_tag = DATUM_INDEX_TO_ABSOLUTE_INDEX(shader_model->base_map.index);
+				material->base_bitmap = (int)bitmap_index;
+				material->base_width = bitmap->width;
+				material->base_height = bitmap->height;
+			}
+		}
+	}
+	/* the scales shader_texture_animation_evaluate is given: the model
+	base_map_scale times the shader map scales (render_model_material.h: the
+	rows of a static animation) */
+	material->texcoord[0][0] = model->base_map_scale.i * shader_model->map_u_scale;
+	material->texcoord[0][1] = 0.0f;
+	material->texcoord[0][2] = 0.0f;
+	material->texcoord[1][0] = 0.0f;
+	material->texcoord[1][1] = model->base_map_scale.j * shader_model->map_v_scale;
+	material->texcoord[1][2] = 0.0f;
+	animation = &shader_model->texture_animation;
+	material->features = 0;
+	if (shader_model->detail_map.index != NONE)
+		material->features |= WII_GX_MODEL_FEATURE_DETAIL_MAP;
+	if (shader_model->multipurpose_map.index != NONE)
+		material->features |= WII_GX_MODEL_FEATURE_MULTIPURPOSE_MAP;
+	if (shader_model->reflection_cube_map.index != NONE)
+		material->features |= WII_GX_MODEL_FEATURE_REFLECTION_CUBE_MAP;
+	if (render_objects_colour_nonzero(&shader_model->self_illumination_animation_color_lower_bound) ||
+		render_objects_colour_nonzero(&shader_model->self_illumination_animation_color_upper_bound))
+	{
+		material->features |= WII_GX_MODEL_FEATURE_SELF_ILLUMINATION;
+	}
+	if (shader_model->change_color_source > 0 &&
+		shader_model->change_color_source < RENDER_OBJECTS_SHADER_ANIMATION_SOURCES)
+	{
+		material->features |= WII_GX_MODEL_FEATURE_CHANGE_COLOR;
+	}
+	if (animation->u_scale != 0.0f || animation->v_scale != 0.0f || animation->r_scale != 0.0f)
+		material->features |= WII_GX_MODEL_FEATURE_TEXTURE_ANIMATION;
+}
+
 /* render_model and render_model_parts for one object and one pass */
 static void render_objects_model(
 	long object_index,
@@ -293,8 +432,8 @@ static void render_objects_model(
 	context.model = model_definition_get(model_index);
 	/* (render_model_parts reads each permutation as a char: NONE is none) */
 	if (wii_render_model_parts(model_index, (signed char const *)object->object.region_permutations,
-		MAXIMUM_REGIONS_PER_OBJECT, detail_level, pass, render_objects_palette, &context,
-		&wii_objects.data_errors) > 0)
+		MAXIMUM_REGIONS_PER_OBJECT, object->object.forced_shader_permutation_index, detail_level, pass,
+		render_objects_palette, &context, &wii_objects.data_errors) > 0)
 	{
 		wii_objects.models_drawn += pass == _wii_gx_model_pass_solid;
 	}
@@ -344,6 +483,7 @@ long wii_render_model_parts(
 	long model_index,
 	signed char const *permutations,
 	short permutation_count,
+	short forced_shader_permutation_index,
 	int detail_level,
 	int pass,
 	wii_render_model_palette_proc palette,
@@ -441,6 +581,10 @@ long wii_render_model_parts(
 				part->triangle_buffer.type == _triangle_buffer_type_triangles ? 3 * part->triangle_buffer.count : 0;
 			description.shader_type = shader_definition_get(reference->shader.index)->base.type;
 			description.two_sided = two_sided;
+			/* HWI-086: the permutation render_model_parts passes (the forced one, when not 0) */
+			render_objects_part_material(model, shader_definition_get(reference->shader.index),
+				forced_shader_permutation_index ? forced_shader_permutation_index : reference->permutation_index,
+				&description.material);
 			/* (the GX side checks the pointers lie in the tag slot's tag data, and
 			refuses whatever is not its one vertex profile) */
 			wii_gx_model_part_draw(&description);

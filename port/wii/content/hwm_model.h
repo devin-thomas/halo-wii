@@ -131,4 +131,10 @@ void hwm_skin_apply(const struct hwm_skin_vertex *vertex, const float (*palette)
 
 const char *hwm_skin_result_name(enum hwm_skin_result result);
 
+/* HWI-086: the vertex's base map texcoord as stored (bytes 24..27, two s16,
+ * little-endian): the declaration's NORMSHORT2, which the renderer's texture
+ * matrix normalises (s / 32767, render_model_material.h) */
+#define HWM_SKIN_TEXCOORD_OFFSET 24u
+void hwm_texcoord_decode_le(const unsigned char *in, int16_t st[2]);
+
 #endif

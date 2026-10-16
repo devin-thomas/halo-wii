@@ -15,6 +15,10 @@ from the same directory: every bitmap of each bitmap tag named ui\\hud\\...
 generation lacks is counted (hud_missing), not staged; the guest counts what
 it cannot draw.
 
+HWI-086: and the base maps of the shader_model shaders the map's models name
+(every bitmap of each: an object's forced shader permutation picks any), the
+files the models' material reads from the same textures directory.
+
 This tool chooses exactly the files the guest asks for, from the owner's map
 (the tags the engine reads: each BSP material's shader, its type and base
 map, the base map's bitmap count) and the generation's manifest, checks each
@@ -50,6 +54,17 @@ SHADER_ROOT_BYTES = 0x2D4
 BITMAP_GROUP_BITMAPS = 0x60          # bitmap_group.bitmaps (tag_block count)
 BITMAP_ROOT_BYTES = 0x6C
 NONE = 0xFFFFFFFF
+# HWI-086: shader_model (rasterizer_xbox_models.c shader_model_definition,
+# render_objects_engine.c asserts the same offsets) and the model tag's
+# shaders block (content_geometry.py: geometries at 208, shaders after them)
+SHADER_MODEL = 4
+SHADER_MODEL_BASE_MAP_INDEX = 0xB0   # shader_model base_map.index
+SHADER_MODEL_ROOT_BYTES = 0x174      # through reflection_cube_map.index
+SHADER_HEADER_BYTES = 0x28
+MODEL_SHADERS = cg.MODEL_GEOMETRIES + 12
+MODEL_SHADER_REFERENCE_BYTES = 0x20
+MODEL_SHADER_DATUM = 12              # the reference's tag index
+MAX_MODEL_SHADERS = 256
 
 
 class StageError(ValueError):
@@ -104,7 +119,7 @@ def select(name, bsp_tag, lightmap_datum, pages, materials, shader_info, bitmap_
                 raise StageError("base map without bitmaps")
             entry = files.setdefault(texture_path(name, tag, permutation % bitmap_counts[tag]), ["base", 0])
             entry[1] += surfaces
-    order = {"geometry": 0, "lightmap": 1, "base": 2}
+    order = {"geometry": 0, "lightmap": 1, "base": 2, "model_base": 3}
     return sorted(((path, kind, surfaces) for path, (kind, surfaces) in files.items()),
                   key=lambda item: (order[item[1]], -item[2], item[0]))
 
@@ -125,6 +140,62 @@ def select_hud(name, bitmap_tags):
 def hud_bitmap_tags(cache):
     return [(instance["ordinal"], cache.name(instance), bitmap_count(cache, instance["ordinal"]))
             for instance in cache.by_group("bitm")]
+
+def select_models(name, references, shader_info, bitmap_counts):
+    """HWI-086: the model base maps the guest may ask for, as (relative path, "model_base", references).
+
+    references: the shader datum of every model shader reference (repeats
+    count); shader_info: datum -> (shader type, base map datum or NONE);
+    bitmap_counts: bitmap tag ordinal -> its bitmap count. Mirrors
+    render_objects_engine.c: a shader_model with a base map of bitmaps draws
+    bitmap permutation % count, and the permutation is the reference's or the
+    object's forced one, so every bitmap of the group is staged. A base map of
+    NONE or no bitmaps binds the Xbox's default texture: nothing to stage (the
+    guest counts it)."""
+    files = {}
+    for datum in references:
+        shader_type, base = shader_info[datum]
+        if shader_type != SHADER_MODEL or base == NONE:
+            continue
+        tag = base & 0xFFFF
+        for bitmap in range(max(bitmap_counts.get(tag, 0), 0)):
+            entry = files.setdefault(texture_path(name, tag, bitmap), ["model_base", 0])
+            entry[1] += 1
+    return sorted(((path, kind, count) for path, (kind, count) in files.items()), key=lambda item: (-item[2], item[0]))
+
+
+def model_shader_references(cache):
+    """the shader datum of every shader reference of every model tag, in tag order"""
+    references = []
+    for instance in cache.by_group("mode"):
+        root = cache.root_offset(instance, cg.MODEL_ROOT_BYTES)
+        if root is None:
+            raise StageError("model root outside tag data")
+        try:
+            blocks = cache.block(root + MODEL_SHADERS, MODEL_SHADER_REFERENCE_BYTES, MAX_MODEL_SHADERS)
+        except hc.CacheError:
+            raise StageError("model shaders block outside bounds") from None
+        for reference in blocks:
+            datum = cache.u32(reference + MODEL_SHADER_DATUM)
+            if datum != NONE:
+                references.append(datum)
+    return references
+
+
+def model_shader_facts(cache, datum):
+    """(shader type, base map datum or NONE) of a shader a model names"""
+    instance = cache.instances[datum & 0xFFFF]
+    if instance["datum"] != datum:
+        raise StageError("model shader datum does not name its tag")
+    root = cache.root_offset(instance, SHADER_HEADER_BYTES)
+    if root is None:
+        raise StageError("shader root outside tag data")
+    shader_type = cache.s16(root + SHADER_TYPE_OFFSET)
+    if shader_type != SHADER_MODEL:
+        return shader_type, NONE
+    if cache.root_offset(instance, SHADER_MODEL_ROOT_BYTES) is None:
+        raise StageError("shader root outside tag data")
+    return shader_type, cache.u32(root + SHADER_MODEL_BASE_MAP_INDEX)
 
 
 def shader_facts(cache, datum):
@@ -195,6 +266,14 @@ def stage(generation, map_path, name, out, hud=True):
                 hud_missing += 1
                 continue
             selected.append((relative, kind, surfaces))
+
+    # HWI-086: the models' base maps (a file the environment stages already serves both)
+    references = model_shader_references(cache)
+    model_shaders = {datum: model_shader_facts(cache, datum) for datum in sorted(set(references))}
+    model_counts = {base & 0xFFFF: bitmap_count(cache, base & 0xFFFF)
+                    for shader_type, base in model_shaders.values() if shader_type == SHADER_MODEL and base != NONE}
+    seen = {path for path, _, _ in selected}
+    selected += [item for item in select_models(name, references, model_shaders, model_counts) if item[0] not in seen]
     out.mkdir(parents=True, exist_ok=False)
     files = []
     for relative, kind, surfaces in selected:

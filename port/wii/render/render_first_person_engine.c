@@ -241,8 +241,9 @@ static void render_first_person_model_draw(
 
 	if (!model->drawable)
 		return;
+	/* (the render_model calls of first_person_weapon_draw force shader permutation 0: none) */
 	handed = wii_render_model_parts(model->model_index, first_person_default_permutations, MAXIMUM_REGIONS_PER_MODEL,
-		model->detail_level, pass, render_first_person_palette, model, &wii_first_person.data_errors);
+		0, model->detail_level, pass, render_first_person_palette, model, &wii_first_person.data_errors);
 	if (handed > 0)
 		wii_first_person.models_drawn[which] += pass == _wii_gx_model_pass_solid;
 	else if (handed < 0)

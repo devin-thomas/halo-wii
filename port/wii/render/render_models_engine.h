@@ -21,6 +21,12 @@ parts handed to the GX side (wii_gx_model_part_draw: drawn or refused there,
 counted), or -1 if the skeleton or node matrices were refused. Unsupported
 skeleton counts and bad region, geometry and shader indices count in
 data_errors (in the solid pass only).
+HWI-086: each part carries its shader_model material (wii_gx_model_material:
+its base map bitmap, texcoord rows and the features not drawn) for the
+shader permutation render_model_parts passes: forced_shader_permutation_index
+when it is not 0 (the forced one of an object, a render_model argument),
+else the one of the model shader reference; the first-person weapon and
+hands pass 0, as their render_model calls do.
 */
 
 #ifndef __HALO_WII_RENDER_MODELS_ENGINE_H
@@ -41,6 +47,7 @@ long wii_render_model_parts(
 	long model_index,
 	signed char const *permutations,
 	short permutation_count,
+	short forced_shader_permutation_index,
 	int detail_level,
 	int pass,
 	wii_render_model_palette_proc palette,
