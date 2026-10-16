@@ -46,6 +46,7 @@ symbols in this file:
 #include "math/periodic_functions.h"
 #include "memory/data.h"
 #include "saved games/game_state.h"
+#include "saved games/game_state_schema.h"
 
 /* ---------- constants */
 
@@ -81,6 +82,80 @@ struct rumble_motor_values
 	word right;
 };
 
+/* port (HWI-085): the rumble's numeric state, by its declared widths. The
+definition's unused byte block is copied from tags but never interpreted
+here: keep it unresolved, rather than declaring opaque bytes portable. */
+static struct game_state_schema_field const rumble_motor_schema_fields[] =
+{
+	GAME_STATE_SCHEMA_FIELD("scale", _game_state_schema_real, 0x0, 1),
+	GAME_STATE_SCHEMA_FIELD("duration", _game_state_schema_real, 0x4, 1),
+	GAME_STATE_SCHEMA_FIELD("transition_function", _game_state_schema_s16, 0x8, 1),
+	GAME_STATE_SCHEMA_FIELD("pad", _game_state_schema_padding, 0xA, 2),
+	GAME_STATE_SCHEMA_FIELD("unused", _game_state_schema_real, 0xC, 2),
+};
+static struct game_state_schema const rumble_motor_schema =
+	GAME_STATE_SCHEMA_DEFINE("rumble_motor", 0x14, rumble_motor_schema_fields);
+
+static struct game_state_schema_field const rumble_definition_schema_fields[] =
+{
+	GAME_STATE_SCHEMA_STRUCT("motors", &rumble_motor_schema, 0x0, NUMBER_OF_RUMBLE_MOTORS),
+	GAME_STATE_SCHEMA_FIELD("scale_floor", _game_state_schema_real, 0x28, 1),
+	GAME_STATE_SCHEMA_FIELD("unused", _game_state_schema_unresolved, 0x2C, 16),
+};
+static struct game_state_schema const rumble_definition_schema =
+	GAME_STATE_SCHEMA_DEFINE("rumble_definition", 0x3C, rumble_definition_schema_fields);
+
+static struct game_state_schema_field const rumble_player_schema_fields[] =
+{
+	GAME_STATE_SCHEMA_STRUCT("impulses", &rumble_definition_schema, 0x0, MAXIMUM_RUMBLE_IMPULSES),
+	GAME_STATE_SCHEMA_FIELD("impulse_time", _game_state_schema_real, 0x1E0, MAXIMUM_RUMBLE_IMPULSES),
+	GAME_STATE_SCHEMA_FIELD("continuous_left", _game_state_schema_real, 0x200, 1),
+	GAME_STATE_SCHEMA_FIELD("continuous_right", _game_state_schema_real, 0x204, 1),
+};
+static struct game_state_schema const rumble_player_schema =
+	GAME_STATE_SCHEMA_DEFINE("rumble_player", 0x208, rumble_player_schema_fields);
+
+static struct game_state_schema_field const rumble_globals_schema_fields[] =
+{
+	GAME_STATE_SCHEMA_STRUCT("players", &rumble_player_schema, 0x0, MAXIMUM_LOCAL_PLAYERS),
+	GAME_STATE_SCHEMA_FIELD("scripted_left_motor", _game_state_schema_real, 0x820, 1),
+	GAME_STATE_SCHEMA_FIELD("scripted_right_motor", _game_state_schema_real, 0x824, 1),
+	GAME_STATE_SCHEMA_FIELD("scripted_scale", _game_state_schema_real, 0x828, 1),
+};
+static struct game_state_schema const rumble_globals_schema =
+	GAME_STATE_SCHEMA_DEFINE("rumble_globals", 0x82C, rumble_globals_schema_fields);
+
+typedef char rumble_motor_schema_check[
+	sizeof(struct rumble_motor) == 0x14 &&
+	offsetof(struct rumble_motor, scale) == 0x0 &&
+	offsetof(struct rumble_motor, duration) == 0x4 &&
+	offsetof(struct rumble_motor, transition_function) == 0x8 &&
+	offsetof(struct rumble_motor, pad) == 0xA &&
+	offsetof(struct rumble_motor, unused) == 0xC &&
+	sizeof(((struct rumble_motor *)0)->unused) == 8 ? 1 : -1];
+typedef char rumble_definition_schema_check[
+	sizeof(struct rumble_definition) == 0x3C &&
+	offsetof(struct rumble_definition, motors) == 0x0 &&
+	sizeof(((struct rumble_definition *)0)->motors) == 2 * 0x14 &&
+	offsetof(struct rumble_definition, scale_floor) == 0x28 &&
+	offsetof(struct rumble_definition, unused) == 0x2C &&
+	sizeof(((struct rumble_definition *)0)->unused) == 16 ? 1 : -1];
+typedef char rumble_player_schema_check[
+	sizeof(struct rumble_player) == 0x208 &&
+	offsetof(struct rumble_player, impulses) == 0x0 &&
+	sizeof(((struct rumble_player *)0)->impulses) == 8 * 0x3C &&
+	offsetof(struct rumble_player, impulse_time) == 0x1E0 &&
+	sizeof(((struct rumble_player *)0)->impulse_time) == 8 * 4 &&
+	offsetof(struct rumble_player, continuous_left) == 0x200 &&
+	offsetof(struct rumble_player, continuous_right) == 0x204 ? 1 : -1];
+typedef char rumble_globals_schema_check[
+	sizeof(struct rumble_globals) == 0x82C &&
+	offsetof(struct rumble_globals, players) == 0x0 &&
+	sizeof(((struct rumble_globals *)0)->players) == 4 * 0x208 &&
+	offsetof(struct rumble_globals, scripted_left_motor) == 0x820 &&
+	offsetof(struct rumble_globals, scripted_right_motor) == 0x824 &&
+	offsetof(struct rumble_globals, scripted_scale) == 0x828 ? 1 : -1];
+
 /* ---------- prototypes */
 
 static struct rumble_motor_values rumble_calculate(
@@ -99,6 +174,7 @@ void rumble_initialize(
 		"rumble",
 		NULL,
 		sizeof(*rumble_globals));
+	game_state_port_schema(rumble_globals, &rumble_globals_schema);
 
 	return;
 }

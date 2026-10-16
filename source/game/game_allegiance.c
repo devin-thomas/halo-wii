@@ -55,6 +55,7 @@ symbols in this file:
 #include "ai/ai.h"
 #include "game/game_allegiance.h"
 #include "saved games/game_state.h"
+#include "saved games/game_state_schema.h"
 
 /* ---------- constants */
 
@@ -98,6 +99,61 @@ typedef char game_allegiance_globals_size_assert[
 	sizeof(struct game_allegiance_globals) == 0xB4 ? 1 : -1];
 typedef struct game_allegiance_globals game_allegiance_globals_type;
 
+/* port (HWI-085): the team's indices, counters and bit vectors are values,
+not datum handles or pointers. The reserved bytes are cleared with the
+globals and have no consumer. */
+static struct game_state_schema_field const game_allegiance_record_schema_fields[] =
+{
+	GAME_STATE_SCHEMA_FIELD("team1_index", _game_state_schema_s16, 0x0, 1),
+	GAME_STATE_SCHEMA_FIELD("team2_index", _game_state_schema_s16, 0x2, 1),
+	GAME_STATE_SCHEMA_FIELD("incident_threshold", _game_state_schema_s16, 0x4, 1),
+	GAME_STATE_SCHEMA_FIELD("incident_decay_time", _game_state_schema_s16, 0x6, 1),
+	GAME_STATE_SCHEMA_FIELD("team1_suspicious", _game_state_schema_boolean, 0x8, 1),
+	GAME_STATE_SCHEMA_FIELD("team2_suspicious", _game_state_schema_boolean, 0x9, 1),
+	GAME_STATE_SCHEMA_FIELD("currently_broken", _game_state_schema_boolean, 0xA, 1),
+	GAME_STATE_SCHEMA_FIELD("status_changed", _game_state_schema_boolean, 0xB, 1),
+	GAME_STATE_SCHEMA_FIELD("requires_communication", _game_state_schema_boolean, 0xC, 1),
+	GAME_STATE_SCHEMA_FIELD("reserved0D", _game_state_schema_padding, 0xD, 1),
+	GAME_STATE_SCHEMA_FIELD("current_incidents", _game_state_schema_s16, 0xE, 1),
+	GAME_STATE_SCHEMA_FIELD("current_incident_decay_time", _game_state_schema_s16, 0x10, 1),
+};
+static struct game_state_schema const game_allegiance_record_schema =
+	GAME_STATE_SCHEMA_DEFINE("game_allegiance_record", 0x12, game_allegiance_record_schema_fields);
+
+static struct game_state_schema_field const game_allegiance_globals_schema_fields[] =
+{
+	GAME_STATE_SCHEMA_FIELD("allegiance_count", _game_state_schema_s16, 0x0, 1),
+	GAME_STATE_SCHEMA_STRUCT("allegiances", &game_allegiance_record_schema, 0x2, 8),
+	GAME_STATE_SCHEMA_FIELD("reserved92", _game_state_schema_padding, 0x92, 2),
+	GAME_STATE_SCHEMA_FIELD("ally_bitvector", _game_state_schema_u32, 0x94, GAME_ALLEGIANCE_BITVECTOR_LONGS),
+	GAME_STATE_SCHEMA_FIELD("friendly_bitvector", _game_state_schema_u32, 0xA4, GAME_ALLEGIANCE_BITVECTOR_LONGS),
+};
+static struct game_state_schema const game_allegiance_globals_schema =
+	GAME_STATE_SCHEMA_DEFINE("game_allegiance_globals", 0xB4, game_allegiance_globals_schema_fields);
+
+typedef char game_allegiance_record_schema_check[
+	offsetof(struct game_allegiance_record, team1_index) == 0x0 &&
+	offsetof(struct game_allegiance_record, team2_index) == 0x2 &&
+	offsetof(struct game_allegiance_record, incident_threshold) == 0x4 &&
+	offsetof(struct game_allegiance_record, incident_decay_time) == 0x6 &&
+	offsetof(struct game_allegiance_record, team1_suspicious) == 0x8 &&
+	offsetof(struct game_allegiance_record, team2_suspicious) == 0x9 &&
+	offsetof(struct game_allegiance_record, currently_broken) == 0xA &&
+	offsetof(struct game_allegiance_record, status_changed) == 0xB &&
+	offsetof(struct game_allegiance_record, requires_communication) == 0xC &&
+	offsetof(struct game_allegiance_record, reserved0D) == 0xD &&
+	offsetof(struct game_allegiance_record, current_incidents) == 0xE &&
+	offsetof(struct game_allegiance_record, current_incident_decay_time) == 0x10 ? 1 : -1];
+typedef char game_allegiance_globals_schema_check[
+	offsetof(struct game_allegiance_globals, allegiance_count) == 0x0 &&
+	offsetof(struct game_allegiance_globals, allegiances) == 0x2 &&
+	sizeof(((struct game_allegiance_globals *)0)->allegiances) == 8 * 0x12 &&
+	offsetof(struct game_allegiance_globals, reserved92) == 0x92 &&
+	offsetof(struct game_allegiance_globals, ally_bitvector) == 0x94 &&
+	sizeof(((struct game_allegiance_globals *)0)->ally_bitvector) == 0x10 &&
+	offsetof(struct game_allegiance_globals, friendly_bitvector) == 0xA4 &&
+	sizeof(((struct game_allegiance_globals *)0)->friendly_bitvector) == 0x10 ? 1 : -1];
+
 /* ---------- globals */
 
 char const *global_game_team_names[NUMBER_OF_GAME_TEAMS] =
@@ -129,6 +185,7 @@ void game_allegiance_initialize(
 		game_allegiance_globals,
 		0,
 		sizeof(*game_allegiance_globals));
+	game_state_port_schema(game_allegiance_globals, &game_allegiance_globals_schema);
 
 	return;
 }
