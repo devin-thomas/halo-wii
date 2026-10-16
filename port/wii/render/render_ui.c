@@ -572,12 +572,12 @@ static void boot_ui_overlay(
 	wii_ui_gx_window(0, 0, BOOT_UI_SCREEN_WIDTH, BOOT_UI_SCREEN_HEIGHT);
 	if (boot_ui.map_name[0] && !boot_ui_in_menu_map() && boot_ui.campaign)
 	{
-		/* HWI-033: the campaign, loaded from the menus: its environment (the
-		structure BSP, HWI-030) is drawn; objects, the sky, effects and the
-		HUD are not yet, and the line says so */
+		/* This is a development build. Individual render paths report their
+		draws and refusals; the frame label must not contradict enabled model
+		and first-person paths. */
 		_snprintf(line, sizeof(line) - 1, boot_ui.config.hud ?
-			"MAP %s: CAMPAIGN - ENVIRONMENT, HUD SUBSET (NO OBJECTS, SKY, EFFECTS YET)" :
-			"MAP %s: CAMPAIGN - ENVIRONMENT ONLY (NO OBJECTS, SKY, EFFECTS, HUD YET)",
+			"MAP %s: CAMPAIGN DEVELOPMENT BUILD (HUD ENABLED)" :
+			"MAP %s: CAMPAIGN DEVELOPMENT BUILD (HUD OFF)",
 			boot_ui.map_name);
 		wii_ui_gx_fill(0, 0, BOOT_UI_SCREEN_WIDTH, 14, 0xA0000000u);
 		wii_ui_gx_text(4, 3, 1, 0xFFFFD040u, line);
