@@ -51,8 +51,9 @@ class CodecFixtureTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr[-4000:])
             match = re.fullmatch(r"ok (\d+) cases\s*", result.stdout)
             self.assertIsNotNone(match, result.stdout)
-            # (127 before the globals of scalars: game_state_schema_check.c's check_named_globals)
-            self.assertGreaterEqual(int(match.group(1)), 240)
+            # (127 before the globals of scalars: game_state_schema_check.c's check_named_globals; 249 before
+            # the sound state: check_sound_state)
+            self.assertGreaterEqual(int(match.group(1)), 290)
 
 
 class DispatchTests(unittest.TestCase):
@@ -161,7 +162,8 @@ class SchemaSourceTests(unittest.TestCase):
         classes = CLASSES.read_text(encoding="utf-8")
         named = re.findall(r'\{ "([^"]+)", _game_state_schema_region_global, &\w+ \}', classes)
         for name in ("director scripting", "hud scripted globals", "rasterizer model ambient reflection tint",
-                     "lights globals", "structure decals", "decal globals", "breakable surface globals"):
+                     "lights globals", "structure decals", "decal globals", "breakable surface globals",
+                     "game sound globals", "sound classes"):
             self.assertIn(name, named)
         allocated = set()
         for path in (ROOT / "source").rglob("*.c"):
@@ -187,6 +189,19 @@ class SchemaSourceTests(unittest.TestCase):
             "source/structures/structure_runtime_decals.c": [
                 "sizeof(struct structure_decals_globals) == 0x4",
                 "offsetof(struct structure_decals_globals, pad) == 0x1"],
+            "source/sound/game_sound.c": [
+                "sizeof(struct game_looping_sound_datum) == 0x34",
+                "offsetof(struct game_looping_sound_datum, flags) == 0x4",
+                "sizeof(((struct game_looping_sound_datum *)0)->flags) == 4",
+                "offsetof(struct game_looping_sound_datum, definition_index) == 0xC",
+                "offsetof(struct game_looping_sound_datum, object_index) == 0x10",
+                "offsetof(struct game_looping_sound_datum, forward) == 0x28",
+                "sizeof(struct game_sound_globals) == 0x8",
+                "offsetof(struct game_sound_globals, music_looping_sound_index) == 0x4"],
+            "source/sound/sound_classes.c": [
+                "sizeof(struct sound_class_datum) == 0xC",
+                "NUMBER_OF_SOUND_CLASSES * sizeof(struct sound_class_datum) == 0x264",
+                "offsetof(struct sound_class_datum, ticks) == 0x8"],
         }
         for path, needles in checks.items():
             text = (ROOT / path).read_text(encoding="utf-8")
@@ -223,6 +238,71 @@ class SchemaSourceTests(unittest.TestCase):
                     continue
                 # (a variable already a long pointer)
                 self.assertRegex(text, r"long const \*" + re.escape(argument) + r"\s*=", f"{path.name}: {argument}")
+
+    def test_sound_state_is_the_engines(self):
+        """HWI-080: the looping sounds are game_sound.c's data array of its datum, found by its whole name; a sound
+        class's 2 pad bytes are named by no code (nothing copies, compares or indexes a whole datum); the looping
+        sound's flags are only ever tested and set as the long they are"""
+        classes = CLASSES.read_text(encoding="utf-8")
+        self.assertIn('{ "object looping sounds", _game_state_schema_region_data_array, &game_looping_sound_schema },',
+                      classes)
+        game_sound = (ROOT / "source/sound/game_sound.c").read_text(encoding="utf-8")
+        self.assertRegex(game_sound, r'game_state_data_new\(\s*"object looping sounds",\s*MAXIMUM_GAME_LOOPING_SOUNDS,'
+                                     r'\s*sizeof\(struct game_looping_sound_datum\)\)')
+        self.assertIn("game_state_schema_classes.c's", game_sound)
+        for match in re.finditer(r"\b(?:sound|looping_sound)->flags\b", game_sound):
+            line = game_sound[game_sound.rindex("\n", 0, match.start()):game_sound.index("\n", match.end())]
+            context = game_sound[max(0, match.start() - 40):match.start()]
+            self.assertTrue(re.search(r"(TEST_FLAG|SET_FLAG)\(\s*$", context) or "flags = 0;" in line, line)
+        sound_classes = (ROOT / "source/sound/sound_classes.c").read_text(encoding="utf-8")
+        self.assertRegex(sound_classes, r'game_state_malloc\(\s*"sound classes",\s*NULL,\s*0x264\)')
+        self.assertIn("NUMBER_OF_SOUND_CLASSES = 51", sound_classes)
+        self.assertEqual(set(re.findall(r"\bsound_class->(\w+)", sound_classes)), {"desired_gain", "gain", "ticks"})
+        # (a datum is had by sound_class_datum_get, into a struct sound_class_datum *sound_class, or its gain read)
+        self.assertEqual(set(re.findall(r"sound_class_datum_get\(\w+\)(->\w+|;)", sound_classes)), {"->gain", ";"})
+        self.assertEqual(len(re.findall(r"= sound_class_datum_get\(", sound_classes)),
+                         len(re.findall(r"struct sound_class_datum \*sound_class = sound_class_datum_get\(", sound_classes)))
+        # (and the one indexing of the classes, the accessor's)
+        self.assertEqual(re.findall(r".*sound_class_data\s*\[.*", sound_classes), ["\treturn &sound_class_data[index];"])
+        whole = re.search(r"(?<!struct sound_class_datum )\*\s*sound_class\b(?!_)|memcpy|memcmp|memset", sound_classes)
+        self.assertIsNone(whole, whole and whole.group(0))
+        for path in (ROOT / "source").rglob("*.[ch]"):
+            if path.name != "sound_classes.c":
+                self.assertNotIn("sound_class_data", path.read_text(encoding="utf-8", errors="replace"), path)
+
+    def test_unclaimed_classes_are_the_listed_ones(self):
+        """the census's allocations with no schema yet are exactly these (the gate counts them unclaimed: no
+        version-3 write); one schema'd from here on is taken off the list, and a new allocation is not silently
+        left off it"""
+        import sys
+        sys.path.insert(0, str(ROOT / "tools" / "wii"))
+        import game_state_census
+        classes = CLASSES.read_text(encoding="utf-8")
+        schemad = set(re.findall(r'\{ "([^"]+)", _game_state_schema_region_\w+, &\w+ \}', classes))
+        for path in (ROOT / "source").rglob("*.c"):
+            text = path.read_text(encoding="utf-8", errors="replace")
+            for variable in re.findall(r"game_state_port_schema\((\w+),", text):
+                allocation = re.search(r"\b" + variable + r'\s*=\s*(?:\([^)]*\)\s*)?game_state_(?:malloc|data_new)\(\s*"([^"]+)"',
+                                       text)
+                self.assertIsNotNone(allocation, f"{path.name}: {variable}")
+                schemad.add(allocation.group(1))
+        # (an lruv cache is its header and its blocks' data array: the engine's own containers' schemas)
+        unclaimed = [site[0] for site in game_state_census.SITES if site[0] not in schemad and site[2] != "lruv"]
+        self.assertEqual(unclaimed, [
+            "actor", "swarm", "swarm component", "ai globals", "ai communication dialogue", "ai communication replies",
+            "ai conversation", "encounter", "squad", "platoon", "ai pursuit", "prop", "cinematic globals",
+            "recorded animations", "device groups", "contrail", "contrail point", "decals", "effect", "effect location",
+            "particle systems", "particle system particles", "particle", "player effects", "game globals",
+            "player control globals", "players", "teams", "players globals", "object list header",
+            "list object reference", "first person weapons", "hud messaging", "hud nav points", "hud unit interface",
+            "hud weapon interface", "motion sensor (radar)", "lights", "object",
+            "objects (memory pool)",  # (its header typed; its blocks' contents, the objects, are not)
+            "object globals", "cluster partition first references", "cluster partition data references",
+            "cluster partition cluster references", "antenna", "flag", "glow", "glow particles", "widget",
+            "screen effect filth", "decal vertices", "cached object render states", "scenario globals",
+            "structure detail objects", "unit globals"])
+        for name in ("object looping sounds", "game sound globals", "sound classes"):
+            self.assertIn(name, schemad)
 
     def test_every_allocation_is_a_region(self):
         text = GAME_STATE.read_text(encoding="utf-8")

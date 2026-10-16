@@ -206,6 +206,26 @@ typedef char sound_attachment_data_size_assert[
 	sizeof(struct sound_attachment_data) == 0x1C ? 1 : -1];
 typedef char sound_attachment_data_node_index_offset_assert[
 	offsetof(struct sound_attachment_data, node_index) == 2 ? 1 : -1];
+/* port (HWI-080): game_state_schema_classes.c's "object looping sounds" and
+"game sound globals" schemas */
+typedef char game_looping_sound_datum_schema_check[
+	offsetof(struct game_looping_sound_datum, header) == 0x0 &&
+	offsetof(struct game_looping_sound_datum, state) == 0x2 &&
+	offsetof(struct game_looping_sound_datum, flags) == 0x4 &&
+	sizeof(((struct game_looping_sound_datum *)0)->flags) == 4 &&
+	offsetof(struct game_looping_sound_datum, scale) == 0x8 &&
+	offsetof(struct game_looping_sound_datum, definition_index) == 0xC &&
+	offsetof(struct game_looping_sound_datum, object_index) == 0x10 &&
+	offsetof(struct game_looping_sound_datum, last_audible_frame_index) == 0x14 &&
+	offsetof(struct game_looping_sound_datum, function_index) == 0x18 &&
+	offsetof(struct game_looping_sound_datum, node_index) == 0x1A &&
+	offsetof(struct game_looping_sound_datum, position) == 0x1C &&
+	sizeof(((struct game_looping_sound_datum *)0)->position) == 3 * sizeof(real) &&
+	offsetof(struct game_looping_sound_datum, forward) == 0x28 &&
+	sizeof(((struct game_looping_sound_datum *)0)->forward) == 3 * sizeof(real) ? 1 : -1];
+typedef char game_sound_globals_schema_check[
+	offsetof(struct game_sound_globals, update_index) == 0x0 &&
+	offsetof(struct game_sound_globals, music_looping_sound_index) == 0x4 ? 1 : -1];
 
 /* ---------- prototypes */
 

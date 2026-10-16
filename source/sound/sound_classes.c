@@ -136,6 +136,15 @@ struct sound_class_datum
 typedef char verify_sound_class_definition_size[
 	sizeof(struct sound_class_definition) == 0x2C ? 1 : -1];
 
+/* port (HWI-080): game_state_schema_classes.c's "sound classes" schema */
+typedef char sound_classes_schema_check[
+	sizeof(struct sound_class_datum) == 0xC &&
+	NUMBER_OF_SOUND_CLASSES * sizeof(struct sound_class_datum) == 0x264 &&
+	offsetof(struct sound_class_datum, desired_gain) == 0x0 &&
+	offsetof(struct sound_class_datum, gain) == 0x4 &&
+	offsetof(struct sound_class_datum, ticks) == 0x8 &&
+	sizeof(((struct sound_class_datum *)0)->ticks) == 2 ? 1 : -1];
+
 /* ---------- prototypes */
 
 /* ---------- globals */

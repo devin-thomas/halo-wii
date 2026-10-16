@@ -19,6 +19,11 @@ bytes written out by hand below, not made by the codec:
   type every byte, encode to the same specified wire bytes from either byte
   order (a breakable surface bsp's flags as 8 longs), drop and zero only
   their pad bytes, and leave the gate shut beside one global without one;
+- the game's sound state (a looping sound's datum, the game sound globals,
+  the 51 sound classes) encodes to specified wire bytes from either byte
+  order, as one stream too (free looping sounds their identifiers only, pad
+  bytes dropped), is taken at another base, and beside HS globals' cells the
+  gate stays shut: nothing written, read or taken;
 - a whole typed stream of the engine's own classes (the game state header,
   a data array with free elements, an lruv cache) is the same from either
   byte order, is checked without being taken, is taken at another base, and
@@ -689,6 +694,9 @@ static struct named_global const named_globals[] =
 	{ "decal globals", 0x280C, 0x280C },
 	/* enabled, 16 bsps' 8 longs of flags, 16 x 256 vitalities (not the 3 pad bytes) */
 	{ "breakable surface globals", 0x4204, 1 + 16 * 32 + 16 * 256 * 4 },
+	{ "game sound globals", 0x8, 8 },
+	/* 51 classes' two gains and ticks (not their 2 pad bytes) */
+	{ "sound classes", 0x264, 51 * 10 },
 };
 
 enum
@@ -1368,6 +1376,332 @@ static void check_stream(void)
 		"a stream failing while taken leaves the state partly taken");
 }
 
+/* ---------- the game's sound state (HWI-080): game_sound.c's looping
+sounds and globals, sound_classes.c's classes */
+
+enum
+{
+	LOOPING_SOUND_BYTES = 0x34,
+	SOUND_CLASS_COUNT = 51,
+	SOUND_CLASS_BYTES = 0xC,
+	SOUND_CLASSES_BYTES = 0x264,
+	SOUND_CLASS_WIRE_BYTES = 10,
+	/* the sound state's regions: 3 looping sounds, the globals, the classes */
+	SOUND_LOOPING_AT = 0x0,
+	SOUND_LOOPING_COUNT = 3,
+	SOUND_GLOBALS_AT = 0x38 + SOUND_LOOPING_COUNT * LOOPING_SOUND_BYTES,
+	SOUND_CLASSES_AT = SOUND_GLOBALS_AT + 0x8,
+	SOUND_CPU_USED = SOUND_CLASSES_AT + SOUND_CLASSES_BYTES,
+	/* (and HS globals after them: 2 of hs_global_datum) */
+	SOUND_HS_AT = SOUND_CPU_USED,
+	SOUND_STATE_BYTES = SOUND_HS_AT + 0x38 + 2 * 8,
+	/* the data array's header, its one looping sound in use, two identifiers,
+	the globals, the classes */
+	SOUND_STREAM_BYTES = 54 + LOOPING_SOUND_BYTES + 2 + 2 + 8 + SOUND_CLASS_COUNT * SOUND_CLASS_WIRE_BYTES,
+};
+
+/* a looping sound in use: identifier 0xE001, state 1 (active), flags 0x19
+(unattached, alternate, scripted), scale 0.75, definition 0xE1230045, no
+object (NONE), last heard in update 0x10203, no function (-1), node 5,
+position (1, -2, 0.5), forward (0, 1, -0) */
+static byte const looping_sound_little[LOOPING_SOUND_BYTES] =
+{
+	0x01, 0xE0, 0x01, 0x00, 0x19, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x3F, 0x45, 0x00, 0x23, 0xE1,
+	0xFF, 0xFF, 0xFF, 0xFF, 0x03, 0x02, 0x01, 0x00, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0x00, 0x80, 0x3F,
+	0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F,
+	0x00, 0x00, 0x00, 0x80,
+};
+static byte const looping_sound_big[LOOPING_SOUND_BYTES] =
+{
+	0xE0, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x19, 0x3F, 0x40, 0x00, 0x00, 0xE1, 0x23, 0x00, 0x45,
+	0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x01, 0x02, 0x03, 0xFF, 0xFF, 0x00, 0x05, 0x3F, 0x80, 0x00, 0x00,
+	0xC0, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00,
+	0x80, 0x00, 0x00, 0x00,
+};
+/* (every field at its own width, no padding: the wire is the little-endian
+layout, written out again here) */
+static byte const looping_sound_wire[LOOPING_SOUND_BYTES] =
+{
+	0x01, 0xE0, /* identifier */
+	0x01, 0x00, /* state */
+	0x19, 0x00, 0x00, 0x00, /* flags */
+	0x00, 0x00, 0x40, 0x3F, /* scale */
+	0x45, 0x00, 0x23, 0xE1, /* definition_index */
+	0xFF, 0xFF, 0xFF, 0xFF, /* object_index */
+	0x03, 0x02, 0x01, 0x00, /* last_audible_frame_index */
+	0xFF, 0xFF, /* function_index */
+	0x05, 0x00, /* node_index */
+	0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x00, 0x3F, /* position */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x80, /* forward */
+};
+
+/* update 42, the music's looping sound 0xE0020007 */
+static byte const sound_globals_little[8] = { 0x2A, 0x00, 0x00, 0x00, 0x07, 0x00, 0x02, 0xE0 };
+static byte const sound_globals_big[8] = { 0x00, 0x00, 0x00, 0x2A, 0xE0, 0x02, 0x00, 0x07 };
+
+/* class n: desired gain 1, gain 0.5 (odd n) or 1, n ticks; the last: desired
+0, gain 0.25, 30 ticks; every one's 2 pad bytes whatever was there (dirty) or
+zero */
+static void sound_classes_make(byte *at, boolean big_endian, boolean dirty)
+{
+	long index;
+
+	for (index = 0; index < SOUND_CLASS_COUNT; index++)
+	{
+		byte *datum = at + index * SOUND_CLASS_BYTES;
+		boolean last = index == SOUND_CLASS_COUNT - 1;
+
+		put32(datum, last ? 0 : 0x3F800000UL, big_endian);
+		put32(datum + 4, last ? 0x3E800000UL : (index & 1) ? 0x3F000000UL : 0x3F800000UL, big_endian);
+		put16(datum + 8, last ? 30 : (unsigned long)index, big_endian);
+		datum[0xA] = dirty ? 0xAB : 0;
+		datum[0xB] = dirty ? 0xCD : 0;
+	}
+}
+
+/* the sound state: dirty as the game leaves it (a free looping sound's and
+one past the count's old contents, pad bytes), or as it is taken (those
+zero); with_hs, 2 HS globals after it */
+static void sound_state_make(byte *memory, unsigned long base, boolean big_endian, boolean dirty, boolean with_hs)
+{
+	byte junk = dirty ? 0x6B : 0;
+	byte *at;
+
+	memset(memory, 0, SOUND_STATE_BYTES);
+	at = memory + SOUND_LOOPING_AT;
+	data_array_make(at, base, SOUND_LOOPING_AT, "object looping sounds", SOUND_LOOPING_COUNT, LOOPING_SOUND_BYTES, 2,
+		(short)0xE003, big_endian, junk);
+	memcpy(at + 0x38, big_endian ? looping_sound_big : looping_sound_little, LOOPING_SOUND_BYTES);
+	/* 1: free; 2: past the count */
+	memset(at + 0x38 + LOOPING_SOUND_BYTES + 2, junk, LOOPING_SOUND_BYTES - 2);
+	memset(at + 0x38 + 2 * LOOPING_SOUND_BYTES + 2, junk, LOOPING_SOUND_BYTES - 2);
+	memcpy(memory + SOUND_GLOBALS_AT, big_endian ? sound_globals_big : sound_globals_little, 8);
+	sound_classes_make(memory + SOUND_CLASSES_AT, big_endian, dirty);
+	if (with_hs)
+	{
+		at = memory + SOUND_HS_AT;
+		data_array_make(at, base, SOUND_HS_AT, "hs globals", 2, 8, 2, (short)0xE003, big_endian, 0);
+		put16(at + 0x38, 0xE001, big_endian);
+		put32(at + 0x3C, 0x00000001UL, big_endian);
+		put16(at + 0x40, 0xE002, big_endian);
+		put32(at + 0x44, 0x3F800000UL, big_endian);
+	}
+}
+
+static struct game_state_schema_region sound_regions[4];
+
+static void sound_regions_make(void)
+{
+	memset(sound_regions, 0, sizeof(sound_regions));
+	/* (as game_state.c records them: each found by its whole allocation name) */
+	sound_regions[0].name = "object looping sounds";
+	sound_regions[0].kind = _game_state_schema_region_data_array;
+	sound_regions[0].offset = SOUND_LOOPING_AT;
+	sound_regions[0].size = 0x38 + SOUND_LOOPING_COUNT * LOOPING_SOUND_BYTES;
+	sound_regions[0].maximum_count = SOUND_LOOPING_COUNT;
+	sound_regions[0].element_size = LOOPING_SOUND_BYTES;
+	sound_regions[0].schema =
+		game_state_schema_class_find("object looping sounds", _game_state_schema_region_data_array, LOOPING_SOUND_BYTES);
+	sound_regions[1].name = "game sound globals";
+	sound_regions[1].offset = SOUND_GLOBALS_AT;
+	sound_regions[1].size = 8;
+	sound_regions[1].schema = game_state_schema_class_find("game sound globals", _game_state_schema_region_global, 8);
+	sound_regions[2].name = "sound classes";
+	sound_regions[2].offset = SOUND_CLASSES_AT;
+	sound_regions[2].size = SOUND_CLASSES_BYTES;
+	sound_regions[2].schema = game_state_schema_class_find("sound classes", _game_state_schema_region_global, SOUND_CLASSES_BYTES);
+	sound_regions[3].name = "hs globals";
+	sound_regions[3].kind = _game_state_schema_region_data_array;
+	sound_regions[3].offset = SOUND_HS_AT;
+	sound_regions[3].size = 0x38 + 2 * 8;
+	sound_regions[3].maximum_count = 2;
+	sound_regions[3].element_size = 8;
+	sound_regions[3].schema = &cell_schema;
+}
+
+static struct game_state_schema_state sound_state(byte *memory, unsigned long base, boolean big_endian, long region_count)
+{
+	struct game_state_schema_state state = make_state(memory, SOUND_STATE_BYTES, base, TAGS, big_endian);
+
+	state.cpu_used = region_count > 3 ? SOUND_STATE_BYTES : SOUND_CPU_USED;
+	state.size = state.cpu_used;
+	state.region_count = region_count;
+	state.regions = sound_regions;
+
+	return state;
+}
+
+static void check_sound_state(void)
+{
+	static byte little[SOUND_STATE_BYTES];
+	static byte big[SOUND_STATE_BYTES];
+	static byte expected[SOUND_STATE_BYTES];
+	static byte taken[SOUND_STATE_BYTES];
+	static byte from_little[0x800];
+	static byte from_big[0x800];
+	static byte scratch[0x400];
+	static byte wire[SOUND_CLASSES_BYTES];
+	static byte other[SOUND_CLASSES_BYTES];
+	static byte native[SOUND_CLASSES_BYTES];
+	struct game_state_schema const *looping =
+		game_state_schema_class_find("object looping sounds", _game_state_schema_region_data_array, LOOPING_SOUND_BYTES);
+	struct game_state_schema_coverage coverage;
+	struct game_state_schema_state state;
+	struct game_state_schema_stream stream;
+	struct buffer buffer;
+	short field_index;
+	short error;
+	long index;
+
+	/* the looping sound: a data array's element, found by its whole name,
+	kind and size only */
+	CHECK(looping && !game_state_schema_validate_element(looping, LOOPING_SOUND_BYTES, &field_index) &&
+		game_state_schema_wire_size(looping) == LOOPING_SOUND_BYTES, "object looping sounds: an element schema, every byte on the wire");
+	CHECK(!game_state_schema_class_find("object looping sounds", _game_state_schema_region_global, LOOPING_SOUND_BYTES) &&
+		!game_state_schema_class_find("object looping sounds", _game_state_schema_region_data_array, LOOPING_SOUND_BYTES + 4) &&
+		!game_state_schema_class_find("object looping sound", _game_state_schema_region_data_array, LOOPING_SOUND_BYTES),
+		"object looping sounds: not found at another kind, size or name");
+	if (looping)
+	{
+		struct game_state_schema_state little_state = make_state(native, LOOPING_SOUND_BYTES, BASE, TAGS, FALSE);
+		struct game_state_schema_state big_state = make_state(native, LOOPING_SOUND_BYTES, OTHER_BASE, OTHER_TAGS, TRUE);
+
+		CHECK(game_state_schema_encode(looping, &little_state, looping_sound_little, BASE, wire, LOOPING_SOUND_BYTES) ==
+			_game_state_schema_stream_ok && !memcmp(wire, looping_sound_wire, LOOPING_SOUND_BYTES),
+			"a looping sound, little-endian: the wire bytes as specified");
+		dump_difference("looping sound", wire, looping_sound_wire, LOOPING_SOUND_BYTES);
+		CHECK(game_state_schema_encode(looping, &big_state, looping_sound_big, OTHER_BASE, other, LOOPING_SOUND_BYTES) ==
+			_game_state_schema_stream_ok && !memcmp(other, looping_sound_wire, LOOPING_SOUND_BYTES),
+			"a looping sound, big-endian: the same wire bytes");
+		dump_difference("looping sound (big)", other, looping_sound_wire, LOOPING_SOUND_BYTES);
+		memset(native, 0xCC, LOOPING_SOUND_BYTES);
+		CHECK(game_state_schema_decode(looping, &big_state, looping_sound_wire, LOOPING_SOUND_BYTES, native, OTHER_BASE) ==
+			_game_state_schema_stream_ok && !memcmp(native, looping_sound_big, LOOPING_SOUND_BYTES),
+			"a looping sound taken big-endian, as specified");
+		memset(native, 0xCC, LOOPING_SOUND_BYTES);
+		CHECK(game_state_schema_decode(looping, &little_state, looping_sound_wire, LOOPING_SOUND_BYTES, native, BASE) ==
+			_game_state_schema_stream_ok && !memcmp(native, looping_sound_little, LOOPING_SOUND_BYTES),
+			"a looping sound taken little-endian, as specified");
+		/* its flags a long: the bits a byte order puts in another byte are the same bits */
+		CHECK(looping_sound_little[4] == 0x19 && looping_sound_big[7] == 0x19 && wire[4] == 0x19,
+			"a looping sound's flags: the long's low byte first on the wire, from either byte order");
+	}
+
+	/* the globals and the classes: from either byte order, the same wire */
+	check_named_round_trip("game sound globals", 8, sound_globals_little, sound_globals_big, sound_globals_little,
+		sound_globals_big, wire, other, native);
+	{
+		static byte classes_little[SOUND_CLASSES_BYTES];
+		static byte classes_big[SOUND_CLASSES_BYTES];
+		static byte classes_taken_big[SOUND_CLASSES_BYTES];
+		static byte classes_wire[SOUND_CLASS_COUNT * SOUND_CLASS_WIRE_BYTES];
+		/* by hand: class 0, class 1, class 50 */
+		static byte const first[10] = { 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00 };
+		static byte const second[10] = { 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x01, 0x00 };
+		static byte const last[10] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3E, 0x1E, 0x00 };
+
+		sound_classes_make(classes_little, FALSE, TRUE);
+		sound_classes_make(classes_big, TRUE, TRUE);
+		sound_classes_make(classes_taken_big, TRUE, FALSE);
+		for (index = 0; index < SOUND_CLASS_COUNT; index++)
+			memcpy(classes_wire + index * SOUND_CLASS_WIRE_BYTES, classes_little + index * SOUND_CLASS_BYTES, SOUND_CLASS_WIRE_BYTES);
+		check_named_round_trip("sound classes", SOUND_CLASSES_BYTES, classes_little, classes_big, classes_wire, classes_taken_big,
+			wire, other, native);
+		CHECK(!memcmp(wire, first, 10) && !memcmp(wire + 10, second, 10) &&
+			!memcmp(wire + (SOUND_CLASS_COUNT - 1) * SOUND_CLASS_WIRE_BYTES, last, 10),
+			"sound classes: classes 0, 1 and 50 on the wire, as specified (no pad bytes)");
+	}
+
+	/* the whole sound state: one stream from either byte order */
+	sound_regions_make();
+	sound_state_make(little, BASE, FALSE, TRUE, FALSE);
+	sound_state_make(big, BASE, TRUE, TRUE, FALSE);
+	state = sound_state(little, BASE, FALSE, 3);
+	game_state_schema_coverage(&state, &coverage);
+	CHECK(coverage.complete && coverage.typed_bytes == SOUND_CPU_USED && !coverage.unresolved_bytes && !coverage.gap_count &&
+		coverage.typed_regions == 3, "the sound state passes the gate (%lu of %lu typed, %ld gaps)", coverage.typed_bytes,
+		coverage.state_bytes, coverage.gap_count);
+	CHECK(game_state_schema_stream_scratch_bytes(&state) == ((SOUND_CLASS_COUNT * SOUND_CLASS_WIRE_BYTES + 3) & ~3L),
+		"its scratch: the classes' wire bytes, in words (%ld)", game_state_schema_stream_scratch_bytes(&state));
+	for (index = 0; index < 2; index++)
+	{
+		boolean big_endian = index == 1;
+
+		state = sound_state(big_endian ? big : little, BASE, big_endian, 3);
+		memset(&buffer, 0, sizeof(buffer));
+		buffer.bytes = big_endian ? from_big : from_little;
+		buffer.size = sizeof(from_little);
+		buffer.fail_after = NONE;
+		memset(&stream, 0, sizeof(stream));
+		stream.context = &buffer;
+		stream.write = buffer_write;
+		stream.scratch = scratch;
+		stream.scratch_size = game_state_schema_stream_scratch_bytes(&state);
+		error = game_state_schema_stream_write(&state, &stream);
+		CHECK(error == _game_state_schema_stream_ok && buffer.used == SOUND_STREAM_BYTES, "the sound stream (%s): %s, %ld bytes",
+			big_endian ? "big" : "little", game_state_schema_stream_error_name(error), buffer.used);
+	}
+	CHECK(!memcmp(from_little, from_big, SOUND_STREAM_BYTES), "the same sound state from either byte order is the same stream");
+	dump_difference("sound stream", from_big, from_little, SOUND_STREAM_BYTES);
+	CHECK(!memcmp(from_little + 54, looping_sound_wire, LOOPING_SOUND_BYTES) &&
+		from_little[54 + LOOPING_SOUND_BYTES] == 0 && from_little[54 + LOOPING_SOUND_BYTES + 1] == 0 &&
+		from_little[54 + LOOPING_SOUND_BYTES + 2] == 0 && from_little[54 + LOOPING_SOUND_BYTES + 3] == 0 &&
+		!memcmp(from_little + 54 + LOOPING_SOUND_BYTES + 4, sound_globals_little, 8),
+		"the stream: the looping sound in use as specified, the free one and the one past the count their identifiers only, the globals");
+
+	/* taken big-endian at another base: as it was, but the free looping
+	sounds' old contents and the pad bytes zero */
+	memset(taken, 0xCC, sizeof(taken));
+	state = sound_state(taken, OTHER_BASE, TRUE, 3);
+	memset(&buffer, 0, sizeof(buffer));
+	buffer.bytes = from_little;
+	buffer.size = SOUND_STREAM_BYTES;
+	buffer.fail_after = NONE;
+	memset(&stream, 0, sizeof(stream));
+	stream.context = &buffer;
+	stream.read = buffer_read;
+	stream.scratch = scratch;
+	stream.scratch_size = game_state_schema_stream_scratch_bytes(&state);
+	error = game_state_schema_stream_read(&state, &stream, TRUE, NULL);
+	sound_state_make(expected, OTHER_BASE, TRUE, FALSE, FALSE);
+	CHECK(error == _game_state_schema_stream_ok && buffer.used == SOUND_STREAM_BYTES &&
+		!memcmp(taken, expected, SOUND_CPU_USED), "the sound stream taken big-endian at another base, as specified (%s)",
+		game_state_schema_stream_error_name(error));
+	dump_difference("sound taken", taken, expected, SOUND_CPU_USED);
+
+	/* beside HS globals (their cells unresolved), the gate does not pass:
+	nothing written, nothing taken */
+	sound_state_make(little, BASE, FALSE, TRUE, TRUE);
+	state = sound_state(little, BASE, FALSE, 4);
+	game_state_schema_coverage(&state, &coverage);
+	CHECK(!coverage.complete && coverage.unresolved_bytes == 2 * 4 && !coverage.unclaimed_bytes &&
+		coverage.typed_bytes == SOUND_STATE_BYTES - 2 * 4 && coverage.gap_count == 1 &&
+		coverage.gaps[0].reason == _game_state_schema_gap_hs_cell && !strcmp(coverage.gaps[0].owner, "hs globals") &&
+		coverage.gaps[0].offset == SOUND_HS_AT + 0x38 + 4, "beside HS globals the gate's one gap is their cells (%lu unresolved)",
+		coverage.unresolved_bytes);
+	memset(&buffer, 0, sizeof(buffer));
+	buffer.bytes = from_big;
+	buffer.size = sizeof(from_big);
+	buffer.fail_after = NONE;
+	memset(&stream, 0, sizeof(stream));
+	stream.context = &buffer;
+	stream.write = buffer_write;
+	stream.read = buffer_read;
+	stream.scratch = scratch;
+	stream.scratch_size = sizeof(scratch);
+	CHECK(game_state_schema_stream_write(&state, &stream) == _game_state_schema_stream_incomplete && buffer.used == 0,
+		"then the stream is not written: nothing written");
+	memset(taken, 0xCC, sizeof(taken));
+	state = sound_state(taken, OTHER_BASE, TRUE, 4);
+	buffer.bytes = from_little;
+	buffer.size = SOUND_STREAM_BYTES;
+	CHECK(game_state_schema_stream_read(&state, &stream, TRUE, NULL) == _game_state_schema_stream_incomplete && buffer.used == 0,
+		"nor read: nothing read");
+	for (index = 0; index < SOUND_STATE_BYTES && taken[index] == 0xCC; index++)
+		;
+	CHECK(index == SOUND_STATE_BYTES, "nothing of the state taken");
+}
+
 int main(void)
 {
 	check_mixed();
@@ -1378,6 +1712,7 @@ int main(void)
 	check_gate();
 	check_named_globals();
 	check_stream();
+	check_sound_state();
 	if (failures)
 	{
 		fprintf(stderr, "%d of %d cases failed\n", failures, cases);

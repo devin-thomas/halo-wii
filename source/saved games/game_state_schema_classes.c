@@ -360,6 +360,64 @@ static struct game_state_schema_field const breakable_surface_globals_fields[] =
 static struct game_state_schema const breakable_surface_globals_schema =
 	SCHEMA("breakable_surface_globals", 0x4204, breakable_surface_globals_fields);
 
+/* ---------- game_sound.c: a looping sound's datum ("object looping sounds";
+checked there): its state, its flags (a long of bits, TEST_FLAG and SET_FLAG
+of the whole), its definition's tag handle and its object's datum handle
+(NONE: unattached), the update it was last heard in (NONE: never) and where on
+its object it plays. No pointer, no union, nothing the compiler pads */
+
+static struct game_state_schema_field const game_looping_sound_fields[] =
+{
+	SCHEMA_FIELD("identifier", _game_state_schema_identifier, 0x0, 1),
+	SCHEMA_FIELD("state", _game_state_schema_s16, 0x2, 1),
+	SCHEMA_FIELD("flags", _game_state_schema_u32, 0x4, 1),
+	SCHEMA_FIELD("scale", _game_state_schema_real, 0x8, 1),
+	SCHEMA_FIELD("definition_index", _game_state_schema_datum_index, 0xC, 1),
+	SCHEMA_FIELD("object_index", _game_state_schema_datum_index, 0x10, 1),
+	SCHEMA_FIELD("last_audible_frame_index", _game_state_schema_s32, 0x14, 1),
+	SCHEMA_FIELD("function_index", _game_state_schema_s16, 0x18, 1),
+	SCHEMA_FIELD("node_index", _game_state_schema_s16, 0x1A, 1),
+	SCHEMA_FIELD("position", _game_state_schema_real, 0x1C, 3),
+	SCHEMA_FIELD("forward", _game_state_schema_real, 0x28, 3),
+};
+static struct game_state_schema const game_looping_sound_schema =
+	SCHEMA("game_looping_sound_datum", 0x34, game_looping_sound_fields);
+
+/* ---------- game_sound.c: the update counter, and the music's looping sound
+(a datum handle, NONE none) ("game sound globals"; checked there) */
+
+static struct game_state_schema_field const game_sound_globals_fields[] =
+{
+	SCHEMA_FIELD("update_index", _game_state_schema_s32, 0x0, 1),
+	SCHEMA_FIELD("music_looping_sound_index", _game_state_schema_datum_index, 0x4, 1),
+};
+static struct game_state_schema const game_sound_globals_schema =
+	SCHEMA("game_sound_globals", 0x8, game_sound_globals_fields);
+
+/* ---------- sound_classes.c: each of the 51 sound classes' gain, the gain it
+goes to and the ticks left to get there ("sound classes", an allocation of
+0x264 bytes; checked there). The 2 bytes the compiler puts after ticks are
+named by no code (every user reads and writes a datum's fields by name, none
+copies or compares a whole one) */
+
+static struct game_state_schema_field const sound_class_datum_fields[] =
+{
+	SCHEMA_FIELD("desired_gain", _game_state_schema_real, 0x0, 1),
+	SCHEMA_FIELD("gain", _game_state_schema_real, 0x4, 1),
+	SCHEMA_FIELD("ticks", _game_state_schema_s16, 0x8, 1),
+	SCHEMA_FIELD("(alignment)", _game_state_schema_padding, 0xA, 2),
+};
+static struct game_state_schema const sound_class_datum_schema =
+	SCHEMA("sound_class_datum", 0xC, sound_class_datum_fields);
+
+static struct game_state_schema_field const sound_classes_fields[] =
+{
+	/* [NUMBER_OF_SOUND_CLASSES 51] */
+	GAME_STATE_SCHEMA_STRUCT("sound_classes", &sound_class_datum_schema, 0x0, 51),
+};
+static struct game_state_schema const sound_classes_schema =
+	SCHEMA("sound_classes", 0x264, sound_classes_fields);
+
 /* ---------- the classes by name */
 
 struct schema_class
@@ -382,6 +440,9 @@ static struct schema_class const schema_classes[] =
 	{ "structure decals", _game_state_schema_region_global, &structure_decals_globals_schema },
 	{ "decal globals", _game_state_schema_region_global, &decal_globals_schema },
 	{ "breakable surface globals", _game_state_schema_region_global, &breakable_surface_globals_schema },
+	{ "object looping sounds", _game_state_schema_region_data_array, &game_looping_sound_schema },
+	{ "game sound globals", _game_state_schema_region_global, &game_sound_globals_schema },
+	{ "sound classes", _game_state_schema_region_global, &sound_classes_schema },
 };
 
 static boolean schema_names_equal(
