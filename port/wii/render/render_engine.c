@@ -30,6 +30,12 @@ Each game frame (the frame hook, after the engine's own game_frame):
    wii_render_objects_collect, right after the visibility), whose models
    the GX side draws over the environment inside the same draw
    (wii_render_objects_draw, registered as its objects pass).
+5. HWI-084: the first-person weapon (render_first_person_engine.c):
+   its pose at render_window's first_person_weapon_render_update point
+   (wii_render_first_person_collect, after the objects' collect; a drawn
+   frame keeps the view model's last pose drawn, a pose check nothing), and
+   its weapon and hands models after the objects' passes, in the same draw
+   (wii_render_first_person_draw, registered as the first-person pass).
 
 The engine's render globals (render.c's `render`) are written, as render.c
 writes them; the game state is only read (lock_global_random_seed guards the
@@ -531,11 +537,14 @@ static int render_engine_rasterizer_initialize(
 		rasterizer_globals.reserved04.frame_bounds.y1);
 	/* HWI-082: object models, drawn by the objects pass */
 	wii_gx_set_objects_proc(wii_render_objects_draw);
+	/* HWI-084: the first-person weapon, drawn after the objects */
+	wii_gx_set_first_person_proc(wii_render_first_person_draw);
 	/* the render subsystems this rasterizer does not draw, each reported */
 	wii_unsupported("render", "object model shaders, textures and lighting (diagnostic material: one fixed light, "
 		"untextured), transparent sorting, model effects (active camouflage, modifiers), change colours");
 	wii_unsupported("render", "object shadows, widgets");
-	wii_unsupported("render", "first-person weapons");
+	wii_unsupported("render", "first-person weapon shaders, lighting, change colours, active camouflage, effects "
+		"and particles, and its sway inputs (render facing: the turning and moving sway stay at rest)");
 	wii_unsupported("render", "sky (render_sky)");
 	wii_unsupported("render", "decals (rasterizer_decals_draw)");
 	wii_unsupported("render", "particles, particle systems, contrails, weather");
@@ -575,6 +584,8 @@ static void render_engine_old_map(
 	void)
 {
 	wii_render_objects_report("old_map");
+	wii_render_first_person_report("old_map");
+	wii_render_first_person_forget();
 	render_engine_map_unload();
 	/* the map's render pool goes back to the heap (a BSP switch keeps it) */
 	wii_gx_pool_release();
@@ -607,6 +618,7 @@ static void render_engine_frame(
 	render_engine_visibility(&render_engine.camera);
 	render_engine_materials_drawn();
 	wii_render_objects_collect();
+	wii_render_first_person_collect(&render_engine.view, TRUE);
 	render_engine.view_valid = TRUE;
 	render_engine.view.visibility_us = (unsigned long)(wii_time_microseconds() - started);
 	if (render_engine.next_run_pose < render_engine.run_pose_count &&
@@ -619,17 +631,21 @@ static void render_engine_frame(
 	if (sample)
 	{
 		unsigned long model_parts, model_refused, model_triangles;
+		unsigned long first_person_parts, first_person_refused, first_person_triangles;
 
 		wii_gx_models_last(&model_parts, &model_refused, &model_triangles);
+		wii_gx_first_person_last(&first_person_parts, &first_person_refused, &first_person_triangles);
 		wii_log("RENDER_RUN_POSE load=%ld tick=%ld game_time=%ld bsp=%d bsp_tag=%lu crc=%08lx covered=%d leaf=%ld "
 			"cluster=%ld clusters=%ld surfaces=%ld eye=%.4f,%.4f,%.4f model_parts=%lu model_parts_refused=%lu "
-			"model_triangles=%lu\n", render_engine.load_ordinal,
+			"model_triangles=%lu first_person_parts=%lu first_person_parts_refused=%lu first_person_triangles=%lu\n",
+			render_engine.load_ordinal,
 			render_engine.run_pose_ticks[render_engine.next_run_pose], game_time_get(), global_structure_bsp_index,
 			(unsigned long)DATUM_INDEX_TO_ABSOLUTE_INDEX(render_engine.bsp_tag_index), crc, covered,
 			render_engine.view.leaf_index,
 			render_engine.view.cluster_index, render_engine.view.rendered_clusters,
 			render_engine.view.visible_surfaces, (double)render_engine.view.eye[0], (double)render_engine.view.eye[1],
-			(double)render_engine.view.eye[2], model_parts, model_refused, model_triangles);
+			(double)render_engine.view.eye[2], model_parts, model_refused, model_triangles, first_person_parts,
+			first_person_refused, first_person_triangles);
 		render_engine.next_run_pose++;
 	}
 	render_engine.frames++;
@@ -707,6 +723,7 @@ static int render_engine_capture(
 {
 	struct wii_gx_pose_result result;
 	unsigned long before, after;
+	unsigned long first_person_parts, first_person_refused, first_person_triangles;
 	int camera_effect_writes;
 	int ok;
 
@@ -715,9 +732,17 @@ static int render_engine_capture(
 	render_engine_visibility(&render_engine.camera);
 	render_engine_materials_drawn();
 	wii_render_objects_collect();
+	/* HWI-084: a pose check keeps nothing of the view model's; a diagnostic
+	override's camera is not the player's, and draws no first-person weapon */
+	if (diagnostic_override)
+		wii_render_first_person_forget();
+	else
+		wii_render_first_person_collect(&render_engine.view, FALSE);
 	wii_gx_pose_capture(&render_engine.view, render.environment_surface_flags, render_engine.drawn,
 		render_engine_frontfacing, 3, &result);
 	unlock_global_random_seed();
+	/* (included in the model counts) */
+	wii_gx_first_person_last(&first_person_parts, &first_person_refused, &first_person_triangles);
 	after = render_engine_state_digest();
 	camera_effect_writes = diagnostic_override ? -1 : render_engine_camera_effect_writes();
 	/* lit and textured pixels, and culling as qualified: under GX_CULL_BACK
@@ -732,7 +757,8 @@ static int render_engine_capture(
 		"differs_lightmap_only=%d differs_base_only=%d facing_none=%d/%d facing_back=%d/%d facing_front=%d/%d "
 		"draw_us=%lu state_before=%08lx state_after=%08lx state_unchanged=%d camera_effect_writes=%d "
 		"textured_triangles=%lu base_missing_triangles=%lu textured_samples=%d object_samples=%d model_parts=%lu "
-		"model_parts_refused=%lu model_triangles=%lu drawn_required=%d pass=%d\n",
+		"model_parts_refused=%lu model_triangles=%lu first_person_parts=%lu first_person_parts_refused=%lu "
+		"first_person_triangles=%lu drawn_required=%d pass=%d\n",
 		name, diagnostic_override ? "diagnostic_override" : "engine_unit_deterministic",
 		(double)render_engine.view.eye[0], (double)render_engine.view.eye[1], (double)render_engine.view.eye[2],
 		render_engine.view.leaf_index, render_engine.view.cluster_index, render_engine.view.rendered_clusters,
@@ -742,7 +768,7 @@ static int render_engine_capture(
 		result.facing_front[2], result.facing_back[2], result.draw_us, before, after, before == after,
 		camera_effect_writes, result.textured_triangles, result.base_missing_triangles, result.textured_samples,
 		result.object_samples, result.model_parts, result.model_parts_refused, result.model_triangles,
-		drawn_required ? 1 : 0, ok);
+		first_person_parts, first_person_refused, first_person_triangles, drawn_required ? 1 : 0, ok);
 
 	return ok;
 }
@@ -1092,6 +1118,7 @@ static int render_engine_pose_phase_map(
 	real_map_end(&result);
 	real_map_set_command(0, NULL);
 	wii_render_objects_report("pose_phase");
+	wii_render_first_person_report("pose_phase");
 	real_map_unload();
 	wii_log("RENDER_POSES end frames=%ld poses=%d failures=%d ticks=%ld sim=%08lx camera_effect_frames=%ld\n", frame,
 		captured, failures, result.ticks, result.simulation_digest, render_engine.camera_effect_skipped);
@@ -1154,6 +1181,7 @@ int wii_render_environment_draw(
 	render_engine_visibility(&camera);
 	render_engine_materials_drawn();
 	wii_render_objects_collect();
+	wii_render_first_person_collect(&render_engine.view, TRUE);
 	render_engine.view_valid = TRUE;
 	render_engine.view.visibility_us = (unsigned long)(wii_time_microseconds() - started);
 	wii_gx_environment_draw(&render_engine.view, render.environment_surface_flags, render_engine.drawn);

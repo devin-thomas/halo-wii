@@ -483,6 +483,8 @@ static void read_config(void)
             gx.stream_frame_bytes = strtoul(line + 19, NULL, 10);
         else if (!strncmp(line, "stream_keep_frames=", 19))
             gx.stream_keep_frames = strtoul(line + 19, NULL, 10);
+        else if (wii_gx_models_config_line(line)) /* HWI-084: first_person, first_person_store_pose */
+            ;
         else if (!strncmp(line, "run_pose_ticks=", 15)) {
             int count = parse_ticks(line + 15, gx.run_pose_ticks, MAX_POSE_TICKS);
             gx.run_pose_count = count > 0 ? count : 0;

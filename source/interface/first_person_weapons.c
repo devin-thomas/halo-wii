@@ -328,6 +328,9 @@ static void first_person_weapon_set_visibility(
 	boolean visible);
 static void first_person_weapon_build_node_matrices(
 	short local_player_index);
+static void first_person_weapon_build_node_orientations(
+	short local_player_index,
+	real_orientation *node_orientations);
 static boolean first_person_weapon_animation_fits(
 	struct animation_graph const *animation_graph,
 	struct animation const *animation);
@@ -796,6 +799,192 @@ struct real_matrix4x3 *first_person_weapon_get_node_matrix(
 	return &first_person_weapon->node_matrices[node_index];
 }
 
+typedef char verify_first_person_weapon_render_pose_nodes[
+	(int)FIRST_PERSON_WEAPON_RENDER_POSE_MAXIMUM_NODES==(int)MAXIMUM_NODES_PER_ANIMATION &&
+	(int)FIRST_PERSON_WEAPON_RENDER_POSE_MAXIMUM_NODES==(int)MAXIMUM_NODES_PER_MODEL ? 1 : -1];
+
+/* port (HWI-084): what first_person_weapon_render_update and
+first_person_weapon_draw decide and build for a frame, for a renderer that
+runs neither (the Wii rasterizer, port/wii/render/render_first_person_engine.c).
+
+- Whether the weapon is drawn: the render update's visibility (the director's
+  perspective is first person and the player is not zoomed) and the draw's
+  tests (the player has a unit, the view model a unit and a weapon, the
+  weapon first-person animations). The view model's visible flag is not
+  written: first_person_weapon_set_visibility starts and stops the effects
+  and particles on the first-person weapon.
+- A weapon deleted since the last tick is not drawn; the render update's
+  first_person_weapon_forget_weapon (which writes the view model and stops
+  effects) is the next tick's (first_person_weapon_update does the same).
+- The pose: first_person_weapon_build_node_orientations from a copy of the
+  last pose drawn, then the graph's node matrices from the camera
+  (animation_graph_node_matrices_from_orientations), into pose. A state
+  animation of NONE (the engine's build asserts there), and a graph or a
+  state animation of more nodes than the orientations and matrices hold,
+  are refused, not drawn.
+- With store_orientations (a drawn frame, at the render update's own point):
+  the orientations are kept as the view model's node_orientations, which
+  the next state change (first_person_weapon_start_interpolation, a tick)
+  blends from, and the frame's matrices go through
+  render_interpolation_first_person as the render update's do (a
+  presentation cache of render_interpolation.c's; a no-op without
+  interpolation). That one field is the only game state written: it is the
+  last pose drawn, read only by first_person_weapon_start_interpolation's
+  copy into original_node_orientations, which only this pose reads; the
+  allocation ("first person weapons") follows the render frames and is not
+  the simulation's (port/wii/engine/real_map_scenario.c). Without
+  store_orientations nothing is written.
+- Not written: rendered, render_facing, last_render_facing, render_position,
+  render_forward (the tick's turning and position sway take them, and its
+  idle poses draw local random numbers by them), node_matrices (read by
+  effects on a visible first-person weapon only) and visible.
+- Each model's remapping table as the last weapon switch built it, and
+  whether it is valid; the caller checks every entry against node_count. */
+short first_person_weapon_render_pose(
+	short local_player_index,
+	struct render_camera const *camera,
+	boolean store_orientations,
+	struct first_person_weapon_render_pose *pose)
+{
+	struct first_person_weapon *first_person_weapon;
+	struct weapon_datum *weapon;
+	struct weapon_definition *weapon_definition;
+	struct animation_graph *animation_graph;
+	real_orientation node_orientations[MAXIMUM_NODES_PER_ANIMATION];
+	long player_index;
+	long unit_index;
+	long first_person_animations_index;
+	long hands_index= NONE;
+
+	pose->unit_index= NONE;
+	pose->weapon_index= NONE;
+	pose->animation_graph_index= NONE;
+	pose->node_count= 0;
+	pose->weapon_model_index= NONE;
+	pose->weapon_model_node_count= 0;
+	pose->hands_model_index= NONE;
+	pose->hands_model_node_count= 0;
+
+	if (local_player_index<0 || local_player_index>=MAXIMUM_NUMBER_OF_LOCAL_PLAYERS)
+	{
+		return _first_person_weapon_render_pose_no_local_player;
+	}
+	player_index= local_player_get_player_index(local_player_index);
+	if (player_index==NONE)
+	{
+		return _first_person_weapon_render_pose_no_local_player;
+	}
+	first_person_weapon= first_person_weapon_get(local_player_index);
+	unit_index= player_get(player_index)->unit_index;
+	if (unit_index==NONE ||
+		first_person_weapon->unit_index==NONE ||
+		!object_try_and_get_and_verify_type(unit_index, _object_mask_unit))
+	{
+		return _first_person_weapon_render_pose_no_unit;
+	}
+	if (director_get_perspective(local_player_index)!=_director_perspective_first_person)
+	{
+		return _first_person_weapon_render_pose_not_first_person;
+	}
+	if (player_control_get_zoom_level(local_player_index)!=NONE)
+	{
+		return _first_person_weapon_render_pose_zoomed;
+	}
+	if (first_person_weapon->weapon_index==NONE)
+	{
+		return _first_person_weapon_render_pose_no_weapon;
+	}
+	weapon= weapon_try_and_get(first_person_weapon->weapon_index);
+	if (!weapon)
+	{
+		return _first_person_weapon_render_pose_weapon_gone;
+	}
+	weapon_definition= weapon_definition_get(weapon->definition_index);
+	first_person_animations_index= weapon_definition->weapon.interface_definition.first_person_animations.index;
+	if (first_person_animations_index==NONE)
+	{
+		return _first_person_weapon_render_pose_no_animations;
+	}
+	animation_graph= animation_graph_definition_get(first_person_animations_index);
+	if (animation_graph->first_person_weapon_animations.count &&
+		!VALID_INDEX(first_person_weapon->state_animation.index, animation_graph->animations.count))
+	{
+		return _first_person_weapon_render_pose_no_state_animation;
+	}
+	/* the graph's nodes, and the state animation's (which
+	animation_get_node_orientations writes all of), fit the orientations */
+	if (animation_graph->nodes.count<1 || animation_graph->nodes.count>MAXIMUM_NODES_PER_ANIMATION ||
+		(animation_graph->first_person_weapon_animations.count &&
+		!first_person_weapon_animation_fits(
+			animation_graph,
+			TAG_BLOCK_GET_ELEMENT(
+				&animation_graph->animations,
+				first_person_weapon->state_animation.index,
+				struct animation))))
+	{
+		return _first_person_weapon_render_pose_node_count;
+	}
+
+	pose->unit_index= unit_index;
+	pose->weapon_index= first_person_weapon->weapon_index;
+	pose->animation_graph_index= first_person_animations_index;
+	pose->node_count= (short)animation_graph->nodes.count;
+
+	csmemcpy(node_orientations, first_person_weapon->node_orientations, sizeof(node_orientations));
+	first_person_weapon_build_node_orientations(local_player_index, node_orientations);
+	animation_graph_node_matrices_from_orientations(
+		first_person_animations_index,
+		pose->node_matrices,
+		node_orientations,
+		&camera->position,
+		&camera->forward,
+		&camera->up);
+	if (store_orientations)
+	{
+		csmemcpy(
+			first_person_weapon->node_orientations,
+			node_orientations,
+			pose->node_count*sizeof(real_orientation));
+		render_interpolation_first_person(
+			local_player_index,
+			pose->node_matrices,
+			pose->node_count,
+			camera);
+	}
+
+	if (first_person_weapon->weapon_node_remapping_table_valid &&
+		weapon_definition->weapon.interface_definition.first_person_model.index!=NONE)
+	{
+		struct model *model= model_definition_get(
+			weapon_definition->weapon.interface_definition.first_person_model.index);
+
+		pose->weapon_model_index= weapon_definition->weapon.interface_definition.first_person_model.index;
+		pose->weapon_model_node_count= (short)model->nodes.count;
+		csmemcpy(
+			pose->weapon_node_remapping_table,
+			first_person_weapon->weapon_node_remapping_table,
+			sizeof(pose->weapon_node_remapping_table));
+	}
+	if (scenario_get_game_globals()->first_person_interface.count>0)
+	{
+		hands_index= TAG_BLOCK_GET_ELEMENT(
+			&scenario_get_game_globals()->first_person_interface,
+			0,
+			struct game_globals_first_person_interface)->hands.index;
+	}
+	if (first_person_weapon->hands_node_remapping_table_valid && hands_index!=NONE)
+	{
+		pose->hands_model_index= hands_index;
+		pose->hands_model_node_count= (short)model_definition_get(hands_index)->nodes.count;
+		csmemcpy(
+			pose->hands_node_remapping_table,
+			first_person_weapon->hands_node_remapping_table,
+			sizeof(pose->hands_node_remapping_table));
+	}
+
+	return _first_person_weapon_render_pose_ok;
+}
+
 void first_person_weapons_update(
 	void)
 {
@@ -1142,6 +1331,48 @@ static void first_person_weapon_build_node_matrices(
 	{
 		struct weapon_datum *weapon= weapon_get(first_person_weapon->weapon_index);
 		struct weapon_definition *weapon_definition= weapon_definition_get(weapon->definition_index);
+		struct animation_graph *animation_graph= animation_graph_definition_get(
+			weapon_definition->weapon.interface_definition.first_person_animations.index);
+
+		first_person_weapon_build_node_orientations(
+			local_player_index,
+			first_person_weapon->node_orientations);
+
+		animation_graph_node_matrices_from_orientations(
+			weapon_definition->weapon.interface_definition.first_person_animations.index,
+			first_person_weapon->node_matrices,
+			first_person_weapon->node_orientations,
+			&render.camera.position,
+			&render.camera.forward,
+			&render.camera.up);
+		/* the pose between the last two ticks (render_interpolation.c) */
+		/* port: no more nodes than the weapon's matrices hold (a map's count) */
+		render_interpolation_first_person(
+			local_player_index,
+			first_person_weapon->node_matrices,
+			(short)MIN(animation_graph->nodes.count, MAXIMUM_NODES_PER_ANIMATION),
+			&render.camera);
+	}
+
+	return;
+}
+
+/* port: the weapon's node orientations, as first_person_weapon_build_node_matrices
+built them in place (the state animation, between frames for a PAL map's,
+the ammunition, moving, overcharged jitter and sway overlays, and the
+interpolation from original_node_orientations), into node_orientations,
+which holds the last pose drawn on entry: nodes no animation sets keep it.
+No other game state is written (first_person_weapon_render_pose computes it
+into a copy) */
+static void first_person_weapon_build_node_orientations(
+	short local_player_index,
+	real_orientation *node_orientations)
+{
+	struct first_person_weapon *first_person_weapon= first_person_weapon_get(local_player_index);
+
+	{
+		struct weapon_datum *weapon= weapon_get(first_person_weapon->weapon_index);
+		struct weapon_definition *weapon_definition= weapon_definition_get(weapon->definition_index);
 		struct model *model= model_definition_get(
 			weapon_definition->weapon.interface_definition.first_person_model.index);
 		struct animation_graph *animation_graph= animation_graph_definition_get(
@@ -1171,7 +1402,7 @@ static void first_person_weapon_build_node_matrices(
 						NULL,
 						state_animation,
 						first_person_weapon->state_animation.frame_index,
-						first_person_weapon->node_orientations);
+						node_orientations);
 					/* port: a PAL map's animation, slowed to the NTSC maps' pace,
 					between the frame it is on and the next: held on the frame, it
 					stood still for that tick, and a reload moved in fits and starts
@@ -1199,10 +1430,10 @@ static void first_person_weapon_build_node_matrices(
 							for (node_index= 0; node_index<MIN(state_animation->node_count, MAXIMUM_NODES_PER_ANIMATION); node_index++)
 							{
 								orientations_interpolate(
-									&first_person_weapon->node_orientations[node_index],
+									&node_orientations[node_index],
 									&next_node_orientations[node_index],
 									fraction,
-									&first_person_weapon->node_orientations[node_index]);
+									&node_orientations[node_index]);
 							}
 						}
 					}
@@ -1214,7 +1445,7 @@ static void first_person_weapon_build_node_matrices(
 						1294,
 						FALSE,
 						NULL);
-					model_get_node_orientations(model, first_person_weapon->node_orientations);
+					model_get_node_orientations(model, node_orientations);
 				}
 
 				firing_animation_index= VALID_INDEX(
@@ -1266,14 +1497,14 @@ static void first_person_weapon_build_node_matrices(
 						overlay_animation_apply(
 							firing_animation,
 							frame_index,
-							first_person_weapon->node_orientations);
+							node_orientations);
 					}
 					else if (weapon->weapon.magazines[0].rounds_loaded<firing_animation->frame_count)
 					{
 						overlay_animation_apply(
 							firing_animation,
 							weapon->weapon.magazines[0].rounds_loaded,
-							first_person_weapon->node_orientations);
+							node_orientations);
 					}
 				}
 
@@ -1290,7 +1521,7 @@ static void first_person_weapon_build_node_matrices(
 						overlay_animation_apply(
 							moving_animation,
 							first_person_weapon->moving_animation.frame_index,
-							first_person_weapon->node_orientations);
+							node_orientations);
 					}
 				}
 
@@ -1308,7 +1539,7 @@ static void first_person_weapon_build_node_matrices(
 							overcharged_jitter_animation,
 							first_person_weapon->overcharged_jitter_animation.frame_index,
 							weapon->weapon.overcharged+0.5f,
-							first_person_weapon->node_orientations);
+							node_orientations);
 					}
 				}
 
@@ -1336,7 +1567,7 @@ static void first_person_weapon_build_node_matrices(
 								overlay_animation,
 								0,
 								first_person_weapon->position.i,
-								first_person_weapon->node_orientations);
+								node_orientations);
 						}
 						else if (first_person_weapon->position.i<0.0f)
 						{
@@ -1344,7 +1575,7 @@ static void first_person_weapon_build_node_matrices(
 								overlay_animation,
 								1,
 								-first_person_weapon->position.i,
-								first_person_weapon->node_orientations);
+								node_orientations);
 						}
 
 						if (first_person_weapon->position.j>0.0f)
@@ -1353,7 +1584,7 @@ static void first_person_weapon_build_node_matrices(
 								overlay_animation,
 								3,
 								first_person_weapon->position.j,
-								first_person_weapon->node_orientations);
+								node_orientations);
 						}
 						else if (first_person_weapon->position.j<0.0f)
 						{
@@ -1361,7 +1592,7 @@ static void first_person_weapon_build_node_matrices(
 								overlay_animation,
 								2,
 								-first_person_weapon->position.j,
-								first_person_weapon->node_orientations);
+								node_orientations);
 						}
 
 						if (first_person_weapon->turning.i>0.0f)
@@ -1370,7 +1601,7 @@ static void first_person_weapon_build_node_matrices(
 								overlay_animation,
 								4,
 								first_person_weapon->turning.i,
-								first_person_weapon->node_orientations);
+								node_orientations);
 						}
 						else if (first_person_weapon->turning.i<0.0f)
 						{
@@ -1378,7 +1609,7 @@ static void first_person_weapon_build_node_matrices(
 								overlay_animation,
 								5,
 								-first_person_weapon->turning.i,
-								first_person_weapon->node_orientations);
+								node_orientations);
 						}
 
 						if (first_person_weapon->turning.j>0.0f)
@@ -1387,7 +1618,7 @@ static void first_person_weapon_build_node_matrices(
 								overlay_animation,
 								7,
 								first_person_weapon->turning.j,
-								first_person_weapon->node_orientations);
+								node_orientations);
 						}
 						else if (first_person_weapon->turning.j<0.0f)
 						{
@@ -1395,7 +1626,7 @@ static void first_person_weapon_build_node_matrices(
 								overlay_animation,
 								6,
 								-first_person_weapon->turning.j,
-								first_person_weapon->node_orientations);
+								node_orientations);
 						}
 
 						if (first_person_weapon->firing_push_back>0.0f)
@@ -1404,7 +1635,7 @@ static void first_person_weapon_build_node_matrices(
 								overlay_animation,
 								8,
 								first_person_weapon->firing_push_back,
-								first_person_weapon->node_orientations);
+								node_orientations);
 						}
 					}
 				}
@@ -1414,27 +1645,12 @@ static void first_person_weapon_build_node_matrices(
 					interpolate_node_orientations(
 						(short)animation_graph->nodes.count,
 						first_person_weapon->original_node_orientations,
-						first_person_weapon->node_orientations,
+						node_orientations,
 						first_person_weapon->interpolation_frame_index,
 						first_person_weapon->interpolation_frame_count);
 				}
 			}
 		}
-
-		animation_graph_node_matrices_from_orientations(
-			weapon_definition->weapon.interface_definition.first_person_animations.index,
-			first_person_weapon->node_matrices,
-			first_person_weapon->node_orientations,
-			&render.camera.position,
-			&render.camera.forward,
-			&render.camera.up);
-		/* the pose between the last two ticks (render_interpolation.c) */
-		/* port: no more nodes than the weapon's matrices hold (a map's count) */
-		render_interpolation_first_person(
-			local_player_index,
-			first_person_weapon->node_matrices,
-			(short)MIN(animation_graph->nodes.count, MAXIMUM_NODES_PER_ANIMATION),
-			&render.camera);
 	}
 
 	return;

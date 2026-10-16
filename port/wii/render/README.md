@@ -160,12 +160,82 @@ objects found (at most `MAXIMUM_RENDERED_OBJECTS`, the engine's), the
 models drawn and what was skipped, after the first frame with objects, at
 each pose phase's end and each map's end.
 
+## The first-person weapon (HWI-084)
+
+In first person, the weapon in the player's hands and the first-person
+hands are drawn every frame (the map run's and the boot mode's), from their
+own first-person models and the engine's own pose, after the objects in the
+same draw (`render_first_person_engine.c`, `render_models_gx.c`).
+
+**The pose.** The engine's `render_window` runs
+`first_person_weapon_render_update` before `render_objects`: it decides
+whether the weapon shows and builds its node matrices from the view model's
+animation state. The Wii frame runs neither, so the engine has one more
+entry point, `first_person_weapon_render_pose`
+(`source/interface/first_person_weapons.c`), called at that point (right
+after the objects are found). It shares the render update's orientation
+code (`first_person_weapon_build_node_orientations`: the state animation,
+the ammunition, moving, overcharged-jitter and sway overlays, and the blend
+of a state change), into a copy of the last pose drawn, then builds the
+animation graph's node matrices from the frame's camera. It draws only what
+`first_person_weapon_draw` would: the player has a unit (none while dead),
+the director's perspective is first person, the player is not zoomed, the
+view model has a weapon that still exists, with first-person animations.
+
+**What it writes.** On a drawn frame, one field: the view model's
+`node_orientations`, the last pose drawn, which the next state change
+(a tick's `first_person_weapon_start_interpolation`) blends from; without it
+every new state would blend from an empty pose. The render update writes it
+at the same point. It lives in the "first person weapons" allocation, which
+follows the render frames and is not part of the simulation's digest
+(`port/wii/engine/real_map_scenario.c`); nothing else of the simulation reads
+it. The fixed-pose checks and the diagnostic cameras store nothing (their
+state checks stay exact). Not written: the view model's visible flag (it
+starts and stops first-person effects and particles), its render facing and
+position (the tick's sway reads them, and its idle poses draw local random
+numbers by them), its node matrices. `render.txt`
+`first_person_store_pose=0` stores nothing.
+
+**Node domains.** The pose's matrices are the animation graph's nodes (1 to
+64). Each model has its own remapping table (model node to graph node, as
+the last weapon switch built it): every entry is checked against the graph's
+nodes, and a model of more than 64 nodes or with any entry outside is
+refused whole and counted. The palette handed to the GX side is in the
+model's own node domain, times each model node's
+`runtime_default_inverse_matrix`; the parts' vertices index it by the one
+vertex profile above (a full weight leaves the second node byte unread; any
+other node past the model's refuses the part). The world weapon's model is
+never drawn in its place.
+
+**The draw.** Each model as `render_model` draws a first-person model:
+level of detail at 0 pixels, every region's permutation 0, each part in its
+pass, through the objects' own walk (`render_models_engine.h`) and the same
+skinning buffer, fence and diagnostic material: the weapon, then the hands,
+in the three passes after the objects'. The Xbox draws the weapon first with
+the first-person near and far clip distances (`rasterizer_set_frustum_z`)
+and writes the stencil, which rejects the world drawn after it. GX has no
+stencil, so the weapon's projection (`render_first_person_projection.c`)
+keeps the frame's x and y, takes its depth from the first-person clip
+distances and maps it into the front 1/32 of the depth range; the world
+lies behind it except within 4% of its own near plane (0.0625).
+`render.txt` `first_person=0` draws none.
+
+**Logs.** `RENDER_FIRST_PERSON_STATE` at each change of what is drawn (a
+weapon switch, zoom, death, third person; the first 64), `RENDER_FIRST_PERSON`
+(why each frame drew or did not, each model's checks and refusals, and the
+state written) after the first drawn frame and at each pose phase's and
+map's end, `RENDER_FIRST_PERSON_TOTALS` (parts, refusals, triangles; also
+counted in `RENDER_MODEL_TOTALS`), and `first_person_parts` in
+`RENDER_POSE` and `RENDER_RUN_POSE`.
+
 ## What is not drawn (each reported `UNSUPPORTED render ...`)
 
 Object models' shaders, textures and lighting (the material above),
 transparent sorting, model effects (active camouflage, modifiers), change
-colours, object shadows and widgets, first-person weapons (and their node
-remapping), the sky, decals, particles,
+colours, object shadows and widgets, the first-person weapon's shaders,
+lighting, change colours, active camouflage, effects and particles, and its
+sway inputs (render facing: the turning and moving sway stay at rest), the
+sky, decals, particles,
 contrails and weather, effects, lights, lens flares and shadows, water and
 fog, environment detail maps, bump maps, specular, reflections and
 self-illumination, mirrors and the HUD. The interface's widgets, menus and
@@ -270,8 +340,11 @@ default 0, the baseline), `stream_loads=<n>` (maps a frame, default 2,
 1–64), `stream_frame_bytes=<bytes>` (default 524288),
 `stream_keep_frames=<n>` (default 30),
 `geometry_check`, `models=0|1` (HWI-082: the object models; 0 draws the
-environment alone), `model_skin_bytes=<bytes>` (their skinning buffer),
-`run_pose_ticks=<t>,...` (the map run's sampled frames)
+environment alone, as before), `model_skin_bytes=<bytes>` (their skinning
+buffer), `first_person=0|1` and `first_person_store_pose=0|1` (HWI-084: the
+first-person weapon, and keeping its last pose drawn; both default 1, and
+the weapon is drawn only while the models are), `run_pose_ticks=<t>,...`
+(the map run's sampled frames)
 and `poses=<scenario> [ticks=...] [switch_bsp=<t>:<i>,...] [overrides=each]`
 (a fixed-pose phase; with `overrides=each`, two labelled diagnostic cameras
 inside the BSP loaded at each tick: above one of its largest floor

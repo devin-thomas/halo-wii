@@ -30,9 +30,13 @@ What wii_objects.c and models.c do for a frame, read only:
 Not used: object_get_cached_render_lighting and object_get_cached_render_state
 (they write cached_render_state_index and the cache), the camera effect
 matrix (it writes player effects), shadows, widgets, model effects (active
-camouflage, modifiers), change colours and function values, first-person
-weapons. A model or part outside what is drawn here is refused and counted,
-never drawn another way.
+camouflage, modifiers), change colours and function values. A model or
+part outside what is drawn here is refused and counted, never drawn another
+way.
+HWI-084: render_model's walk (detail level, region permutations, each part
+in its pass, the node matrices once a model has a part in the pass) is
+shared with the first-person weapon (render_first_person_engine.c), through
+render_models_engine.h.
 */
 
 #include "cseries.h"
@@ -53,6 +57,7 @@ never drawn another way.
 #include "tag_files/tag_files.h"
 
 #include "wii_render.h"
+#include "render_models_engine.h"
 #include "../engine/wii_platform.h"
 
 /* (structure_visibility.c's; wii_objects.c declares it so too) */
@@ -195,13 +200,21 @@ static boolean render_objects_first_person_camera(
 		scripted_camera_object_is_first_person_camera(object_index);
 }
 
-/* render_model's relative node matrices, as the vertex shader's constants */
-static short render_objects_palette(
-	long object_index,
-	struct object_datum const *object,
-	struct model const *model)
+struct render_objects_palette_context
 {
-	short node_count = (short)MIN(model->nodes.count, WII_GX_MODEL_MAXIMUM_NODES);
+	long object_index;
+	struct object_datum const *object;
+	struct model const *model;
+};
+
+/* render_model's relative node matrices, as the vertex shader's constants:
+the object's node matrices (a wii_render_model_palette_proc) */
+static int render_objects_palette(
+	void *context,
+	float (*palette)[3][4])
+{
+	struct render_objects_palette_context const *objects = (struct render_objects_palette_context const *)context;
+	short node_count = (short)MIN(objects->model->nodes.count, WII_GX_MODEL_MAXIMUM_NODES);
 	real_matrix4x3 const *node_matrices;
 	short node_index;
 
@@ -209,31 +222,16 @@ static short render_objects_palette(
 		return 0;
 	/* the object's node matrices hold the model's nodes (an object of another
 	model's skeleton is not drawn) */
-	if (object->object.node_matrices.size < (long)(node_count * sizeof(real_matrix4x3)))
+	if (objects->object->object.node_matrices.size < (long)(node_count * sizeof(real_matrix4x3)))
 	{
 		wii_objects.node_block_short++;
 		return 0;
 	}
-	node_matrices = object_get_node_matrices(object_index);
+	node_matrices = object_get_node_matrices(objects->object_index);
 	for (node_index = 0; node_index < node_count; node_index++)
 	{
-		struct model_node *node = TAG_BLOCK_GET_ELEMENT(&model->nodes, node_index, struct model_node);
-		real_matrix4x3 relative;
-		float (*constants)[4] = wii_objects.palette[node_index];
-
-		matrix4x3_multiply(&node_matrices[node_index], &node->runtime_default_inverse_matrix, &relative);
-		constants[0][0] = relative.scale * relative.forward.i;
-		constants[0][1] = relative.scale * relative.left.i;
-		constants[0][2] = relative.scale * relative.up.i;
-		constants[0][3] = relative.position.x;
-		constants[1][0] = relative.scale * relative.forward.j;
-		constants[1][1] = relative.scale * relative.left.j;
-		constants[1][2] = relative.scale * relative.up.j;
-		constants[1][3] = relative.position.y;
-		constants[2][0] = relative.scale * relative.forward.k;
-		constants[2][1] = relative.scale * relative.left.k;
-		constants[2][2] = relative.scale * relative.up.k;
-		constants[2][3] = relative.position.z;
+		wii_render_model_node_constants(&node_matrices[node_index],
+			TAG_BLOCK_GET_ELEMENT(&objects->model->nodes, node_index, struct model_node), palette[node_index]);
 	}
 
 	return node_count;
@@ -272,37 +270,99 @@ static void render_objects_model(
 {
 	struct object_definition *definition = object_definition_get(object->definition_index);
 	long model_index = definition->object.model.index;
-	struct model *model;
+	struct render_objects_palette_context context;
 	real level_of_detail_pixels;
-	short detail_level;
-	short region_count;
-	short region_index;
-	short node_count = 0;
-	boolean begun = FALSE;
+	int detail_level;
 
 	if (model_index == NONE)
 		return;
-	model = model_definition_get(model_index);
 	/* object_get_level_of_detail_pixels */
 	if (cinematic_in_progress() && TEST_FLAG(object->object.flags, _object_movie_star_bit))
 		level_of_detail_pixels = REAL_MAX;
 	else
 		level_of_detail_pixels = render_frustum_sphere_diameter_in_pixels(&render.frustum,
 			&object->object.bounding_sphere_center, object->object.bounding_sphere_radius);
-	if (!(level_of_detail_pixels >= model->detail_cutoff_pixels[0]))
+	detail_level = wii_render_model_detail_level(model_index, level_of_detail_pixels);
+	if (detail_level < 0)
 	{
 		wii_objects.lod_skipped += pass == _wii_gx_model_pass_solid;
 		return;
 	}
+	context.object_index = object_index;
+	context.object = object;
+	context.model = model_definition_get(model_index);
+	/* (render_model_parts reads each permutation as a char: NONE is none) */
+	if (wii_render_model_parts(model_index, (signed char const *)object->object.region_permutations,
+		MAXIMUM_REGIONS_PER_OBJECT, detail_level, pass, render_objects_palette, &context,
+		&wii_objects.data_errors) > 0)
+	{
+		wii_objects.models_drawn += pass == _wii_gx_model_pass_solid;
+	}
+}
+
+/* ---------- the model walk shared with the first-person weapon (render_models_engine.h) */
+
+void wii_render_model_node_constants(
+	real_matrix4x3 const *node_matrix,
+	struct model_node const *node,
+	float (*constants)[4])
+{
+	real_matrix4x3 relative;
+
+	matrix4x3_multiply(node_matrix, &node->runtime_default_inverse_matrix, &relative);
+	constants[0][0] = relative.scale * relative.forward.i;
+	constants[0][1] = relative.scale * relative.left.i;
+	constants[0][2] = relative.scale * relative.up.i;
+	constants[0][3] = relative.position.x;
+	constants[1][0] = relative.scale * relative.forward.j;
+	constants[1][1] = relative.scale * relative.left.j;
+	constants[1][2] = relative.scale * relative.up.j;
+	constants[1][3] = relative.position.y;
+	constants[2][0] = relative.scale * relative.forward.k;
+	constants[2][1] = relative.scale * relative.left.k;
+	constants[2][2] = relative.scale * relative.up.k;
+	constants[2][3] = relative.position.z;
+}
+
+int wii_render_model_detail_level(
+	long model_index,
+	real level_of_detail_pixels)
+{
+	struct model *model = model_definition_get(model_index);
+	short detail_level;
+
+	if (!(level_of_detail_pixels >= model->detail_cutoff_pixels[0]))
+		return -1;
 	detail_level = RENDER_OBJECTS_DETAIL_LEVELS - 1;
 	while (detail_level > 0 && level_of_detail_pixels < model->detail_cutoff_pixels[detail_level])
 		detail_level--;
-	region_count = (short)MIN(model->regions.count, MAXIMUM_REGIONS_PER_OBJECT);
+
+	return detail_level;
+}
+
+long wii_render_model_parts(
+	long model_index,
+	signed char const *permutations,
+	short permutation_count,
+	int detail_level,
+	int pass,
+	wii_render_model_palette_proc palette,
+	void *context,
+	unsigned long *data_errors)
+{
+	struct model *model = model_definition_get(model_index);
+	short region_count = (short)MIN(model->regions.count, permutation_count);
+	short region_index;
+	long handed = 0;
+	int node_count;
+	boolean begun = FALSE;
+
+	if (detail_level < 0 || detail_level >= RENDER_OBJECTS_DETAIL_LEVELS)
+		return 0;
 	for (region_index = 0; region_index < region_count; region_index++)
 	{
 		struct model_region *region = TAG_BLOCK_GET_ELEMENT(&model->regions, region_index, struct model_region);
-		/* (render_model_parts reads the permutation as a char: NONE is none) */
-		signed char permutation_index = (signed char)object->object.region_permutations[region_index];
+		signed char permutation_index = permutations[region_index];
 		struct model_region_permutation *permutation;
 		struct render_objects_model_geometry *geometry;
 		short geometry_index;
@@ -312,7 +372,7 @@ static void render_objects_model(
 			continue;
 		if (!VALID_INDEX(permutation_index, region->permutations.count))
 		{
-			wii_objects.data_errors += pass == _wii_gx_model_pass_solid;
+			*data_errors += pass == _wii_gx_model_pass_solid;
 			continue;
 		}
 		permutation = TAG_BLOCK_GET_ELEMENT(&region->permutations, permutation_index, struct model_region_permutation);
@@ -321,7 +381,7 @@ static void render_objects_model(
 			continue;
 		if (!VALID_INDEX(geometry_index, model->geometries.count))
 		{
-			wii_objects.data_errors += pass == _wii_gx_model_pass_solid;
+			*data_errors += pass == _wii_gx_model_pass_solid;
 			continue;
 		}
 		geometry = TAG_BLOCK_GET_ELEMENT(&model->geometries, geometry_index, struct render_objects_model_geometry);
@@ -338,7 +398,7 @@ static void render_objects_model(
 
 			if (!VALID_INDEX(part->shader_index, model->shaders.count))
 			{
-				wii_objects.data_errors += pass == _wii_gx_model_pass_solid;
+				*data_errors += pass == _wii_gx_model_pass_solid;
 				continue;
 			}
 			reference = TAG_BLOCK_GET_ELEMENT(&model->shaders, part->shader_index,
@@ -352,10 +412,13 @@ static void render_objects_model(
 			if (!begun)
 			{
 				begun = TRUE;
-				node_count = render_objects_palette(object_index, object, model);
-				if (!node_count || !wii_gx_model_begin((const float (*)[3][4])wii_objects.palette, node_count))
-					return;
-				wii_objects.models_drawn += pass == _wii_gx_model_pass_solid;
+				/* the node matrices, once the model has a part in this pass */
+				node_count = palette(context, wii_objects.palette);
+				if (node_count < 1 || node_count > WII_GX_MODEL_MAXIMUM_NODES ||
+					!wii_gx_model_begin((const float (*)[3][4])wii_objects.palette, node_count))
+				{
+					return -1;
+				}
 			}
 			vertex_descriptor = (struct render_objects_buffer_descriptor const *)part->vertex_buffer.hardware_format;
 			index_descriptor = (struct render_objects_buffer_descriptor const *)part->triangle_buffer.hardware_format;
@@ -373,10 +436,13 @@ static void render_objects_model(
 			/* (the GX side checks the pointers lie in the tag slot's tag data, and
 			refuses whatever is not its one vertex profile) */
 			wii_gx_model_part_draw(&description);
+			handed++;
 		}
 	}
-	if (begun && node_count)
+	if (begun)
 		wii_gx_model_end();
+
+	return handed;
 }
 
 /* render_object_list for one pass */

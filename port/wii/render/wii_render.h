@@ -41,6 +41,11 @@ Configuration: WII_ENGINE_ROOT/render.txt, optional, "key=value" lines:
                        the environment-only frame of before)
   model_skin_bytes=<bytes>  HWI-082: the models' skinning buffer, from the
                        BSP's store (default WII_RENDER_DEFAULT_MODEL_SKIN_BYTES)
+  first_person=0|1     HWI-084: draw the first-person weapon and hands
+                       (default 1, while models are drawn)
+  first_person_store_pose=0|1  HWI-084: keep each drawn frame's first-person
+                       orientations as the view model's last pose, which its
+                       state changes blend from (default 1)
   run_pose_ticks=<t>,...  the map run's sampled frames (game ticks; default
                        30,150,300)
   poses=<scenario path> [ticks=<t>,...] [switch_bsp=<t>:<i>,...] [overrides=each]
@@ -307,5 +312,77 @@ void wii_gx_models_unbind(void);
 unsigned long wii_gx_models_draw(void);
 void wii_gx_models_last(unsigned long *parts, unsigned long *refused, unsigned long *triangles);
 void wii_gx_models_report(void);
+
+/* ---------- HWI-084: the first-person weapon
+
+What render.c's render_window and render_objects do for it, in the same
+frame as the objects (render_first_person_engine.c, engine side):
+- first_person_weapon_render_update's pose and visibility, at its point
+  (after the frame's camera and visibility, with the objects' collect):
+  wii_render_first_person_collect, through the engine's
+  first_person_weapon_render_pose (interface/first_person_weapons.c): the
+  view model's state animation, overlays and interpolation, as the engine
+  computes them, into the animation graph's node matrices from the frame's
+  camera. On a drawn frame (store_pose) the orientations are kept as the
+  view model's last pose drawn, which its next state change blends from (a
+  presentation field of a frame-coupled allocation; nothing else of the game
+  state is written; pose checks store nothing).
+- first_person_weapon_draw: the weapon's first-person model, then the
+  first-person interface's hands, each through its own node remapping table
+  (model node -> graph node; every entry checked, a model of more than
+  WII_GX_MODEL_MAXIMUM_NODES nodes or with a bad entry refused, counted),
+  drawn as render_model draws them (level of detail 0 pixels, every region's
+  permutation 0, each part in its pass) through the objects' model walk
+  (render_models_engine.h) and the GX side's parts: the first-person passes
+  (wii_render_first_person_draw), after the objects', in the diagnostic
+  material, with the projection of the first-person near and far clip
+  distances (rasterizer_set_frustum_z's) in the front depth slice.
+Not drawn: the weapon's and hands' shaders, lighting
+(object_get_cached_render_lighting writes the render state cache), change
+colours, function values and active camouflage; first-person effects and
+particles (the view model's visible flag, which starts them, is not
+written); the sway inputs the render update writes (render facing, the
+facing of the last frame), so the turning and moving sway stay at rest. */
+
+/* the first-person passes' depth: the front 1/32 of the range (24 bits) */
+#define WII_GX_FIRST_PERSON_DEPTH_SLICE (1.0f / 32.0f)
+
+struct wii_gx_first_person_view
+{
+	float projection[4][4];  /* GX_PERSPECTIVE: the weapon's */
+	float restore[4][4];     /* the frame's, loaded again after */
+};
+
+/* the weapon's projection from the frame's (GX_PERSPECTIVE rows): x and y
+kept, depth from the first-person near and far clip distances into the
+front slice [0, slice] of the depth range (render_first_person_projection.c);
+1 if the distances and slice are usable (0 < near < far, 0 < slice <= 1) */
+int wii_gx_first_person_projection(const float frame[4][4], float near_distance, float far_distance, float slice,
+	float out[4][4]);
+
+typedef void (*wii_gx_first_person_proc)(int pass);
+
+/* engine side: the frame's pose (view: the frame's GX view, after its
+visibility; store_pose: a drawn frame, not a pose check), one pass of its
+draw, and forget (the map's end, or a diagnostic camera: nothing collected
+is drawn after it) */
+void wii_render_first_person_collect(const struct wii_gx_view *view, int store_pose);
+void wii_render_first_person_draw(int pass);
+void wii_render_first_person_forget(void);
+/* RENDER_FIRST_PERSON: the engine side's counts */
+void wii_render_first_person_report(const char *when);
+
+/* GX side (render_models_gx.c): render.txt's first_person=0|1 (default 1:
+drawn while models are) and first_person_store_pose=0|1 (default 1), as
+read_config hands it lines (1 if the line was one of these) */
+int wii_gx_models_config_line(const char *line);
+int wii_gx_first_person_enabled(void);
+int wii_gx_first_person_store_pose(void);
+void wii_gx_set_first_person_proc(wii_gx_first_person_proc proc);
+/* the frame's first-person projection (NULL: no first-person weapon this
+frame); copied, valid until the next call */
+void wii_gx_first_person_view_set(const struct wii_gx_first_person_view *view);
+/* the last draw's first-person parts (included in wii_gx_models_last's) */
+void wii_gx_first_person_last(unsigned long *parts, unsigned long *refused, unsigned long *triangles);
 
 #endif

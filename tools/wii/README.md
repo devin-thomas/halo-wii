@@ -581,3 +581,17 @@ renderer's one compressed model vertex profile (`port/wii/content/hwm_model.h`).
 python -B tools/wii/model_vertex_probe.py --map <your staged .wmap>
 python -B -m unittest test_model_skinning
 ```
+
+## First-person weapon (HWI-084)
+
+`test_first_person_render.py` builds the first-person weapon's GX projection
+(`port/wii/render/render_first_person_projection.c`) with the host compiler
+and checks it (the frame's x and y, the first-person near plane at depth 0,
+its far plane at the front slice's end, the world behind it, 24-bit
+precision), and checks the engine seam's state boundary
+(`first_person_weapon_render_pose` writes only the view model's last pose,
+and only on drawn frames) and the build's lists.
+
+```powershell
+python -B -m unittest test_first_person_render
+```

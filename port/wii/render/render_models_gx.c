@@ -37,10 +37,22 @@
  * writes, after every opaque part. Culling is GX_CULL_BACK, the Xbox's
  * D3DCULL_CCW for models as for the environment; two-sided model shaders
  * draw both faces (GX_CULL_NONE).
+ *
+ * HWI-084, the first-person weapon: after the objects' three passes, the
+ * engine side's first-person proc draws the weapon's and the hands' first-
+ * person models in the same three passes, through the same part path,
+ * skinning buffer and fence, with the projection the engine side set for
+ * the frame (wii_gx_first_person_view_set): the frame's own x and y, depth
+ * from the first-person near and far clip distances into the front slice
+ * [0, WII_GX_FIRST_PERSON_DEPTH_SLICE] of the depth range, so that it is
+ * drawn over the world as the Xbox's stencil (written by the weapon, drawn
+ * first; rejecting the world after) makes it; then the frame's projection
+ * again. render.txt first_person=0 draws none (counted as disabled).
  */
 #include <gccore.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "wii_platform.h"
@@ -97,6 +109,16 @@ static struct {
     uint32_t node_count;
     struct model_stats frame, total;
     long refusals_logged;
+    /* HWI-084: the first-person weapon (render.txt first_person,
+    first_person_store_pose; both on unless set to 0) */
+    struct {
+        int disabled, no_store;
+        wii_gx_first_person_proc proc;
+        int view_valid, drawing;
+        struct wii_gx_first_person_view view;
+        struct model_stats frame, total;
+        unsigned long frames_drawn, frames_without_view;
+    } first_person;
 } models;
 
 void wii_gx_models_configure(int enabled, unsigned long skin_bytes)
@@ -106,6 +128,40 @@ void wii_gx_models_configure(int enabled, unsigned long skin_bytes)
     if (!models.skin_bytes)
         models.enabled = 0;
     models.token = DRAW_SYNC_FIRST;
+}
+
+int wii_gx_models_config_line(const char *line)
+{
+    if (!strncmp(line, "first_person=", 13))
+        models.first_person.disabled = strtol(line + 13, NULL, 10) == 0;
+    else if (!strncmp(line, "first_person_store_pose=", 24))
+        models.first_person.no_store = strtol(line + 24, NULL, 10) == 0;
+    else
+        return 0;
+    return 1;
+}
+
+int wii_gx_first_person_enabled(void)
+{
+    /* drawn through the models' path and skinning buffer */
+    return models.enabled && !models.first_person.disabled;
+}
+
+int wii_gx_first_person_store_pose(void)
+{
+    return wii_gx_first_person_enabled() && !models.first_person.no_store;
+}
+
+void wii_gx_set_first_person_proc(wii_gx_first_person_proc proc)
+{
+    models.first_person.proc = proc;
+}
+
+void wii_gx_first_person_view_set(const struct wii_gx_first_person_view *view)
+{
+    models.first_person.view_valid = view != NULL;
+    if (view)
+        models.first_person.view = *view;
 }
 
 int wii_gx_models_enabled(void)
@@ -185,10 +241,11 @@ static void refuse(enum refusal why, int detail, const struct wii_gx_model_part 
     if (models.refusals_logged < REFUSALS_LOGGED) {
         models.refusals_logged++;
         wii_log("RENDER_MODEL_PART_REFUSED reason=%s detail=%s vertex_type=%d vertices=%ld indices=%ld strip=%d "
-                "shader_type=%d nodes=%lu pass=%d skin_bytes=%lu (not drawn)\n", refusal_names[why],
+                "shader_type=%d nodes=%lu pass=%d first_person=%d skin_bytes=%lu (not drawn)\n", refusal_names[why],
                 why == REFUSE_VERTEX ? hwm_skin_result_name((enum hwm_skin_result)detail) : "-", part->vertex_type,
                 part->vertex_count, part->index_count, part->strip, part->shader_type,
-                (unsigned long)models.node_count, models.pass, (unsigned long)models.bytes);
+                (unsigned long)models.node_count, models.pass, models.first_person.drawing,
+                (unsigned long)models.bytes);
     }
 }
 
@@ -345,13 +402,73 @@ static void stats_merge(struct model_stats *into, const struct model_stats *from
         into->used_max = from->used_max;
 }
 
-unsigned long wii_gx_models_draw(void)
+/* what the first-person passes added to the frame's counts */
+static void stats_delta(struct model_stats *into, const struct model_stats *after, const struct model_stats *before)
+{
+    memset(into, 0, sizeof(*into));
+    into->models = after->models - before->models;
+    into->parts = after->parts - before->parts;
+    into->refused = after->refused - before->refused;
+    into->triangles = after->triangles - before->triangles;
+    into->vertices = after->vertices - before->vertices;
+    into->wraps = after->wraps - before->wraps;
+    into->fence_waits = after->fence_waits - before->fence_waits;
+    for (int i = 0; i < NUMBER_OF_REFUSALS; ++i)
+        into->refusals[i] = after->refusals[i] - before->refusals[i];
+    for (int i = 0; i < NUMBER_OF_HWM_SKIN_RESULTS; ++i)
+        into->vertex_refusals[i] = after->vertex_refusals[i] - before->vertex_refusals[i];
+    into->used_max = after->used_max;
+}
+
+static void set_pass_state(int pass)
 {
     static const u8 blend[NUMBER_OF_WII_GX_MODEL_PASSES] = {GX_BM_NONE, GX_BM_NONE, GX_BM_BLEND};
     static const u8 depth_write[NUMBER_OF_WII_GX_MODEL_PASSES] = {GX_TRUE, GX_FALSE, GX_FALSE};
 
+    models.pass = pass;
+    if (blend[pass] == GX_BM_BLEND)
+        GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+    else
+        GX_SetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
+    GX_SetZMode(GX_TRUE, GX_LEQUAL, depth_write[pass]);
+}
+
+/* HWI-084: the first-person weapon's three passes, with its projection, then
+the frame's projection again */
+static void first_person_passes(void)
+{
+    struct model_stats before = models.frame;
+    Mtx44 projection;
+
+    memset(&models.first_person.frame, 0, sizeof(models.first_person.frame));
+    if (!wii_gx_first_person_enabled() || !models.first_person.proc)
+        return;
+    if (!models.first_person.view_valid) {
+        models.first_person.frames_without_view++;
+        return;
+    }
+    memcpy(projection, models.first_person.view.projection, sizeof(projection));
+    GX_LoadProjectionMtx(projection, GX_PERSPECTIVE);
+    models.first_person.drawing = 1;
+    for (int pass = 0; pass < NUMBER_OF_WII_GX_MODEL_PASSES; ++pass) {
+        set_pass_state(pass);
+        models.first_person.proc(pass);
+    }
+    models.first_person.drawing = 0;
+    memcpy(projection, models.first_person.view.restore, sizeof(projection));
+    GX_LoadProjectionMtx(projection, GX_PERSPECTIVE);
+    stats_delta(&models.first_person.frame, &models.frame, &before);
+    models.first_person.frame.draws = 1;
+    models.first_person.frames_drawn += models.first_person.frame.parts > 0;
+    stats_merge(&models.first_person.total, &models.first_person.frame);
+}
+
+unsigned long wii_gx_models_draw(void)
+{
     memset(&models.frame, 0, sizeof(models.frame));
-    if (!models.enabled || !models.proc || !models.buffer || !tag_data_range(&models.tags_first, &models.tags_end))
+    memset(&models.first_person.frame, 0, sizeof(models.first_person.frame));
+    if (!models.enabled || (!models.proc && !models.first_person.proc) || !models.buffer ||
+        !tag_data_range(&models.tags_first, &models.tags_end))
         return 0;
     /* the last draw's parts may still be read from the buffer's start */
     fence_wait();
@@ -371,15 +488,13 @@ unsigned long wii_gx_models_draw(void)
     GX_SetCurrentMtx(GX_PNMTX0);
     GX_SetAlphaUpdate(GX_FALSE);
     models.drawing = 1;
-    for (int pass = 0; pass < NUMBER_OF_WII_GX_MODEL_PASSES; ++pass) {
-        models.pass = pass;
-        if (blend[pass] == GX_BM_BLEND)
-            GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
-        else
-            GX_SetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
-        GX_SetZMode(GX_TRUE, GX_LEQUAL, depth_write[pass]);
+    for (int pass = 0; models.proc && pass < NUMBER_OF_WII_GX_MODEL_PASSES; ++pass) {
+        set_pass_state(pass);
         models.proc(pass);
     }
+    /* HWI-084: the first-person weapon over them (render.c's render_objects
+    draws it first, under the stencil it writes; here its depth slice) */
+    first_person_passes();
     models.drawing = 0;
     models.palette = NULL;
     models.node_count = 0;
@@ -403,8 +518,28 @@ void wii_gx_models_last(unsigned long *parts, unsigned long *refused, unsigned l
     *triangles = models.frame.triangles;
 }
 
+void wii_gx_first_person_last(unsigned long *parts, unsigned long *refused, unsigned long *triangles)
+{
+    *parts = models.first_person.frame.parts;
+    *refused = models.first_person.frame.refused;
+    *triangles = models.first_person.frame.triangles;
+}
+
 void wii_gx_models_report(void)
 {
+    const struct model_stats *f = &models.first_person.total;
+    wii_log("RENDER_FIRST_PERSON_TOTALS enabled=%d store_pose=%d draws=%lu frames_drawn=%lu frames_without_view=%lu "
+            "models=%lu parts=%lu refused=%lu triangles=%lu vertices=%lu parts_max=%lu triangles_max=%lu wraps=%lu "
+            "refused_pointers=%lu refused_counts=%lu refused_vertex_type=%lu refused_index=%lu refused_capacity=%lu "
+            "refused_vertex=%lu vertex_node_stride=%lu vertex_node_range=%lu vertex_weight_range=%lu "
+            "vertex_position=%lu depth_slice=%.6f material=diagnostic_light_untextured (included in RENDER_MODEL_TOTALS)\n",
+            wii_gx_first_person_enabled(), wii_gx_first_person_store_pose(), f->draws, models.first_person.frames_drawn,
+            models.first_person.frames_without_view, f->models, f->parts, f->refused, f->triangles, f->vertices,
+            f->parts_max, f->triangles_max, f->wraps, f->refusals[REFUSE_POINTERS], f->refusals[REFUSE_COUNTS],
+            f->refusals[REFUSE_VERTEX_TYPE], f->refusals[REFUSE_INDEX], f->refusals[REFUSE_CAPACITY],
+            f->refusals[REFUSE_VERTEX], f->vertex_refusals[HWM_SKIN_NODE_STRIDE], f->vertex_refusals[HWM_SKIN_NODE_RANGE],
+            f->vertex_refusals[HWM_SKIN_WEIGHT_RANGE], f->vertex_refusals[HWM_SKIN_POSITION],
+            (double)WII_GX_FIRST_PERSON_DEPTH_SLICE);
     const struct model_stats *t = &models.total;
     wii_log("RENDER_MODEL_TOTALS enabled=%d skin_bytes=%lu draws=%lu models=%lu parts=%lu refused=%lu triangles=%lu "
             "vertices=%lu parts_max=%lu triangles_max=%lu skin_used_max=%lu wraps=%lu fence_waits=%lu "
