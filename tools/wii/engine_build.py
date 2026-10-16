@@ -101,12 +101,17 @@ RENDER_DIR = Path("port/wii/render")
 CONTENT_DIR = Path("port/wii/content")
 RENDER_ENGINE = (RENDER_DIR / "render_engine.c",
                  # HWI-016D: the boot mode's interface and frame
-                 RENDER_DIR / "render_ui.c")
+                 RENDER_DIR / "render_ui.c",
+                 # HWI-082: the objects in the rendered clusters, their models' node matrices and parts
+                 RENDER_DIR / "render_objects_engine.c")
 RENDER_GX = (RENDER_DIR / "render_gx.c",) + tuple(CONTENT_DIR / name for name in (
     "content_common.c", "content_sections.c", "hwl_lightmap.c", "hwt_texture.c")) + (
-    RENDER_DIR / "render_ui_gx.c",)
+    RENDER_DIR / "render_ui_gx.c",
+    # HWI-082: the model parts skinned from the tag slot (hwm_model.c's vertex profile) and drawn through GX
+    RENDER_DIR / "render_models_gx.c", CONTENT_DIR / "hwm_model.c")
 RENDER_HEADERS = (RENDER_DIR / "wii_render.h", RENDER_DIR / "wii_render_ui.h") + tuple(
-    CONTENT_DIR / name for name in ("content_common.h", "content_sections.h", "hwl_lightmap.h", "hwt_texture.h"))
+    CONTENT_DIR / name for name in ("content_common.h", "content_sections.h", "hwl_lightmap.h", "hwt_texture.h",
+                                    "hwm_model.h"))
 # HWI-016D: the boot mode's driver half (libogc; engine.dol only, like the
 # rasterizer's GX side): boot.txt, the manifests, the pad, the boot errors
 BOOT_DRIVER = (ENGINE_DIR / "boot_main.c",)

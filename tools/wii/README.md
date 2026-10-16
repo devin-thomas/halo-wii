@@ -567,3 +567,17 @@ remain. Selected serialization still copies only root/lightmap/material records,
 retaining original surface count/address words and excluding triangle payloads.
 Authored host cases and strict PPC compilation are separate from owned-data or
 PPC execution; earlier streaming evidence applies to its recorded source build.
+
+## Model vertex probe (HWI-082)
+
+`model_vertex_probe.py` reads one of your staged maps (`HWIMAP02`, either
+byte order) and prints counts only, never bytes or names: where each model
+part's vertex and index buffers lie in the tag slot and in which byte
+order, and how its vertices' node bytes and weights measure against the
+renderer's one compressed model vertex profile (`port/wii/content/hwm_model.h`).
+`test_model_skinning.py` checks that profile's decoder on authored vertices.
+
+```powershell
+python -B tools/wii/model_vertex_probe.py --map <your staged .wmap>
+python -B -m unittest test_model_skinning
+```

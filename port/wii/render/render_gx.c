@@ -170,6 +170,12 @@ static struct {
     long base_limit;
     unsigned long pool_max, pool_keep[2];
     int geometry_check;
+    /* HWI-082: the object models (render_models_gx.c) and their skinning
+    buffer, taken from the BSP's store after the material tables */
+    int models;
+    unsigned long model_skin_bytes;
+    void *model_skin;
+    uint32_t model_skin_taken;
     long run_pose_ticks[MAX_POSE_TICKS];
     int run_pose_count;
     char pose_map[MAX_POSE_PHASES][64];
@@ -373,6 +379,8 @@ static void config_defaults(void)
     gx.pool_keep[0] = POOL_KEEP_MEM1;
     gx.pool_keep[1] = POOL_KEEP_MEM2;
     gx.geometry_check = 1;
+    gx.models = 1;
+    gx.model_skin_bytes = WII_RENDER_DEFAULT_MODEL_SKIN_BYTES;
     memcpy(gx.run_pose_ticks, default_pose_ticks, sizeof(default_pose_ticks));
     gx.run_pose_count = 3;
     gx.pose_phases = 0;
@@ -407,6 +415,10 @@ static void read_config(void)
                 gx.pool_keep[1] = strtoul(comma + 1, NULL, 10);
         } else if (!strncmp(line, "geometry_check=", 15))
             gx.geometry_check = (int)strtol(line + 15, NULL, 10);
+        else if (!strncmp(line, "models=", 7))
+            gx.models = (int)strtol(line + 7, NULL, 10);
+        else if (!strncmp(line, "model_skin_bytes=", 17))
+            gx.model_skin_bytes = strtoul(line + 17, NULL, 10);
         else if (!strncmp(line, "run_pose_ticks=", 15)) {
             int count = parse_ticks(line + 15, gx.run_pose_ticks, MAX_POSE_TICKS);
             gx.run_pose_count = count > 0 ? count : 0;
@@ -451,6 +463,7 @@ int wii_render_configure(const struct wii_render_video *video)
 {
     memset(&gx, 0, sizeof(gx));
     read_config();
+    wii_gx_models_configure(gx.models, gx.model_skin_bytes);
     gx.configured = 1;
     gx.mode = (GXRModeObj *)video->mode;
     gx.xfb[0] = video->xfb[0];
@@ -490,9 +503,10 @@ int wii_render_configure(const struct wii_render_video *video)
         GX_DrawDone();
     }
     wii_log("RENDER_CONFIG enabled=%d poses_only=%d base_budget=%lu base_limit=%ld pool_max=%lu pool_keep=%lu,%lu "
-            "geometry=tag_slot geometry_check=%d run_pose_ticks=%d pose_phases=%d efb=%ux%u xfb=%ux%u\n",
+            "geometry=tag_slot geometry_check=%d models=%d model_skin_bytes=%lu run_pose_ticks=%d pose_phases=%d "
+            "efb=%ux%u xfb=%ux%u\n",
             gx.enabled, gx.poses_only, gx.base_budget, gx.base_limit, gx.pool_max, gx.pool_keep[0], gx.pool_keep[1],
-            gx.geometry_check, gx.run_pose_count, gx.pose_phases, gx.mode->fbWidth, gx.mode->efbHeight,
+            gx.geometry_check, wii_gx_models_enabled(), wii_gx_models_skin_bytes(), gx.run_pose_count, gx.pose_phases, gx.mode->fbWidth, gx.mode->efbHeight,
             gx.mode->fbWidth, gx.mode->xfbHeight);
     return gx.enabled;
 }
@@ -547,6 +561,7 @@ void wii_render_report(void)
             "geometry_equal=%ld geometry_missing=%ld\n", gx.loads, gx.pools, gx.load_ms_max, gx.owned_peak, gx.owned,
             SYS_GetArena1Lo(), arena1_free(), SYS_GetArena2Lo(), gx.mem1_free_min, gx.mem2_above_reserve_min,
             gx.checks, gx.checks_equal, gx.checks_missing);
+    wii_gx_models_report();
 }
 
 /* ---------- the render pool */
@@ -714,6 +729,12 @@ static void release_textures(void)
 
 void wii_gx_map_end(void)
 {
+    /* HWI-082: GX finishes reading the skinning buffer before the store goes back */
+    wii_gx_models_unbind();
+    if (gx.model_skin)
+        store_give(gx.model_skin, gx.model_skin_taken);
+    gx.model_skin = NULL;
+    gx.model_skin_taken = 0;
     if (gx.ready || gx.materials) {
         stats_log("RENDER_MAP_STATS", gx.loads, &gx.map_stats);
         stats_merge(&gx.totals, &gx.map_stats);
@@ -808,6 +829,19 @@ int wii_gx_map_begin(unsigned long bsp_tag_index, long material_count, long surf
     memset(gx.textures, 0, (size_t)gx.texture_capacity * sizeof(*gx.textures));
     for (long i = 0; i < material_count; ++i)
         gx.materials[i].lightmap_texture = gx.materials[i].base_texture = -1;
+    /* HWI-082: the object models' skinning buffer, before the textures fill
+    the store (without it the models are not drawn, and that is logged) */
+    if (wii_gx_models_skin_bytes()) {
+        gx.model_skin_taken = (uint32_t)wii_gx_models_skin_bytes();
+        gx.model_skin = store_take(gx.model_skin_taken);
+        if (!gx.model_skin) {
+            wii_log("RENDER_MODEL_SKIN_NOT_RESIDENT bsp_tag=%lu bytes=%lu pool=%lu used=%lu (object models not drawn)\n",
+                    bsp_tag_index, (unsigned long)gx.model_skin_taken, (unsigned long)pool_bytes(),
+                    (unsigned long)pool_used());
+            gx.model_skin_taken = 0;
+        }
+        wii_gx_models_bind(gx.model_skin, gx.model_skin_taken);
+    }
     gx.material_count = material_count;
     gx.surface_count = surface_count;
     gx.surfaces = surfaces;
@@ -1688,6 +1722,8 @@ void wii_gx_frame(const struct wii_gx_view *view, const unsigned long *surface_f
     u64 start = gettime();
     load_view(view);
     unsigned long triangles = draw_materials(surface_flags, material_drawn, DRAW_FULL, GX_CULL_BACK);
+    /* HWI-082: the object models over the environment */
+    wii_gx_models_draw();
     unsigned long submit = elapsed_us(start);
     u64 gp_start = gettime();
     GX_DrawDone();
@@ -1716,6 +1752,7 @@ void wii_gx_environment_draw(const struct wii_gx_view *view, const unsigned long
     u64 start = gettime();
     load_view(view);
     unsigned long triangles = draw_materials(surface_flags, material_drawn, DRAW_FULL, GX_CULL_BACK);
+    wii_gx_models_draw();
     unsigned long submit = elapsed_us(start);
     stats_add(&gx.map_stats, view->visibility_us, submit, 0, 0, triangles, view->visible_surfaces,
               view->rendered_clusters);
@@ -1775,6 +1812,13 @@ void wii_gx_pose_capture(const struct wii_gx_view *view, const unsigned long *su
     sample_grid(pose_full, GRID_X, GRID_Y);
     out->crc_full = samples_crc(pose_full, count, &out->covered);
     out->distinct = count_distinct(pose_full, count);
+    /* HWI-082: the object models over that draw: the samples they change
+    (the environment's checks below stay the environment's own) */
+    wii_gx_models_draw();
+    GX_DrawDone();
+    wii_gx_models_last(&out->model_parts, &out->model_parts_refused, &out->model_triangles);
+    sample_grid(pose_other, GRID_X, GRID_Y);
+    out->object_samples = count_differs(pose_full, pose_other, count);
     clear_efb();
     draw_materials(surface_flags, material_drawn, DRAW_LIGHTMAP_ONLY, GX_CULL_BACK);
     GX_DrawDone();
@@ -1814,9 +1858,10 @@ void wii_gx_pose_capture(const struct wii_gx_view *view, const unsigned long *su
             out->facing_back[k] += c == 0xFF0000u;
         }
     }
-    /* the full frame again, shown (frame dumps) */
+    /* the full frame again, shown (frame dumps), with the object models */
     clear_efb();
     draw_materials(surface_flags, material_drawn, DRAW_FULL, GX_CULL_BACK);
+    wii_gx_models_draw();
     GX_DrawDone();
     present(present_frames);
     GX_SetCullMode(GX_CULL_BACK);

@@ -3,8 +3,9 @@
 `engine.dol` draws the loaded map's structure BSP through GX every
 `game_frame`, from the engine's own render camera and with the engine's own
 visibility. This replaces the `rasterizer_initialize` the Wii build skipped
-(HWI-015B) with what the environment path needs. Everything else the
-renderer draws stays unsupported and reports itself (below).
+(HWI-015B) with what the environment path needs. HWI-082 adds the objects'
+models over it (real geometry and poses, diagnostic material: below).
+Everything else the renderer draws stays unsupported and reports itself.
 [Evidence](../../../docs/wii/evidence/2026-10-10-engine-environment-render.md)
 
 | File | Side | What |
@@ -89,9 +90,81 @@ drawn in the boot mode. Textures are read from
   environment material whose base map is not resident draws lightmap-only.
   The clear colour stands where the sky would be.
 
+## Object models (HWI-082)
+
+Every frame, in the map run, the boot mode and each pose check, the objects
+in the rendered clusters are drawn over the environment, inside the same GX
+draw, as models: the engine's real geometry, node matrices and permutations,
+with a diagnostic material.
+
+| File | Side | What |
+|---|---|---|
+| [`render_objects_engine.c`](render_objects_engine.c) | engine unit | the objects of the rendered clusters (`structure_visibility_find_objects`, with marks of its own: the engine's object marker writes each object's `magic_number`); `render_object_list`'s walk (children too; not the local player's unit in first person); `render_model`'s detail cutoff, level of detail and region permutations; the parts of each pass; the node matrices (the object's, times each node's `runtime_default_inverse_matrix`) |
+| [`render_models_gx.c`](render_models_gx.c) | libogc | each part skinned on the CPU from the tag slot into a bounded buffer and drawn as indexed strips or lists (`GX_VTXFMT3`), in three passes |
+| [`../content/hwm_model.c`](../content/hwm_model.c) | both | `hwm_skin_decode_le` and `hwm_skin_apply`: the one vertex profile (below) |
+
+**What is read.** Only the game state, as it stands: each object's node
+matrices as the simulation computed them (with their scale and animation;
+in the boot mode, the ports' interpolated pose), its region permutations,
+flags, children and bounding sphere; the model and shader tags. Not used:
+`object_get_cached_render_lighting` and `object_get_cached_render_state`
+(they write `cached_render_state_index` and the cache), the camera effect
+matrix (it writes player effects), the object marker. Each pose check's
+game-state digest, taken around the visibility and every draw, covers the
+models too.
+
+**The vertex profile.** A model part's vertex buffer stays where the
+staged map holds it: the tag slot's tag data, as the map holds it
+(little-endian; `map_stage.py` converts only what the game reads), with
+its index buffer (big-endian: model indices are converted). Its skinning
+fields are decoded as the Xbox's vertex declaration for this vertex reads
+them (`vertex_shader_declarations[0x78 / 4]`: PBYTE2 nodes, NORMSHORT1
+weight) with the node matrices as `rasterizer_set_model_skinning` loads
+them (three constant registers a node, every node of the model):
+node = byte / 3, the first node's weight s16 / 32767, the second's 1 minus
+it. `rasterizer_geometry_uncompress_vertices`' `(byte)weight / 255` is not
+what the hardware reads. Under a full weight (32767) the second node's
+weight is exactly 0 and its byte is not read. `tools/wii/model_vertex_probe.py`
+measures a staged map against these rules (counts only; on a10: every first
+node byte a triple below the model's nodes, every weight from 1560 to 32767,
+every partially weighted vertex's second byte a triple below them too; the
+fully weighted vertices' second bytes arbitrary; no part with local nodes).
+A part with any vertex outside the profile, a vertex type other than 5,
+buffers outside the tag data, an index past its vertices, or more vertices
+than the skinning buffer holds, is refused whole and counted
+(`RENDER_MODEL_PART_REFUSED`, the first 16 logged; `RENDER_MODEL_TOTALS`),
+never drawn with another node.
+
+**Memory and GX.** The skinning buffer (`model_skin_bytes`, default
+512 KiB: 32,768 vertices of 16 bytes, position F32 and colour RGBA8) is
+taken from the BSP's store after the material tables, before the textures
+fill it, and given back at the BSP's end; without it the models are not
+drawn (`RENDER_MODEL_SKIN_NOT_RESIDENT`). A frame fills it from its start; a
+part that does not fit what is left waits for GX and starts it again
+(`wraps`). Each draw ends with a draw sync token; the next draw and the
+buffer's release wait for it unless GX has passed it.
+
+**Material (diagnostic, labelled).** No texture, shader or lighting of the
+engine's: one fixed directional light over the skinned normal. Solid parts
+grey and opaque; the alpha-blended decals of model shaders light blue,
+depth-tested without depth writes; transparent shaders' parts a 50% magenta
+blend without depth writes, after every opaque part, in object order (not
+sorted by distance). `GX_CULL_BACK` (the Xbox's `D3DCULL_CCW`, as for the
+environment); two-sided model shaders draw both faces.
+
+**Logs.** `RENDER_POSE` and `RENDER_RUN_POSE` add the model parts drawn,
+refused and their triangles, and (poses) `object_samples`: the samples the
+models changed over the environment's full draw. `RENDER_OBJECTS`: the
+objects found (at most `MAXIMUM_RENDERED_OBJECTS`, the engine's), the
+models drawn and what was skipped, after the first frame with objects, at
+each pose phase's end and each map's end.
+
 ## What is not drawn (each reported `UNSUPPORTED render ...`)
 
-Objects and models, first-person weapons, the sky, decals, particles,
+Object models' shaders, textures and lighting (the material above),
+transparent sorting, model effects (active camouflage, modifiers), change
+colours, object shadows and widgets, first-person weapons (and their node
+remapping), the sky, decals, particles,
 contrails and weather, effects, lights, lens flares and shadows, water and
 fog, environment detail maps, bump maps, specular, reflections and
 self-illumination, mirrors and the HUD. The interface's widgets, menus and
@@ -140,7 +213,9 @@ rasterizer reported unsupported), `mode=poses_only` (skip the map run; only
 the fixed-pose checks, for short frame dumps), `base_budget=<bytes>`,
 `base_limit=<count>` (at most that many base maps, in coverage order:
 compares texture profiles at equal residency), `pool_max`, `pool_keep`,
-`geometry_check`, `run_pose_ticks=<t>,...` (the map run's sampled frames)
+`geometry_check`, `models=0|1` (HWI-082: the object models; 0 draws the
+environment alone, as before), `model_skin_bytes=<bytes>` (their skinning
+buffer), `run_pose_ticks=<t>,...` (the map run's sampled frames)
 and `poses=<scenario> [ticks=...] [switch_bsp=<t>:<i>,...] [overrides=each]`
 (a fixed-pose phase; with `overrides=each`, two labelled diagnostic cameras
 inside the BSP loaded at each tick: above one of its largest floor

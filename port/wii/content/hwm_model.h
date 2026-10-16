@@ -72,4 +72,63 @@ void hwm_release(struct hwm_model *model);
  * (HWM_PART_FORMAT), vertices (HWM_VERTEX_FORMAT), indices. */
 void hwm_digest(const struct hwm_model *model, unsigned char digest[32]);
 
+/* ---------- HWI-082: the compressed model vertex as the renderer consumes it
+ *
+ * One profile, the Xbox cache's: a model part's vertex buffer of
+ * _rasterizer_vertex_type_model_compressed (5), 32 bytes a vertex, read from
+ * the tag slot where map_stage.py leaves the payload as the map holds it
+ * (little-endian: the staging converts only what the game reads).
+ *
+ * The skinning fields are decoded as the Xbox's vertex declaration for this
+ * vertex consumes them (rasterizer_xbox_vertex_shaders_initialize.c,
+ * vertex_shader_declarations[0x78 / 4]: FLOAT3, NORMPACKED3 x3, NORMSHORT2,
+ * PBYTE2, NORMSHORT1), with the node matrices as rasterizer_set_model_skinning
+ * loads them (three constant registers a node, every node of the model):
+ *   node byte    the model's node times 3 (the constant register offset), so
+ *                node = byte / 3; a byte that is not a multiple of 3 is refused
+ *   node weight  NORMSHORT1: the first node's weight is s16 / 32767, the
+ *                second's 1 minus it (compress_real_to_int16_clamp writes it)
+ * rasterizer_geometry_uncompress_vertices' (byte)weight / 255 is not what the
+ * hardware reads, and is not used. A weight of 32767 gives the second node
+ * weight 0 exactly: its byte is not consumed (retail maps leave other values
+ * there) and is not checked. Anything else outside this profile is refused,
+ * never mapped to another node. tools/wii/model_vertex_probe.py measures a
+ * staged map against these rules (counts only).
+ *
+ * The node matrices are the renderer's (render_model's node matrix times the
+ * node's runtime_default_inverse_matrix), each as the vertex shader's three
+ * constants (node_matrix_constants): row r = scale * (forward, left, up)
+ * component r, then position component r. */
+#define HWM_SKIN_VERTEX_BYTES 32u
+#define HWM_SKIN_FULL_WEIGHT 32767
+#define HWM_SKIN_MAXIMUM_NODES 64u
+
+enum hwm_skin_result {
+    HWM_SKIN_OK = 0,
+    HWM_SKIN_NODE_STRIDE,  /* a consumed node byte is not a multiple of 3 */
+    HWM_SKIN_NODE_RANGE,   /* a consumed node is past the model's nodes */
+    HWM_SKIN_WEIGHT_RANGE, /* the weight is negative */
+    HWM_SKIN_POSITION,     /* the position is not finite */
+    NUMBER_OF_HWM_SKIN_RESULTS
+};
+
+struct hwm_skin_vertex {
+    float position[3];
+    float normal[3];
+    uint8_t node[2];   /* the model's nodes (byte / 3); node[1] == node[0] when unused */
+    float weight[2];
+};
+
+/* Decodes one little-endian compressed model vertex (HWM_SKIN_VERTEX_BYTES)
+ * against a model of node_count nodes (1..HWM_SKIN_MAXIMUM_NODES). */
+enum hwm_skin_result hwm_skin_decode_le(const unsigned char *in, uint32_t node_count, struct hwm_skin_vertex *out);
+
+/* The decoded vertex through the node matrices: the weighted sum of each
+ * consumed node's transform of the position and of the normal (the normal then
+ * normalised; left as the sum when its length is 0). */
+void hwm_skin_apply(const struct hwm_skin_vertex *vertex, const float (*palette)[3][4], float position[3],
+                    float normal[3]);
+
+const char *hwm_skin_result_name(enum hwm_skin_result result);
+
 #endif

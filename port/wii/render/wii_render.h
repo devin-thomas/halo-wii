@@ -37,6 +37,10 @@ Configuration: WII_ENGINE_ROOT/render.txt, optional, "key=value" lines:
   geometry_check=0|1   compare the drawn geometry, as the tag slot holds it,
                        with the content generation's HWL1 file, read in
                        chunks, at every BSP load (default 1)
+  models=0|1           HWI-082: draw the objects' models (default 1; 0 is
+                       the environment-only frame of before)
+  model_skin_bytes=<bytes>  HWI-082: the models' skinning buffer, from the
+                       BSP's store (default WII_RENDER_DEFAULT_MODEL_SKIN_BYTES)
   run_pose_ticks=<t>,...  the map run's sampled frames (game ticks; default
                        30,150,300)
   poses=<scenario path> [ticks=<t>,...] [switch_bsp=<t>:<i>,...] [overrides=each]
@@ -203,6 +207,10 @@ struct wii_gx_pose_result
 	unsigned long textured_triangles, base_missing_triangles;
 	/* the samples that show an environment material with a resident base map */
 	int textured_samples;
+	/* HWI-082: the samples the object models changed over the full draw, and
+	the model parts drawn, refused and their triangles */
+	int object_samples;
+	unsigned long model_parts, model_parts_refused, model_triangles;
 };
 
 void wii_gx_pose_capture(const struct wii_gx_view *view, const unsigned long *surface_flags,
@@ -219,5 +227,85 @@ void wii_render_environment_boot(void);
 int wii_render_environment_draw(const void *render_camera);
 void wii_gx_environment_draw(const struct wii_gx_view *view, const unsigned long *surface_flags,
 	const unsigned char *material_drawn);
+
+/* ---------- HWI-082: object models
+
+render_objects_engine.c (engine side) finds the objects in the rendered
+clusters as render_objects' find_rendered_objects does, with marks of its
+own (the engine's object marker writes each object's magic_number), right
+after each frame's visibility: wii_render_objects_collect. Then, from
+inside each GX draw, after the environment, the GX side asks it to draw one
+pass (wii_gx_objects_proc): it walks the objects as render_object_list does
+(children too; the local player's unit in first person is not drawn), and
+for each model render_model would draw (detail cutoff, level of detail,
+region permutations), sets the model's node matrices (wii_gx_model_begin:
+the object's node matrices times each node's runtime_default_inverse_matrix,
+as the vertex shader's constants) and hands each of its parts of that pass
+to the GX side (wii_gx_model_part_draw), which skins it on the CPU from the
+tag slot into a bounded buffer (hwm_skin_decode_le, hwm_skin_apply) and
+draws it. Only the game state is read: no render state cache
+(cached_render_state_index), no lighting cache, no camera effects.
+
+Material (diagnostic, labelled): no textures, no shader; one fixed
+directional light over the skinned normal. Solid parts opaque grey, the
+alpha-blended decal parts of model shaders light blue without depth writes,
+transparent parts a 50% magenta blend without depth writes, drawn after
+every opaque part in object order (unsorted). */
+
+enum wii_gx_model_pass
+{
+	_wii_gx_model_pass_solid,
+	_wii_gx_model_pass_decal,
+	_wii_gx_model_pass_transparent,
+	NUMBER_OF_WII_GX_MODEL_PASSES
+};
+
+#define WII_GX_MODEL_MAXIMUM_NODES 64
+#define WII_RENDER_DEFAULT_MODEL_SKIN_BYTES 524288UL
+
+struct wii_gx_model_part
+{
+	/* the part's vertex buffer as the tag slot holds it: vertex_count compressed
+	model vertices (type 5, 32 bytes, little-endian as staged) */
+	const void *vertices;
+	long vertex_count;
+	int vertex_type;
+	/* its triangle buffer: index_count u16 (big-endian: map_stage converts
+	model indices), a precompiled strip (1) or a triangle list (0) */
+	const void *indices;
+	long index_count;
+	int strip;
+	int shader_type;
+	int two_sided;          /* shader_model's two-sided flag: both faces drawn */
+};
+
+typedef void (*wii_gx_objects_proc)(int pass);
+
+/* engine side */
+void wii_render_objects_collect(void);
+void wii_render_objects_draw(int pass);
+/* RENDER_OBJECTS: the engine side's counts (when: a label) */
+void wii_render_objects_report(const char *when);
+/* GX side: the engine side's pass drawer; NULL draws no objects */
+void wii_gx_set_objects_proc(wii_gx_objects_proc proc);
+/* one model's node matrices (node_count, 1..WII_GX_MODEL_MAXIMUM_NODES, rows
+as hwm_model.h's palette); valid until wii_gx_model_end. 1 if accepted */
+int wii_gx_model_begin(const float (*palette)[3][4], int node_count);
+/* one part, skinned and drawn now (or refused, counted and logged); 1 if drawn */
+int wii_gx_model_part_draw(const struct wii_gx_model_part *part);
+void wii_gx_model_end(void);
+
+/* GX side, inside (render_gx.c <-> render_models_gx.c): render.txt's models
+and model_skin_bytes; the skinning buffer (from the BSP's store, given back
+at its end: wii_gx_models_unbind waits for GX first); one draw of every
+pass with the view loaded, returning the parts drawn; the totals */
+void wii_gx_models_configure(int enabled, unsigned long skin_bytes);
+int wii_gx_models_enabled(void);
+unsigned long wii_gx_models_skin_bytes(void);
+void wii_gx_models_bind(void *buffer, unsigned long bytes);
+void wii_gx_models_unbind(void);
+unsigned long wii_gx_models_draw(void);
+void wii_gx_models_last(unsigned long *parts, unsigned long *refused, unsigned long *triangles);
+void wii_gx_models_report(void);
 
 #endif

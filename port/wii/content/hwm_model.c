@@ -1,6 +1,7 @@
 /* HWM1 model geometry loader (HWI-008E). See hwm_model.h. */
 #include "hwm_model.h"
 
+#include <math.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -116,4 +117,78 @@ void hwm_digest(const struct hwm_model *m, unsigned char digest[32])
     content_records_digest(&sha, &vertex, m->vertices, m->vertex_count, sizeof(struct hwm_vertex));
     content_records_digest(&sha, &index, m->indices, m->index_count, 2);
     content_sha256_final(&sha, digest);
+}
+
+/* ---------- HWI-082: the compressed model vertex as the renderer consumes it */
+
+static uint32_t skin_le32(const unsigned char *p)
+{
+    return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24;
+}
+
+static enum hwm_skin_result skin_node(uint8_t byte, uint32_t node_count, uint8_t *node)
+{
+    if (byte % 3u)
+        return HWM_SKIN_NODE_STRIDE;
+    if (byte / 3u >= node_count)
+        return HWM_SKIN_NODE_RANGE;
+    *node = (uint8_t)(byte / 3u);
+    return HWM_SKIN_OK;
+}
+
+enum hwm_skin_result hwm_skin_decode_le(const unsigned char *in, uint32_t node_count, struct hwm_skin_vertex *out)
+{
+    for (int c = 0; c < 3; ++c) {
+        uint32_t bits = skin_le32(in + 4 * c);
+        memcpy(&out->position[c], &bits, 4);
+        if (!isfinite(out->position[c]))
+            return HWM_SKIN_POSITION;
+    }
+    content_unpack_vector(skin_le32(in + 12), out->normal);
+    int16_t weight = (int16_t)(uint16_t)((uint16_t)in[30] | (uint16_t)in[31] << 8);
+    if (weight < 0)
+        return HWM_SKIN_WEIGHT_RANGE;
+    enum hwm_skin_result result = skin_node(in[28], node_count, &out->node[0]);
+    if (result != HWM_SKIN_OK)
+        return result;
+    if (weight == HWM_SKIN_FULL_WEIGHT) {
+        /* the second node's weight is 1 - 32767 / 32767 = 0: not consumed */
+        out->node[1] = out->node[0];
+        out->weight[0] = 1.0f;
+        out->weight[1] = 0.0f;
+        return HWM_SKIN_OK;
+    }
+    result = skin_node(in[29], node_count, &out->node[1]);
+    if (result != HWM_SKIN_OK)
+        return result;
+    out->weight[0] = (float)weight * (1.0f / 32767.0f);
+    out->weight[1] = 1.0f - out->weight[0];
+    return HWM_SKIN_OK;
+}
+
+void hwm_skin_apply(const struct hwm_skin_vertex *v, const float (*palette)[3][4], float position[3], float normal[3])
+{
+    const int nodes = v->weight[1] != 0.0f ? 2 : 1;
+    for (int r = 0; r < 3; ++r)
+        position[r] = normal[r] = 0.0f;
+    for (int k = 0; k < nodes; ++k) {
+        const float (*m)[4] = palette[v->node[k]];
+        const float w = v->weight[k];
+        for (int r = 0; r < 3; ++r) {
+            position[r] += w * (m[r][0] * v->position[0] + m[r][1] * v->position[1] + m[r][2] * v->position[2] +
+                                m[r][3]);
+            normal[r] += w * (m[r][0] * v->normal[0] + m[r][1] * v->normal[1] + m[r][2] * v->normal[2]);
+        }
+    }
+    float length = sqrtf(normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]);
+    if (length > 0.0f)
+        for (int r = 0; r < 3; ++r)
+            normal[r] /= length;
+}
+
+const char *hwm_skin_result_name(enum hwm_skin_result result)
+{
+    static const char *const names[NUMBER_OF_HWM_SKIN_RESULTS] = {"ok", "node_stride", "node_range", "weight_range",
+                                                                  "position"};
+    return (unsigned)result < NUMBER_OF_HWM_SKIN_RESULTS ? names[result] : "unknown";
 }
