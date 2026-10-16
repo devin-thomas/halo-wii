@@ -418,6 +418,68 @@ static struct game_state_schema_field const sound_classes_fields[] =
 static struct game_state_schema const sound_classes_schema =
 	SCHEMA("sound_classes", 0x264, sound_classes_fields);
 
+/* ---------- reference_lists.h: a reference list's datum (reference_list_new's
+"%s reference": object_lists.c's "list object reference", and each cluster
+partition's two, cluster_partitions.c's "cluster %s reference" and "%s cluster
+reference"; checked there): what it refers to and the next reference in its
+list (a datum handle of the same array, NONE the last). A reference of an
+object list or of a cluster's list refers to a datum (an object's or a
+light's datum handle); a reference of a datum's list of clusters refers to a
+cluster, its index (cluster_partition_reconnect's, a short kept as a long).
+The pad word is named by no code: datum_initialize clears it, and it is only
+ever copied with its whole datum from another such (reference_list_copy), so
+it is always zero */
+
+static struct game_state_schema_field const data_reference_fields[] =
+{
+	SCHEMA_FIELD("identifier", _game_state_schema_identifier, 0x0, 1),
+	SCHEMA_FIELD("pad", _game_state_schema_padding, 0x2, 2),
+	SCHEMA_FIELD("datum_index", _game_state_schema_datum_index, 0x4, 1),
+	SCHEMA_FIELD("next_reference_index", _game_state_schema_datum_index, 0x8, 1),
+};
+static struct game_state_schema const data_reference_schema =
+	SCHEMA("data_reference", 0xC, data_reference_fields);
+
+static struct game_state_schema_field const cluster_reference_fields[] =
+{
+	SCHEMA_FIELD("identifier", _game_state_schema_identifier, 0x0, 1),
+	SCHEMA_FIELD("pad", _game_state_schema_padding, 0x2, 2),
+	SCHEMA_FIELD("cluster_index", _game_state_schema_s32, 0x4, 1),
+	SCHEMA_FIELD("next_reference_index", _game_state_schema_datum_index, 0x8, 1),
+};
+static struct game_state_schema const cluster_reference_schema =
+	SCHEMA("cluster_reference", 0xC, cluster_reference_fields);
+
+/* ---------- cluster_partitions.c: each of a structure's 512 clusters' first
+reference in its partition's list of datums (a datum handle of "cluster %s
+reference", NONE none), allocated under the partition's name ("collideable
+object", "noncollideable object", "light"; checked there) */
+
+static struct game_state_schema_field const cluster_first_references_fields[] =
+{
+	/* [MAXIMUM_CLUSTERS_PER_STRUCTURE 512] */
+	SCHEMA_FIELD("cluster_first_data_references", _game_state_schema_datum_index, 0x0, 512),
+};
+static struct game_state_schema const cluster_first_references_schema =
+	SCHEMA("cluster_first_data_references", 0x800, cluster_first_references_fields);
+
+/* ---------- object_lists.h: an object list's datum ("object list header";
+checked in object_lists.c): the scripts' references to it, its objects'
+count and its first reference (a datum handle of "list object reference",
+NONE none). Its pad word, as a reference's, is named by no code and only
+cleared by datum_initialize */
+
+static struct game_state_schema_field const object_list_header_fields[] =
+{
+	SCHEMA_FIELD("identifier", _game_state_schema_identifier, 0x0, 1),
+	SCHEMA_FIELD("pad", _game_state_schema_padding, 0x2, 2),
+	SCHEMA_FIELD("reference_count", _game_state_schema_s16, 0x4, 1),
+	SCHEMA_FIELD("count", _game_state_schema_s16, 0x6, 1),
+	SCHEMA_FIELD("first_reference_index", _game_state_schema_datum_index, 0x8, 1),
+};
+static struct game_state_schema const object_list_header_schema =
+	SCHEMA("object_list_header_datum", 0xC, object_list_header_fields);
+
 /* ---------- the classes by name */
 
 struct schema_class
@@ -443,6 +505,17 @@ static struct schema_class const schema_classes[] =
 	{ "object looping sounds", _game_state_schema_region_data_array, &game_looping_sound_schema },
 	{ "game sound globals", _game_state_schema_region_global, &game_sound_globals_schema },
 	{ "sound classes", _game_state_schema_region_global, &sound_classes_schema },
+	{ "object list header", _game_state_schema_region_data_array, &object_list_header_schema },
+	{ "list object reference", _game_state_schema_region_data_array, &data_reference_schema },
+	{ "collideable object", _game_state_schema_region_global, &cluster_first_references_schema },
+	{ "cluster collideable object reference", _game_state_schema_region_data_array, &data_reference_schema },
+	{ "collideable object cluster reference", _game_state_schema_region_data_array, &cluster_reference_schema },
+	{ "noncollideable object", _game_state_schema_region_global, &cluster_first_references_schema },
+	{ "cluster noncollideable object reference", _game_state_schema_region_data_array, &data_reference_schema },
+	{ "noncollideable object cluster reference", _game_state_schema_region_data_array, &cluster_reference_schema },
+	{ "light", _game_state_schema_region_global, &cluster_first_references_schema },
+	{ "cluster light reference", _game_state_schema_region_data_array, &data_reference_schema },
+	{ "light cluster reference", _game_state_schema_region_data_array, &cluster_reference_schema },
 };
 
 static boolean schema_names_equal(

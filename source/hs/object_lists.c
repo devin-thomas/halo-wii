@@ -75,6 +75,17 @@ enum
 
 /* ---------- structures */
 
+/* port (HWI-080): game_state_schema_classes.c's "object list header" schema
+("list object reference": cluster_partitions.c checks a reference's) */
+typedef char object_list_header_schema_check[
+	sizeof(struct object_list_header_datum) == 0xC &&
+	offsetof(struct object_list_header_datum, identifier) == 0x0 &&
+	offsetof(struct object_list_header_datum, pad) == 0x2 &&
+	offsetof(struct object_list_header_datum, reference_count) == 0x4 &&
+	offsetof(struct object_list_header_datum, count) == 0x6 &&
+	offsetof(struct object_list_header_datum, first_reference_index) == 0x8 &&
+	sizeof(((struct object_list_header_datum *)0)->first_reference_index) == 4 ? 1 : -1];
+
 /* ---------- prototypes */
 
 /* ---------- globals */

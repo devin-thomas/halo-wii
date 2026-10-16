@@ -18,6 +18,14 @@ IMAGE_HEADER = SAVED / "game_state_image.h"
 GAME_STATE = SAVED / "game_state.c"
 SCHEMA = SAVED / "game_state_schema.c"
 CLASSES = SAVED / "game_state_schema_classes.c"
+# the cluster partitions (cluster_partition_new's names: objects.c, object_lights.c), and the allocations each
+# census row of them stands for
+CLUSTER_PARTITIONS = ("collideable object", "noncollideable object", "light")
+CLUSTER_PARTITION_ROWS = {
+    "cluster partition first references": list(CLUSTER_PARTITIONS),
+    "cluster partition data references": ["cluster " + name + " reference" for name in CLUSTER_PARTITIONS],
+    "cluster partition cluster references": [name + " cluster reference" for name in CLUSTER_PARTITIONS],
+}
 
 
 def compiler():
@@ -52,8 +60,8 @@ class CodecFixtureTests(unittest.TestCase):
             match = re.fullmatch(r"ok (\d+) cases\s*", result.stdout)
             self.assertIsNotNone(match, result.stdout)
             # (127 before the globals of scalars: game_state_schema_check.c's check_named_globals; 249 before
-            # the sound state: check_sound_state)
-            self.assertGreaterEqual(int(match.group(1)), 290)
+            # the sound state: check_sound_state; 298 before the reference lists: check_reference_lists)
+            self.assertGreaterEqual(int(match.group(1)), 360)
 
 
 class DispatchTests(unittest.TestCase):
@@ -171,7 +179,9 @@ class SchemaSourceTests(unittest.TestCase):
                                         path.read_text(encoding="utf-8", errors="replace")))
         census = (ROOT / "tools/wii/game_state_census.py").read_text(encoding="utf-8")
         for name in named:
-            if name == "header":
+            # (a cluster partition's first references are allocated under the partition's name, given at run time:
+            # test_reference_lists_are_the_engines)
+            if name == "header" or name in CLUSTER_PARTITIONS:
                 continue
             self.assertIn(name, allocated)
             self.assertIn('("' + name + '", ', census)
@@ -202,6 +212,17 @@ class SchemaSourceTests(unittest.TestCase):
                 "sizeof(struct sound_class_datum) == 0xC",
                 "NUMBER_OF_SOUND_CLASSES * sizeof(struct sound_class_datum) == 0x264",
                 "offsetof(struct sound_class_datum, ticks) == 0x8"],
+            "source/structures/cluster_partitions.c": [
+                "sizeof(struct data_reference) == 0xC",
+                "offsetof(struct data_reference, pad) == 0x2",
+                "offsetof(struct data_reference, datum_index) == 0x4",
+                "offsetof(struct data_reference, next_reference_index) == 0x8",
+                "MAXIMUM_CLUSTERS_PER_STRUCTURE * sizeof(*((struct cluster_partition *)0)->cluster_first_data_references) == 0x800"],
+            "source/hs/object_lists.c": [
+                "sizeof(struct object_list_header_datum) == 0xC",
+                "offsetof(struct object_list_header_datum, reference_count) == 0x4",
+                "offsetof(struct object_list_header_datum, count) == 0x6",
+                "offsetof(struct object_list_header_datum, first_reference_index) == 0x8"],
         }
         for path, needles in checks.items():
             text = (ROOT / path).read_text(encoding="utf-8")
@@ -286,23 +307,85 @@ class SchemaSourceTests(unittest.TestCase):
                                        text)
                 self.assertIsNotNone(allocation, f"{path.name}: {variable}")
                 schemad.add(allocation.group(1))
-        # (an lruv cache is its header and its blocks' data array: the engine's own containers' schemas)
-        unclaimed = [site[0] for site in game_state_census.SITES if site[0] not in schemad and site[2] != "lruv"]
+        # (an lruv cache is its header and its blocks' data array: the engine's own containers' schemas; a census
+        # row of the cluster partitions is claimed when each partition's allocation of it is)
+        unclaimed = [site[0] for site in game_state_census.SITES
+                     if not set(CLUSTER_PARTITION_ROWS.get(site[0], [site[0]])) <= schemad and site[2] != "lruv"]
         self.assertEqual(unclaimed, [
             "actor", "swarm", "swarm component", "ai globals", "ai communication dialogue", "ai communication replies",
             "ai conversation", "encounter", "squad", "platoon", "ai pursuit", "prop", "cinematic globals",
             "recorded animations", "device groups", "contrail", "contrail point", "decals", "effect", "effect location",
             "particle systems", "particle system particles", "particle", "player effects", "game globals",
-            "player control globals", "players", "teams", "players globals", "object list header",
-            "list object reference", "first person weapons", "hud messaging", "hud nav points", "hud unit interface",
-            "hud weapon interface", "motion sensor (radar)", "lights", "object",
+            "player control globals", "players", "teams", "players globals", "first person weapons", "hud messaging",
+            "hud nav points", "hud unit interface", "hud weapon interface", "motion sensor (radar)", "lights", "object",
             "objects (memory pool)",  # (its header typed; its blocks' contents, the objects, are not)
-            "object globals", "cluster partition first references", "cluster partition data references",
-            "cluster partition cluster references", "antenna", "flag", "glow", "glow particles", "widget",
-            "screen effect filth", "decal vertices", "cached object render states", "scenario globals",
-            "structure detail objects", "unit globals"])
-        for name in ("object looping sounds", "game sound globals", "sound classes"):
+            "object globals", "antenna", "flag", "glow", "glow particles", "widget", "screen effect filth",
+            "decal vertices", "cached object render states", "scenario globals", "structure detail objects",
+            "unit globals"])
+        for name in ("object looping sounds", "game sound globals", "sound classes", "object list header",
+                     "list object reference"):
             self.assertIn(name, schemad)
+        for names in CLUSTER_PARTITION_ROWS.values():
+            self.assertLessEqual(set(names), schemad)
+
+    def test_reference_lists_are_the_engines(self):
+        """HWI-080: the object lists' two data arrays and each cluster partition's three allocations are found by
+        the whole names the engine makes for them; a reference's and an object list's pad word is named by no code,
+        and a datum of either is only ever copied whole (reference_list_copy) from another of its array"""
+        classes = CLASSES.read_text(encoding="utf-8")
+        object_lists = (ROOT / "source/hs/object_lists.c").read_text(encoding="utf-8")
+        self.assertIn('game_state_data_new("object list header", MAXIMUM_OBJECT_LISTS_PER_MAP, '
+                      'sizeof(struct object_list_header_datum))', object_lists)
+        self.assertIn('reference_list_new("list object", MAXIMUM_LISTED_OBJECTS_PER_MAP)', object_lists)
+        reference_lists = (ROOT / "source/objects/reference_lists.h").read_text(encoding="utf-8")
+        self.assertIn('sprintf(buffer, "%s reference", name);\n\treturn game_state_data_new(buffer, maximum_count, '
+                      'sizeof(struct data_reference));', reference_lists)
+        partitions = (ROOT / "source/structures/cluster_partitions.c").read_text(encoding="utf-8")
+        new = function_body(partitions, "cluster_partition_new")
+        self.assertRegex(new, r"game_state_malloc\(\s*name,\s*\"cluster references\",\s*MAXIMUM_CLUSTERS_PER_STRUCTURE \* "
+                              r"sizeof\(\*partition->cluster_first_data_references\)\)")
+        data = new.index('sprintf(cluster_name, "cluster %s", name);')
+        cluster = new.index('sprintf(cluster_name, "%s cluster", name);', data)
+        self.assertIn("partition->data_reference_data = reference_list_new(cluster_name,", new[data:cluster])
+        self.assertIn("partition->cluster_reference_data = reference_list_new(cluster_name,", new[cluster:cluster + 200])
+        made = re.findall(r'cluster_partition_new\(&\w+, "([^"]+)"\)',
+                          (ROOT / "source/objects/objects.c").read_text(encoding="utf-8") +
+                          (ROOT / "source/objects/object_lights.c").read_text(encoding="utf-8"))
+        self.assertEqual(sorted(made), sorted(CLUSTER_PARTITIONS))
+        for partition in CLUSTER_PARTITIONS:
+            for name, kind, schema in ((partition, "global", "cluster_first_references_schema"),
+                                       ("cluster " + partition + " reference", "data_array", "data_reference_schema"),
+                                       (partition + " cluster reference", "data_array", "cluster_reference_schema")):
+                self.assertIn('{ "' + name + '", _game_state_schema_region_' + kind + ", &" + schema + " },", classes)
+        for name, schema in (("object list header", "object_list_header_schema"),
+                             ("list object reference", "data_reference_schema")):
+            self.assertIn('{ "' + name + '", _game_state_schema_region_data_array, &' + schema + " },", classes)
+        # (a cluster's reference holds a cluster index: cluster_partition_reconnect adds cluster_index,
+        # cluster_partition_disconnect reads it back as a short)
+        self.assertIn("partition->cluster_reference_data,\n\t\t\tfirst_cluster_reference,\n\t\t\tcluster_index,", partitions)
+        self.assertIn("short const cluster_index = (short)cluster_reference->datum_index;", partitions)
+        # the pad words: never named, nor a datum compared or set as a whole outside data.c's datum code
+        users = {path: path.read_text(encoding="utf-8", errors="replace") for path in (ROOT / "source").rglob("*.[ch]")}
+        users = {path: text for path, text in users.items()
+                 if re.search(r"struct (?:data_reference|object_list_header_datum)\b", text)}
+        self.assertEqual(sorted(path.name for path in users),
+                         ["cluster_partitions.c", "object_lists.c", "object_lists.h", "reference_lists.h"])
+        # (and the accessors of their datums are used nowhere else)
+        for path in (ROOT / "source").rglob("*.[ch]"):
+            if path not in users:
+                self.assertIsNone(re.search(r"\bobject_list_(?:header_)?get\(", path.read_text(encoding="utf-8",
+                                                                                              errors="replace")), path.name)
+        for path, text in users.items():
+            # (but its layout check's sizeof(((struct data_reference *)0)->pad))
+            self.assertIsNone(re.search(r"(?<!\*\)0\))(?:->|\.)pad\b", text), path.name)
+            self.assertIsNone(re.search(r"\b(?:cs)?mem(?:cpy|cmp|set)\s*\(\s*(?:\(\w+ \*\))?\s*&?\s*\*?\s*(?:reference|list)\b",
+                                        text), path.name)
+        whole = [line.strip() for text in users.values() for line in text.splitlines()
+                 if re.search(r"\*\s*\w*(?:reference|list)\s*=\s*\*\s*\w+\s*;", line)]
+        self.assertEqual(whole, ["*result_reference = *source_reference;"])
+        # (and datum_initialize clears a whole datum before it is given out)
+        data = (ROOT / "source/memory/data.c").read_text(encoding="utf-8")
+        self.assertIn("csmemset(header, 0, data->size);", function_body(data, "datum_initialize"))
 
     def test_every_allocation_is_a_region(self):
         text = GAME_STATE.read_text(encoding="utf-8")

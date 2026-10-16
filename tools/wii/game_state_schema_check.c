@@ -24,6 +24,13 @@ bytes written out by hand below, not made by the codec:
   order, as one stream too (free looping sounds their identifiers only, pad
   bytes dropped), is taken at another base, and beside HS globals' cells the
   gate stays shut: nothing written, read or taken;
+- the reference lists (object lists and their references, each cluster
+  partition's first references and two lists, a cluster's datums and a
+  datum's clusters, found by their whole allocation names) encode to
+  specified wire bytes from either byte order, pad words dropped, as one
+  stream too, are taken at another base and checked without taking; an
+  array of another element size is unclaimed, and beside HS globals' cells
+  the gate stays shut;
 - a whole typed stream of the engine's own classes (the game state header,
   a data array with free elements, an lruv cache) is the same from either
   byte order, is checked without being taken, is taken at another base, and
@@ -1702,6 +1709,454 @@ static void check_sound_state(void)
 	CHECK(index == SOUND_STATE_BYTES, "nothing of the state taken");
 }
 
+/* ---------- HWI-080: the reference lists: object_lists.c's object lists and
+their references, and a cluster partition's (cluster_partitions.c) first
+references, its clusters' lists of datums and its datums' lists of clusters */
+
+enum
+{
+	REFERENCE_BYTES = 0xC,
+	REFERENCE_WIRE_BYTES = 10,
+	FIRST_REFERENCES_BYTES = 0x800,
+	CLUSTER_COUNT = 512,
+	/* the regions: 2 object lists, 3 list object references, the light
+	partition's first references, 2 of its clusters' references, 2 of its
+	lights' */
+	LISTS_AT = 0x0,
+	LISTS_COUNT = 2,
+	LISTED_AT = LISTS_AT + 0x38 + LISTS_COUNT * REFERENCE_BYTES,
+	LISTED_COUNT = 3,
+	FIRST_AT = LISTED_AT + 0x38 + LISTED_COUNT * REFERENCE_BYTES,
+	CLUSTER_DATA_AT = FIRST_AT + FIRST_REFERENCES_BYTES,
+	CLUSTER_DATA_COUNT = 2,
+	DATA_CLUSTERS_AT = CLUSTER_DATA_AT + 0x38 + CLUSTER_DATA_COUNT * REFERENCE_BYTES,
+	DATA_CLUSTERS_COUNT = 2,
+	REFERENCES_CPU_USED = DATA_CLUSTERS_AT + 0x38 + DATA_CLUSTERS_COUNT * REFERENCE_BYTES,
+	/* (and HS globals after them: 2 of hs_global_datum) */
+	REFERENCES_HS_AT = REFERENCES_CPU_USED,
+	REFERENCES_STATE_BYTES = REFERENCES_HS_AT + 0x38 + 2 * 8,
+	/* on the wire: each array's header, its elements in use, the others'
+	identifiers; the first references every one */
+	LISTS_WIRE_AT = 0,
+	LISTED_WIRE_AT = LISTS_WIRE_AT + 54 + REFERENCE_WIRE_BYTES + 2,
+	FIRST_WIRE_AT = LISTED_WIRE_AT + 54 + 2 * REFERENCE_WIRE_BYTES + 2,
+	CLUSTER_DATA_WIRE_AT = FIRST_WIRE_AT + FIRST_REFERENCES_BYTES,
+	DATA_CLUSTERS_WIRE_AT = CLUSTER_DATA_WIRE_AT + 54 + 2 * REFERENCE_WIRE_BYTES,
+	REFERENCES_STREAM_BYTES = DATA_CLUSTERS_WIRE_AT + 54 + REFERENCE_WIRE_BYTES + 2,
+};
+
+/* an object list in use: identifier 0xE001, its pad word, 1 script's
+reference, 2 objects, its first reference 0xE0020001 */
+static byte const object_list_little[REFERENCE_BYTES] =
+	{ 0x01, 0xE0, 0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x02, 0xE0 };
+static byte const object_list_big[REFERENCE_BYTES] =
+	{ 0xE0, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0xE0, 0x02, 0x00, 0x01 };
+static byte const object_list_wire[REFERENCE_WIRE_BYTES] =
+{
+	0x01, 0xE0, /* identifier */
+	0x01, 0x00, /* reference_count */
+	0x02, 0x00, /* count */
+	0x01, 0x00, 0x02, 0xE0, /* first_reference_index */
+};
+
+/* a reference of a cluster's list: identifier 0xE002, the light 0xE4A10003,
+the next reference 0xE0010000 */
+static byte const data_reference_little[REFERENCE_BYTES] =
+	{ 0x02, 0xE0, 0x00, 0x00, 0x03, 0x00, 0xA1, 0xE4, 0x00, 0x00, 0x01, 0xE0 };
+static byte const data_reference_big[REFERENCE_BYTES] =
+	{ 0xE0, 0x02, 0x00, 0x00, 0xE4, 0xA1, 0x00, 0x03, 0xE0, 0x01, 0x00, 0x00 };
+static byte const data_reference_wire[REFERENCE_WIRE_BYTES] =
+{
+	0x02, 0xE0, /* identifier */
+	0x03, 0x00, 0xA1, 0xE4, /* datum_index */
+	0x00, 0x00, 0x01, 0xE0, /* next_reference_index */
+};
+
+/* a reference of a light's list of clusters: identifier 0xE001, cluster
+499, the last of its list (NONE) */
+static byte const cluster_reference_little[REFERENCE_BYTES] =
+	{ 0x01, 0xE0, 0x00, 0x00, 0xF3, 0x01, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF };
+static byte const cluster_reference_big[REFERENCE_BYTES] =
+	{ 0xE0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0xF3, 0xFF, 0xFF, 0xFF, 0xFF };
+static byte const cluster_reference_wire[REFERENCE_WIRE_BYTES] =
+{
+	0x01, 0xE0, /* identifier */
+	0xF3, 0x01, 0x00, 0x00, /* cluster_index */
+	0xFF, 0xFF, 0xFF, 0xFF, /* next_reference_index */
+};
+
+/* an element of the named data array from the native bytes of either byte
+order (pad bytes dirty there): the same specified wire bytes, taken back
+into either order with the pad zero */
+static void check_reference_round_trip(char const *name, char const *kind, byte const *little, byte const *big,
+	byte const *expected_wire)
+{
+	struct game_state_schema const *schema =
+		game_state_schema_class_find(name, _game_state_schema_region_data_array, REFERENCE_BYTES);
+	struct game_state_schema_state little_state;
+	struct game_state_schema_state big_state;
+	byte dirty_little[REFERENCE_BYTES];
+	byte dirty_big[REFERENCE_BYTES];
+	byte wire[REFERENCE_WIRE_BYTES];
+	byte other[REFERENCE_WIRE_BYTES];
+	byte native[REFERENCE_BYTES];
+	short field_index;
+
+	CHECK(schema && !game_state_schema_validate_element(schema, REFERENCE_BYTES, &field_index) &&
+		game_state_schema_wire_size(schema) == REFERENCE_WIRE_BYTES, "%s: an element schema, all but its pad on the wire", name);
+	CHECK(!game_state_schema_class_find(name, _game_state_schema_region_global, REFERENCE_BYTES) &&
+		!game_state_schema_class_find(name, _game_state_schema_region_data_array, REFERENCE_BYTES + 4),
+		"%s: not found at another kind or size", name);
+	if (!schema)
+		return;
+	little_state = make_state(native, REFERENCE_BYTES, BASE, TAGS, FALSE);
+	big_state = make_state(native, REFERENCE_BYTES, OTHER_BASE, OTHER_TAGS, TRUE);
+	memcpy(dirty_little, little, REFERENCE_BYTES);
+	memcpy(dirty_big, big, REFERENCE_BYTES);
+	dirty_little[2] = dirty_big[2] = 0x5A;
+	dirty_little[3] = dirty_big[3] = 0xA5;
+	CHECK(game_state_schema_encode(schema, &little_state, dirty_little, BASE, wire, REFERENCE_WIRE_BYTES) ==
+		_game_state_schema_stream_ok && !memcmp(wire, expected_wire, REFERENCE_WIRE_BYTES),
+		"%s, little-endian: the wire bytes as specified", kind);
+	dump_difference(kind, wire, expected_wire, REFERENCE_WIRE_BYTES);
+	CHECK(game_state_schema_encode(schema, &big_state, dirty_big, OTHER_BASE, other, REFERENCE_WIRE_BYTES) ==
+		_game_state_schema_stream_ok && !memcmp(other, expected_wire, REFERENCE_WIRE_BYTES),
+		"%s, big-endian: the same wire bytes", kind);
+	dump_difference(kind, other, expected_wire, REFERENCE_WIRE_BYTES);
+	memset(native, 0xCC, REFERENCE_BYTES);
+	CHECK(game_state_schema_decode(schema, &big_state, expected_wire, REFERENCE_WIRE_BYTES, native, OTHER_BASE) ==
+		_game_state_schema_stream_ok && !memcmp(native, big, REFERENCE_BYTES),
+		"%s taken big-endian, as specified (its pad zero)", kind);
+	memset(native, 0xCC, REFERENCE_BYTES);
+	CHECK(game_state_schema_decode(schema, &little_state, expected_wire, REFERENCE_WIRE_BYTES, native, BASE) ==
+		_game_state_schema_stream_ok && !memcmp(native, little, REFERENCE_BYTES),
+		"%s taken little-endian, as specified (its pad zero)", kind);
+	CHECK(game_state_schema_decode(schema, &big_state, expected_wire, REFERENCE_WIRE_BYTES - 1, NULL, OTHER_BASE) ==
+		_game_state_schema_stream_layout, "%s: a wire one byte short is refused", kind);
+}
+
+/* the reference lists' state: dirty as the game leaves it (free elements'
+and pad words' old contents), or as it is taken (those zero); with_hs, 2 HS
+globals after it */
+static void references_state_make(byte *memory, unsigned long base, boolean big_endian, boolean dirty, boolean with_hs)
+{
+	byte junk = dirty ? 0x6B : 0;
+	byte *at;
+	long index;
+
+	memset(memory, 0, REFERENCES_STATE_BYTES);
+	/* object lists: 0 in use, 1 free */
+	at = memory + LISTS_AT;
+	data_array_make(at, base, LISTS_AT, "object list header", LISTS_COUNT, REFERENCE_BYTES, 2, (short)0xE002, big_endian, junk);
+	memcpy(at + 0x38, big_endian ? object_list_big : object_list_little, REFERENCE_BYTES);
+	at[0x38 + 2] = junk;
+	memset(at + 0x38 + REFERENCE_BYTES + 2, junk, REFERENCE_BYTES - 2);
+	/* its references: 1 (the object 0x80050006), then 0 (the object
+	0x80030004, the last); 2 past the count */
+	at = memory + LISTED_AT;
+	data_array_make(at, base, LISTED_AT, "list object reference", LISTED_COUNT, REFERENCE_BYTES, 2, (short)0xE003, big_endian,
+		junk);
+	put16(at + 0x38, 0xE001, big_endian);
+	at[0x38 + 3] = junk;
+	put32(at + 0x38 + 4, 0x80030004UL, big_endian);
+	put32(at + 0x38 + 8, 0xFFFFFFFFUL, big_endian);
+	put16(at + 0x38 + REFERENCE_BYTES, 0xE002, big_endian);
+	put32(at + 0x38 + REFERENCE_BYTES + 4, 0x80050006UL, big_endian);
+	put32(at + 0x38 + REFERENCE_BYTES + 8, 0xE0010000UL, big_endian);
+	memset(at + 0x38 + 2 * REFERENCE_BYTES + 2, junk, REFERENCE_BYTES - 2);
+	/* the light partition: cluster 499's list is reference 1 then 0 (both
+	the light 0xE4A10003), the others' none */
+	at = memory + FIRST_AT;
+	for (index = 0; index < CLUSTER_COUNT; index++)
+		put32(at + index * 4, index == 499 ? 0xE0020001UL : 0xFFFFFFFFUL, big_endian);
+	at = memory + CLUSTER_DATA_AT;
+	data_array_make(at, base, CLUSTER_DATA_AT, "cluster light reference", CLUSTER_DATA_COUNT, REFERENCE_BYTES, 2,
+		(short)0xE003, big_endian, junk);
+	put16(at + 0x38, 0xE001, big_endian);
+	put32(at + 0x38 + 4, 0xE4A10003UL, big_endian);
+	put32(at + 0x38 + 8, 0xFFFFFFFFUL, big_endian);
+	memcpy(at + 0x38 + REFERENCE_BYTES, big_endian ? data_reference_big : data_reference_little, REFERENCE_BYTES);
+	at[0x38 + REFERENCE_BYTES + 2] = junk;
+	at[0x38 + REFERENCE_BYTES + 3] = junk;
+	/* the light's clusters: 499 (reference 0), then the reference free */
+	at = memory + DATA_CLUSTERS_AT;
+	data_array_make(at, base, DATA_CLUSTERS_AT, "light cluster reference", DATA_CLUSTERS_COUNT, REFERENCE_BYTES, 1,
+		(short)0xE002, big_endian, junk);
+	memcpy(at + 0x38, big_endian ? cluster_reference_big : cluster_reference_little, REFERENCE_BYTES);
+	at[0x38 + 2] = junk;
+	memset(at + 0x38 + REFERENCE_BYTES + 2, junk, REFERENCE_BYTES - 2);
+	if (with_hs)
+	{
+		at = memory + REFERENCES_HS_AT;
+		data_array_make(at, base, REFERENCES_HS_AT, "hs globals", 2, 8, 2, (short)0xE003, big_endian, 0);
+		put16(at + 0x38, 0xE001, big_endian);
+		put32(at + 0x3C, 0x00000001UL, big_endian);
+		put16(at + 0x40, 0xE002, big_endian);
+		put32(at + 0x44, 0x3F800000UL, big_endian);
+	}
+}
+
+static struct game_state_schema_region reference_regions[6];
+
+static void reference_region_make(struct game_state_schema_region *region, char const *name, long offset, short count)
+{
+	/* (as game_state.c records them: each found by its whole allocation name) */
+	region->name = name;
+	region->kind = _game_state_schema_region_data_array;
+	region->offset = offset;
+	region->size = 0x38 + count * REFERENCE_BYTES;
+	region->maximum_count = count;
+	region->element_size = REFERENCE_BYTES;
+	region->schema = game_state_schema_class_find(name, _game_state_schema_region_data_array, REFERENCE_BYTES);
+}
+
+static void reference_regions_make(void)
+{
+	memset(reference_regions, 0, sizeof(reference_regions));
+	reference_region_make(&reference_regions[0], "object list header", LISTS_AT, LISTS_COUNT);
+	reference_region_make(&reference_regions[1], "list object reference", LISTED_AT, LISTED_COUNT);
+	reference_regions[2].name = "light";
+	reference_regions[2].offset = FIRST_AT;
+	reference_regions[2].size = FIRST_REFERENCES_BYTES;
+	reference_regions[2].schema = game_state_schema_class_find("light", _game_state_schema_region_global, FIRST_REFERENCES_BYTES);
+	reference_region_make(&reference_regions[3], "cluster light reference", CLUSTER_DATA_AT, CLUSTER_DATA_COUNT);
+	reference_region_make(&reference_regions[4], "light cluster reference", DATA_CLUSTERS_AT, DATA_CLUSTERS_COUNT);
+	reference_regions[5].name = "hs globals";
+	reference_regions[5].kind = _game_state_schema_region_data_array;
+	reference_regions[5].offset = REFERENCES_HS_AT;
+	reference_regions[5].size = 0x38 + 2 * 8;
+	reference_regions[5].maximum_count = 2;
+	reference_regions[5].element_size = 8;
+	reference_regions[5].schema = &cell_schema;
+}
+
+static struct game_state_schema_state references_state(byte *memory, unsigned long base, boolean big_endian, long region_count)
+{
+	struct game_state_schema_state state = make_state(memory, REFERENCES_STATE_BYTES, base, TAGS, big_endian);
+
+	state.cpu_used = region_count > 5 ? REFERENCES_STATE_BYTES : REFERENCES_CPU_USED;
+	state.size = state.cpu_used;
+	state.region_count = region_count;
+	state.regions = reference_regions;
+
+	return state;
+}
+
+static void check_reference_lists(void)
+{
+	static char const *const partitions[] = { "collideable object", "noncollideable object", "light" };
+	static byte little[REFERENCES_STATE_BYTES];
+	static byte big[REFERENCES_STATE_BYTES];
+	static byte expected[REFERENCES_STATE_BYTES];
+	static byte taken[REFERENCES_STATE_BYTES];
+	static byte from_little[0x1000];
+	static byte from_big[0x1000];
+	static byte scratch[FIRST_REFERENCES_BYTES];
+	static byte first_little[FIRST_REFERENCES_BYTES];
+	static byte first_big[FIRST_REFERENCES_BYTES];
+	static byte wire[FIRST_REFERENCES_BYTES];
+	static byte other[FIRST_REFERENCES_BYTES];
+	static byte native[FIRST_REFERENCES_BYTES];
+	struct game_state_schema const *first =
+		game_state_schema_class_find("collideable object", _game_state_schema_region_global, FIRST_REFERENCES_BYTES);
+	struct game_state_schema const *data_references =
+		game_state_schema_class_find("list object reference", _game_state_schema_region_data_array, REFERENCE_BYTES);
+	struct game_state_schema const *cluster_references =
+		game_state_schema_class_find("light cluster reference", _game_state_schema_region_data_array, REFERENCE_BYTES);
+	struct game_state_schema_coverage coverage;
+	struct game_state_schema_state state;
+	struct game_state_schema_stream stream;
+	struct buffer buffer;
+	char name[64];
+	short error;
+	long index;
+
+	/* each partition's three, by their whole names (cluster_partition_new's
+	and reference_list_new's), and the object lists' two */
+	for (index = 0; index < (long)NUMBEROF(partitions); index++)
+	{
+		CHECK(game_state_schema_class_find(partitions[index], _game_state_schema_region_global, FIRST_REFERENCES_BYTES) == first &&
+			first, "%s: its first references", partitions[index]);
+		snprintf(name, sizeof(name), "cluster %s reference", partitions[index]);
+		CHECK(game_state_schema_class_find(name, _game_state_schema_region_data_array, REFERENCE_BYTES) == data_references &&
+			data_references, "%s: a reference of a datum", name);
+		snprintf(name, sizeof(name), "%s cluster reference", partitions[index]);
+		CHECK(game_state_schema_class_find(name, _game_state_schema_region_data_array, REFERENCE_BYTES) == cluster_references &&
+			cluster_references, "%s: a reference of a cluster", name);
+	}
+	CHECK(data_references != cluster_references && data_references && cluster_references &&
+		game_state_schema_identity(data_references) != game_state_schema_identity(cluster_references) &&
+		cluster_references->fields[2].type == _game_state_schema_s32 &&
+		data_references->fields[2].type == _game_state_schema_datum_index,
+		"a cluster's reference is to a cluster index (a long), a datum's to a datum handle: two identities");
+	CHECK(!game_state_schema_class_find("light", _game_state_schema_region_data_array, FIRST_REFERENCES_BYTES) &&
+		!game_state_schema_class_find("light", _game_state_schema_region_global, FIRST_REFERENCES_BYTES - 4) &&
+		!game_state_schema_class_find("lights", _game_state_schema_region_global, FIRST_REFERENCES_BYTES) &&
+		!game_state_schema_class_find("cluster light", _game_state_schema_region_data_array, REFERENCE_BYTES) &&
+		!game_state_schema_class_find("cluster light references", _game_state_schema_region_data_array, REFERENCE_BYTES),
+		"the reference lists: not found at another kind, size or name");
+
+	/* each element, and the first references: from either byte order, the
+	same specified wire */
+	check_reference_round_trip("object list header", "an object list", object_list_little, object_list_big, object_list_wire);
+	check_reference_round_trip("list object reference", "an object list's reference", data_reference_little, data_reference_big,
+		data_reference_wire);
+	check_reference_round_trip("cluster noncollideable object reference", "a cluster's reference", data_reference_little,
+		data_reference_big, data_reference_wire);
+	check_reference_round_trip("collideable object cluster reference", "an object's cluster reference",
+		cluster_reference_little, cluster_reference_big, cluster_reference_wire);
+	for (index = 0; index < CLUSTER_COUNT; index++)
+	{
+		unsigned long reference = index & 1 ? 0xFFFFFFFFUL : 0xE0000000UL | ((unsigned long)index << 16) | (unsigned long)index;
+
+		put32(first_little + index * 4, reference, FALSE);
+		put32(first_big + index * 4, reference, TRUE);
+	}
+	check_named_round_trip("noncollideable object", FIRST_REFERENCES_BYTES, first_little, first_big, first_little, first_big, wire,
+		other, native);
+	CHECK(wire[0] == 0x00 && wire[1] == 0x00 && wire[2] == 0x00 && wire[3] == 0xE0 && wire[4] == 0xFF && wire[8] == 0x02 &&
+		wire[9] == 0x00 && wire[10] == 0x02 && wire[11] == 0xE0 && wire[FIRST_REFERENCES_BYTES - 1] == 0xFF,
+		"first references: cluster 0's 0xE0000000, cluster 1 none, cluster 2's 0xE0020002, little-endian on the wire");
+
+	/* the reference lists as one stream, from either byte order */
+	reference_regions_make();
+	references_state_make(little, BASE, FALSE, TRUE, FALSE);
+	references_state_make(big, BASE, TRUE, TRUE, FALSE);
+	state = references_state(little, BASE, FALSE, 5);
+	game_state_schema_coverage(&state, &coverage);
+	CHECK(coverage.complete && coverage.typed_bytes == REFERENCES_CPU_USED && !coverage.unresolved_bytes &&
+		!coverage.unclaimed_bytes && !coverage.gap_count && coverage.typed_regions == 5,
+		"the reference lists pass the gate (%lu of %lu typed, %ld gaps)", coverage.typed_bytes, coverage.state_bytes,
+		coverage.gap_count);
+	CHECK(game_state_schema_stream_scratch_bytes(&state) == FIRST_REFERENCES_BYTES,
+		"their scratch: the first references' wire bytes (%ld)", game_state_schema_stream_scratch_bytes(&state));
+	for (index = 0; index < 2; index++)
+	{
+		boolean big_endian = index == 1;
+
+		state = references_state(big_endian ? big : little, BASE, big_endian, 5);
+		memset(&buffer, 0, sizeof(buffer));
+		buffer.bytes = big_endian ? from_big : from_little;
+		buffer.size = sizeof(from_little);
+		buffer.fail_after = NONE;
+		memset(&stream, 0, sizeof(stream));
+		stream.context = &buffer;
+		stream.write = buffer_write;
+		stream.scratch = scratch;
+		stream.scratch_size = game_state_schema_stream_scratch_bytes(&state);
+		error = game_state_schema_stream_write(&state, &stream);
+		CHECK(error == _game_state_schema_stream_ok && buffer.used == REFERENCES_STREAM_BYTES,
+			"the reference lists' stream (%s): %s, %ld bytes", big_endian ? "big" : "little",
+			game_state_schema_stream_error_name(error), buffer.used);
+		CHECK(buffer.largest_transfer <= FIRST_REFERENCES_BYTES, "its transfers bounded by the scratch (%ld)",
+			buffer.largest_transfer);
+	}
+	CHECK(!memcmp(from_little, from_big, REFERENCES_STREAM_BYTES), "the same reference lists from either byte order are the same stream");
+	dump_difference("reference stream", from_big, from_little, REFERENCES_STREAM_BYTES);
+	{
+		/* by hand: the list object references' elements, the light's
+		cluster references' */
+		static byte const listed[2 * REFERENCE_WIRE_BYTES + 2] =
+		{
+			0x01, 0xE0, 0x04, 0x00, 0x03, 0x80, 0xFF, 0xFF, 0xFF, 0xFF,
+			0x02, 0xE0, 0x06, 0x00, 0x05, 0x80, 0x00, 0x00, 0x01, 0xE0,
+			0x00, 0x00, /* (past the count: its identifier) */
+		};
+		static byte const light_clusters[REFERENCE_WIRE_BYTES + 2] =
+		{
+			0x01, 0xE0, 0xF3, 0x01, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
+			0x00, 0x00, /* (free: its identifier) */
+		};
+
+		CHECK(!memcmp(from_little + LISTS_WIRE_AT + 54, object_list_wire, REFERENCE_WIRE_BYTES) &&
+			from_little[LISTS_WIRE_AT + 54 + REFERENCE_WIRE_BYTES] == 0 &&
+			from_little[LISTS_WIRE_AT + 54 + REFERENCE_WIRE_BYTES + 1] == 0,
+			"the stream: the object list in use as specified, the free one its identifier");
+		CHECK(!memcmp(from_little + LISTED_WIRE_AT + 54, listed, sizeof(listed)),
+			"the stream: the list's two references as specified, no pad words");
+		CHECK(from_little[FIRST_WIRE_AT] == 0xFF && from_little[FIRST_WIRE_AT + 499 * 4] == 0x01 &&
+			from_little[FIRST_WIRE_AT + 499 * 4 + 1] == 0x00 && from_little[FIRST_WIRE_AT + 499 * 4 + 2] == 0x02 &&
+			from_little[FIRST_WIRE_AT + 499 * 4 + 3] == 0xE0, "the stream: cluster 499's first reference 0xE0020001");
+		CHECK(!memcmp(from_little + CLUSTER_DATA_WIRE_AT + 54 + REFERENCE_WIRE_BYTES, data_reference_wire, REFERENCE_WIRE_BYTES),
+			"the stream: the cluster's second reference as specified");
+		CHECK(!memcmp(from_little + DATA_CLUSTERS_WIRE_AT + 54, light_clusters, sizeof(light_clusters)) &&
+			!memcmp(from_little + DATA_CLUSTERS_WIRE_AT, "light cluster reference", 24),
+			"the stream: the light's cluster reference as specified, after its array's header");
+	}
+
+	/* taken big-endian at another base: as it was, but the free elements'
+	old contents and the pad words zero; then checked without taking */
+	memset(taken, 0xCC, sizeof(taken));
+	state = references_state(taken, OTHER_BASE, TRUE, 5);
+	memset(&buffer, 0, sizeof(buffer));
+	buffer.bytes = from_little;
+	buffer.size = REFERENCES_STREAM_BYTES;
+	buffer.fail_after = NONE;
+	memset(&stream, 0, sizeof(stream));
+	stream.context = &buffer;
+	stream.read = buffer_read;
+	stream.scratch = scratch;
+	stream.scratch_size = game_state_schema_stream_scratch_bytes(&state);
+	error = game_state_schema_stream_read(&state, &stream, TRUE, NULL);
+	references_state_make(expected, OTHER_BASE, TRUE, FALSE, FALSE);
+	CHECK(error == _game_state_schema_stream_ok && buffer.used == REFERENCES_STREAM_BYTES &&
+		!memcmp(taken, expected, REFERENCES_CPU_USED), "the reference lists taken big-endian at another base, as specified (%s)",
+		game_state_schema_stream_error_name(error));
+	dump_difference("references taken", taken, expected, REFERENCES_CPU_USED);
+	buffer.used = 0;
+	CHECK(game_state_schema_stream_read(&state, &stream, FALSE, NULL) == _game_state_schema_stream_ok &&
+		!memcmp(taken, expected, REFERENCES_CPU_USED), "checked again without taking: nothing changed");
+	/* (a stream cut short in the first references: refused; what was taken
+	before is the reader's, not retried here) */
+	buffer.used = 0;
+	buffer.fail_after = FIRST_WIRE_AT + 100;
+	CHECK(game_state_schema_stream_read(&state, &stream, FALSE, NULL) == _game_state_schema_stream_read,
+		"a stream cut short in the first references is refused");
+
+	/* a reference array of another element size is not this class: its bytes
+	unclaimed, the gate shut */
+	reference_regions[1].element_size = REFERENCE_BYTES + 4;
+	reference_regions[1].schema =
+		game_state_schema_class_find("list object reference", _game_state_schema_region_data_array, REFERENCE_BYTES + 4);
+	state = references_state(little, BASE, FALSE, 5);
+	game_state_schema_coverage(&state, &coverage);
+	CHECK(!coverage.complete && !reference_regions[1].schema && coverage.unclaimed_regions == 1 && coverage.gap_count >= 1 &&
+		!strcmp(coverage.gaps[0].owner, "list object reference"),
+		"a list object reference array of another element size is unclaimed (%ld gaps)", coverage.gap_count);
+	reference_regions_make();
+
+	/* beside HS globals (their cells unresolved), the gate does not pass:
+	nothing written, nothing read, nothing taken */
+	references_state_make(little, BASE, FALSE, TRUE, TRUE);
+	state = references_state(little, BASE, FALSE, 6);
+	game_state_schema_coverage(&state, &coverage);
+	CHECK(!coverage.complete && coverage.unresolved_bytes == 2 * 4 && !coverage.unclaimed_bytes &&
+		coverage.typed_bytes == REFERENCES_STATE_BYTES - 2 * 4 && coverage.gap_count == 1 &&
+		coverage.gaps[0].reason == _game_state_schema_gap_hs_cell && !strcmp(coverage.gaps[0].owner, "hs globals"),
+		"beside HS globals the gate's one gap is their cells (%lu unresolved)", coverage.unresolved_bytes);
+	memset(&buffer, 0, sizeof(buffer));
+	buffer.bytes = from_big;
+	buffer.size = sizeof(from_big);
+	buffer.fail_after = NONE;
+	memset(&stream, 0, sizeof(stream));
+	stream.context = &buffer;
+	stream.write = buffer_write;
+	stream.read = buffer_read;
+	stream.scratch = scratch;
+	stream.scratch_size = sizeof(scratch);
+	CHECK(game_state_schema_stream_write(&state, &stream) == _game_state_schema_stream_incomplete && buffer.used == 0,
+		"then the stream is not written: nothing written");
+	memset(taken, 0xCC, sizeof(taken));
+	state = references_state(taken, OTHER_BASE, TRUE, 6);
+	buffer.bytes = from_little;
+	buffer.size = REFERENCES_STREAM_BYTES;
+	CHECK(game_state_schema_stream_read(&state, &stream, TRUE, NULL) == _game_state_schema_stream_incomplete && buffer.used == 0,
+		"nor read: nothing read");
+	for (index = 0; index < REFERENCES_STATE_BYTES && taken[index] == 0xCC; index++)
+		;
+	CHECK(index == REFERENCES_STATE_BYTES, "nothing of the state taken");
+}
+
 int main(void)
 {
 	check_mixed();
@@ -1713,6 +2168,7 @@ int main(void)
 	check_named_globals();
 	check_stream();
 	check_sound_state();
+	check_reference_lists();
 	if (failures)
 	{
 		fprintf(stderr, "%d of %d cases failed\n", failures, cases);

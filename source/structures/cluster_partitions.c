@@ -79,6 +79,20 @@ symbols in this file:
 
 /* ---------- structures */
 
+/* port (HWI-080): game_state_schema_classes.c's "cluster %s reference" and
+"%s cluster reference" schemas, and its partitions' first references */
+typedef char data_reference_schema_check[
+	sizeof(struct data_reference) == 0xC &&
+	offsetof(struct data_reference, identifier) == 0x0 &&
+	offsetof(struct data_reference, pad) == 0x2 &&
+	sizeof(((struct data_reference *)0)->pad) == 2 &&
+	offsetof(struct data_reference, datum_index) == 0x4 &&
+	sizeof(((struct data_reference *)0)->datum_index) == 4 &&
+	offsetof(struct data_reference, next_reference_index) == 0x8 ? 1 : -1];
+typedef char cluster_first_references_schema_check[
+	MAXIMUM_CLUSTERS_PER_STRUCTURE == 512 &&
+	MAXIMUM_CLUSTERS_PER_STRUCTURE * sizeof(*((struct cluster_partition *)0)->cluster_first_data_references) == 0x800 ? 1 : -1];
+
 /* ---------- prototypes */
 
 void reference_list_remove(
