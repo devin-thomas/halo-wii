@@ -359,6 +359,14 @@ long wii_render_model_parts(
 
 	if (detail_level < 0 || detail_level >= RENDER_OBJECTS_DETAIL_LEVELS)
 		return 0;
+	/* Refuse an unsupported skeleton whole. The object's palette clamps
+	its local work to the buffer capacity; that must not make a larger
+	model appear to be a supported, partially populated skeleton. */
+	if (model->nodes.count < 1 || model->nodes.count > WII_GX_MODEL_MAXIMUM_NODES)
+	{
+		*data_errors += pass == _wii_gx_model_pass_solid;
+		return -1;
+	}
 	for (region_index = 0; region_index < region_count; region_index++)
 	{
 		struct model_region *region = TAG_BLOCK_GET_ELEMENT(&model->regions, region_index, struct model_region);

@@ -18,8 +18,9 @@ its node's runtime_default_inverse_matrix, wii_render_model_node_constants)
 for the model's nodes in order and returns their count (1 up to
 WII_GX_MODEL_MAXIMUM_NODES; anything else refuses the model). Returns the
 parts handed to the GX side (wii_gx_model_part_draw: drawn or refused there,
-counted), or -1 if the node matrices were refused. Bad region, geometry and
-shader indices count in data_errors (in the solid pass only).
+counted), or -1 if the skeleton or node matrices were refused. Unsupported
+skeleton counts and bad region, geometry and shader indices count in
+data_errors (in the solid pass only).
 */
 
 #ifndef __HALO_WII_RENDER_MODELS_ENGINE_H
