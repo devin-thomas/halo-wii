@@ -78,8 +78,28 @@ the address it was saved at.
 
 The words are the port's own: a field narrower than 32 bits keeps its place
 in its word of the port that saved it, so an image is taken only by a port of
-the same byte order (header offset 16). Version 3 is to write each field by
-itself (HWI-046).
+the same byte order (header offset 16).
+
+---------- format (version 3, HWI-085: the typed image)
+
+The header is version 2's but for: version 3; byte order 3 (canonical: no
+port's); payload encoding 2 (typed); 412 the schemas' identity
+(game_state_schema_stream_identity: every region's kind, extent and class
+schema's identity and layout); 416 the typed stream's bytes (a whole number
+of words). The chunks and segments are version 2's; their words are the
+typed stream's bytes (game_state_schema.c), four at a time little-endian,
+the last word made up with zero bytes. Each field is written by itself by
+its class's schema, so a little-endian and a big-endian port that lay the
+state out alike write the same image.
+
+A typed image is written only when the schemas cover every byte of the game
+state (the gate: game_state_schema_coverage); a save asked of version 3
+otherwise writes nothing and is refused (_game_state_image_refusal_schema).
+Reading one, the gate and the identity are checked with the header, before
+any of the payload is read: an image the build cannot take whole is refused
+before anything of it is taken. Version 2 is read as it always was (its
+byte order refused when not this port's), and saves stay version 2
+(GAME_STATE_IMAGE_WRITE_VERSION) until the gate passes for the live game.
 
 ---------- loading
 
@@ -106,6 +126,7 @@ one chunk and its header are held at a time.
 #include "lruv_cache.h"
 #include "game_state.h"
 #include "game_state_image.h"
+#include "game_state_schema.h"
 
 /* ---------- constants */
 
@@ -121,6 +142,9 @@ enum
 	IMAGE_BIG_ENDIAN = 2,
 
 	IMAGE_ENCODING_WORDS = 1,
+	/* (HWI-085) version 3's: no port's byte order, a typed stream */
+	IMAGE_CANONICAL_ORDER = 3,
+	IMAGE_ENCODING_TYPED = 2,
 
 	LITERAL_MAXIMUM_WORDS = 1024,
 	ZERO_RUN_MINIMUM_WORDS = 3,
@@ -183,6 +207,8 @@ enum
 	HEADER_POOL_BLOCKS = 400,
 	HEADER_SCRIPT_THREADS = 404,
 	HEADER_POINTERS = 408,
+	HEADER_SCHEMA_IDENTITY = 412,
+	HEADER_TYPED_BYTES = 416,
 	HEADER_CHECKSUM = 508,
 };
 
@@ -226,6 +252,10 @@ struct image_writer
 	/* whether the words being written are room nothing reads: a memory
 	pool's outside its blocks, a script thread's above its top frame */
 	boolean dead;
+	/* (HWI-085) a typed stream's bytes not yet a word, and its bytes */
+	byte typed_word[4];
+	long typed_used;
+	unsigned long typed_bytes;
 	boolean failed;
 	struct game_state_image_report *report;
 };
@@ -263,6 +293,12 @@ struct image_reader
 	byte *element;
 	/* the next declared pointer word */
 	long next_pointer_word;
+	/* (HWI-085) a typed image's: the word being read, its bytes not yet
+	taken, the stream's bytes read */
+	boolean typed;
+	byte typed_word[4];
+	long typed_left;
+	long typed_offset;
 };
 
 /* ---------- prototypes */
@@ -728,13 +764,16 @@ static void image_header_encode(
 	byte const digest[32],
 	boolean complete)
 {
+	boolean typed = report->version == GAME_STATE_IMAGE_TYPED_VERSION;
+
 	csmemset(bytes, 0, GAME_STATE_IMAGE_HEADER_BYTES);
 	csmemcpy(bytes + HEADER_MAGIC, IMAGE_MAGIC, 4);
-	put_le32(bytes + HEADER_VERSION, GAME_STATE_IMAGE_VERSION);
+	put_le32(bytes + HEADER_VERSION, typed ? GAME_STATE_IMAGE_TYPED_VERSION : GAME_STATE_IMAGE_VERSION);
 	put_le32(bytes + HEADER_BYTES, GAME_STATE_IMAGE_HEADER_BYTES);
 	put_le32(bytes + HEADER_FLAGS, (complete ? IMAGE_FLAG_COMPLETE : 0) | (report->base_bound ? IMAGE_FLAG_BASE_BOUND : 0));
-	put_le32(bytes + HEADER_BYTE_ORDER, image_port_big_endian() ? IMAGE_BIG_ENDIAN : IMAGE_LITTLE_ENDIAN);
-	put_le32(bytes + HEADER_ENCODING, IMAGE_ENCODING_WORDS);
+	put_le32(bytes + HEADER_BYTE_ORDER, typed ? IMAGE_CANONICAL_ORDER :
+		image_port_big_endian() ? IMAGE_BIG_ENDIAN : IMAGE_LITTLE_ENDIAN);
+	put_le32(bytes + HEADER_ENCODING, typed ? IMAGE_ENCODING_TYPED : IMAGE_ENCODING_WORDS);
 	put_le32(bytes + HEADER_CHUNK_BYTES, GAME_STATE_IMAGE_CHUNK_BYTES);
 	put_le32(bytes + HEADER_CHUNK_COUNT, (image_word)report->chunks);
 	put_le32(bytes + HEADER_PAYLOAD_BYTES, (image_word)report->payload_bytes);
@@ -759,6 +798,11 @@ static void image_header_encode(
 	put_le32(bytes + HEADER_POOL_BLOCKS, (image_word)report->references);
 	put_le32(bytes + HEADER_SCRIPT_THREADS, (image_word)report->script_threads);
 	put_le32(bytes + HEADER_POINTERS, (image_word)report->pointers);
+	if (typed)
+	{
+		put_le32(bytes + HEADER_SCHEMA_IDENTITY, (image_word)report->schema_identity);
+		put_le32(bytes + HEADER_TYPED_BYTES, (image_word)report->typed_bytes);
+	}
 	put_le32(bytes + HEADER_CHECKSUM, (image_word)image_crc(bytes, HEADER_CHECKSUM));
 }
 
@@ -768,7 +812,8 @@ static short image_header_check(
 {
 	if (csmemcmp(bytes + HEADER_MAGIC, IMAGE_MAGIC, 4))
 		return _game_state_image_refusal_magic;
-	if (get_le32(bytes + HEADER_VERSION) != GAME_STATE_IMAGE_VERSION ||
+	if ((get_le32(bytes + HEADER_VERSION) != GAME_STATE_IMAGE_VERSION &&
+			get_le32(bytes + HEADER_VERSION) != GAME_STATE_IMAGE_TYPED_VERSION) ||
 		get_le32(bytes + HEADER_BYTES) != GAME_STATE_IMAGE_HEADER_BYTES)
 	{
 		return _game_state_image_refusal_version;
@@ -1291,32 +1336,171 @@ static boolean writer_collect_references(
 	return TRUE;
 }
 
+/* ---------- private code: the typed image (HWI-085) */
+
+/* the game state as the typed codec sees it */
+static void image_typed_state(
+	struct game_state_image_layout const *layout,
+	struct game_state_schema_state *state)
+{
+	csmemset(state, 0, sizeof(*state));
+	state->memory = layout->base;
+	state->base_address = (unsigned long)layout->base;
+	state->size = layout->size;
+	state->cpu_used = layout->cpu_used;
+	state->gpu_used = layout->gpu_used;
+	state->tags_address = (unsigned long)layout->tags;
+	state->tags_size = layout->tags_size;
+	state->big_endian = image_port_big_endian();
+	state->region_count = layout->region_count;
+	state->regions = layout->regions;
+}
+
+/* why the typed image is not written or taken: the gate's account */
+static void image_schema_log(
+	char const *what,
+	struct game_state_schema_coverage const *coverage)
+{
+	long index;
+
+	error(_error_silent, "%s: the schemas type %lu of %lu game-state bytes (%lu unresolved, %lu unclaimed, "
+		"%ld pointer conflicts; %ld of %ld regions typed, %ld with unresolved, %ld with unclaimed; schema error %s)",
+		what, coverage->typed_bytes, coverage->state_bytes, coverage->unresolved_bytes, coverage->unclaimed_bytes,
+		coverage->conflicts, coverage->typed_regions, coverage->regions, coverage->unresolved_regions,
+		coverage->unclaimed_regions, game_state_schema_error_name(coverage->schema_error));
+	for (index = 0; index < coverage->gaps_kept && index < 8; index++)
+	{
+		struct game_state_schema_gap const *gap = &coverage->gaps[index];
+
+		error(_error_silent, "  %s: %.31s %s, %ld bytes at %ld", game_state_schema_gap_reason_name(gap->reason),
+			gap->owner ? gap->owner : "(none)", gap->field ? gap->field : "", gap->size, gap->offset);
+	}
+}
+
+/* the typed stream's bytes, into words of the payload */
+static boolean writer_typed_bytes(
+	void *context,
+	byte const *bytes,
+	long size)
+{
+	struct image_writer *writer = context;
+	long index;
+
+	for (index = 0; index < size; index++)
+	{
+		writer->typed_word[writer->typed_used++] = bytes[index];
+		if (writer->typed_used == 4)
+		{
+			writer_word(writer, get_le32(writer->typed_word));
+			writer->typed_used = 0;
+			writer->typed_bytes += 4;
+		}
+	}
+
+	return !writer->failed;
+}
+
+static short image_schema_refusal(
+	short error)
+{
+	switch (error)
+	{
+	case _game_state_schema_stream_read:
+		return _game_state_image_refusal_read;
+	case _game_state_schema_stream_pointer:
+	case _game_state_schema_stream_frame_pointer:
+		return _game_state_image_refusal_pointer;
+	case _game_state_schema_stream_data_array:
+		return _game_state_image_refusal_data_array;
+	case _game_state_schema_stream_lruv_cache:
+		return _game_state_image_refusal_lruv_cache;
+	case _game_state_schema_stream_memory:
+		return _game_state_image_refusal_memory;
+	}
+
+	return _game_state_image_refusal_schema;
+}
+
+/* the typed stream written: the gate passed (image_write_or_measure) */
+static boolean writer_typed(
+	struct image_writer *writer,
+	struct game_state_schema_state const *state)
+{
+	struct game_state_schema_stream stream;
+	long scratch_size = game_state_schema_stream_scratch_bytes(state);
+	short error;
+
+	csmemset(&stream, 0, sizeof(stream));
+	stream.context = writer;
+	stream.write = writer_typed_bytes;
+	stream.scratch = image_allocate((unsigned long)scratch_size);
+	stream.scratch_size = scratch_size;
+	error = stream.scratch ? game_state_schema_stream_write(state, &stream) : _game_state_schema_stream_memory;
+	image_free(stream.scratch);
+	if (!error && writer->typed_used)
+	{
+		byte zero[4] = { 0, 0, 0, 0 };
+
+		writer_typed_bytes(writer, zero, 4 - writer->typed_used);
+	}
+	writer->report->schema_error = error;
+	writer->report->typed_bytes = writer->typed_bytes;
+	if (error)
+	{
+		writer->report->refusal = image_schema_refusal(error);
+		writer->failed = TRUE;
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 static boolean image_write_or_measure(
 	struct game_state_image_layout const *layout,
 	struct game_state_header const *header,
 	struct game_state_image_file const *file,
-	byte digest[32])
+	byte digest[32],
+	long version)
 {
 	struct image_writer writer;
 	byte header_bytes[GAME_STATE_IMAGE_HEADER_BYTES];
 	long offset = 0;
 	long index;
 	boolean success;
+	struct game_state_schema_state typed_state;
 
 	csmemset(&image_report, 0, sizeof(image_report));
 	image_report.save = TRUE;
 	image_report.first_address_like_offset = NONE;
 	image_report.save_base = (unsigned long)(layout ? layout->base : NULL);
 	image_report.passes = 1;
+	image_report.version = version;
 	csmemset(&writer, 0, sizeof(writer));
 	writer.layout = layout;
 	writer.file = file;
 	writer.report = &image_report;
 	sha256_begin(&writer.sha);
-	if (!image_layout_valid(layout) || !header)
+	if (!image_layout_valid(layout) || !header ||
+		(version != GAME_STATE_IMAGE_VERSION && version != GAME_STATE_IMAGE_TYPED_VERSION))
 	{
 		image_report.refusal = _game_state_image_refusal_layout;
 		return FALSE;
+	}
+	if (version == GAME_STATE_IMAGE_TYPED_VERSION)
+	{
+		struct game_state_schema_coverage coverage;
+
+		/* (the gate, before anything is written) */
+		image_typed_state(layout, &typed_state);
+		game_state_schema_coverage(&typed_state, &coverage);
+		image_report.schema_identity = coverage.identity;
+		if (!coverage.complete)
+		{
+			image_report.refusal = _game_state_image_refusal_schema;
+			image_report.schema_error = _game_state_schema_stream_incomplete;
+			image_schema_log("the typed saved game is not written", &coverage);
+			return FALSE;
+		}
 	}
 	writer.literal = image_allocate(LITERAL_MAXIMUM_WORDS * sizeof(image_word));
 	writer.element = image_allocate(image_largest_pointer_element(layout));
@@ -1338,7 +1522,18 @@ static boolean image_write_or_measure(
 			writer.failed = TRUE;
 		image_report.file_bytes = GAME_STATE_IMAGE_HEADER_BYTES;
 	}
-	for (index = 0; index < layout->allocation_count && !writer.failed; index++)
+	if (version == GAME_STATE_IMAGE_TYPED_VERSION)
+	{
+		writer_typed(&writer, &typed_state);
+		/* (no word of the state below is written as itself) */
+		offset = layout->cpu_used;
+		index = layout->allocation_count;
+	}
+	else
+	{
+		index = 0;
+	}
+	for (; index < layout->allocation_count && !writer.failed; index++)
 	{
 		struct game_state_image_allocation const *allocation = &layout->allocations[index];
 
@@ -1357,8 +1552,11 @@ static boolean image_write_or_measure(
 		}
 		offset = allocation->offset + allocation->size;
 	}
-	writer_words(&writer, layout->base + offset, offset, layout->cpu_used - offset);
-	writer_words(&writer, layout->base + layout->size - layout->gpu_used, layout->size - layout->gpu_used, layout->gpu_used);
+	if (version != GAME_STATE_IMAGE_TYPED_VERSION)
+	{
+		writer_words(&writer, layout->base + offset, offset, layout->cpu_used - offset);
+		writer_words(&writer, layout->base + layout->size - layout->gpu_used, layout->size - layout->gpu_used, layout->gpu_used);
+	}
 	writer_end(&writer);
 	sha256_end(&writer.sha, digest);
 	image_report.state_bytes = (unsigned long)(layout->cpu_used + layout->gpu_used);
@@ -1374,7 +1572,7 @@ static boolean image_write_or_measure(
 			writer.failed = TRUE;
 	}
 	success = !writer.failed;
-	if (!success)
+	if (!success && !image_report.refusal)
 		image_report.refusal = _game_state_image_refusal_read;
 	image_free(writer.element);
 	image_free(writer.references);
@@ -1636,6 +1834,72 @@ static boolean reader_pointer_field(
 	return TRUE;
 }
 
+/* (HWI-085) the typed stream's bytes, from words of the payload */
+static boolean reader_typed_bytes(
+	void *context,
+	byte *bytes,
+	long size)
+{
+	struct image_reader *reader = context;
+	long index;
+
+	for (index = 0; index < size; index++)
+	{
+		if (!reader->typed_left)
+		{
+			if (!reader->state_words_left)
+				return reader_refuse(reader, _game_state_image_refusal_length, reader->typed_offset + index);
+			if (!reader->segment_left && !reader_segment(reader, reader->typed_offset + index))
+				return FALSE;
+			if (reader->segment_zero)
+				csmemset(reader->typed_word, 0, 4);
+			else if (!reader_payload(reader, reader->typed_word, 4))
+				return FALSE;
+			reader->segment_left--;
+			reader->state_words_left--;
+			reader->typed_left = 4;
+		}
+		bytes[index] = reader->typed_word[4 - reader->typed_left];
+		reader->typed_left--;
+	}
+	reader->typed_offset += size;
+
+	return TRUE;
+}
+
+/* (HWI-085) the typed stream: checked, or taken; the rest of its last word
+zero */
+static boolean reader_typed(
+	struct image_reader *reader,
+	struct game_state_schema_state const *state)
+{
+	struct game_state_schema_stream stream;
+	long scratch_size = game_state_schema_stream_scratch_bytes(state);
+	long error_offset = 0;
+	short error;
+
+	csmemset(&stream, 0, sizeof(stream));
+	stream.context = reader;
+	stream.read = reader_typed_bytes;
+	stream.scratch = image_allocate((unsigned long)scratch_size);
+	stream.scratch_size = scratch_size;
+	reader->typed_left = 0;
+	reader->typed_offset = 0;
+	error = stream.scratch ? game_state_schema_stream_read(state, &stream, reader->taking, &error_offset) :
+		_game_state_schema_stream_memory;
+	image_free(stream.scratch);
+	reader->report->schema_error = error;
+	if (error)
+		return reader_refuse(reader, image_schema_refusal(error), error_offset);
+	while (reader->typed_left)
+	{
+		if (reader->typed_word[4 - reader->typed_left--])
+			return reader_refuse(reader, _game_state_image_refusal_length, reader->typed_offset);
+	}
+
+	return TRUE;
+}
+
 /* a data array's header: upstream's game_state_image_data_valid, its
 elements its own */
 static boolean reader_data_array_header(
@@ -1889,6 +2153,8 @@ static boolean reader_pass(
 	long index;
 	unsigned long payload_bytes;
 	unsigned long state_bytes = (unsigned long)(layout->cpu_used + layout->gpu_used);
+	unsigned long stream_bytes = state_bytes;
+	struct game_state_schema_state typed_state;
 
 	if (!reader->file->seek(reader->file->context, 0) ||
 		!reader->file->read(reader->file->context, header, GAME_STATE_IMAGE_HEADER_BYTES))
@@ -1903,10 +2169,22 @@ static boolean reader_pass(
 	{
 		return reader_refuse(reader, _game_state_image_refusal_read, 0);
 	}
-	if (get_le32(header + HEADER_BYTE_ORDER) != (image_word)(image_port_big_endian() ? IMAGE_BIG_ENDIAN : IMAGE_LITTLE_ENDIAN))
-		return reader_refuse(reader, _game_state_image_refusal_byte_order, 0);
-	if (get_le32(header + HEADER_ENCODING) != IMAGE_ENCODING_WORDS)
-		return reader_refuse(reader, _game_state_image_refusal_encoding, 0);
+	reader->typed = get_le32(header + HEADER_VERSION) == GAME_STATE_IMAGE_TYPED_VERSION;
+	if (reader->typed)
+	{
+		/* (HWI-085) the typed image: no port's byte order */
+		if (get_le32(header + HEADER_BYTE_ORDER) != IMAGE_CANONICAL_ORDER)
+			return reader_refuse(reader, _game_state_image_refusal_byte_order, 0);
+		if (get_le32(header + HEADER_ENCODING) != IMAGE_ENCODING_TYPED)
+			return reader_refuse(reader, _game_state_image_refusal_encoding, 0);
+	}
+	else
+	{
+		if (get_le32(header + HEADER_BYTE_ORDER) != (image_word)(image_port_big_endian() ? IMAGE_BIG_ENDIAN : IMAGE_LITTLE_ENDIAN))
+			return reader_refuse(reader, _game_state_image_refusal_byte_order, 0);
+		if (get_le32(header + HEADER_ENCODING) != IMAGE_ENCODING_WORDS)
+			return reader_refuse(reader, _game_state_image_refusal_encoding, 0);
+	}
 	if (get_le32(header + HEADER_STATE_BYTES) != state_bytes ||
 		get_le32(header + HEADER_CPU_USED) != (image_word)layout->cpu_used ||
 		get_le32(header + HEADER_GPU_USED) != (image_word)layout->gpu_used ||
@@ -1929,13 +2207,35 @@ static boolean reader_pass(
 		if (decoded.cache_file_checksum != (expected->cache_file_checksum & 0xFFFFFFFFUL))
 			return reader_refuse(reader, _game_state_image_refusal_map_checksum, 0);
 	}
+	if (reader->typed)
+	{
+		struct game_state_schema_coverage coverage;
+
+		/* (HWI-085) taken whole, or not at all: the schemas cover the game
+		state, and are the image's, before any of its payload is read */
+		image_typed_state(layout, &typed_state);
+		game_state_schema_coverage(&typed_state, &coverage);
+		reader->report->schema_identity = coverage.identity;
+		if (!coverage.complete)
+		{
+			reader->report->schema_error = _game_state_schema_stream_incomplete;
+			if (!reader->taking)
+				image_schema_log("the typed saved game is not taken", &coverage);
+			return reader_refuse(reader, _game_state_image_refusal_schema, 0);
+		}
+		if (get_le32(header + HEADER_SCHEMA_IDENTITY) != (image_word)coverage.identity)
+			return reader_refuse(reader, _game_state_image_refusal_schema, 0);
+		stream_bytes = get_le32(header + HEADER_TYPED_BYTES);
+		if (!stream_bytes || (stream_bytes & 3) || stream_bytes > state_bytes)
+			return reader_refuse(reader, _game_state_image_refusal_length, 0);
+	}
 	payload_bytes = get_le32(header + HEADER_PAYLOAD_BYTES);
 	reader->chunk_bytes = (long)get_le32(header + HEADER_CHUNK_BYTES);
 	reader->chunk_count = get_le32(header + HEADER_CHUNK_COUNT);
 	/* (words, zero runs and control words: at most a control word every
 	literal maximum, and one for each zero run) */
 	if (reader->chunk_bytes != GAME_STATE_IMAGE_CHUNK_BYTES || payload_bytes < 4 || (payload_bytes & 3) ||
-		payload_bytes > state_bytes * 2 + 8 ||
+		payload_bytes > stream_bytes * 2 + 8 ||
 		reader->chunk_count != (payload_bytes + GAME_STATE_IMAGE_CHUNK_BYTES - 1) / GAME_STATE_IMAGE_CHUNK_BYTES)
 	{
 		return reader_refuse(reader, _game_state_image_refusal_length, 0);
@@ -1948,7 +2248,7 @@ static boolean reader_pass(
 	reader->chunk_position = 0;
 	reader->segment_left = 0;
 	reader->segment_zero = FALSE;
-	reader->state_words_left = state_bytes / 4;
+	reader->state_words_left = stream_bytes / 4;
 	reader->next_pointer_word = 0;
 	sha256_begin(&reader->sha);
 	if (!reader->chunk_checksums)
@@ -1959,8 +2259,22 @@ static boolean reader_pass(
 	}
 	csmemset(reader->report, 0, offsetof(struct game_state_image_report, peak_bytes));
 	reader->report->first_address_like_offset = NONE;
+	reader->report->version = (long)get_le32(header + HEADER_VERSION);
+	reader->report->typed_bytes = reader->typed ? stream_bytes : 0;
 
-	for (index = 0; index < layout->allocation_count; index++)
+	if (reader->typed)
+	{
+		/* (HWI-085) every byte of the state from the typed stream */
+		if (!reader_typed(reader, &typed_state))
+			return FALSE;
+		offset = layout->cpu_used;
+		index = layout->allocation_count;
+	}
+	else
+	{
+		index = 0;
+	}
+	for (; index < layout->allocation_count; index++)
 	{
 		struct game_state_image_allocation const *allocation = &layout->allocations[index];
 		boolean valid = FALSE;
@@ -1984,8 +2298,9 @@ static boolean reader_pass(
 			return FALSE;
 		offset = allocation->offset + allocation->size;
 	}
-	if (!reader_take(reader, offset, layout->cpu_used - offset) ||
-		!reader_take(reader, layout->size - layout->gpu_used, layout->gpu_used))
+	if (!reader->typed &&
+		(!reader_take(reader, offset, layout->cpu_used - offset) ||
+			!reader_take(reader, layout->size - layout->gpu_used, layout->gpu_used)))
 	{
 		return FALSE;
 	}
@@ -2117,12 +2432,63 @@ boolean game_state_image_write(
 
 	if (image_observer)
 		image_observer(3, &image_report);
-	success = file && image_write_or_measure(layout, header, file, digest);
+	success = file && image_write_or_measure(layout, header, file, digest, GAME_STATE_IMAGE_VERSION);
 
 	if (image_observer)
 		image_observer(0, &image_report);
 
 	return success;
+}
+
+/* (HWI-085) a save of a version: the typed image is refused (nothing is
+written) unless the schemas cover the whole game state */
+boolean game_state_image_write_version(
+	struct game_state_image_layout const *layout,
+	struct game_state_header const *header,
+	struct game_state_image_file const *file,
+	long version)
+{
+	byte digest[32];
+	boolean success;
+
+	if (version == GAME_STATE_IMAGE_VERSION)
+		return game_state_image_write(layout, header, file);
+	if (image_observer)
+		image_observer(3, &image_report);
+	success = file && image_write_or_measure(layout, header, file, digest, version);
+	if (!file)
+	{
+		csmemset(&image_report, 0, sizeof(image_report));
+		image_report.save = TRUE;
+		image_report.refusal = _game_state_image_refusal_layout;
+	}
+	if (!success)
+	{
+		error(_error_silent, "the saved game (version %ld) is not written: %s", version,
+			game_state_image_refusal_name(image_report.refusal));
+	}
+	if (image_observer)
+		image_observer(0, &image_report);
+
+	return success;
+}
+
+boolean game_state_image_schema_coverage(
+	struct game_state_image_layout const *layout,
+	long first_gap,
+	struct game_state_schema_coverage *coverage)
+{
+	struct game_state_schema_state state;
+
+	if (!image_layout_valid(layout))
+	{
+		csmemset(coverage, 0, sizeof(*coverage));
+		return FALSE;
+	}
+	image_typed_state(layout, &state);
+	game_state_schema_coverage_page(&state, first_gap, coverage);
+
+	return coverage->complete;
 }
 
 boolean game_state_image_digest(
@@ -2132,7 +2498,7 @@ boolean game_state_image_digest(
 {
 	byte bytes[32];
 	struct game_state_image_report report = image_report;
-	boolean success = image_write_or_measure(layout, header, NULL, bytes);
+	boolean success = image_write_or_measure(layout, header, NULL, bytes, GAME_STATE_IMAGE_VERSION);
 
 	csmemcpy(digest, image_report.digest, sizeof(image_report.digest));
 	image_report = report;
@@ -2210,7 +2576,7 @@ char const *game_state_image_refusal_name(
 	{
 		"none", "read", "magic", "version", "header_checksum", "incomplete", "byte_order", "encoding", "layout",
 		"build", "map", "players", "map_checksum", "chunk", "chunk_checksum", "segment", "length", "digest",
-		"pointer", "data_array", "memory_pool", "lruv_cache", "script_thread", "base", "memory"
+		"pointer", "data_array", "memory_pool", "lruv_cache", "script_thread", "base", "memory", "schema"
 	};
 
 	return refusal >= 0 && refusal < NUMBER_OF_GAME_STATE_IMAGE_REFUSALS ? names[refusal] : "unknown";

@@ -76,6 +76,7 @@ symbols in this file:
 #include "networking/network_game_globals.h"
 #include "networking/network_server_manager.h"
 #include "saved games/game_state.h"
+#include "saved games/game_state_schema.h"
 /* port/linux/game/network_distributed.c's */
 void network_distributed_tick(void);
 
@@ -106,6 +107,39 @@ struct game_time_globals_struct
 	real leftover_dt;
 };
 
+/* port (HWI-085): its schema for the typed game-state image
+(game_state_schema.h) */
+static struct game_state_schema_field const game_time_globals_schema_fields[] =
+{
+	GAME_STATE_SCHEMA_FIELD("initialized", _game_state_schema_boolean, 0x0, 1),
+	GAME_STATE_SCHEMA_FIELD("active", _game_state_schema_boolean, 0x1, 1),
+	GAME_STATE_SCHEMA_FIELD("paused", _game_state_schema_boolean, 0x2, 1),
+	GAME_STATE_SCHEMA_FIELD("(alignment)", _game_state_schema_padding, 0x3, 1),
+	GAME_STATE_SCHEMA_FIELD("monitor_state", _game_state_schema_s16, 0x4, 1),
+	GAME_STATE_SCHEMA_FIELD("monitor_counter", _game_state_schema_s16, 0x6, 1),
+	GAME_STATE_SCHEMA_FIELD("monitor_latency", _game_state_schema_s16, 0x8, 1),
+	GAME_STATE_SCHEMA_FIELD("(alignment)", _game_state_schema_padding, 0xA, 2),
+	GAME_STATE_SCHEMA_FIELD("local_time", _game_state_schema_s32, 0xC, 1),
+	GAME_STATE_SCHEMA_FIELD("last_local_time_elapsed", _game_state_schema_s16, 0x10, 1),
+	GAME_STATE_SCHEMA_FIELD("(alignment)", _game_state_schema_padding, 0x12, 2),
+	GAME_STATE_SCHEMA_FIELD("server_time", _game_state_schema_s32, 0x14, 1),
+	GAME_STATE_SCHEMA_FIELD("speed", _game_state_schema_real, 0x18, 1),
+	GAME_STATE_SCHEMA_FIELD("leftover_dt", _game_state_schema_real, 0x1C, 1),
+};
+static struct game_state_schema const game_time_globals_schema =
+	GAME_STATE_SCHEMA_DEFINE("game_time_globals", 0x20, game_time_globals_schema_fields);
+
+typedef char game_time_globals_schema_check[
+	sizeof(struct game_time_globals_struct) == 0x20 &&
+	offsetof(struct game_time_globals_struct, paused) == 0x2 &&
+	offsetof(struct game_time_globals_struct, monitor_state) == 0x4 &&
+	offsetof(struct game_time_globals_struct, monitor_latency) == 0x8 &&
+	offsetof(struct game_time_globals_struct, local_time) == 0xC &&
+	offsetof(struct game_time_globals_struct, last_local_time_elapsed) == 0x10 &&
+	offsetof(struct game_time_globals_struct, server_time) == 0x14 &&
+	offsetof(struct game_time_globals_struct, speed) == 0x18 &&
+	offsetof(struct game_time_globals_struct, leftover_dt) == 0x1C ? 1 : -1];
+
 /* ---------- prototypes */
 
 /* ---------- globals */
@@ -134,6 +168,7 @@ void game_time_initialize(
 {
 	game_time_globals = (struct game_time_globals_struct *)game_state_malloc("game time globals", NULL, sizeof(*game_time_globals));
 	memset(game_time_globals, 0, sizeof(*game_time_globals));
+	game_state_port_schema(game_time_globals, &game_time_globals_schema);
 
 	return;
 }

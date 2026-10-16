@@ -279,6 +279,7 @@ symbols in this file:
 #include "scenario/scenario.h"
 #include "scenario/scenario_definitions.h"
 #include "saved games/game_state.h"
+#include "saved games/game_state_schema.h"
 #include "text/draw_string.h"
 #include "cseries/errors.h"
 #include "main/console.h"
@@ -431,6 +432,43 @@ struct hs_thread_datum
 
 typedef char hs_thread_datum_size_assert[
 	sizeof(struct hs_thread_datum) == 0x218 ? 1 : -1];
+
+/* port (HWI-085): their schemas for the typed game-state image
+(game_state_schema.h). A value cell (a global's value, a thread's result) is
+an HS cell: a value stored by its type's width, its other bytes kept from
+what was there (HS_CELL_SHORT, hs.h; HWI-016C), so it is unresolved, as is a
+thread's stack (its frames at 2-byte offsets, their values cells). The top
+frame's pointer is typed: an offset in the stack, at a 2-byte boundary. */
+static struct game_state_schema_field const hs_global_schema_fields[] =
+{
+	GAME_STATE_SCHEMA_FIELD("identifier", _game_state_schema_identifier, 0x0, 1),
+	GAME_STATE_SCHEMA_FIELD("unused", _game_state_schema_s16, 0x2, 1),
+	GAME_STATE_SCHEMA_FIELD("value", _game_state_schema_hs_cell, 0x4, 1),
+};
+static struct game_state_schema const hs_global_schema =
+	GAME_STATE_SCHEMA_DEFINE("hs_global_datum", 0x8, hs_global_schema_fields);
+
+static struct game_state_schema_field const hs_thread_schema_fields[] =
+{
+	GAME_STATE_SCHEMA_FIELD("identifier", _game_state_schema_identifier, 0x0, 1),
+	GAME_STATE_SCHEMA_FIELD("type", _game_state_schema_u8, 0x2, 1),
+	GAME_STATE_SCHEMA_FIELD("flags", _game_state_schema_u8, 0x3, 1),
+	GAME_STATE_SCHEMA_FIELD("script_index", _game_state_schema_s32, 0x4, 1),
+	GAME_STATE_SCHEMA_FIELD("sleep_until", _game_state_schema_s32, 0x8, 1),
+	GAME_STATE_SCHEMA_FIELD("previous_sleep_until", _game_state_schema_s32, 0xC, 1),
+	GAME_STATE_SCHEMA_FRAME_POINTER("stack", 0x10, 0x18, 0x200),
+	GAME_STATE_SCHEMA_FIELD("result", _game_state_schema_hs_cell, 0x14, 1),
+	GAME_STATE_SCHEMA_FIELD("stack_data", _game_state_schema_unresolved, 0x18, 0x200),
+};
+static struct game_state_schema const hs_thread_schema =
+	GAME_STATE_SCHEMA_DEFINE("hs_thread_datum", 0x218, hs_thread_schema_fields);
+
+typedef char hs_runtime_schema_check[
+	sizeof(struct hs_global_datum) == 0x8 && offsetof(struct hs_global_datum, value) == 0x4 &&
+	offsetof(struct hs_thread_datum, type) == 0x2 && offsetof(struct hs_thread_datum, flags) == 0x3 &&
+	offsetof(struct hs_thread_datum, script_index) == 0x4 && offsetof(struct hs_thread_datum, sleep_until) == 0x8 &&
+	offsetof(struct hs_thread_datum, previous_sleep_until) == 0xC && offsetof(struct hs_thread_datum, stack) == 0x10 &&
+	offsetof(struct hs_thread_datum, result) == 0x14 && offsetof(struct hs_thread_datum, stack_data) == 0x18 ? 1 : -1];
 
 /* ---------- prototypes */
 
@@ -745,6 +783,8 @@ void hs_runtime_initialize(
 
 	hs_thread_data = game_state_data_new("hs thread", 0x100, 0x218);
 	hs_global_data = game_state_data_new("hs globals", 0x400, 8);
+	game_state_port_schema(hs_thread_data, &hs_thread_schema);
+	game_state_port_schema(hs_global_data, &hs_global_schema);
 	if (hs_thread_data && hs_global_data)
 	{
 		match_vassert("c:\\halo\\SOURCE\\hs\\hs_runtime.c", 0xa9,

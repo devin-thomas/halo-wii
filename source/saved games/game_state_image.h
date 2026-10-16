@@ -10,6 +10,13 @@ the whole. It is checked whole, in a first pass over the file, before any of
 it is taken; a second pass then takes it into the game state. A pointer is
 saved as its place in the game state and made again at the game state's
 address, whatever that is. game_state_image.c describes the format.
+
+port (HWI-085): version 3, the typed image, writes each field by itself by
+its class's schema (game_state_schema.h), the same bytes on either byte
+order. It is written only once the schemas cover the whole game state (the
+gate, game_state_image_schema_coverage); until then saves are version 2
+(GAME_STATE_IMAGE_WRITE_VERSION), and a version-3 image is refused before
+anything of it is taken. A version-2 image is read as it always was.
 */
 
 #ifndef __GAME_STATE_IMAGE_H
@@ -18,9 +25,18 @@ address, whatever that is. game_state_image.c describes the format.
 
 /* ---------- constants */
 
+/* (HWI-085) the version saves are written in: version 2 until the typed
+image's gate passes for the live game state (a version-3 save is refused
+while it does not) */
+#ifndef GAME_STATE_IMAGE_WRITE_VERSION
+#define GAME_STATE_IMAGE_WRITE_VERSION GAME_STATE_IMAGE_VERSION
+#endif
+
 enum
 {
 	GAME_STATE_IMAGE_VERSION = 2,
+	/* (HWI-085) the typed image: written only when the gate passes */
+	GAME_STATE_IMAGE_TYPED_VERSION = 3,
 	GAME_STATE_IMAGE_HEADER_BYTES = 512,
 	GAME_STATE_IMAGE_CHUNK_HEADER_BYTES = 16,
 	GAME_STATE_IMAGE_CHUNK_BYTES = 0x10000,
@@ -100,6 +116,8 @@ enum game_state_image_refusal
 	_game_state_image_refusal_script_thread,
 	_game_state_image_refusal_base,
 	_game_state_image_refusal_memory,
+	/* (HWI-085) a typed image the schemas do not cover, or of others */
+	_game_state_image_refusal_schema,
 
 	NUMBER_OF_GAME_STATE_IMAGE_REFUSALS
 };
@@ -107,6 +125,8 @@ enum game_state_image_refusal
 /* ---------- structures */
 
 struct game_state_header;
+struct game_state_schema_region;
+struct game_state_schema_coverage;
 
 /* one data array, memory pool or lruv cache of the game state, as
 game_state.c made it */
@@ -145,6 +165,10 @@ struct game_state_image_layout
 	struct game_state_image_pointer_word const *pointer_words;
 	long allocation_count; /* in ascending offset */
 	struct game_state_image_allocation const *allocations;
+	/* (HWI-085) every allocation with its class's schema, for the typed
+	image (game_state_schema.h's order) */
+	long region_count;
+	struct game_state_schema_region const *regions;
 };
 
 /* how an image is read and written: whole transfers of size bytes */
@@ -182,6 +206,12 @@ struct game_state_image_report
 	unsigned long save_base;
 	boolean base_bound;
 	long passes;
+	/* (HWI-085) the image's version; a typed image's stream bytes and
+	schema identity, and the codec's error (game_state_schema.h) */
+	long version;
+	unsigned long typed_bytes;
+	unsigned long schema_identity;
+	short schema_error;
 };
 
 /* ---------- prototypes */
@@ -193,6 +223,21 @@ boolean game_state_image_write(
 	struct game_state_image_layout const *layout,
 	struct game_state_header const *header,
 	struct game_state_image_file const *file);
+/* (HWI-085) the same, of a version: GAME_STATE_IMAGE_VERSION, or
+GAME_STATE_IMAGE_TYPED_VERSION (refused, nothing written, unless the gate
+passes) */
+boolean game_state_image_write_version(
+	struct game_state_image_layout const *layout,
+	struct game_state_header const *header,
+	struct game_state_image_file const *file,
+	long version);
+/* (HWI-085) what the schemas cover of the game state, keeping its gaps
+from the first_gap'th on: TRUE when the gate passes (the typed image can be
+written and taken) */
+boolean game_state_image_schema_coverage(
+	struct game_state_image_layout const *layout,
+	long first_gap,
+	struct game_state_schema_coverage *coverage);
 /* reads an image's header; FALSE (and why, in the report) if it is not one
 of this format, or not complete */
 boolean game_state_image_read_header(

@@ -69,6 +69,19 @@ boolean game_state_port_image_check(
 	boolean check_header);
 boolean game_state_port_image_digest(
 	unsigned long digest[8]);
+/* port (HWI-085): a state class's schema for the typed image (its unit's),
+and what the schemas cover of the game state (the typed image's gate) */
+struct game_state_schema;
+struct game_state_schema_coverage;
+void game_state_port_schema(
+	void const *address,
+	struct game_state_schema const *schema);
+boolean game_state_port_image_schema_coverage(
+	long first_gap,
+	struct game_state_schema_coverage *coverage);
+/* port (HWI-085): the gate's whole account to halo.log, a page at a time */
+void game_state_port_image_schema_log(
+	void);
 /* port (HWI-079): game_state_image_pointer_places of this game state */
 long game_state_port_image_pointer_places(
 	long *offsets,

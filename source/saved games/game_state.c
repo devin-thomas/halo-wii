@@ -123,6 +123,7 @@ symbols in this file:
 #include "memory_pool.h"
 #include "cluster_partitions.h"
 #include "game_state_image.h"
+#include "game_state_schema.h"
 #include "physical_memory_map.h"
 
 void platform_log(const char *format, ...);
@@ -516,6 +517,12 @@ static boolean game_state_header_valid(
 	return valid;
 }
 
+static void game_state_region_record(
+	const char *name,
+	void const *address,
+	long size,
+	boolean gpu);
+
 static void game_state_allocation_record(
 	const char *name,
 	const char *type,
@@ -565,6 +572,7 @@ void *game_state_malloc(
 
 	pointer = (byte *)game_state_globals.base_address+game_state_globals.cpu_allocation_size;
 	game_state_globals.cpu_allocation_size+= size;
+	game_state_region_record(name, pointer, size, FALSE);
 
 	crc_checksum_buffer((unsigned long *)&game_state_globals.allocation_size_checksum, &size, sizeof(size));
 
@@ -586,6 +594,7 @@ void *game_state_gpu_malloc(
 
 	game_state_globals.gpu_allocation_size+= size;
 	pointer = (byte *)game_state_globals.base_address-game_state_globals.gpu_allocation_size+GAME_STATE_SIZE;
+	game_state_region_record(name, pointer, size, TRUE);
 
 	crc_checksum_buffer((unsigned long *)&game_state_globals.allocation_size_checksum, &size, sizeof(size));
 
@@ -646,6 +655,85 @@ enum
 
 static struct game_state_image_pointer_word game_state_pointer_words[MAXIMUM_GAME_STATE_POINTER_WORDS];
 static long game_state_pointer_word_count;
+
+/* (HWI-085) every allocation of the game state, as the typed image's schema
+regions (game_state_schema.h): its name (kept here: some are made in a
+caller's buffer), kind, extent and the schema of its class, named
+(game_state_schema_class_find) or its unit's (game_state_port_schema). A
+game state with more is not one the typed image covers */
+enum
+{
+	MAXIMUM_GAME_STATE_REGIONS = 384,
+	GAME_STATE_REGION_NAME_BYTES = 32,
+};
+
+static struct game_state_schema_region game_state_regions[MAXIMUM_GAME_STATE_REGIONS];
+static char game_state_region_names[MAXIMUM_GAME_STATE_REGIONS][GAME_STATE_REGION_NAME_BYTES];
+static long game_state_region_count;
+static boolean game_state_regions_overflowed;
+static boolean game_state_schema_logged;
+
+static void game_state_region_record(
+	const char *name,
+	void const *address,
+	long size,
+	boolean gpu)
+{
+	struct game_state_schema_region *region;
+	char *kept;
+	long length;
+
+	if (game_state_region_count >= MAXIMUM_GAME_STATE_REGIONS)
+	{
+		game_state_regions_overflowed = TRUE;
+		return;
+	}
+	region = &game_state_regions[game_state_region_count];
+	kept = game_state_region_names[game_state_region_count];
+	csmemset(region, 0, sizeof(*region));
+	for (length = 0; name && name[length] && length < GAME_STATE_REGION_NAME_BYTES - 1; length++)
+		kept[length] = name[length];
+	kept[length] = 0;
+	region->name = kept;
+	region->kind = _game_state_schema_region_global;
+	region->gpu = gpu;
+	region->offset = (long)((byte const *)address - (byte const *)game_state_globals.base_address);
+	region->size = size;
+	region->schema = game_state_schema_class_find(region->name, _game_state_schema_region_global, size);
+	game_state_region_count++;
+}
+
+/* the region an allocation begins (containing: the one a word lies in) */
+static struct game_state_schema_region *game_state_region_find(
+	void const *address,
+	boolean containing)
+{
+	long offset = (long)((byte const *)address - (byte const *)game_state_globals.base_address);
+	long index;
+
+	for (index = 0; index < game_state_region_count; index++)
+	{
+		struct game_state_schema_region *region = &game_state_regions[index];
+
+		if (containing ? offset >= region->offset && offset < region->offset + region->size : offset == region->offset)
+			return region;
+	}
+
+	return NULL;
+}
+
+/* (a pointer version 2 is told of, for the gate's cross-check: more than a
+region keeps is a conflict the gate reports) */
+static void game_state_region_declare_pointer(
+	struct game_state_schema_region *region,
+	long offset)
+{
+	if (!region)
+		return;
+	if (region->declared_pointer_count < (short)NUMBEROF(region->declared_pointers))
+		region->declared_pointers[region->declared_pointer_count] = offset;
+	region->declared_pointer_count++;
+}
 
 static struct game_state_allocation *game_state_allocation_new(
 	short kind,
@@ -715,6 +803,10 @@ static void game_state_image_layout_get(
 	layout->pointer_words = game_state_pointer_words;
 	layout->allocation_count = game_state_allocation_count;
 	layout->allocations = game_state_image_allocations;
+	/* (HWI-085) the typed image's regions; none (nothing covered) if more
+	were made than are kept */
+	layout->region_count = game_state_regions_overflowed ? 0 : game_state_region_count;
+	layout->regions = game_state_regions;
 }
 
 /* port (HWI-076): a pointer in each element in use of a data array of the
@@ -737,6 +829,7 @@ void game_state_port_data_pointer_field(
 			match_assert("game_state.c", 0, allocation->pointer_field_count < GAME_STATE_IMAGE_MAXIMUM_POINTER_FIELDS);
 			if (allocation->pointer_field_count < GAME_STATE_IMAGE_MAXIMUM_POINTER_FIELDS)
 				allocation->pointer_fields[allocation->pointer_field_count++] = offset;
+			game_state_region_declare_pointer(game_state_region_find(data, FALSE), offset);
 			return;
 		}
 	}
@@ -768,6 +861,77 @@ void game_state_port_pointer_field(
 	game_state_pointer_words[index].offset = offset;
 	game_state_pointer_words[index].kind = kind;
 	game_state_pointer_word_count++;
+	{
+		struct game_state_schema_region *region = game_state_region_find(field, TRUE);
+
+		if (region)
+			game_state_region_declare_pointer(region, offset - region->offset);
+	}
+}
+
+/* port (HWI-085): the schema (game_state_schema.h) of the class allocated at
+address (a game_state_malloc'd global, or a data array's elements), given by
+the unit that defines it */
+void game_state_port_schema(
+	void const *address,
+	struct game_state_schema const *schema)
+{
+	struct game_state_schema_region *region = game_state_region_find(address, FALSE);
+
+	match_assert("game_state.c", 0, region);
+	if (region)
+		region->schema = schema;
+}
+
+/* port (HWI-085): what the schemas cover of the game state (the typed
+image's completeness gate, game_state_image_schema_coverage) */
+boolean game_state_port_image_schema_coverage(
+	long first_gap,
+	struct game_state_schema_coverage *coverage)
+{
+	struct game_state_image_layout layout;
+
+	game_state_image_layout_get(&layout);
+
+	return game_state_image_schema_coverage(&layout, first_gap, coverage);
+}
+
+/* port (HWI-085): what keeps the typed image from being written: the bytes
+the schemas type, leave unresolved and leave unclaimed, and every gap
+(region and field, reason, extent), to halo.log */
+void game_state_port_image_schema_log(
+	void)
+{
+	struct game_state_schema_coverage coverage;
+	long first = 0;
+
+	do
+	{
+		long index;
+
+		game_state_port_image_schema_coverage(first, &coverage);
+		if (!first)
+		{
+			platform_log("game state schemas: %s; %lu of %lu bytes typed, %lu unresolved, %lu unclaimed, "
+				"%ld pointer conflicts; regions %ld: %ld typed, %ld with unresolved, %ld with unclaimed; "
+				"%ld gaps; schema error %s (%.31s, field %d); identity %08lx",
+				coverage.complete ? "complete" : "incomplete (saves stay version 2)", coverage.typed_bytes,
+				coverage.state_bytes, coverage.unresolved_bytes, coverage.unclaimed_bytes, coverage.conflicts,
+				coverage.regions, coverage.typed_regions, coverage.unresolved_regions, coverage.unclaimed_regions,
+				coverage.gap_count, game_state_schema_error_name(coverage.schema_error),
+				coverage.schema_error_owner ? coverage.schema_error_owner : "", coverage.schema_error_field,
+				coverage.identity);
+		}
+		for (index = 0; index < coverage.gaps_kept; index++)
+		{
+			struct game_state_schema_gap const *gap = &coverage.gaps[index];
+
+			platform_log("game state schema gap %ld: %s %.31s %s, %ld bytes at %ld", first + index,
+				game_state_schema_gap_reason_name(gap->reason), gap->owner ? gap->owner : "(none)",
+				gap->field ? gap->field : "", gap->size, gap->offset);
+		}
+		first += coverage.gaps_kept;
+	} while (coverage.gaps_kept && first < coverage.gap_count);
 }
 
 /* port (HWI-076): the game state written as an image */
@@ -777,8 +941,16 @@ boolean game_state_port_image_write(
 	struct game_state_image_layout layout;
 
 	game_state_image_layout_get(&layout);
+	/* (HWI-085) the gate's account, once a run, with its first save */
+	if (!game_state_schema_logged)
+	{
+		game_state_schema_logged = TRUE;
+		game_state_port_image_schema_log();
+	}
 
-	return game_state_image_write(&layout, game_state_globals.header, file);
+	/* (HWI-085) version 2 until the typed image's gate passes for the whole
+	game state: a version that cannot be written whole is refused */
+	return game_state_image_write_version(&layout, game_state_globals.header, file, GAME_STATE_IMAGE_WRITE_VERSION);
 }
 
 /* port (HWI-076): an image checked whole, then taken (game_state_image.h's
@@ -846,6 +1018,17 @@ struct data_array *game_state_data_new(
 
 	data = game_state_malloc(name, "data array", data_allocation_size(maximum_count, size));
 	data_initialize(data, name, maximum_count, size);
+	{
+		struct game_state_schema_region *region = game_state_region_find(data, FALSE);
+
+		if (region)
+		{
+			region->kind = _game_state_schema_region_data_array;
+			region->maximum_count = maximum_count;
+			region->element_size = size;
+			region->schema = game_state_schema_class_find(region->name, _game_state_schema_region_data_array, size);
+		}
+	}
 	allocation = game_state_allocation_new(_game_state_allocation_data, data);
 	if (allocation)
 	{
@@ -933,6 +1116,16 @@ struct memory_pool *game_state_memory_pool_new(
 	pool = game_state_malloc(name, "memory pool", memory_pool_allocation_size(size));
 	memory_pool_initialize(pool, name, size);
 	{
+		struct game_state_schema_region *region = game_state_region_find(pool, FALSE);
+
+		if (region)
+		{
+			region->kind = _game_state_schema_region_memory_pool;
+			region->pool_size = size;
+			region->schema = NULL;
+		}
+	}
+	{
 		struct game_state_allocation *allocation = game_state_allocation_new(_game_state_allocation_memory_pool, pool);
 
 		if (allocation)
@@ -954,6 +1147,20 @@ struct lruv_cache *game_state_lruv_cache_new(
 
 	cache = game_state_malloc(name, "lruv cache", lruv_allocation_size(maximum_block_count));
 	lruv_initialize(cache, name, page_count, page_size_bits, maximum_block_count, delete_block_proc, locked_block_proc);
+	{
+		struct game_state_schema_region *region = game_state_region_find(cache, FALSE);
+
+		if (region)
+		{
+			region->kind = _game_state_schema_region_lruv_cache;
+			region->maximum_count = (short)maximum_block_count;
+			region->page_count = page_count;
+			region->page_size_bits = page_size_bits;
+			region->procedures[0] = (unsigned long)delete_block_proc;
+			region->procedures[1] = (unsigned long)locked_block_proc;
+			region->schema = NULL;
+		}
+	}
 	{
 		struct game_state_allocation *allocation = game_state_allocation_new(_game_state_allocation_lruv_cache, cache);
 
