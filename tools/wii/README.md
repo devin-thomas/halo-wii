@@ -616,3 +616,24 @@ inversion, and the menus' signal that picks the layer.
 ```powershell
 python -B -m unittest test_gamecube_input
 ```
+
+## Shootable targets in the real-map run (HWI-041)
+
+`test_combat_targets.py` builds `combat_targets_check.c` with the host
+compiler around `port/wii/engine/combat_targets.c`, compiled whole: the plan
+key `targets=` and its refusals, the harness's hit schedule, spawn, hits by
+the harness and by the world, a shield's recharge (no hit), death by the
+object's dead bit, a body hit again (no hit), a destruction outright,
+removal, the spawn refusals and the targets' places. The test recomputes
+each event digest the check prints with zlib's CRC-32 from its event lines.
+Static checks tie `combat_targets_scenario.c` to the engine's own machinery
+(targets by `object_new` from the player's unit definition, hits by
+`object_cause_damage` with the weapon's projectile impact damage filled as
+`projectiles.c` fills it, vitality and death read, never written, nothing
+outside an armed run whose plan asks) and the build's lists. It does not run
+a map: the engine side's spawns and hits on a staged map are the Dolphin
+and Wii gates.
+
+```powershell
+python -B -m unittest test_combat_targets
+```

@@ -69,6 +69,8 @@ ENGINE_AUTHORED = (ENGINE_DIR / "engine_hooks.c", ENGINE_DIR / "fixed_step_scena
                    ENGINE_DIR / "boot_hooks.c",
                    # HWI-076: the real-map run's view of saved games' images
                    ENGINE_DIR / "save_image_scenario.c",
+                   # HWI-041: the real-map run's shootable targets (object_new, object_cause_damage)
+                   ENGINE_DIR / "combat_targets_scenario.c",
                    # HWI-074: the sound's engine side (pass-through unless the sound runs)
                    SOUND_DIR / "sound_hooks.c")
 
@@ -82,6 +84,8 @@ WII_PLATFORM = tuple(ENGINE_DIR / name for name in (
     "wii_log.c", "wii_kernel.c", "wii_memory.c", "wii_posix_files.c", "wii_sdl_files.c",
     "wii_platform_checks.c", "unsupported_sdk.c", "unsupported_port.c", "engine_map_run.c",
     "wii_engine_main.c",
+    # HWI-041: the targets' states and events (C types only; the host check compiles it too)
+    "combat_targets.c",
     # HWI-016D: XInput on the GameCube pad; the in-process loopback sockets
     "wii_xinput.c", "wii_loopback_net.c")) + (
     Path("port/wii/runtime/runtime_start.c"), Path("tools/wii/cache_arena_plan.c")) + tuple(

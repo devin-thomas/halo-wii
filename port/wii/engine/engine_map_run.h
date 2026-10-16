@@ -16,6 +16,7 @@ print the same report lines (through wii_log):
        [canonical=every|checkpoints] [invariance=1|0]
        [script=<tick>:<script source, ~ for a space>] [core_save=<tick>]
        [image_test=<tick>] [name=<the runs' name in the log>]
+       [targets=<spawn tick>:<count>[:<first hit tick>:<interval>]]
      A map's runs: an unmeasured warm-up run (unless warmup=0; of N ticks
      with warmup=N, N>1), then cycles
      x (load the staged map; run it at each cadence for ticks of the
@@ -36,7 +37,15 @@ print the same report lines (through wii_log):
      (HWI-076) image_test= saves a core after that tick and loads damaged
      copies of it, each of which must be refused with the game state
      unchanged (save_image_scenario.h); name= names the line's runs in the log, so lines of one map compare
-     apart. Defaults:
+     apart. (HWI-041) targets= makes count (1-4) shootable units of the
+     player's own definition in front of the player after the spawn tick
+     and, with a first hit tick, hits the first one alive then and every
+     interval after through the engine's object_cause_damage with the
+     player's weapon's impact damage (combat_targets_scenario.h); TARGET,
+     TARGETS and TARGET_END lines report each spawn, hit, death and
+     removal, every run's events must be the first run's, and the line's
+     TARGETS_CHECK (an expectation) needs every target made, no refusal and,
+     with a first hit tick, a hit dealt. Not in the warm-up. Defaults:
      300 ticks, the driver's cycles, all six cadences (60hz, 30hz, 20hz,
      144hz, irregular, vsync_measured), a warm-up.
 

@@ -170,6 +170,28 @@ decals' per-map vertex-cache flush (the decals' own unlocking is kept).
      state that image was saved from), and a plan line's `image_test=<tick>`
      loads twelve damaged copies of a core saved after that tick, each of
      which must be refused with the game state unchanged (IMAGE_TEST line).
+   - Shootable targets (HWI-041): a plan line's
+     `targets=<spawn tick>:<count>[:<first hit tick>:<interval>]` makes
+     1-4 units of the player's own unit definition (the map's biped, its
+     collision model's vitality) by `object_new`, 3 world units in front of
+     the player, facing it, on the covenant team, after the spawn tick of
+     every run but the warm-up; with a first hit tick, the first target
+     alive takes one hit then and every interval after through
+     `object_cause_damage`, with the impact damage of the projectile the
+     player's weapon's first trigger fires, filled as a projectile's impact
+     fills it. Shields, health, death and destruction are the engine's;
+     [combat_targets_scenario.c](combat_targets_scenario.c) only reads each
+     target's vitality and dead bit back after every tick
+     ([combat_targets.c](combat_targets.c): spawned, hit by the harness or
+     the world, killed, removed, refused: `no_player_unit`,
+     `not_damageable`, `no_room`, `no_impact_damage`). TARGET, TARGETS and
+     TARGET_END lines report them with a CRC of every event; every run's
+     must be the first run's, and the line's TARGETS_CHECK needs every
+     target made, no refusal and a hit dealt. No AI actor drives the
+     targets (an encounter's actors need the map's own squads, `script=`'s
+     `ai_place`); nothing is made outside such a run, so the boot mode and
+     ordinary play never see them. Checked on the host by
+     `tools/wii/test_combat_targets.py`; not yet run on a staged map.
 5. Shuts the engine down; the arena's bound must be restored. Reports the
    main stack's peak, the engine threads' stack peak and every unsupported
    entry point called.
