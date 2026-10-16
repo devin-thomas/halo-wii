@@ -100,6 +100,7 @@ symbols in this file:
 #include "interface/player_ui.h"
 #include "memory/crc.h"
 #include "saved games/game_state.h"
+#include "saved games/game_state_generations.h"
 #include "saved games/game_state_image.h"
 #include "sound/sound_manager.h"
 #include <xtl.h>
@@ -112,6 +113,10 @@ enum
 	/* the native builds' larger game state (halo_port_capacity.h) */
 	GAME_STATE_SIZE = HALO_PORT_GAME_STATE_SIZE
 };
+
+/* port (HWI-080): the checkpoint's primary (game_state_generations.h) */
+#define GAME_STATE_CHECKPOINT_PATH "z:\\savegame.bin"
+#define GAME_STATE_NO_FILE_ATTRIBUTES ((DWORD)-1)
 
 /* ---------- structures */
 
@@ -136,6 +141,17 @@ typedef char verify_xbox_game_state_handle_offset[
 typedef char verify_xbox_game_state_globals_prefix_size[
 	sizeof(struct xbox_game_state_globals_prefix) == 0x14 ? 1 : -1];
 
+/* port (HWI-080): a saved game's generations as files
+(game_state_generation_files_new) */
+struct game_state_generation_io
+{
+	DWORD flags; /* CreateFileA's */
+	char const *what;
+	/* game_state_generation_attempt_header's */
+	void *header;
+	boolean damaged;
+};
+
 /* ---------- prototypes */
 
 static void game_state_header_terminate(
@@ -151,6 +167,20 @@ static boolean game_state_image_file_end(
 static boolean game_state_image_file_take(
 	HANDLE handle,
 	boolean check_header,
+	char const *what);
+static short game_state_image_file_take_result(
+	HANDLE handle,
+	boolean check_header,
+	char const *what);
+static void game_state_generation_files_new(
+	struct game_state_generation_files *files,
+	struct game_state_generation_io *io);
+static short game_state_generation_attempt_header(
+	void *context,
+	char const *path);
+static boolean game_state_generations_take(
+	char const *primary,
+	DWORD flags,
 	char const *what);
 
 /* ---------- globals */
@@ -229,6 +259,8 @@ void game_state_free_buffer(
 void game_state_create_or_open_file(
 	void)
 {
+	char candidate[GAME_STATE_GENERATION_PATH_BYTES];
+
 	match_assert(
 		"c:\\halo\\SOURCE\\saved games\\game_state_xbox.c",
 		86,
@@ -239,12 +271,28 @@ void game_state_create_or_open_file(
 		!xbox_game_state_globals.file_open);
 
 	/* port (HWI-076): the canonical image is as long as it is written, not
-	the game state's size (game_state_image.c) */
-	xbox_game_state_globals.handle = CreateFileA("z:\\savegame.bin",
+	the game state's size (game_state_image.c). port (HWI-080): the
+	checkpoint is kept in generations (game_state_generations.h), each
+	opened as it is written or read; the primary is only made sure of here,
+	and not held open (it is renamed), nor made over a candidate a save
+	stopped before promoting (the next save promotes it) */
+	if (game_state_generation_path(candidate, sizeof(candidate), GAME_STATE_CHECKPOINT_PATH,
+			_game_state_generation_candidate) &&
+		GetFileAttributesA(GAME_STATE_CHECKPOINT_PATH) == GAME_STATE_NO_FILE_ATTRIBUTES &&
+		GetFileAttributesA(candidate) != GAME_STATE_NO_FILE_ATTRIBUTES)
+	{
+		xbox_game_state_globals.handle = INVALID_HANDLE_VALUE;
+		xbox_game_state_globals.file_open = TRUE;
+
+		return;
+	}
+	xbox_game_state_globals.handle = CreateFileA(GAME_STATE_CHECKPOINT_PATH,
 		GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
 		FILE_FLAG_NO_BUFFERING|FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 	if (xbox_game_state_globals.handle != INVALID_HANDLE_VALUE)
 	{
+		CloseHandle(xbox_game_state_globals.handle);
+		xbox_game_state_globals.handle = INVALID_HANDLE_VALUE;
 		xbox_game_state_globals.file_open = TRUE;
 	}
 	else
@@ -267,7 +315,10 @@ void game_state_close_file(
 		"c:\\halo\\SOURCE\\saved games\\game_state_xbox.c",
 		106,
 		xbox_game_state_globals.file_open);
-	CloseHandle(xbox_game_state_globals.handle);
+	/* port (HWI-080): no handle is held (game_state_create_or_open_file) */
+	if (xbox_game_state_globals.handle != INVALID_HANDLE_VALUE)
+		CloseHandle(xbox_game_state_globals.handle);
+	xbox_game_state_globals.handle = INVALID_HANDLE_VALUE;
 	xbox_game_state_globals.file_open = FALSE;
 
 	return;
@@ -277,7 +328,8 @@ boolean game_state_write_to_file(
 	void)
 {
 	boolean result = FALSE;
-	struct game_state_image_file file;
+	struct game_state_generation_io io;
+	struct game_state_generation_files files;
 
 	match_assert(
 		"c:\\halo\\SOURCE\\saved games\\game_state_xbox.c",
@@ -288,10 +340,14 @@ boolean game_state_write_to_file(
 		121,
 		xbox_game_state_globals.file_open);
 
-	/* port (HWI-076): the canonical image, in chunks */
-	game_state_image_file_new(&file, &xbox_game_state_globals.handle);
-	if (game_state_port_image_write(&file) &&
-		game_state_image_file_end(xbox_game_state_globals.handle))
+	/* port (HWI-076): the canonical image, in chunks. port (HWI-080): as a
+	new generation, checked whole before it replaces the last checkpoint;
+	one not written leaves the last as it was (game_state_generations.h).
+	(game_state_save still counts the checkpoint as lost: game_state.c) */
+	csmemset(&io, 0, sizeof(io));
+	io.flags = FILE_FLAG_NO_BUFFERING|FILE_FLAG_SEQUENTIAL_SCAN;
+	game_state_generation_files_new(&files, &io);
+	if (game_state_generations_save(&files, GAME_STATE_CHECKPOINT_PATH))
 	{
 		xbox_game_state_globals.file_valid_for_read = TRUE;
 		result = TRUE;
@@ -328,8 +384,11 @@ boolean game_state_read_from_file(
 
 	/* port (HWI-076): the canonical image, checked whole in a first pass
 	over the file and only then taken in a second; one that is not taken
-	leaves the game state as it is (game_state_revert starts the map over) */
-	result = game_state_image_file_take(xbox_game_state_globals.handle, TRUE, "saved game file");
+	leaves the game state as it is (game_state_revert starts the map over).
+	port (HWI-080): the newest generation that is taken; one that failed
+	while being taken ends the attempt (game_state_generations_take) */
+	result = game_state_generations_take(GAME_STATE_CHECKPOINT_PATH,
+		FILE_FLAG_NO_BUFFERING|FILE_FLAG_SEQUENTIAL_SCAN, "saved game file");
 
 	return result;
 }
@@ -431,15 +490,24 @@ static __inline boolean game_state_get_persistent_storage_path(
 	return result;
 }
 
-static void delete_persistent_storage(
-	void)
+/* port (HWI-080): the persistent storage's primary (game_state_generations.h).
+Upstream deleted a saved game it could not write or read; its generations
+are kept instead, the previous one the one a load falls back to */
+static boolean game_state_get_persistent_storage_primary(
+	char *path)
 {
-	char path[256];
+	char directory[256];
+	boolean result = FALSE;
 
-	if (game_state_get_persistent_storage_path(path))
-		DeleteFileA(path);
+	if (game_state_get_persistent_storage_path(directory) &&
+		strlen(directory) + strlen("savegame.bin") < GAME_STATE_GENERATION_PATH_BYTES)
+	{
+		strcpy(path, directory);
+		strcat(path, "savegame.bin");
+		result = TRUE;
+	}
 
-	return;
+	return result;
 }
 
 static HANDLE game_state_open_persistent_storage(
@@ -505,46 +573,42 @@ boolean game_state_read_header_from_persistent_storage(
 	long buffer_size,
 	boolean *corrupted)
 {
-	HANDLE file;
-	boolean result;
-	struct game_state_image_file image;
+	char primary[GAME_STATE_GENERATION_PATH_BYTES];
+	struct game_state_generation_io io;
+	struct game_state_generation_files files;
+	short generation;
+	boolean result = FALSE;
 
 	/* port (HWI-076): the canonical image's header, and the whole image
 	checked (game_state_image_check: its chunks, its digest, its layout)
-	where the upstream summed the file's CRC */
+	where the upstream summed the file's CRC. port (HWI-080): of the newest
+	generation that checks whole, the one game_state_read_from_persistent_storage
+	then takes; corrupted only when none does and one held something */
 	(void)header_checksum;
 	(void)buffer_size;
-	file = game_state_open_persistent_storage(NULL);
-	result = FALSE;
 	if (corrupted)
 		*corrupted = FALSE;
 
-	if (file != INVALID_HANDLE_VALUE)
+	if (header_size == sizeof(struct game_state_header) && game_state_get_persistent_storage_primary(primary))
 	{
-		game_state_image_file_new(&image, &file);
-		if (header_size != sizeof(struct game_state_header) ||
-			!game_state_image_read_header(&image, header))
+		csmemset(&io, 0, sizeof(io));
+		io.header = header;
+		game_state_generation_files_new(&files, &io);
+		if (game_state_generations_load(&files, primary, game_state_generation_attempt_header, &generation) ==
+			_game_state_generation_taken)
 		{
-			/* (an empty file holds no saved game; anything else is damaged) */
-			if (GetFileSize(file, NULL) && corrupted)
-				*corrupted = TRUE;
-			error(_error_silent, "no saved game in persistent storage");
+			if (generation != _game_state_generation_current)
+				error(_error_silent, "persistent storage: the newest saved game that checks whole is generation %d",
+					generation);
+			result = TRUE;
 		}
 		else
 		{
-			game_state_header_terminate(header, header_size);
-			if (game_state_port_image_check(&image, FALSE))
-			{
-				result = TRUE;
-			}
-			else
-			{
-				if (corrupted)
-					*corrupted = TRUE;
-				error(_error_silent, "checksum failed on persistent storage");
-			}
+			if (io.damaged && corrupted)
+				*corrupted = TRUE;
+			error(_error_silent, io.damaged ? "checksum failed on persistent storage" :
+				"no saved game in persistent storage");
 		}
-		CloseHandle(file);
 	}
 
 	return result;
@@ -556,20 +620,24 @@ void game_state_write_to_persistent_storage(
 	long header_size,
 	long buffer_size)
 {
-	HANDLE file;
-	struct game_state_image_file image;
+	char primary[GAME_STATE_GENERATION_PATH_BYTES];
+	struct game_state_generation_io io;
+	struct game_state_generation_files files;
 
 	/* port (HWI-076): the canonical image of the game state (buffer); its
-	chunks' CRCs and its digest stand for the upstream header checksum */
+	chunks' CRCs and its digest stand for the upstream header checksum.
+	port (HWI-080): as a new generation, checked whole before it replaces
+	the saved game; one not written leaves that as it was, where upstream
+	deleted it */
 	(void)buffer;
 	(void)header_checksum;
 	(void)header_size;
 	(void)buffer_size;
-	file = game_state_open_persistent_storage(NULL);
-	if (file != INVALID_HANDLE_VALUE)
+	if (game_state_get_persistent_storage_primary(primary))
 	{
-		game_state_image_file_new(&image, &file);
-		if (!game_state_port_image_write(&image) || !game_state_image_file_end(file))
+		csmemset(&io, 0, sizeof(io));
+		game_state_generation_files_new(&files, &io);
+		if (!game_state_generations_save(&files, primary))
 		{
 			match_vassert(
 				"c:\\halo\\SOURCE\\saved games\\game_state_xbox.c",
@@ -577,9 +645,7 @@ void game_state_write_to_persistent_storage(
 				FALSE,
 				csprintf(temporary, "failed to write to persistent storage (#%d)",
 					GetLastError()));
-			delete_persistent_storage();
 		}
-		CloseHandle(file);
 	}
 
 	return;
@@ -589,22 +655,18 @@ boolean game_state_read_from_persistent_storage(
 	void *buffer,
 	long buffer_size)
 {
-	HANDLE file;
+	char primary[GAME_STATE_GENERATION_PATH_BYTES];
 	boolean result = FALSE;
 
 	/* port (HWI-076): the canonical image, checked whole and only then
-	taken into the game state (buffer); one that is not taken is deleted,
-	as upstream deleted one it could not read */
+	taken into the game state (buffer). port (HWI-080): the newest
+	generation that is taken; none is deleted (upstream deleted the one it
+	could not read), and one that failed while being taken ends the attempt
+	(game_state_generations_take) */
 	(void)buffer;
 	(void)buffer_size;
-	file = game_state_open_persistent_storage(NULL);
-	if (file != INVALID_HANDLE_VALUE)
-	{
-		result = game_state_image_file_take(file, TRUE, "persistent storage");
-		CloseHandle(file);
-		if (!result)
-			delete_persistent_storage();
-	}
+	if (game_state_get_persistent_storage_primary(primary))
+		result = game_state_generations_take(primary, 0, "persistent storage");
 
 	return result;
 }
@@ -678,6 +740,15 @@ static boolean game_state_image_file_take(
 	boolean check_header,
 	char const *what)
 {
+	return game_state_image_file_take_result(handle, check_header, what) == _game_state_image_taken;
+}
+
+/* (game_state_image.h's result) */
+static short game_state_image_file_take_result(
+	HANDLE handle,
+	boolean check_header,
+	char const *what)
+{
 	struct game_state_image_file file;
 	short result;
 
@@ -694,5 +765,181 @@ static boolean game_state_image_file_take(
 		result != _game_state_image_failed_while_taking,
 		"game state has been corrupted (thank you, come again)");
 
-	return result == _game_state_image_taken;
+	return result;
+}
+
+/* port (HWI-080): a saved game's generations (game_state_generations.h) as
+files. None is held open: each is opened as it is written, checked or read,
+and closed before it is renamed or removed */
+static boolean game_state_generation_exists(
+	void *context,
+	char const *path)
+{
+	(void)context;
+
+	return GetFileAttributesA(path) != GAME_STATE_NO_FILE_ATTRIBUTES;
+}
+
+static boolean game_state_generation_remove(
+	void *context,
+	char const *path)
+{
+	(void)context;
+
+	return DeleteFileA(path) != FALSE;
+}
+
+static boolean game_state_generation_rename(
+	void *context,
+	char const *from,
+	char const *to)
+{
+	(void)context;
+
+	return MoveFileA(from, to) != FALSE;
+}
+
+/* the image's end is where the file's is, and the file is closed (no flush
+is asked of the medium: there is none in this API, docs/wii) */
+static boolean game_state_generation_write(
+	void *context,
+	char const *path)
+{
+	struct game_state_generation_io *io = context;
+	struct game_state_image_file image;
+	HANDLE file;
+	boolean result = FALSE;
+
+	file = CreateFileA(path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, io->flags, NULL);
+	if (file != INVALID_HANDLE_VALUE)
+	{
+		game_state_image_file_new(&image, &file);
+		result = game_state_port_image_write(&image) && game_state_image_file_end(file);
+		if (!CloseHandle(file))
+			result = FALSE;
+	}
+
+	return result;
+}
+
+/* checked whole in bounded memory (game_state_image_check); nothing taken */
+static boolean game_state_generation_check(
+	void *context,
+	char const *path,
+	boolean compatible)
+{
+	struct game_state_generation_io *io = context;
+	struct game_state_image_file image;
+	HANDLE file;
+	boolean result = FALSE;
+
+	file = CreateFileA(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, io->flags, NULL);
+	if (file != INVALID_HANDLE_VALUE)
+	{
+		game_state_image_file_new(&image, &file);
+		result = game_state_port_image_check(&image, compatible);
+		CloseHandle(file);
+	}
+
+	return result;
+}
+
+static void game_state_generation_files_new(
+	struct game_state_generation_files *files,
+	struct game_state_generation_io *io)
+{
+	files->context = io;
+	files->exists = game_state_generation_exists;
+	files->remove = game_state_generation_remove;
+	files->rename = game_state_generation_rename;
+	files->write = game_state_generation_write;
+	files->check = game_state_generation_check;
+}
+
+/* a generation's header, of an image that checks whole (not against this
+game state: the caller sees to that) */
+static short game_state_generation_attempt_header(
+	void *context,
+	char const *path)
+{
+	struct game_state_generation_io *io = context;
+	struct game_state_image_file image;
+	HANDLE file;
+	short result = _game_state_generation_refused;
+
+	file = CreateFileA(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, io->flags, NULL);
+	if (file != INVALID_HANDLE_VALUE)
+	{
+		game_state_image_file_new(&image, &file);
+		if (!game_state_image_read_header(&image, io->header))
+		{
+			/* (an empty file holds no saved game; anything else is damaged) */
+			if (GetFileSize(file, NULL))
+				io->damaged = TRUE;
+		}
+		else if (game_state_port_image_check(&image, FALSE))
+		{
+			game_state_header_terminate(io->header, sizeof(struct game_state_header));
+			result = _game_state_generation_taken;
+		}
+		else
+		{
+			io->damaged = TRUE;
+		}
+		CloseHandle(file);
+	}
+
+	return result;
+}
+
+/* a generation checked whole and taken (game_state_image_file_take) */
+static short game_state_generation_attempt_take(
+	void *context,
+	char const *path)
+{
+	struct game_state_generation_io *io = context;
+	HANDLE file;
+	short result = _game_state_generation_refused;
+
+	file = CreateFileA(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, io->flags, NULL);
+	if (file != INVALID_HANDLE_VALUE)
+	{
+		switch (game_state_image_file_take_result(file, TRUE, io->what))
+		{
+		case _game_state_image_taken:
+			result = _game_state_generation_taken;
+			break;
+		case _game_state_image_failed_while_taking:
+			result = _game_state_generation_failed;
+			break;
+		}
+		CloseHandle(file);
+	}
+
+	return result;
+}
+
+/* the newest generation taken: TRUE if one was. One that failed while it
+was taken has changed the game state, and no other is tried: that has
+halted as game_state_image_file_take does, and the game state is not the
+one before it (it is not pretended to be) */
+static boolean game_state_generations_take(
+	char const *primary,
+	DWORD flags,
+	char const *what)
+{
+	struct game_state_generation_io io;
+	struct game_state_generation_files files;
+	short generation;
+	short result;
+
+	csmemset(&io, 0, sizeof(io));
+	io.flags = flags;
+	io.what = what;
+	game_state_generation_files_new(&files, &io);
+	result = game_state_generations_load(&files, primary, game_state_generation_attempt_take, &generation);
+	if (result == _game_state_generation_taken && generation != _game_state_generation_current)
+		error(_error_silent, "%s: taken from generation %d (the newer ones were refused)", what, generation);
+
+	return result == _game_state_generation_taken;
 }
