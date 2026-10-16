@@ -17,6 +17,7 @@ fixed_step_scenario.h, real_map_scenario.h and cache_files_wii.h.
 #include "real_map_scenario.h"
 #include "cache_files_wii.h"
 #include "save_image_scenario.h"
+#include "combat_targets_scenario.h"
 #include "../sound/wii_sound.h"
 
 #define FIXED_STEP_SEED 0x48574931UL /* "HWI1", as HWI-015A */
@@ -81,6 +82,11 @@ struct map_line
 	/* (HWI-076) image_test=<tick>: damaged copies of a core saved after that
 	tick loaded and refused (save_image_scenario.h) */
 	long image_test_tick;
+	/* (HWI-041) targets=<spawn tick>:<count>[:<first hit tick>:<interval>]
+	(combat_targets_scenario.h), checked against the line's ticks once the
+	line is read */
+	char targets_text[48];
+	struct combat_targets_plan targets;
 };
 
 static struct map_line plan_lines[ENGINE_MAP_RUN_MAXIMUM_LINES];
@@ -265,9 +271,34 @@ static void image_observer(const struct save_image_event *event)
 		event->kind == SAVE_IMAGE_EVENT_TEST ? 0UL : (unsigned long)(now - image_ended));
 }
 
+/* (HWI-041) the targets' events of a line's reference run, as they happen */
+static int target_run_cycle;
+static const char *target_run_cadence = "";
+/* the last run's targets */
+static struct combat_targets_state run_targets;
+
+static void target_observer(const struct combat_target_event *event)
+{
+	unsigned int bits[4];
+
+	if (!progress_logging)
+		return;
+	memcpy(&bits[0], &event->body_before, sizeof(bits[0]));
+	memcpy(&bits[1], &event->body_after, sizeof(bits[1]));
+	memcpy(&bits[2], &event->shield_before, sizeof(bits[2]));
+	memcpy(&bits[3], &event->shield_after, sizeof(bits[3]));
+	wii_log("TARGET map=%s cycle=%d cadence=%s event=%s target=%d tick=%ld cause=%s object=%08lx body=%.6f>%.6f "
+		"shield=%.6f>%.6f bits=%08x>%08x,%08x>%08x refusal=%s destroyed=%d\n", current_map, target_run_cycle,
+		target_run_cadence, combat_target_event_name(event->kind), event->target, event->tick,
+		combat_target_cause_name(event->cause), event->object_index, (double)event->body_before,
+		(double)event->body_after, (double)event->shield_before, (double)event->shield_after, bits[0], bits[1],
+		bits[2], bits[3], combat_targets_refusal_name(event->refusal), event->destroyed);
+}
+
 static void tick_observer(long tick)
 {
 	save_image_scenario_after_tick(tick);
+	combat_targets_scenario_after_tick(tick);
 	if (trace_count)
 		trace_allocations(tick);
 	if (dump_count)
@@ -488,6 +519,12 @@ static int parse_line(char *text, int default_cycles, struct map_line *line)
 			line->core_save_tick = strtol(value, NULL, 10);
 		else if (!strcmp(word, "image_test"))
 			line->image_test_tick = strtol(value, NULL, 10);
+		else if (!strcmp(word, "targets"))
+		{
+			if (strlen(value) >= sizeof(line->targets_text))
+				return 0;
+			snprintf(line->targets_text, sizeof(line->targets_text), "%s", value);
+		}
 		else if (!strcmp(word, "name"))
 			snprintf(line->name, sizeof(line->name), "%s", value);
 		else
@@ -498,6 +535,8 @@ static int parse_line(char *text, int default_cycles, struct map_line *line)
 		if (line->more_switch_ticks[more] >= line->ticks)
 			return 0;
 	}
+	if (line->targets_text[0] && !combat_targets_parse(line->targets_text, line->ticks, &line->targets))
+		return 0;
 	/* (one command a run: a script= or a switch_bsp=) */
 	return line->ticks >= 1 && line->ticks <= REAL_MAP_MAXIMUM_TICKS && line->cycles >= 1 && line->cycles <= 8 &&
 		(line->switch_tick >= 0 && line->switch_tick < line->ticks) &&
@@ -652,7 +691,10 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 		real_map_set_command(line->script_tick, line->script);
 	real_map_set_core_save(line->core_save_tick);
 	save_image_scenario_set_test(line->image_test_tick);
+	combat_targets_scenario_set_plan(&line->targets);
 	progress_logging = reference;
+	target_run_cycle = cycle;
+	target_run_cadence = cadence_names[cadence];
 	real_map_set_canonical_every_tick(line->canonical_every_tick);
 	if (!real_map_begin(reference ? NULL : reference_raw_digests, line->ticks))
 		return 0;
@@ -704,6 +746,29 @@ static int run_cadence(const struct engine_map_run_config *config, const struct 
 			"bsp_switches=%ld\n", line->name, cycle, cadence_names[cadence], line->more_switches,
 			result->more_commands_ran, result->more_commands_bsp_after, result->structure_bsp_index,
 			result->bsp_switches);
+	}
+	/* (HWI-041) the run's targets, and each one's end */
+	combat_targets_scenario_state(&run_targets);
+	if (line->targets.spawn_tick)
+	{
+		wii_log("TARGETS map=%s cycle=%d cadence=%s asked=%d spawn_tick=%ld first_hit_tick=%ld interval=%ld "
+			"damage_definition=%08lx spawned=%ld hits=%ld harness_hits=%ld world_hits=%ld kills=%ld removals=%ld "
+			"refusals=%ld first_refusal=%s events=%ld digest=%08lx\n", line->name, cycle, cadence_names[cadence],
+			line->targets.count, line->targets.spawn_tick, line->targets.first_hit_tick, line->targets.hit_interval,
+			(unsigned long)combat_targets_scenario_damage_definition(), run_targets.spawned, run_targets.hits,
+			run_targets.harness_hits, run_targets.world_hits, run_targets.kills, run_targets.removals,
+			run_targets.refusals, combat_targets_refusal_name(run_targets.first_refusal), run_targets.events,
+			run_targets.digest);
+		for (int target = 0; reference && target < run_targets.count; target++)
+		{
+			const struct combat_target_track *track = &run_targets.targets[target];
+
+			wii_log("TARGET_END map=%s target=%d object=%08lx state=%s spawn_tick=%ld killed_tick=%ld "
+				"removed_tick=%ld hits=%ld harness_hits=%ld body=%.6f shield=%.6f\n", line->name, target,
+				track->object_index, combat_target_state_name(track->state), track->spawn_tick, track->killed_tick,
+				track->removed_tick, track->hits, track->harness_hits, (double)track->body_vitality,
+				(double)track->shield_vitality);
+		}
 	}
 	if (cadence == _cadence_vsync)
 	{
@@ -757,18 +822,21 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 {
 	struct real_map_result first;
 	struct real_map_result cadence_first[ENGINE_MAP_RUN_CADENCES];
+	struct combat_targets_state first_targets;
 	long first_heap = 0;
 	int have_first = 0;
 	int identical = 1, whole_identical = 1, heap_flat = 1, runs = 0;
+	int targets_identical = 1;
 
 	memset(&first, 0, sizeof(first));
+	memset(&first_targets, 0, sizeof(first_targets));
 	memset(cadence_first, 0, sizeof(cadence_first));
 	current_map = line->name;
 	wii_log("MAP_LINE map=%s scenario=%s ticks=%ld cycles=%d cadences=%x warmup=%d expect=%08lx switch_bsp=%ld:%d "
-		"expect_error=%s script_tick=%ld core_save=%ld\n", line->name, line->scenario_path, line->ticks, line->cycles,
-		line->cadences, line->warmup, line->has_expect ? line->expect : 0UL, line->switch_tick, line->switch_index,
-		line->expected_error > 0 ? wii_cache_error_name(line->expected_error) : "none", line->script_tick,
-		line->core_save_tick);
+		"expect_error=%s script_tick=%ld core_save=%ld targets=%s\n", line->name, line->scenario_path, line->ticks,
+		line->cycles, line->cadences, line->warmup, line->has_expect ? line->expect : 0UL, line->switch_tick,
+		line->switch_index, line->expected_error > 0 ? wii_cache_error_name(line->expected_error) : "none",
+		line->script_tick, line->core_save_tick, line->targets_text[0] ? line->targets_text : "none");
 
 	/* a warm-up run first, not measured: a map leaves state behind for the
 	next (a light's stale field, the game sound's first-map flag), so every
@@ -788,6 +856,7 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 		warm_line.script_tick = 0;
 		warm_line.core_save_tick = 0;
 		warm_line.image_test_tick = 0;
+		memset(&warm_line.targets, 0, sizeof(warm_line.targets));
 		ran = real_map_load(line->scenario_path) &&
 			run_cadence(config, &warm_line, -1, _cadence_30, 0, &warm, &milliseconds);
 
@@ -860,6 +929,7 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 			if (reference && ran)
 			{
 				first = result;
+				first_targets = run_targets;
 				have_first = 1;
 				if (first_map)
 				{
@@ -901,6 +971,13 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 				result.random_seed == first.random_seed && result.objects == first.objects &&
 				result.tags_at_start == first.tags_at_start && result.tags_at_end == first.tags_at_end &&
 				result.structure_bsp_index == first.structure_bsp_index;
+			/* (HWI-041) and the targets' events, every one */
+			if (line->targets.spawn_tick &&
+				(!ran || run_targets.digest != first_targets.digest || run_targets.events != first_targets.events))
+			{
+				targets_identical = 0;
+				same = 0;
+			}
 			whole_same = ran && result.raw_digest == cadence_first[cadence].raw_digest &&
 				result.raw_chain == cadence_first[cadence].raw_chain;
 			/* (invariance=0: an observation, reported, not a failure) */
@@ -977,6 +1054,23 @@ static int run_map(const struct engine_map_run_config *config, const struct map_
 		wii_log("EXPECT_SIM map=%s simulation=%08lx expected=%08lx pass=%d\n", line->name, first.simulation_digest,
 			line->expect_simulation, pass);
 	}
+	/* (HWI-041) the targets asked for were made, the harness's hits dealt,
+	and every run's events were the reference run's */
+	if (line->targets.spawn_tick)
+	{
+		int pass = have_first && first_targets.spawned == line->targets.count && !first_targets.refusals &&
+			(!line->targets.first_hit_tick || first_targets.harness_hits > 0) && targets_identical;
+
+		report->expectations++;
+		report->expectations_met += pass;
+		if (!pass)
+			report->failures++;
+		wii_log("TARGETS_CHECK map=%s asked=%d spawned=%ld harness_hits=%ld world_hits=%ld kills=%ld removals=%ld "
+			"refusals=%ld first_refusal=%s identical=%d digest=%08lx pass=%d\n", line->name, line->targets.count,
+			first_targets.spawned, first_targets.harness_hits, first_targets.world_hits, first_targets.kills,
+			first_targets.removals, first_targets.refusals, combat_targets_refusal_name(first_targets.first_refusal),
+			targets_identical, first_targets.digest, pass);
+	}
 	wii_log("MAP_RUNS map=%s runs=%d simulation_identical=%d whole_identical_per_cadence=%d heap_flat=%d digest=%08lx "
 		"chain=%08lx sim=%08lx sim_chain=%08lx tags_start=%08lx spawn_tick=%ld\n",
 		line->name, runs, identical, whole_identical, heap_flat, first.digest, first.chain, first.simulation_digest,
@@ -997,6 +1091,7 @@ int engine_map_run(
 	report->heap_flat = 1;
 	real_map_set_tick_observer(tick_observer);
 	save_image_scenario_set_observer(image_observer);
+	combat_targets_scenario_set_observer(target_observer);
 
 	report->fixed_step_pass = run_fixed_step();
 	if (!report->fixed_step_pass)
