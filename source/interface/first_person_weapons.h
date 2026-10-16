@@ -8,6 +8,9 @@ header included in hcex build.
 #define __FIRST_PERSON_WEAPONS_H
 #pragma once
 
+/* The render pose embeds matrices, so their complete type is required. */
+#include "math/real_math.h"
+
 /* ---------- headers */
 
 #include "cseries/cseries.h"
