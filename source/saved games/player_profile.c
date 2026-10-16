@@ -673,8 +673,7 @@ static boolean player_profile_read(
 {
 	boolean succeeded = FALSE;
 	byte block[SAVED_GAME_FILE_BLOCK_SIZE];
-	struct file_reference file;
-	XCALCSIG_SIGNATURE checksum;
+	boolean found;
 	struct player_profile sanitized_profile;
 
 	match_vassert("c:\\halo\\SOURCE\\saved games\\player_profile.c", 0x261, profile, "profile");
@@ -695,50 +694,40 @@ static boolean player_profile_read(
 	{
 		if (saved_game_files_take_mutex())
 		{
-			if (saved_game_file_open(&file, player_profile_index))
+			/* port (HWI-046): the newest of the profile's generations that is
+			signed (saved_game_file_read_block); sanitized when one exists
+			and none is, as upstream did for its one file's checksum */
+			if (saved_game_file_read_block(player_profile_index, block, sizeof(struct player_profile), &found))
 			{
-				if (file_read(&file, SAVED_GAME_FILE_BLOCK_SIZE, block))
-				{
-					saved_game_file_generate_checksum(block, sizeof(struct player_profile), &checksum);
+				csmemcpy(profile, block, sizeof(struct player_profile));
+				succeeded = TRUE;
+			}
+			else if (found)
+			{
+				error(
+					_error_silent,
+					"checksum failed on player profile file, sanitizing memory resident version...");
 
-					if (!csmemcmp(&checksum, block+sizeof(struct player_profile), sizeof(checksum)))
-					{
-						csmemcpy(profile, block, sizeof(struct player_profile));
-					}
-					else
-					{
-						error(
-							_error_silent,
-							"checksum failed on player profile file, sanitizing memory resident version...");
+				csmemset(&sanitized_profile, 0, sizeof(sanitized_profile));
+				sanitized_profile.primary_color_index = NONE;
+				sanitized_profile.controller_settings.look_sensitivity = DEFAULT_LOOK_SENSITIVITY;
+				sanitized_profile.controller_settings.invert_look = FALSE;
+				sanitized_profile.controller_settings.flight_stick_aircraft_controls = FALSE;
+				sanitized_profile.controller_settings.ingame_help_disabled = FALSE;
+				sanitized_profile.controller_settings.vibration_disabled = FALSE;
+				sanitized_profile.last_single_player_map_played = 0;
+				sanitized_profile.controller_settings.button_preset = _button_preset_standard;
+				sanitized_profile.controller_settings.joystick_preset = _joystick_preset_standard;
+				sanitized_profile.flags = 0;
+				ustrncpy(
+					sanitized_profile.player_name,
+					saved_game_file_get_display_name(player_profile_index),
+					MAXIMUM_PLAYER_PROFILE_NAME_LENGTH-1);
+				sanitized_profile.player_name[MAXIMUM_PLAYER_PROFILE_NAME_LENGTH-1] = 0;
+				csmemcpy(profile, &sanitized_profile, sizeof(struct player_profile));
 
-						csmemset(&sanitized_profile, 0, sizeof(sanitized_profile));
-						sanitized_profile.primary_color_index = NONE;
-						sanitized_profile.controller_settings.look_sensitivity = DEFAULT_LOOK_SENSITIVITY;
-						sanitized_profile.controller_settings.invert_look = FALSE;
-						sanitized_profile.controller_settings.flight_stick_aircraft_controls = FALSE;
-						sanitized_profile.controller_settings.ingame_help_disabled = FALSE;
-						sanitized_profile.controller_settings.vibration_disabled = FALSE;
-						sanitized_profile.last_single_player_map_played = 0;
-						sanitized_profile.controller_settings.button_preset = _button_preset_standard;
-						sanitized_profile.controller_settings.joystick_preset = _joystick_preset_standard;
-						sanitized_profile.flags = 0;
-						ustrncpy(
-							sanitized_profile.player_name,
-							saved_game_file_get_display_name(player_profile_index),
-							MAXIMUM_PLAYER_PROFILE_NAME_LENGTH-1);
-						sanitized_profile.player_name[MAXIMUM_PLAYER_PROFILE_NAME_LENGTH-1] = 0;
-						csmemcpy(profile, &sanitized_profile, sizeof(struct player_profile));
-					}
-
-					/* a sanitized profile still counts as a successful get */
-					succeeded = TRUE;
-				}
-				else
-				{
-					error(_error_silent, "failed to read player profile from file");
-				}
-
-				saved_game_file_close(&file, player_profile_index);
+				/* a sanitized profile still counts as a successful get */
+				succeeded = TRUE;
 			}
 			else
 			{
@@ -789,7 +778,6 @@ static unsigned long __stdcall player_profile_write_thread_proc(
 {
 	struct player_profile_write_request *request = input;
 	struct player_profile_file_block block = {0};
-	struct file_reference file;
 
 	match_vassert("c:\\halo\\SOURCE\\saved games\\player_profile.c", 0x2D7, input, "input");
 
@@ -798,36 +786,23 @@ static unsigned long __stdcall player_profile_write_thread_proc(
 	if (saved_game_files_take_mutex())
 	{
 		long player_profile_index = request->player_profile_index;
-		boolean failed = FALSE;
 		struct player_profile *profile = &request->profile;
 
-		if (saved_game_file_open(&file, player_profile_index))
+		csmemcpy(&block.profile, profile, sizeof(struct player_profile));
+		saved_game_file_generate_checksum(&block.profile, sizeof(block.profile),
+			&block.checksum);
+
+		/* port (HWI-046): written as a new generation, read back before it
+		replaces the last (saved_game_file_write_block). A write that fails
+		leaves the last profile; upstream deleted the profile, and its
+		save-and-quit game with it */
+		if (!saved_game_file_write_block(player_profile_index, &block, sizeof(block.profile)))
 		{
-			csmemcpy(&block.profile, profile, sizeof(struct player_profile));
-			saved_game_file_generate_checksum(&block.profile, sizeof(block.profile),
-				&block.checksum);
-
-			if (!file_set_position(&file, 0) ||
-				!file_write(&file, sizeof(block), &block))
-			{
-				error(_error_silent, "failed to write player profile to file");
-				failed = TRUE;
-			}
-
-			if (saved_game_file_close(&file, player_profile_index) &&
-				!synchronize_metadata_display_name_with_profile_name(player_profile_index, profile->player_name))
-			{
-				error(_error_silent, "metadata name may not match game display name");
-			}
+			error(_error_silent, "failed to write player profile to file");
 		}
-		else
+		else if (!synchronize_metadata_display_name_with_profile_name(player_profile_index, profile->player_name))
 		{
-			error(_error_silent, "failed to open player profile file");
-		}
-
-		if (failed)
-		{
-			delete_enumerated_saved_game_file(player_profile_index);
+			error(_error_silent, "metadata name may not match game display name");
 		}
 
 		saved_game_files_release_mutex();

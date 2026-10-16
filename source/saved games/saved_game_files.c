@@ -318,6 +318,7 @@ symbols in this file:
 #include "interface/ui_widget.h"
 #include "interface/ui_widget_event_handler_functions.h"
 #include "saved games/game_state.h"
+#include "saved games/game_state_generations.h"
 #include "saved games/player_profile.h"
 #include "saved games/playlist_profile.h"
 #include "text/text_group.h"
@@ -426,6 +427,13 @@ struct saved_game_files_globals
 	boolean enumeration_in_progress;
 };
 
+/* port (HWI-046): a profile's or gametype's block is a generation's
+(game_state_generations.h) */
+typedef char verify_saved_game_file_block_generation_size[
+	SAVED_GAME_FILE_BLOCK_SIZE == GAME_STATE_GENERATION_BLOCK_BYTES ? 1 : -1];
+typedef char verify_saved_game_file_signature_generation_size[
+	sizeof(XCALCSIG_SIGNATURE) == GAME_STATE_GENERATION_SIGNATURE_BYTES ? 1 : -1];
+
 typedef char verify_saved_game_files_globals_memory_units_dirty_offset[
 	offsetof(struct saved_game_files_globals, memory_units_dirty) == 0x117 ? 1 : -1];
 typedef char verify_saved_game_files_globals_size[
@@ -482,6 +490,15 @@ static void saved_game_files_release_mapfile_mutex(
 	void);
 static short enumerate_default_profiles(
 	void);
+static boolean saved_game_file_get_path(
+	long profile_index,
+	char *path);
+static void saved_game_file_generations_new(
+	struct game_state_generation_block_files *files);
+static boolean saved_game_file_type_from_generations(
+	char const *directory,
+	struct enumerated_saved_game_file *file,
+	word *checksum_data_size);
 
 /* ---------- globals */
 
@@ -1026,6 +1043,65 @@ boolean saved_game_file_open(
 		file_open(saved_game_file, FLAG(_permission_read_bit)|FLAG(_permission_write_bit));
 
 	return success;
+}
+
+/* port (HWI-046): a profile's or gametype's block, its first signed_bytes
+followed by their signature, kept in generations (game_state_generations.h):
+the newest generation that is signed. Upstream read the one file, which a
+write stopped part way left unsigned. *found: whether any generation exists */
+boolean saved_game_file_read_block(
+	long profile_index,
+	void *block,
+	word signed_bytes,
+	boolean *found)
+{
+	struct game_state_generation_block_files files;
+	char path[GAME_STATE_GENERATION_PATH_BYTES];
+	char generation_path[GAME_STATE_GENERATION_PATH_BYTES];
+	short generation;
+	boolean result = FALSE;
+
+	if (found)
+		*found = FALSE;
+	if (saved_game_file_get_path(profile_index, path))
+	{
+		saved_game_file_generations_new(&files);
+		result = game_state_generation_block_load(&files, path, block, signed_bytes, &generation);
+		if (result && generation != _game_state_generation_current)
+			error(_error_silent, "'%s': the newest generation that is signed is #%d", path, generation);
+		for (generation = 0; found && generation < NUMBER_OF_GAME_STATE_GENERATIONS; generation++)
+		{
+			if (game_state_generation_path(generation_path, sizeof(generation_path), path, generation) &&
+				files.exists(files.context, generation_path))
+			{
+				*found = TRUE;
+			}
+		}
+	}
+
+	return result;
+}
+
+/* port (HWI-046): a block (signed by the caller) as a new generation, read
+back as written before it replaces the last; FALSE leaves the last as it
+was. Upstream wrote over the one file, and its callers deleted the profile
+(its save-and-quit game too) when that failed */
+boolean saved_game_file_write_block(
+	long profile_index,
+	void const *block,
+	word signed_bytes)
+{
+	struct game_state_generation_block_files files;
+	char path[GAME_STATE_GENERATION_PATH_BYTES];
+	boolean result = FALSE;
+
+	if (saved_game_file_get_path(profile_index, path))
+	{
+		saved_game_file_generations_new(&files);
+		result = game_state_generation_block_save(&files, path, block, signed_bytes);
+	}
+
+	return result;
 }
 
 boolean synchronize_metadata_display_name_with_profile_name(
@@ -1812,6 +1888,7 @@ static void enumerate_memory_units(
 	wchar_t message[MAXIMUM_FILENAME_LENGTH+1];
 	XGAME_FIND_DATA find_data;
 	byte block[SAVED_GAME_FILE_BLOCK_SIZE];
+	struct game_state_generation_block_files generations;
 	struct file_reference saved_game_file;
 	XCALCSIG_SIGNATURE checksum;
 	HANDLE find_handle;
@@ -1869,6 +1946,13 @@ static void enumerate_memory_units(
 									file.type = _saved_game_file_type_game_variant;
 									checksum_data_size = PLAYLIST_PROFILE_CHECKSUM_DATA_SIZE;
 								}
+								else if (saved_game_file_type_from_generations(
+									find_data.szSaveGameDirectory,
+									&file,
+									&checksum_data_size))
+								{
+									/* port (HWI-046): neither primary, but a signed generation */
+								}
 								else
 								{
 									usnprintf(
@@ -1895,47 +1979,34 @@ static void enumerate_memory_units(
 									ustrncpy(file.display_name, find_data.szSaveGameName, MAX_GAMENAME-1);
 									file.display_name[MAX_GAMENAME-1] = 0;
 
-									if (file_open(
-											&saved_game_file,
-											FLAG(_permission_read_bit)|FLAG(_permission_write_bit)))
+									/* port (HWI-046): valid when one of the file's generations is
+									signed (saved_game_file_read_block). A primary with an
+									old-style CRC, when none is, is signed again as a new
+									generation; upstream rewrote the file in place */
+									saved_game_file_generations_new(&generations);
+									if (game_state_generation_block_load(&generations, file.path, block, checksum_data_size, NULL))
 									{
-										if (file_read(&saved_game_file, sizeof(block), block))
+										file.valid = TRUE;
+									}
+									else if (generations.read(generations.context, file.path, block))
+									{
+										error(_error_silent, "checksum validation failed for '%s'", file.path);
+										crc_new(&old_style_crc);
+										crc_checksum_buffer(&old_style_crc, block, checksum_data_size);
+										if (!csmemcmp(&old_style_crc, block+checksum_data_size, sizeof(old_style_crc)))
 										{
+											error(_error_silent, "checksum validation matched old-style crc; updating saved game file '%s'", file.path);
 											saved_game_file_generate_checksum(block, checksum_data_size, &checksum);
-											if (!csmemcmp(&checksum, block+checksum_data_size, sizeof(checksum)))
+											csmemcpy(block+checksum_data_size, &checksum, sizeof(checksum));
+											if (game_state_generation_block_save(&generations, file.path, block, checksum_data_size))
 											{
 												file.valid = TRUE;
 											}
-											else
-											{
-												error(_error_silent, "checksum validation failed for '%s'", file.path);
-												crc_new(&old_style_crc);
-												crc_checksum_buffer(&old_style_crc, block, checksum_data_size);
-												if (!csmemcmp(&old_style_crc, block+checksum_data_size, sizeof(old_style_crc)))
-												{
-													error(_error_silent, "checksum validation matched old-style crc; updating saved game file '%s'", file.path);
-													csmemcpy(block+checksum_data_size, &checksum, sizeof(checksum));
-													if (file_set_position(&saved_game_file, 0) &&
-														file_write(&saved_game_file, sizeof(block), block))
-													{
-														file.valid = TRUE;
-													}
-												}
-											}
-										}
-										else
-										{
-											error(_error_silent, "failed to read saved game file to verify checksum");
-										}
-
-										if (!file_close(&saved_game_file))
-										{
-											error(_error_silent, "failed to close saved game file after verifying checksum");
 										}
 									}
 									else
 									{
-										error(_error_silent, "failed to open saved game file to verify checksum");
+										error(_error_silent, "failed to read saved game file to verify checksum");
 									}
 
 									if (!enumerate_saved_game_file(&file))
@@ -2591,4 +2662,167 @@ static boolean get_nth_entry_in_mapfile(
 	}
 
 	return success;
+}
+
+/* port (HWI-046): an enumerated saved game file's path (its primary's) */
+static boolean saved_game_file_get_path(
+	long profile_index,
+	char *path)
+{
+	struct enumerated_saved_game_file file;
+	long type = SAVED_GAME_FILE_INDEX_TYPE(profile_index);
+	long memory_unit = SAVED_GAME_FILE_INDEX_MEMORY_UNIT(profile_index);
+	long n = SAVED_GAME_FILE_INDEX_FILE_INDEX(profile_index);
+	boolean success = FALSE;
+
+	if (profile_index != NONE &&
+		(type >= 0) && (type < NUMBER_OF_SAVED_GAME_FILE_TYPES) &&
+		(memory_unit == _memory_unit_hard_drive) &&
+		(n >= 0) && (n < MAXIMUM_ENUMERATED_SAVED_GAME_FILES_ANY_TYPE_PER_MEMORY_UNIT) &&
+		get_nth_entry_in_mapfile(memory_unit, n, &file))
+	{
+		csstrncpy(path, file.path, MAXIMUM_FILENAME_LENGTH);
+		path[MAXIMUM_FILENAME_LENGTH] = 0;
+		success = TRUE;
+	}
+	else
+	{
+		error(_error_silent, "invalid saved game file index");
+	}
+
+	return success;
+}
+
+/* port (HWI-046): a saved game file's generations as files. None is held
+open: each is opened as it is written or read, and closed before it is
+renamed or removed (no flush is asked of the medium: there is none in this
+API, docs/wii) */
+static boolean saved_game_file_generation_exists(
+	void *context,
+	char const *path)
+{
+	struct file_reference file;
+
+	(void)context;
+
+	return file_reference_create_from_path(&file, path, FALSE) && file_exists(&file);
+}
+
+static boolean saved_game_file_generation_remove(
+	void *context,
+	char const *path)
+{
+	struct file_reference file;
+
+	(void)context;
+
+	return file_reference_create_from_path(&file, path, FALSE) && file_delete(&file);
+}
+
+static boolean saved_game_file_generation_rename(
+	void *context,
+	char const *from,
+	char const *to)
+{
+	(void)context;
+
+	return MoveFileA(from, to) != FALSE;
+}
+
+static boolean saved_game_file_generation_write(
+	void *context,
+	char const *path,
+	unsigned char const *block)
+{
+	struct file_reference file;
+	boolean result = FALSE;
+
+	(void)context;
+	if (file_reference_create_from_path(&file, path, FALSE) &&
+		file_create(&file) &&
+		file_open(&file, FLAG(_permission_write_bit)))
+	{
+		result = file_write(&file, SAVED_GAME_FILE_BLOCK_SIZE, block);
+		if (!file_close(&file))
+			result = FALSE;
+	}
+
+	return result;
+}
+
+static boolean saved_game_file_generation_read(
+	void *context,
+	char const *path,
+	unsigned char *block)
+{
+	struct file_reference file;
+	boolean result = FALSE;
+
+	(void)context;
+	if (file_reference_create_from_path(&file, path, FALSE) &&
+		file_exists(&file) &&
+		file_open(&file, FLAG(_permission_read_bit)))
+	{
+		result = file_read(&file, SAVED_GAME_FILE_BLOCK_SIZE, block);
+		file_close(&file);
+	}
+
+	return result;
+}
+
+static void saved_game_file_generation_sign(
+	void *context,
+	unsigned char const *block,
+	long size,
+	unsigned char *signature)
+{
+	(void)context;
+	saved_game_file_generate_checksum(block, (word)size, (XCALCSIG_SIGNATURE *)signature);
+}
+
+static void saved_game_file_generations_new(
+	struct game_state_generation_block_files *files)
+{
+	files->context = NULL;
+	files->exists = saved_game_file_generation_exists;
+	files->remove = saved_game_file_generation_remove;
+	files->rename = saved_game_file_generation_rename;
+	files->write = saved_game_file_generation_write;
+	files->read = saved_game_file_generation_read;
+	files->sign = saved_game_file_generation_sign;
+}
+
+/* port (HWI-046): a saved game directory with neither primary, where a
+write stopped between moving its primary and promoting its candidate
+(game_state_generations.h). A profile's and a gametype's generations have
+the same names (blam.new, blam.bak); the type is the one whose signature
+the newest signed generation carries, and the file its primary */
+static boolean saved_game_file_type_from_generations(
+	char const *directory,
+	struct enumerated_saved_game_file *file,
+	word *checksum_data_size)
+{
+	static char const *const names[NUMBER_OF_SAVED_GAME_FILE_TYPES] = { "blam.sav", "blam.lst" };
+	static word const sizes[NUMBER_OF_SAVED_GAME_FILE_TYPES] =
+	{
+		PLAYER_PROFILE_CHECKSUM_DATA_SIZE,
+		PLAYLIST_PROFILE_CHECKSUM_DATA_SIZE
+	};
+	struct game_state_generation_block_files files;
+	byte block[SAVED_GAME_FILE_BLOCK_SIZE];
+	short type;
+
+	saved_game_file_generations_new(&files);
+	for (type = 0; type < NUMBER_OF_SAVED_GAME_FILE_TYPES; type++)
+	{
+		if (_snprintf(file->path, MAXIMUM_FILENAME_LENGTH, "%s%s", directory, names[type]) > 0 &&
+			game_state_generation_block_load(&files, file->path, block, sizes[type], NULL))
+		{
+			file->type = type;
+			*checksum_data_size = sizes[type];
+			return TRUE;
+		}
+	}
+
+	return FALSE;
 }

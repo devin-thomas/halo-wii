@@ -628,10 +628,9 @@ static boolean playlist_profile_read(
 	struct game_variant *variant)
 {
 	byte block[SAVED_GAME_FILE_BLOCK_SIZE];
-	struct file_reference file;
 	struct game_variant temporary;
 	struct game_variant default_variant;
-	XCALCSIG_SIGNATURE checksum;
+	boolean found;
 	boolean success = FALSE;
 
 	match_assert(
@@ -655,53 +654,34 @@ static boolean playlist_profile_read(
 	{
 		if (saved_game_files_take_mutex())
 		{
-			if (saved_game_file_open(&file, playlist_profile_index))
+			/* port (HWI-046): the newest of the gametype's generations that
+			is signed (saved_game_file_read_block); sanitized when one exists
+			and none is, as upstream did for its one file's checksum */
+			if (saved_game_file_read_block(playlist_profile_index, block, PLAYLIST_PROFILE_CHECKSUM_DATA_SIZE, &found))
 			{
-				if (file_read(&file, sizeof(block), block))
-				{
-					saved_game_file_generate_checksum(
-						block,
-						PLAYLIST_PROFILE_CHECKSUM_DATA_SIZE,
-						&checksum);
-
-					if (!csmemcmp(
-						&checksum,
-						block + PLAYLIST_PROFILE_CHECKSUM_DATA_SIZE,
-						sizeof(checksum)))
-					{
-						csmemcpy(
-							variant,
-							block,
-							sizeof(struct game_variant));
-					}
-					else
-					{
-						default_variant = *build_game_variant_slayer(&temporary);
-						error(
-							_error_silent,
-							"checksum failed on playlist profile file, sanitizing memory resident version...");
-						default_variant.flags = 0;
-						ustrncpy(
-							(wchar_t *)&default_variant,
-							saved_game_file_get_display_name(playlist_profile_index),
-							MAXIMUM_GAME_VARIANT_NAME_LENGTH - 1);
-						default_variant.human_readable_game_description[MAXIMUM_GAME_VARIANT_NAME_LENGTH - 1] = 0;
-						csmemcpy(
-							variant,
-							&default_variant,
-							sizeof(struct game_variant));
-					}
-
-					success = TRUE;
-				}
-				else
-				{
-					error(
-						_error_silent,
-						"failed to read playlist profile from file");
-				}
-
-				saved_game_file_close(&file, playlist_profile_index);
+				csmemcpy(
+					variant,
+					block,
+					sizeof(struct game_variant));
+				success = TRUE;
+			}
+			else if (found)
+			{
+				default_variant = *build_game_variant_slayer(&temporary);
+				error(
+					_error_silent,
+					"checksum failed on playlist profile file, sanitizing memory resident version...");
+				default_variant.flags = 0;
+				ustrncpy(
+					(wchar_t *)&default_variant,
+					saved_game_file_get_display_name(playlist_profile_index),
+					MAXIMUM_GAME_VARIANT_NAME_LENGTH - 1);
+				default_variant.human_readable_game_description[MAXIMUM_GAME_VARIANT_NAME_LENGTH - 1] = 0;
+				csmemcpy(
+					variant,
+					&default_variant,
+					sizeof(struct game_variant));
+				success = TRUE;
 			}
 			else
 			{
@@ -745,7 +725,6 @@ static unsigned long __stdcall playlist_profile_write_thread_proc(
 	void *input)
 {
 	struct playlist_profile_write_request *request = input;
-	struct file_reference file;
 	byte block[SAVED_GAME_FILE_BLOCK_SIZE];
 
 	match_assert(
@@ -760,54 +739,37 @@ static unsigned long __stdcall playlist_profile_write_thread_proc(
 	if (saved_game_files_take_mutex())
 	{
 		long playlist_profile_index = request->playlist_profile_index;
-		boolean failed = FALSE;
 		struct game_variant *variant = &request->variant;
 
-		if (saved_game_file_open(&file, playlist_profile_index))
-		{
-			/* port: the block cleared (the Xbox game wrote its stack's bytes
-			after the signature), and the PC options after it */
-			csmemset(block, 0, sizeof(block));
-			csmemcpy(
-				block,
-				variant,
-				sizeof(struct game_variant));
-			saved_game_file_generate_checksum(
-				block,
-				sizeof(struct game_variant),
-				(struct _XCALCSIG_SIGNATURE *)(block + sizeof(struct game_variant)));
-			playlist_profile_options_to_block(block, &playlist_profile_write_options);
+		/* port: the block cleared (the Xbox game wrote its stack's bytes
+		after the signature), and the PC options after it */
+		csmemset(block, 0, sizeof(block));
+		csmemcpy(
+			block,
+			variant,
+			sizeof(struct game_variant));
+		saved_game_file_generate_checksum(
+			block,
+			sizeof(struct game_variant),
+			(struct _XCALCSIG_SIGNATURE *)(block + sizeof(struct game_variant)));
+		playlist_profile_options_to_block(block, &playlist_profile_write_options);
 
-			if (!file_set_position(&file, 0) ||
-				!file_write(&file, sizeof(block), block))
-			{
-				error(
-					_error_silent,
-					"failed to write playlist profile to file");
-				failed = TRUE;
-			}
-
-			if (saved_game_file_close(&file, playlist_profile_index) &&
-				!synchronize_metadata_display_name_with_profile_name(
-					playlist_profile_index,
-					(wchar_t *)variant))
-			{
-				error(
-					_error_silent,
-					"metadata name may not match game display name");
-			}
-
-		}
-		else
+		/* port (HWI-046): written as a new generation, read back before it
+		replaces the last (saved_game_file_write_block). A write that fails
+		leaves the last gametype; upstream deleted it */
+		if (!saved_game_file_write_block(playlist_profile_index, block, sizeof(struct game_variant)))
 		{
 			error(
 				_error_silent,
-				"failed to open playlist profile file");
+				"failed to write playlist profile to file");
 		}
-
-		if (failed)
+		else if (!synchronize_metadata_display_name_with_profile_name(
+			playlist_profile_index,
+			(wchar_t *)variant))
 		{
-			delete_enumerated_saved_game_file(playlist_profile_index);
+			error(
+				_error_silent,
+				"metadata name may not match game display name");
 		}
 
 		saved_game_files_release_mutex();
@@ -862,12 +824,12 @@ static void playlist_profile_write(
 	return;
 }
 
-/* port: a gametype file's block, read whole */
+/* port: a gametype file's block, read whole. port (HWI-046): the newest
+of its generations that is signed (saved_game_file_read_block) */
 static boolean playlist_profile_read_block(
 	long playlist_profile_index,
 	byte *block)
 {
-	struct file_reference file;
 	boolean success = FALSE;
 
 	if (playlist_profile_globals.thread)
@@ -880,11 +842,7 @@ static boolean playlist_profile_read_block(
 	}
 	if (saved_game_files_take_mutex())
 	{
-		if (saved_game_file_open(&file, playlist_profile_index))
-		{
-			success = file_read(&file, SAVED_GAME_FILE_BLOCK_SIZE, block);
-			saved_game_file_close(&file, playlist_profile_index);
-		}
+		success = saved_game_file_read_block(playlist_profile_index, block, PLAYLIST_PROFILE_CHECKSUM_DATA_SIZE, NULL);
 		saved_game_files_release_mutex();
 	}
 	return success;

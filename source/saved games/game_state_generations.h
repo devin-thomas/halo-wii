@@ -11,8 +11,9 @@ that checked whole and was compatible with this game. A save that stops
 anywhere leaves a primary, a candidate or a previous that checks whole, unless none did before it. A load tries
 them newest first and takes the first that is not refused.
 
-The files are the caller's (game_state_xbox.c); this is only the order of
-the steps. It makes no claim beyond the file system's own: a rename that
+The files are the caller's (game_state_xbox.c, and saved_game_files.c for
+a profile's or gametype's signed block); this is only the order of the
+steps. It makes no claim beyond the file system's own: a rename that
 power loss interrupts is the medium's to keep or lose (docs/wii).
 */
 
@@ -25,6 +26,10 @@ power loss interrupts is the medium's to keep or lose (docs/wii).
 enum
 {
 	GAME_STATE_GENERATION_PATH_BYTES = 256,
+	/* a saved game file's block (saved_game_files.h) and its signature
+	(an XCALCSIG_SIGNATURE) */
+	GAME_STATE_GENERATION_BLOCK_BYTES = 512,
+	GAME_STATE_GENERATION_SIGNATURE_BYTES = 20,
 };
 
 /* in the order a load tries them */
@@ -65,6 +70,24 @@ struct game_state_generation_files
 	boolean (*check)(void *context, char const *path, boolean compatible);
 };
 
+/* port (HWI-046): a saved game file that is one signed block (a profile's
+blam.sav, a gametype's blam.lst: saved_game_files.c), as the caller reaches
+it. The block's first signed bytes are followed by their signature */
+struct game_state_generation_block_files
+{
+	void *context;
+	boolean (*exists)(void *context, char const *path);
+	boolean (*remove)(void *context, char const *path);
+	/* to does not exist */
+	boolean (*rename)(void *context, char const *from, char const *to);
+	/* the block, written whole to a new file at path */
+	boolean (*write)(void *context, char const *path, unsigned char const *block);
+	/* the file's block, read whole */
+	boolean (*read)(void *context, char const *path, unsigned char *block);
+	/* the signature of the block's first size bytes */
+	void (*sign)(void *context, unsigned char const *block, long size, unsigned char *signature);
+};
+
 /* ---------- prototypes */
 
 /* a generation's path: the primary's with its extension (.bin) replaced;
@@ -87,5 +110,26 @@ short game_state_generations_load(
 	char const *primary,
 	short (*attempt)(void *context, char const *path),
 	short *generation);
+
+/* port (HWI-046): a signed block as a new generation, promoted only once
+it reads back as written and signed; FALSE as game_state_generations_save */
+boolean game_state_generation_block_save(
+	struct game_state_generation_block_files const *files,
+	char const *primary,
+	unsigned char const *block,
+	long signed_bytes);
+/* the newest generation's block that is signed, into block (left as it was
+when none is); FALSE when none is, and which in *generation (NONE then) */
+boolean game_state_generation_block_load(
+	struct game_state_generation_block_files const *files,
+	char const *primary,
+	unsigned char *block,
+	long signed_bytes,
+	short *generation);
+/* the block's first signed bytes are followed by their signature */
+boolean game_state_generation_block_signed(
+	struct game_state_generation_block_files const *files,
+	unsigned char const *block,
+	long signed_bytes);
 
 #endif // __GAME_STATE_GENERATIONS_H
