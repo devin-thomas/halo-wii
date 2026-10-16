@@ -67,6 +67,7 @@
 #include "content_common.h"
 #include "hwl_lightmap.h"
 #include "hwt_texture.h"
+#include "render_texture_cache.h"
 
 #define RENDER_TXT WII_ENGINE_ROOT "/render.txt"
 #define RENDER_ROOT WII_ENGINE_DATA_ROOT "/render"
@@ -95,6 +96,13 @@ reads) grow the heap there */
 #define POOL_KEEP_MEM2 262144u
 /* the HWL1 comparison's chunk, taken from the pool's free end */
 #define CHECK_CHUNK_BYTES 32768u
+/* HWI-083's streaming defaults (render.txt texture_stream=1): base maps
+loaded a frame, the bytes they may read together (one larger map may still
+load alone), and the frames a base map stays after it was last visible
+before another may take its bytes */
+#define STREAM_LOADS_DEFAULT 2
+#define STREAM_FRAME_BYTES_DEFAULT 524288ul
+#define STREAM_KEEP_FRAMES_DEFAULT 30ul
 
 static const GXColor clear_colour = {18, 22, 30, 255};
 static const GXColor placeholder_transparent = {255, 0, 255, 128};
@@ -124,6 +132,8 @@ struct texture {
     int resident;
     uint32_t bytes;
     long coverage;
+    int want_width, want_height;  /* a base map's: the engine's bitmap_data, or 0 */
+    int staged;                   /* streaming: its file was found at the BSP load (file_bytes its size) */
 };
 
 struct material {
@@ -213,6 +223,26 @@ static struct {
     int placeholder_reported[NUMBER_OF_WII_GX_MATERIAL_KINDS];
     /* the last full draw's textured and lightmap-only triangles (HWI-030) */
     unsigned long drawn_textured, drawn_base_missing;
+    /* HWI-083: GX draw sequences. Each draw_materials is one; completed once
+    a GX_DrawDone has returned after it */
+    uint32_t gpu_submitted, gpu_completed;
+    /* HWI-083: base map streaming (texture_stream=1). The base maps are
+    textures[0, base_total) and the cache's entries by the same index */
+    int texture_stream, stream_loads;
+    unsigned long stream_frame_bytes, stream_keep_frames;
+    int streaming, base_total;
+    struct wii_texture_cache cache;
+    struct wii_texture_cache_entry *stream_entries;
+    struct wii_texture_cache_block *stream_blocks;
+    unsigned char *stream_arena;      /* the boot mode's one heap block, or NULL (the pool's) */
+    uint32_t stream_entries_bytes, stream_blocks_bytes, stream_arena_bytes, stream_region[2];
+    /* this BSP's streaming: loads and their bytes, reads that failed, content
+    refused, frames a visible base map stayed out (still wanted after the
+    frame's loads), loads left for a later frame by the frame's bounds, and
+    the time spent */
+    unsigned long stream_loaded, stream_read_failed, stream_invalid, stream_frames_short, stream_deferred;
+    unsigned long long stream_loaded_bytes, stream_us;
+    unsigned long stream_us_max;
 } gx;
 
 /* ---------- helpers */
@@ -280,6 +310,26 @@ static uint32_t align32(uint32_t value)
 static unsigned long elapsed_us(u64 start)
 {
     return (unsigned long)ticks_to_microsecs(gettime() - start);
+}
+
+/* HWI-083: GX_DrawDone returns once the GP has finished every command sent
+before it, so every draw sequence submitted so far is complete: the GPU
+reads none of their textures any more */
+static void draw_done(void)
+{
+    GX_DrawDone();
+    gx.gpu_completed = gx.gpu_submitted;
+    if (gx.streaming)
+        wii_texture_cache_gpu_done(&gx.cache, gx.gpu_completed);
+}
+
+/* the texture cache's wait: its bytes are about to be reused */
+static uint32_t gpu_wait(void *context)
+{
+    (void)context;
+    GX_DrawDone();
+    gx.gpu_completed = gx.gpu_submitted;
+    return gx.gpu_completed;
 }
 
 static void stats_add(struct frame_stats *s, unsigned long visibility, unsigned long submit, unsigned long gp,
@@ -385,6 +435,10 @@ static void config_defaults(void)
     gx.run_pose_count = 3;
     gx.pose_phases = 0;
     gx.mem1_free_min = gx.mem2_above_reserve_min = 0xFFFFFFFFul;
+    gx.texture_stream = 0;
+    gx.stream_loads = STREAM_LOADS_DEFAULT;
+    gx.stream_frame_bytes = STREAM_FRAME_BYTES_DEFAULT;
+    gx.stream_keep_frames = STREAM_KEEP_FRAMES_DEFAULT;
 }
 
 static void read_config(void)
@@ -419,6 +473,15 @@ static void read_config(void)
             gx.models = (int)strtol(line + 7, NULL, 10);
         else if (!strncmp(line, "model_skin_bytes=", 17))
             gx.model_skin_bytes = strtoul(line + 17, NULL, 10);
+        else if (!strncmp(line, "texture_stream=", 15))
+            gx.texture_stream = strtol(line + 15, NULL, 10) == 1;
+        else if (!strncmp(line, "stream_loads=", 13)) {
+            long loads = strtol(line + 13, NULL, 10);
+            gx.stream_loads = loads < 1 ? 1 : loads > 64 ? 64 : (int)loads;
+        } else if (!strncmp(line, "stream_frame_bytes=", 19))
+            gx.stream_frame_bytes = strtoul(line + 19, NULL, 10);
+        else if (!strncmp(line, "stream_keep_frames=", 19))
+            gx.stream_keep_frames = strtoul(line + 19, NULL, 10);
         else if (!strncmp(line, "run_pose_ticks=", 15)) {
             int count = parse_ticks(line + 15, gx.run_pose_ticks, MAX_POSE_TICKS);
             gx.run_pose_count = count > 0 ? count : 0;
@@ -508,6 +571,9 @@ int wii_render_configure(const struct wii_render_video *video)
             gx.enabled, gx.poses_only, gx.base_budget, gx.base_limit, gx.pool_max, gx.pool_keep[0], gx.pool_keep[1],
             gx.geometry_check, wii_gx_models_enabled(), wii_gx_models_skin_bytes(), gx.run_pose_count, gx.pose_phases, gx.mode->fbWidth, gx.mode->efbHeight,
             gx.mode->fbWidth, gx.mode->xfbHeight);
+    wii_log("RENDER_STREAM_CONFIG texture_stream=%d limit=base_budget:%lu stream_loads=%d stream_frame_bytes=%lu "
+            "stream_keep_frames=%lu\n", gx.texture_stream, gx.base_budget, gx.stream_loads, gx.stream_frame_bytes,
+            gx.stream_keep_frames);
     return gx.enabled;
 }
 
@@ -717,8 +783,13 @@ static int store_fits(uint32_t bytes)
 
 /* ---------- per BSP: geometry */
 
+static void stream_end(void);
+
 static void release_textures(void)
 {
+    /* HWI-083: a streamed BSP's base maps are the arena's bytes, not blocks
+    of their own: they are forgotten, and the arena given back, first */
+    stream_end();
     if (gx.textures) {
         for (int i = 0; i < gx.texture_count; ++i)
             store_give(gx.textures[i].data, gx.textures[i].file_bytes);
@@ -729,6 +800,13 @@ static void release_textures(void)
 
 void wii_gx_map_end(void)
 {
+    /* HWI-083: the textures, tables and pool go back (and the next BSP
+    refills them) only once the GP has finished every draw that read them.
+    The map run's frames end with a GX_DrawDone already; the boot mode's
+    environment draw leaves its completion to render_ui_gx.c's frame, which
+    this side does not see */
+    if (gx.gpu_submitted != gx.gpu_completed)
+        draw_done();
     /* HWI-082: GX finishes reading the skinning buffer before the store goes back */
     wii_gx_models_unbind();
     if (gx.model_skin)
@@ -1101,6 +1179,21 @@ static void texture_path(char *path, size_t size, long tag, long bitmap)
     snprintf(path, size, RENDER_ROOT "/%s/textures/%05ld-%03ld.hwt", gx.map, tag, bitmap);
 }
 
+/* the open file whole into data (size bytes, then zeros to the next 32),
+and closed: exactly size bytes, or CONTENT_IO (a failed read, a short file or
+a longer one) */
+static enum content_error texture_read_file(FILE *file, uint32_t size, unsigned char *data)
+{
+    unsigned char extra;
+    enum content_error error = CONTENT_OK;
+    memset(data + size, 0, align32(size) - size);
+    if (fread(data, 1, size, file) != size || fread(&extra, 1, 1, file) != 0)
+        error = CONTENT_IO;
+    if (fclose(file) != 0 && error == CONTENT_OK)
+        error = CONTENT_IO;
+    return error;
+}
+
 /* the file whole into the pool (its size as stat gave it); CONTENT_MEMORY
 if the pool has no room */
 static enum content_error texture_read(const char *path, uint32_t size, unsigned char **out)
@@ -1114,17 +1207,11 @@ static enum content_error texture_read(const char *path, uint32_t size, unsigned
     if (!file)
         return CONTENT_IO;
     unsigned char *data = store_take(size);
-    unsigned char extra;
     if (!data) {
         fclose(file);
         return CONTENT_MEMORY;
     }
-    enum content_error error = CONTENT_OK;
-    memset(data + size, 0, align32(size) - size);
-    if (fread(data, 1, size, file) != size || fread(&extra, 1, 1, file) != 0)
-        error = CONTENT_IO;
-    if (fclose(file) != 0 && error == CONTENT_OK)
-        error = CONTENT_IO;
+    enum content_error error = texture_read_file(file, size, data);
     if (error == CONTENT_OK)
         *out = data;
     else
@@ -1132,17 +1219,14 @@ static enum content_error texture_read(const char *path, uint32_t size, unsigned
     return error;
 }
 
-static int texture_load(struct texture *t, int lightmap, int width, int height, uint32_t size)
+/* t->data's size bytes checked as a drawable HWT1 (2D, one face, the
+engine's dimensions if given, a GX-loadable first image and alpha plane on
+32 bytes) and its texture objects made; CONTENT_OK, or why not. Nothing here
+is drawn until the caller marks it resident */
+static enum content_error texture_prepare(struct texture *t, int lightmap, int width, int height, uint32_t size)
 {
-    char path[192];
-    struct hwt_image image;
-    enum content_error error;
-    uint32_t mark[2] = {gx.pool[0].used, gx.pool[1].used};
-
-    texture_path(path, sizeof(path), t->tag, t->bitmap);
-    error = texture_read(path, size, &t->data);
-    if (error == CONTENT_OK)
-        error = hwt_parse(t->data, size, &t->header);
+    struct hwt_image image, alpha_image;
+    enum content_error error = hwt_parse(t->data, size, &t->header);
     if (error == CONTENT_OK && (t->header.type != HWT_TYPE_2D || t->header.faces != 1 || t->header.depth != 1))
         error = CONTENT_DIMENSIONS;
     if (error == CONTENT_OK && width > 0 && ((int)t->header.width != width || (int)t->header.height != height))
@@ -1152,7 +1236,6 @@ static int texture_load(struct texture *t, int lightmap, int width, int height, 
     if (error == CONTENT_OK && (!image.gx_loadable || (image.offset & 31u)))
         error = CONTENT_DIMENSIONS;
     /* the alpha plane: the same chain in I4 or I8, after the colour images */
-    struct hwt_image alpha_image;
     t->alpha_plane = error == CONTENT_OK && t->header.alpha_kind == HWT_ALPHA_PLANE;
     if (t->alpha_plane) {
         error = hwt_alpha_image_at(&t->header, 0, &alpha_image);
@@ -1160,13 +1243,8 @@ static int texture_load(struct texture *t, int lightmap, int width, int height, 
             error = CONTENT_DIMENSIONS;
     }
     if (error != CONTENT_OK) {
-        wii_log("RENDER_TEXTURE_FAIL tag=%ld bitmap=%ld kind=%s error=%s\n", t->tag, t->bitmap,
-                lightmap ? "lightmap" : "base", content_error_name(error));
-        store_give(t->data, size);
-        t->data = NULL;
-        gx.pool[0].used = mark[0];
-        gx.pool[1].used = mark[1];
-        return 0;
+        t->alpha_plane = 0;
+        return error;
     }
     int levels = (int)t->header.levels;
     u8 wrap = lightmap ? GX_CLAMP : GX_REPEAT;
@@ -1188,9 +1266,32 @@ static int texture_load(struct texture *t, int lightmap, int width, int height, 
         else
             GX_InitTexObjFilterMode(&t->alpha_object, GX_LINEAR, GX_LINEAR);
     }
+    /* the CPU wrote these bytes: GX reads memory */
     DCFlushRange(t->data, align32(size));
     t->file_bytes = size;
     t->bytes = size;
+    return CONTENT_OK;
+}
+
+static int texture_load(struct texture *t, int lightmap, int width, int height, uint32_t size)
+{
+    char path[192];
+    enum content_error error;
+    uint32_t mark[2] = {gx.pool[0].used, gx.pool[1].used};
+
+    texture_path(path, sizeof(path), t->tag, t->bitmap);
+    error = texture_read(path, size, &t->data);
+    if (error == CONTENT_OK)
+        error = texture_prepare(t, lightmap, width, height, size);
+    if (error != CONTENT_OK) {
+        wii_log("RENDER_TEXTURE_FAIL tag=%ld bitmap=%ld kind=%s error=%s\n", t->tag, t->bitmap,
+                lightmap ? "lightmap" : "base", content_error_name(error));
+        store_give(t->data, size);
+        t->data = NULL;
+        gx.pool[0].used = mark[0];
+        gx.pool[1].used = mark[1];
+        return 0;
+    }
     t->resident = 1;
     return 1;
 }
@@ -1212,6 +1313,303 @@ static unsigned long file_size(long tag, long bitmap, int *found)
     texture_path(path, sizeof(path), tag, bitmap);
     *found = stat(path, &information) == 0;
     return *found ? (unsigned long)information.st_size : 0ul;
+}
+
+/* ---------- per BSP: base map streaming (HWI-083, texture_stream=1)
+
+The BSP's base maps (textures[0, base_total), by coverage) live in a cache
+arena that base_budget bounds: the render pool's (at most two regions, one in
+each part) or, in the boot mode, one heap block. The arena and the cache's
+tables are taken once, at the BSP load, after the lightmap pages; nothing is
+allocated while frames are drawn. The load fills the arena in coverage order
+(the baseline's residency at the same budget). Each frame, before its draws,
+the base maps of the visible surfaces are wanted. The most wanted map that
+is not resident is read into bytes the cache gives (evicting maps nobody saw
+for stream_keep_frames frames), checked as the baseline checks it, and only
+then published. A frame loads at most stream_loads maps and
+stream_frame_bytes bytes (one larger map may load alone). The cache waits for
+the GP (GX_DrawDone) before it hands out bytes that a draw it has not seen
+complete may still read; a load invalidates GX's texture cache before the
+frame's draws. Lightmap pages and the tables stay where the load put them. */
+
+/* the bits set among count surfaces from first */
+static unsigned long visible_count(const unsigned long *flags, long first, long count)
+{
+    unsigned long n = 0;
+    long s = first, end = first + count;
+    while (s < end) {
+        int bit = (int)(s & 31);
+        long take = 32 - bit < end - s ? 32 - bit : end - s;
+        uint32_t bits = (uint32_t)flags[s >> 5] >> bit;
+        if (take < 32)
+            bits &= (1u << take) - 1u;
+        n += (unsigned long)__builtin_popcount(bits);
+        s += take;
+    }
+    return n;
+}
+
+/* the base map a material draws with now, or NULL (lightmap-only) */
+static const struct texture *base_of(const struct material *m)
+{
+    if (m->base_texture < 0)
+        return NULL;
+    if (gx.streaming)
+        return wii_texture_cache_resident(&gx.cache, m->base_texture) ? &gx.textures[m->base_texture] : NULL;
+    return &gx.textures[m->base_texture];
+}
+
+/* a base map's texture without its bytes: no object points at them */
+static void texture_forget(struct texture *t)
+{
+    t->data = NULL;
+    t->resident = 0;
+    t->alpha_plane = 0;
+    memset(&t->object, 0, sizeof(t->object));
+    memset(&t->alpha_object, 0, sizeof(t->alpha_object));
+}
+
+/* the maps a reservation evicted keep no pointer into the bytes it reused */
+static void stream_forget_evicted(void)
+{
+    for (int i = 0; i < gx.base_total; ++i) {
+        int state = gx.cache.entries[i].state;
+        if (gx.textures[i].data && state != _wii_texture_cache_resident && state != _wii_texture_cache_loading)
+            texture_forget(&gx.textures[i]);
+    }
+}
+
+/* the ticket's bytes read, checked and published; 1 if base map index is
+resident. A failed or short read is retried after the cache's backoff; a map
+that fails its checks is refused for the BSP. Either is logged */
+static int stream_load(int index, const struct wii_texture_cache_ticket *ticket)
+{
+    struct texture *t = &gx.textures[index];
+    char path[192];
+    enum content_error error = CONTENT_IO;
+    FILE *file;
+
+    texture_path(path, sizeof(path), t->tag, t->bitmap);
+    texture_forget(t);
+    t->data = ticket->data;
+    if ((file = fopen(path, "rb")) != NULL)
+        error = texture_read_file(file, ticket->bytes, ticket->data);
+    if (error == CONTENT_OK)
+        error = texture_prepare(t, 0, t->want_width, t->want_height, ticket->bytes);
+    if (error != CONTENT_OK) {
+        int transient = error == CONTENT_IO;
+        wii_texture_cache_abandon(&gx.cache, ticket, transient);
+        texture_forget(t);
+        if (transient)
+            gx.stream_read_failed++;
+        else
+            gx.stream_invalid++;
+        wii_log("RENDER_TEXTURE_FAIL tag=%ld bitmap=%ld kind=base error=%s stream=1 state=%s\n", t->tag, t->bitmap,
+                content_error_name(error),
+                gx.cache.entries[index].state == _wii_texture_cache_failed
+                    ? "retry_later" : wii_texture_cache_refusal_name(gx.cache.entries[index].refusal));
+        return 0;
+    }
+    if (!wii_texture_cache_publish(&gx.cache, ticket)) {
+        texture_forget(t);
+        return 0;
+    }
+    t->resident = 1;
+    gx.stream_loaded++;
+    gx.stream_loaded_bytes += ticket->bytes;
+    return 1;
+}
+
+static void stream_reset_counters(void)
+{
+    gx.stream_loaded = gx.stream_read_failed = gx.stream_invalid = gx.stream_frames_short = gx.stream_deferred = 0;
+    gx.stream_loaded_bytes = gx.stream_us = 0;
+    gx.stream_us_max = 0;
+}
+
+/* the cache over an arena of at most base_budget bytes; 1 if this BSP
+streams. 0 (why logged) leaves the baseline's residency to the load */
+static int stream_begin(void)
+{
+    const int count = gx.base_total;
+    const int blocks = wii_texture_cache_blocks_per_region(count);
+    uint32_t mark[2] = {gx.pool[0].used, gx.pool[1].used};
+    unsigned long long wanted = 0;
+    unsigned char *base[2] = {NULL, NULL};
+    uint32_t bytes[2] = {0, 0};
+    const char *why = NULL;
+    int missing = 0, oversize = 0;
+
+    stream_reset_counters();
+    for (int i = 0; i < count; ++i) {
+        struct texture *t = &gx.textures[i];
+        unsigned long size = file_size(t->tag, t->bitmap, &t->staged);
+        /* larger than any file the loaders read: refused as oversize */
+        t->file_bytes = size > MAX_FILE_BYTES ? 0xFFFFFFFFu : (uint32_t)size;
+        if (t->staged && size <= MAX_FILE_BYTES)
+            wanted += align32((uint32_t)size);
+    }
+    uint32_t arena = (uint32_t)((wanted < gx.base_budget ? wanted : (unsigned long long)gx.base_budget) & ~31ull);
+    gx.stream_entries_bytes = (uint32_t)((size_t)count * sizeof(struct wii_texture_cache_entry));
+    gx.stream_blocks_bytes = (uint32_t)((size_t)WII_TEXTURE_CACHE_REGIONS * (size_t)blocks *
+                                        sizeof(struct wii_texture_cache_block));
+    gx.stream_arena = NULL;
+    gx.stream_arena_bytes = 0;
+    gx.stream_entries = NULL;
+    gx.stream_blocks = NULL;
+    if (!count || !arena)
+        why = "nothing_to_stream";
+    if (!why) {
+        gx.stream_entries = store_take(gx.stream_entries_bytes);
+        gx.stream_blocks = store_take(gx.stream_blocks_bytes);
+        if (!gx.stream_entries || !gx.stream_blocks)
+            why = "tables";
+    }
+    if (!why && gx.heap_textures) {
+        /* the boot mode: one heap block, never more than the base maps the
+        baseline could take at the same budget */
+        gx.stream_arena = store_take(arena);
+        if (gx.stream_arena) {
+            gx.stream_arena_bytes = arena;
+            base[0] = gx.stream_arena;
+            bytes[0] = arena;
+        } else {
+            why = "heap";
+        }
+    } else if (!why) {
+        /* the pool's free ends, MEM1's first: nothing else takes the pool
+        until the BSP ends */
+        uint32_t left = arena;
+        for (int part = 0; part < 2 && left; ++part) {
+            struct pool_part *p = &gx.pool[part];
+            uint32_t free_bytes = p->base ? (p->bytes - p->used) & ~31u : 0;
+            uint32_t take = free_bytes < left ? free_bytes : left;
+            if (!take)
+                continue;
+            base[part] = p->base + p->used;
+            bytes[part] = take;
+            p->used += take;
+            if (p->used > p->peak)
+                p->peak = p->used;
+            left -= take;
+        }
+        if (!bytes[0] && !bytes[1])
+            why = "pool";
+    }
+    if (!why && !wii_texture_cache_init(&gx.cache, gx.stream_entries, count, gx.stream_blocks, blocks, base, bytes,
+                                        gx.gpu_completed, gpu_wait, NULL))
+        why = "init";
+    if (why) {
+        store_give(gx.stream_arena, gx.stream_arena_bytes);
+        store_give(gx.stream_blocks, gx.stream_blocks_bytes);
+        store_give(gx.stream_entries, gx.stream_entries_bytes);
+        gx.stream_arena = NULL;
+        gx.stream_blocks = NULL;
+        gx.stream_entries = NULL;
+        gx.stream_arena_bytes = 0;
+        if (!gx.heap_textures) {
+            gx.pool[0].used = mark[0];
+            gx.pool[1].used = mark[1];
+        }
+        wii_log("RENDER_STREAM_OFF load=%ld bsp_tag=%lu base_maps=%d reason=%s (the baseline's residency)\n", gx.loads,
+                gx.bsp_tag, count, why);
+        return 0;
+    }
+    for (int i = 0; i < count; ++i) {
+        const struct texture *t = &gx.textures[i];
+        wii_texture_cache_entry_set(&gx.cache, i, t->tag, t->bitmap, t->staged, t->file_bytes, t->coverage);
+        missing += gx.cache.entries[i].refusal == _wii_texture_cache_refusal_missing;
+        oversize += gx.cache.entries[i].refusal == _wii_texture_cache_refusal_oversize;
+    }
+    gx.stream_region[0] = bytes[0];
+    gx.stream_region[1] = bytes[1];
+    gx.streaming = 1;
+    wii_log("RENDER_STREAM_BEGIN load=%ld bsp_tag=%lu base_maps=%d base_bytes_staged=%llu arena=%lu region0=%p+%lu "
+            "region1=%p+%lu store=%s tables=%lu missing=%d oversize=%d\n", gx.loads, gx.bsp_tag, count, wanted,
+            (unsigned long)arena, (void *)base[0], (unsigned long)bytes[0], (void *)base[1], (unsigned long)bytes[1],
+            gx.heap_textures ? "heap" : "pool", (unsigned long)(gx.stream_entries_bytes + gx.stream_blocks_bytes),
+            missing, oversize);
+    return 1;
+}
+
+/* the BSP's streaming ends (the GPU reads none of it: wii_gx_map_end waits) */
+static void stream_end(void)
+{
+    if (!gx.streaming)
+        return;
+    const struct wii_texture_cache_stats *st = &gx.cache.stats;
+    wii_log("RENDER_STREAM_STATS load=%ld bsp_tag=%lu base_maps=%d arena=%lu used_end=%lu used_peak=%lu loads=%lu "
+            "loaded_bytes=%llu evictions=%lu gpu_waits=%lu no_space=%lu read_failed=%lu invalid=%lu stale=%lu "
+            "frames_short=%lu deferred=%lu stream_us=%llu stream_us_max=%lu\n", gx.loads, gx.bsp_tag, gx.base_total,
+            (unsigned long)(gx.stream_region[0] + gx.stream_region[1]), (unsigned long)st->used,
+            (unsigned long)st->used_peak, gx.stream_loaded, gx.stream_loaded_bytes, st->evictions, st->waits,
+            st->no_space, gx.stream_read_failed, gx.stream_invalid, st->stale, gx.stream_frames_short,
+            gx.stream_deferred, gx.stream_us, gx.stream_us_max);
+    /* the arena's bytes are not heap blocks of their own */
+    for (int i = 0; i < gx.base_total; ++i)
+        texture_forget(&gx.textures[i]);
+    store_give(gx.stream_arena, gx.stream_arena_bytes);
+    store_give(gx.stream_blocks, gx.stream_blocks_bytes);
+    store_give(gx.stream_entries, gx.stream_entries_bytes);
+    gx.stream_arena = NULL;
+    gx.stream_blocks = NULL;
+    gx.stream_entries = NULL;
+    gx.stream_arena_bytes = 0;
+    gx.stream_region[0] = gx.stream_region[1] = 0;
+    /* the cache keeps only its generation's number: the next init is newer */
+    gx.cache.entries = NULL;
+    gx.cache.entry_count = 0;
+    memset(gx.cache.regions, 0, sizeof(gx.cache.regions));
+    gx.streaming = 0;
+}
+
+/* before a frame's draws: the visible base maps wanted, and the most wanted
+loaded within the frame's bounds (settle: every one that fits, evicting any
+map not visible now, for the fixed-pose checks) */
+static void stream_update(const unsigned long *flags, const unsigned char *drawn, int settle)
+{
+    if (!gx.streaming)
+        return;
+    u64 start = gettime();
+    int loads = 0, published = 0, short_now = 0;
+    unsigned long bytes = 0;
+    wii_texture_cache_frame_begin(&gx.cache);
+    for (long i = 0; i < gx.material_count; ++i) {
+        const struct material *m = &gx.materials[i];
+        if (!drawn[i] || !m->vertex_count || m->engine.kind != _wii_gx_material_environment || m->base_texture < 0)
+            continue;
+        wii_texture_cache_want(&gx.cache, m->base_texture,
+                               visible_count(flags, m->engine.first_surface, m->engine.surface_count));
+    }
+    for (;;) {
+        struct wii_texture_cache_ticket ticket;
+        int e = wii_texture_cache_next_wanted(&gx.cache);
+        if (e < 0)
+            break;
+        uint32_t size = gx.cache.entries[e].bytes;
+        if (!settle && (loads >= gx.stream_loads || (loads && bytes + size > gx.stream_frame_bytes))) {
+            gx.stream_deferred++;
+            break;
+        }
+        enum wii_texture_cache_result result =
+            wii_texture_cache_reserve(&gx.cache, e, 1, settle ? 0u : (uint32_t)gx.stream_keep_frames, &ticket);
+        stream_forget_evicted();
+        if (result != _wii_texture_cache_ok)
+            continue;  /* no room this frame: the cache offers the next */
+        loads++;
+        bytes += size;
+        published += stream_load(e, &ticket);
+    }
+    for (int i = 0; i < gx.base_total && !short_now; ++i)
+        short_now = gx.cache.entries[i].demand && gx.cache.entries[i].state != _wii_texture_cache_resident;
+    gx.stream_frames_short += (unsigned long)short_now;
+    /* new texels where GX's texture cache may hold an evicted map's */
+    if (published)
+        GX_InvalidateTexAll();
+    unsigned long us = elapsed_us(start);
+    gx.stream_us += us;
+    if (us > gx.stream_us_max)
+        gx.stream_us_max = us;
 }
 
 int wii_gx_textures_load(long lightmap_tag_index)
@@ -1257,6 +1655,17 @@ int wii_gx_textures_load(long lightmap_tag_index)
     if (gx.texture_count)
         qsort(gx.textures, (size_t)gx.texture_count, sizeof(gx.textures[0]), coverage_order);
     base_total = gx.texture_count;
+    gx.base_total = base_total;
+    /* each base map's dimensions, as the engine's first material with it has them */
+    for (int i = 0; i < base_total; ++i) {
+        struct texture *t = &gx.textures[i];
+        for (long k = 0; k < gx.material_count; ++k)
+            if (gx.materials[k].engine.base_tag == t->tag && gx.materials[k].engine.base_bitmap == t->bitmap) {
+                t->want_width = gx.materials[k].engine.base_width;
+                t->want_height = gx.materials[k].engine.base_height;
+                break;
+            }
+    }
     /* lightmap pages first (always resident) */
     for (long i = 0; i < gx.material_count; ++i) {
         const struct wii_gx_material *m = &gx.materials[i].engine;
@@ -1282,16 +1691,62 @@ int wii_gx_textures_load(long lightmap_tag_index)
             lightmap_failed++;
         }
     }
-    /* then the base maps that fit the budget and the pool */
-    for (int i = 0; i < base_total; ++i) {
+    /* HWI-083: with texture_stream=1, the base maps' arena (stream_begin)
+    filled in coverage order as below, without evicting; the frames stream
+    the rest as they become visible */
+    int streamed = gx.texture_stream && base_total && stream_begin();
+    for (int i = 0; streamed && i < base_total; ++i) {
         struct texture *t = &gx.textures[i];
-        int width = 0, height = 0, found;
-        for (long k = 0; k < gx.material_count; ++k)
-            if (gx.materials[k].engine.base_tag == t->tag && gx.materials[k].engine.base_bitmap == t->bitmap) {
-                width = gx.materials[k].engine.base_width;
-                height = gx.materials[k].engine.base_height;
-                break;
-            }
+        const struct wii_texture_cache_entry *e = &gx.cache.entries[i];
+        struct wii_texture_cache_ticket ticket;
+        if (e->state == _wii_texture_cache_refused && e->refusal == _wii_texture_cache_refusal_missing) {
+            wii_log("RENDER_TEXTURE_FAIL tag=%ld bitmap=%ld kind=base error=missing\n", t->tag, t->bitmap);
+            base_failed++;
+            continue;
+        }
+        if (e->state == _wii_texture_cache_refused) {
+            missing_bytes += e->bytes;
+            base_budget_short++;
+            wii_log("RENDER_BASE_NOT_RESIDENT tag=%ld bitmap=%ld bytes=%lu surfaces=%ld reason=oversize arena_regions=%lu,%lu\n",
+                    t->tag, t->bitmap, (unsigned long)e->bytes, t->coverage, (unsigned long)gx.stream_region[0],
+                    (unsigned long)gx.stream_region[1]);
+            continue;
+        }
+        if (gx.base_limit >= 0 && base_resident >= gx.base_limit) {
+            missing_bytes += e->bytes;
+            base_limited++;
+            wii_log("RENDER_BASE_NOT_RESIDENT tag=%ld bitmap=%ld bytes=%lu surfaces=%ld reason=base_limit\n", t->tag,
+                    t->bitmap, (unsigned long)e->bytes, t->coverage);
+            continue;
+        }
+        enum wii_texture_cache_result result = wii_texture_cache_reserve(&gx.cache, i, 0, 0, &ticket);
+        if (result == _wii_texture_cache_no_space) {
+            missing_bytes += e->bytes;
+            base_budget_short++;
+            wii_log("RENDER_BASE_NOT_RESIDENT tag=%ld bitmap=%ld bytes=%lu surfaces=%ld reason=budget stream=when_visible "
+                    "arena_left=%lu\n", t->tag, t->bitmap, (unsigned long)e->bytes, t->coverage,
+                    (unsigned long)(gx.stream_region[0] + gx.stream_region[1] - gx.cache.stats.used));
+            continue;
+        }
+        if (result == _wii_texture_cache_ok && stream_load(i, &ticket)) {
+            base_bytes += t->bytes;
+            base_resident++;
+            base_split += t->header.version == 2;
+            base_planes += t->alpha_plane;
+            base_alpha_omitted += t->header.alpha_kind == HWT_ALPHA_OMITTED;
+            wii_log("RENDER_BASE_RESIDENT tag=%ld bitmap=%ld bytes=%lu surfaces=%ld gx=%lu version=%lu alpha=%s\n",
+                    t->tag, t->bitmap, (unsigned long)t->bytes, t->coverage, (unsigned long)t->header.gx_format,
+                    (unsigned long)t->header.version,
+                    t->alpha_plane ? (t->header.alpha_gx_format == HWT_GX_I4 ? "I4" : "I8")
+                                   : t->header.alpha_kind == HWT_ALPHA_OMITTED ? "omitted_255" : "own");
+        } else {
+            base_failed++;
+        }
+    }
+    /* then (the baseline) the base maps that fit the budget and the pool */
+    for (int i = 0; !streamed && i < base_total; ++i) {
+        struct texture *t = &gx.textures[i];
+        int width = t->want_width, height = t->want_height, found;
         unsigned long size = file_size(t->tag, t->bitmap, &found);
         if (!found) {
             wii_log("RENDER_TEXTURE_FAIL tag=%ld bitmap=%ld kind=base error=missing\n", t->tag, t->bitmap);
@@ -1344,17 +1799,21 @@ int wii_gx_textures_load(long lightmap_tag_index)
         if (m->engine.lightmap_page >= 0 && m->lightmap_vertex_count &&
             (t = texture_find(lightmap_tag_index, m->engine.lightmap_page)) >= 0 && gx.textures[t].resident)
             m->lightmap_texture = t;
+        /* streaming, a material keeps its base map's entry, and each draw
+        asks whether it is resident (base_of) */
         if (m->engine.kind == _wii_gx_material_environment && m->engine.base_tag >= 0 &&
-            (t = texture_find(m->engine.base_tag, m->engine.base_bitmap)) >= 0 && gx.textures[t].resident)
+            (t = texture_find(m->engine.base_tag, m->engine.base_bitmap)) >= 0 &&
+            (gx.streaming ? t < gx.base_total : gx.textures[t].resident))
             m->base_texture = t;
+        const struct texture *base = base_of(m);
         if (m->engine.kind == _wii_gx_material_environment && m->lightmap_texture < 0)
             no_lightmap++;
         if (m->engine.kind == _wii_gx_material_environment && m->engine.base_alpha_used) {
             alpha_used++;
-            alpha_used_split += m->base_texture >= 0 && gx.textures[m->base_texture].header.version == 2;
+            alpha_used_split += base && base->header.version == 2;
         }
         if (m->engine.kind == _wii_gx_material_environment && m->engine.base_tag >= 0) {
-            if (m->base_texture >= 0)
+            if (base)
                 environment_surfaces_textured += m->engine.surface_count;
             else
                 environment_surfaces_lightmap_only += m->engine.surface_count;
@@ -1557,6 +2016,9 @@ static unsigned long draw_materials(const unsigned long *flags, const unsigned c
                                     u8 cull)
 {
     unsigned long triangles = 0;
+    /* HWI-083: this draw's sequence; every base map it binds is fenced by
+    it (the texture cache reuses no byte of it before the GP completes it) */
+    const uint32_t sequence = ++gx.gpu_submitted;
     gx.drawn_textured = gx.drawn_base_missing = 0;
     GX_SetCullMode(cull);
     GX_SetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
@@ -1573,19 +2035,20 @@ static unsigned long draw_materials(const unsigned long *flags, const unsigned c
             if (!drawn[i] || transparent != pass || !m->vertex_count)
                 continue;
             int lightmap = 0;
+            const struct texture *base = m->engine.kind == _wii_gx_material_environment ? base_of(m) : NULL;
+            if (base && gx.streaming && mode != DRAW_TEXTURED_MASK && mode != DRAW_LIGHTMAP_ONLY)
+                wii_texture_cache_used(&gx.cache, m->base_texture, sequence);
             if (mode == DRAW_TEXTURED_MASK) {
-                tev_constant(m->engine.kind == _wii_gx_material_environment && m->base_texture >= 0
-                                 ? opaque_white : opaque_black);
+                tev_constant(base ? opaque_white : opaque_black);
             } else if (m->engine.kind == _wii_gx_material_environment && mode == DRAW_BASE_ALPHA) {
-                if (m->base_texture >= 0)
-                    tev_alpha_view(&gx.textures[m->base_texture]);
+                if (base)
+                    tev_alpha_view(base);
                 else
                     tev_constant(opaque_white);
             } else if (m->engine.kind == _wii_gx_material_environment) {
                 const struct texture *l = m->lightmap_texture >= 0 && mode != DRAW_BASE_ONLY
                                               ? &gx.textures[m->lightmap_texture] : NULL;
-                const struct texture *b = m->base_texture >= 0 && mode != DRAW_LIGHTMAP_ONLY
-                                              ? &gx.textures[m->base_texture] : NULL;
+                const struct texture *b = mode != DRAW_LIGHTMAP_ONLY ? base : NULL;
                 if (l || b)
                     tev_textures(l, b, m->engine.base_alpha_used);
                 else
@@ -1598,7 +2061,7 @@ static unsigned long draw_materials(const unsigned long *flags, const unsigned c
             unsigned long drawn = emit_material(m, flags, lightmap);
             triangles += drawn;
             if (mode == DRAW_FULL && m->engine.kind == _wii_gx_material_environment && m->engine.base_tag >= 0) {
-                if (m->base_texture >= 0)
+                if (base)
                     gx.drawn_textured += drawn;
                 else
                     gx.drawn_base_missing += drawn;
@@ -1665,7 +2128,7 @@ static void load_view(const struct wii_gx_view *view)
 static void present(int vsyncs)
 {
     GX_CopyDisp(gx.xfb[gx.fb], GX_TRUE);
-    GX_DrawDone();
+    draw_done();
     VIDEO_SetNextFramebuffer(gx.xfb[gx.fb]);
     VIDEO_Flush();
     for (int i = 0; i < vsyncs; ++i)
@@ -1677,7 +2140,7 @@ static void present(int vsyncs)
 static void clear_efb(void)
 {
     GX_CopyDisp(gx.xfb[gx.fb], GX_TRUE);
-    GX_DrawDone();
+    draw_done();
 }
 
 static uint32_t sample_at(int gx_index, int gy_index, int columns, int rows)
@@ -1719,6 +2182,8 @@ void wii_gx_frame(const struct wii_gx_view *view, const unsigned long *surface_f
     if (!gx.ready)
         return;
     memory_low_water();
+    /* HWI-083: before the frame's draws (its time is RENDER_STREAM_STATS's) */
+    stream_update(surface_flags, material_drawn, 0);
     u64 start = gettime();
     load_view(view);
     unsigned long triangles = draw_materials(surface_flags, material_drawn, DRAW_FULL, GX_CULL_BACK);
@@ -1726,7 +2191,7 @@ void wii_gx_frame(const struct wii_gx_view *view, const unsigned long *surface_f
     wii_gx_models_draw();
     unsigned long submit = elapsed_us(start);
     u64 gp_start = gettime();
-    GX_DrawDone();
+    draw_done();
     unsigned long gp = elapsed_us(gp_start);
     if (sample) {
         uint32_t samples[RUN_GRID_X * RUN_GRID_Y];
@@ -1749,6 +2214,7 @@ void wii_gx_environment_draw(const struct wii_gx_view *view, const unsigned long
     if (!gx.ready)
         return;
     memory_low_water();
+    stream_update(surface_flags, material_drawn, 0);
     u64 start = gettime();
     load_view(view);
     unsigned long triangles = draw_materials(surface_flags, material_drawn, DRAW_FULL, GX_CULL_BACK);
@@ -1801,11 +2267,14 @@ void wii_gx_pose_capture(const struct wii_gx_view *view, const unsigned long *su
     if (!gx.ready)
         return;
     out->samples = count;
+    /* HWI-083: the pose's visible base maps, as many as the arena holds,
+    before any of its draws: every draw below sees the same residency */
+    stream_update(surface_flags, material_drawn, 1);
     load_view(view);
     clear_efb();
     u64 start = gettime();
     draw_materials(surface_flags, material_drawn, DRAW_FULL, GX_CULL_BACK);
-    GX_DrawDone();
+    draw_done();
     out->draw_us = elapsed_us(start);
     out->textured_triangles = gx.drawn_textured;
     out->base_missing_triangles = gx.drawn_base_missing;
@@ -1815,25 +2284,25 @@ void wii_gx_pose_capture(const struct wii_gx_view *view, const unsigned long *su
     /* HWI-082: the object models over that draw: the samples they change
     (the environment's checks below stay the environment's own) */
     wii_gx_models_draw();
-    GX_DrawDone();
+    draw_done();
     wii_gx_models_last(&out->model_parts, &out->model_parts_refused, &out->model_triangles);
     sample_grid(pose_other, GRID_X, GRID_Y);
     out->object_samples = count_differs(pose_full, pose_other, count);
     clear_efb();
     draw_materials(surface_flags, material_drawn, DRAW_LIGHTMAP_ONLY, GX_CULL_BACK);
-    GX_DrawDone();
+    draw_done();
     sample_grid(pose_other, GRID_X, GRID_Y);
     out->crc_lightmap_only = samples_crc(pose_other, count, &ignored);
     out->differs_lightmap_only = count_differs(pose_full, pose_other, count);
     clear_efb();
     draw_materials(surface_flags, material_drawn, DRAW_BASE_ONLY, GX_CULL_BACK);
-    GX_DrawDone();
+    draw_done();
     sample_grid(pose_other, GRID_X, GRID_Y);
     out->crc_base_only = samples_crc(pose_other, count, &ignored);
     out->differs_base_only = count_differs(pose_full, pose_other, count);
     clear_efb();
     draw_materials(surface_flags, material_drawn, DRAW_BASE_ALPHA, GX_CULL_BACK);
-    GX_DrawDone();
+    draw_done();
     sample_grid(pose_other, GRID_X, GRID_Y);
     out->crc_base_alpha = samples_crc(pose_other, count, &ignored);
     for (int i = 0; i < count; ++i) {
@@ -1843,14 +2312,14 @@ void wii_gx_pose_capture(const struct wii_gx_view *view, const unsigned long *su
     /* the samples a resident base map shows in (HWI-030) */
     clear_efb();
     draw_materials(surface_flags, material_drawn, DRAW_TEXTURED_MASK, GX_CULL_BACK);
-    GX_DrawDone();
+    draw_done();
     sample_grid(pose_other, GRID_X, GRID_Y);
     for (int i = 0; i < count; ++i)
         out->textured_samples += pose_other[i] == 0xFFFFFFu;
     for (int k = 0; k < 3; ++k) {
         clear_efb();
         draw_classified(view, surface_flags, material_drawn, frontfacing, culls[k]);
-        GX_DrawDone();
+        draw_done();
         sample_grid(pose_other, GRID_X, GRID_Y);
         for (int i = 0; i < count; ++i) {
             uint32_t c = pose_other[i];
@@ -1862,7 +2331,7 @@ void wii_gx_pose_capture(const struct wii_gx_view *view, const unsigned long *su
     clear_efb();
     draw_materials(surface_flags, material_drawn, DRAW_FULL, GX_CULL_BACK);
     wii_gx_models_draw();
-    GX_DrawDone();
+    draw_done();
     present(present_frames);
     GX_SetCullMode(GX_CULL_BACK);
 }

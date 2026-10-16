@@ -107,11 +107,13 @@ RENDER_ENGINE = (RENDER_DIR / "render_engine.c",
 RENDER_GX = (RENDER_DIR / "render_gx.c",) + tuple(CONTENT_DIR / name for name in (
     "content_common.c", "content_sections.c", "hwl_lightmap.c", "hwt_texture.c")) + (
     RENDER_DIR / "render_ui_gx.c",
-    # HWI-082: the model parts skinned from the tag slot (hwm_model.c's vertex profile) and drawn through GX
-    RENDER_DIR / "render_models_gx.c", CONTENT_DIR / "hwm_model.c")
+    # HWI-082: the model parts skinned from the tag slot and drawn through GX
+    RENDER_DIR / "render_models_gx.c", CONTENT_DIR / "hwm_model.c",
+    # HWI-083: the environment's bounded base map residency
+    RENDER_DIR / "render_texture_cache.c")
 RENDER_HEADERS = (RENDER_DIR / "wii_render.h", RENDER_DIR / "wii_render_ui.h") + tuple(
     CONTENT_DIR / name for name in ("content_common.h", "content_sections.h", "hwl_lightmap.h", "hwt_texture.h",
-                                    "hwm_model.h"))
+                                    "hwm_model.h")) + (RENDER_DIR / "render_texture_cache.h",)
 # HWI-016D: the boot mode's driver half (libogc; engine.dol only, like the
 # rasterizer's GX side): boot.txt, the manifests, the pad, the boot errors
 BOOT_DRIVER = (ENGINE_DIR / "boot_main.c",)

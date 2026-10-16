@@ -13,6 +13,7 @@ Everything else the renderer draws stays unsupported and reports itself.
 | [`wii_render.h`](wii_render.h) | interface | C types only; the three parts below and `render.txt` |
 | [`render_engine.c`](render_engine.c) | engine unit | the rasterizer's start-up and per-map hooks; each frame's camera (`director_update`, `observer_update`, the window camera of `set_window_camera_values`) and visibility (`structure_visibility_find_camera`, `render_camera_build_frustum`, `structure_visibility_compute`); what each BSP material is; the fixed-pose checks |
 | [`render_gx.c`](render_gx.c) | libogc | converted geometry (HWL1) and textures (HWT1) from the card, GX state, the draw, EFB samples, the frame copy, timings and memory |
+| [`render_texture_cache.c`](render_texture_cache.c) | strict C11 | HWI-083: where streamed base maps live in their arena, which may be evicted, and when the GPU no longer reads their bytes (tested on the host: `tools/wii/test_texture_cache.py`) |
 
 The hooks are registered with `port/wii/engine/engine_hooks.c` by the Wii
 driver. The i686 host reference (`tools/wii/run_engine_map_host.py`) builds
@@ -205,6 +206,56 @@ lightmap-only, and every frame counts the visible triangles drawn textured
 and lightmap-only (`RENDER_MAP_STATS`). The boot mode's menus share the
 heap, so there each texture is its own heap block (HWI-016D's rule).
 
+**Base map streaming (HWI-083, HWI-054; `texture_stream=1`, off by
+default).** The baseline above leaves out whatever the budget does not hold
+for the whole BSP: a10 has about 27.8 MB of base maps, of which 60–100% of
+surface coverage is resident at the default budget. With
+`texture_stream=1` the base maps live in a cache instead
+([`render_texture_cache.c`](render_texture_cache.c); the cache allocates
+nothing). At the BSP load, after the lightmap pages, one arena of at most
+`base_budget` bytes (no more than the BSP's staged base maps) is taken from
+the pool's free ends (MEM1's first, at most one region in each part) or, in
+the boot mode, as one heap block. The pool still never takes the MEM2
+reserve or the `pool_keep` headroom. The load fills the arena in coverage
+order (the baseline's residency at the same budget). Before each frame's
+draws, the base maps of the visible surfaces (the engine's surface flags
+and drawn materials, counted per base map across every material that shares
+it) are wanted. The most wanted map that is not resident is read into bytes
+the cache gives. If needed, those bytes come from evicting maps that no
+surface has shown for `stream_keep_frames` frames; a visible map is never
+evicted. The map is then checked as the baseline checks it (HWT1 version 1
+or 2 with its split alpha plane, the engine's dimensions, GX-loadable images
+on 32 bytes), and only then published. A frame loads at most
+`stream_loads` maps and `stream_frame_bytes` bytes (one larger map may load
+alone). Maps left for a later frame draw lightmap-only, as before.
+
+GX completion: every `draw_materials` is one draw sequence, and every base
+map it binds records it. A sequence is complete once a `GX_DrawDone` issued
+after it has returned: the map run's frames and the pose checks do this
+themselves. The boot mode's frame completes in `render_ui_gx.c`, which this
+side does not see. The cache calls `GX_DrawDone` itself before it hands out
+bytes of a map whose sequence it has not seen complete, and
+`wii_gx_map_end` does the same before any BSP memory is given back or
+refilled. A load invalidates GX's texture cache before the frame's draws.
+An evicted map's texture objects and pointer are cleared at once.
+
+Refused for the BSP, and logged once: a map not staged (`missing`), one
+larger than every arena region (`oversize`), and content that fails the
+checks (`invalid`). A failed or short read is retried after 120 frames, at
+most 3 reads. A reservation made before a BSP change can never be published
+(the cache's generation). The fixed-pose checks settle first: every visible
+map that fits is loaded and any map not visible may be evicted, so all of a
+pose's draws see one residency. That residency can depend on the arena's
+earlier placement (fragmentation).
+Logs: `RENDER_STREAM_CONFIG`, `RENDER_STREAM_BEGIN` (arena regions, store,
+missing and oversize counts), `RENDER_STREAM_OFF` (why the BSP fell back to
+the baseline), `RENDER_STREAM_STATS` at the BSP's end (loads, bytes,
+evictions, GPU waits, no-space, failed reads, invalid, stale, frames with a
+visible map not resident, deferred loads, and the time spent outside the
+frame timings). Not qualified on Dolphin or hardware yet. The reads are
+synchronous on the main thread, so a load costs its SD read time in that
+frame (the bounds above cap it); the frame rate under streaming is unmeasured.
+
 ## `render.txt`
 
 Optional, on the card at `sd:/halo-wii-engine/render.txt` (full list in
@@ -212,10 +263,15 @@ Optional, on the card at `sd:/halo-wii-engine/render.txt` (full list in
 rasterizer reported unsupported), `mode=poses_only` (skip the map run; only
 the fixed-pose checks, for short frame dumps), `base_budget=<bytes>`,
 `base_limit=<count>` (at most that many base maps, in coverage order:
-compares texture profiles at equal residency), `pool_max`, `pool_keep`,
+compares texture profiles at equal residency; with streaming, the load's
+fill only), `pool_max`, `pool_keep`,
+`texture_stream=1` (HWI-083 base map streaming within `base_budget`;
+default 0, the baseline), `stream_loads=<n>` (maps a frame, default 2,
+1–64), `stream_frame_bytes=<bytes>` (default 524288),
+`stream_keep_frames=<n>` (default 30),
 `geometry_check`, `models=0|1` (HWI-082: the object models; 0 draws the
-environment alone, as before), `model_skin_bytes=<bytes>` (their skinning
-buffer), `run_pose_ticks=<t>,...` (the map run's sampled frames)
+environment alone), `model_skin_bytes=<bytes>` (their skinning buffer),
+`run_pose_ticks=<t>,...` (the map run's sampled frames)
 and `poses=<scenario> [ticks=...] [switch_bsp=<t>:<i>,...] [overrides=each]`
 (a fixed-pose phase; with `overrides=each`, two labelled diagnostic cameras
 inside the BSP loaded at each tick: above one of its largest floor
