@@ -3857,6 +3857,54 @@ static void detail_sound_random_offset(
 	return;
 }
 
+/* port (HWI-078, ADR-022): the scripted sound class fades on the game's
+ticks. On the Xbox a frame was a tick, and sound_render moved the classes'
+gains (game state: sound_class_data) by the ticks its clock said had passed,
+one a 30 Hz frame. The ports render at any rate and several ticks a frame,
+or none, so a fade followed the frame rate and the system's clock. Each game
+tick (game_time_update) now moves them one tick, as the Xbox's frame after
+it did, where sound_render would have run: with the sound manager running
+and not paused. At 30 Hz, a tick a frame, the gains are the Xbox's on every
+tick; at any other rate the same steps follow the same ticks. A game without
+sound (no sound manager) leaves them, as before. */
+static struct sound_tick_report sound_tick_report;
+
+void sound_tick_update(
+	void)
+{
+	if (sound_manager_globals.initialized &&
+		sound_manager_globals.enabled &&
+		!sound_manager_globals.paused)
+	{
+		short moving = sound_classes_moving();
+
+		if (moving > 0)
+		{
+			sound_tick_report.fade_ticks++;
+			sound_tick_report.fade_class_steps += moving;
+		}
+		sound_classes_update(1);
+	}
+
+	return;
+}
+
+void sound_tick_report_get(
+	struct sound_tick_report *report)
+{
+	*report = sound_tick_report;
+
+	return;
+}
+
+void sound_tick_report_reset(
+	void)
+{
+	csmemset(&sound_tick_report, 0, sizeof(sound_tick_report));
+
+	return;
+}
+
 void sound_render(
 	void)
 {
@@ -3874,19 +3922,8 @@ void sound_render(
 				((real)render_time - sound_manager_globals.render_time) *
 				0.029999999f;
 			sound_manager_globals.render_time = render_time;
-			/* Sounds are rendered once a frame, and a frame is well under a
-			tick on the native builds, so the ticks truncate to none and
-			scripted sound class fades would never move: carry the
-			fraction over. */
-			{
-				static real leftover_ticks = 0.f;
-				long ticks;
-
-				leftover_ticks += sound_manager_globals.ticks_elapsed;
-				ticks = (long)leftover_ticks;
-				leftover_ticks -= (real)ticks;
-				sound_classes_update(ticks);
-			}
+			/* port (HWI-078): the scripted sound class fades move a tick at a
+			time, after each game tick (sound_tick_update), not here */
 			refresh_listener();
 			process_looping_sounds();
 			refresh_sounds();

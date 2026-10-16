@@ -436,8 +436,8 @@ void wii_sound_tags_mask_end(
 /* ---------- the game's reactions to its sounds (couplings=presentation)
 
 Five things the Xbox's game did because a sound played, which are game
-state, and which the game without sound never does (the Wii's until now,
-and the map run's reference digests):
+state, and which the game without sound never does (HWI-074's map run and
+its reference digests):
 - a scripted line a unit speaks makes the unit speak (scripted_sound_new:
   object_type_notify_impulse_sound, only if the sound manager started the
   sound: unit_speak, the unit's speech state, which its dialogue and the AI
@@ -446,21 +446,22 @@ and the map run's reference digests):
   (sound_manager.c update_channels: game_sound_set_mouth_aperture, the unit's
   mouth aperture, an object function its animation and attachments read);
   frames are not ticks on the Wii, so this follows the render cadence;
-- scripted sound class fades move the classes' gains, once a frame, in the
-  game state (sound_classes_update from sound_render);
+- scripted sound class fades move the classes' gains in the game state
+  (sound_classes_update);
 - a looping sound is deleted when its stop has played out (below);
 - a sound's index is kept where it was started (below).
-With couplings=presentation (the default) the game stays as without sound:
-the unit is not notified, its mouth is not moved, and the fades move a copy
-of the gains outside the game state, which the sound manager reads
-(sound_class_get_gain). couplings=original runs the Xbox's own. Which the
-game should do is HWI-040's to decide (the lines' mouths do not move with
-presentation; with original, a10 is not cadence-invariant: the mouth). */
+(HWI-078, ADR-022) The fades are the Xbox's on every port and with any
+couplings: the engine moves them a tick after each game tick
+(sound_manager.c's sound_tick_update), not once a frame, so they follow the
+ticks alone and equal the Xbox's at 30 Hz. With couplings=presentation (the
+default) the other four stay as without sound: the unit is not notified,
+its mouth is not moved, the looping sound and the index are as below.
+couplings=original runs the Xbox's own (with it, a10 is not
+cadence-invariant: the mouth, once a frame); moving those four to the ticks
+is the rest of HWI-078. */
 
 void __real_object_type_notify_impulse_sound(long object_index, long sound_index, long source_object_index);
 void __real_game_sound_set_mouth_aperture(long object_index, real mouth_aperture);
-void __real_sound_classes_update(long ticks);
-real __real_sound_class_get_gain(short class_index);
 
 static boolean sound_hooks_presentation(
 	void)
@@ -551,90 +552,6 @@ long __wrap_object_impulse_sound_new(
 		return NONE;
 	}
 	return sound_index;
-}
-
-/* the sound classes' gains (sound_classes.c's struct sound_class_datum: the
-game state's, which scripts set the fade of) */
-struct sound_class_gain
-{
-	real desired_gain;
-	real gain;
-	short ticks;
-};
-
-enum
-{
-	SOUND_HOOK_SOUND_CLASSES = 51,
-};
-
-extern struct sound_class_gain *sound_class_data;
-
-static struct
-{
-	boolean valid;
-	struct sound_class_gain seen;   /* the game state's, as last adopted */
-	struct sound_class_gain gain;   /* the copy the sound fades */
-} sound_class_copies[SOUND_HOOK_SOUND_CLASSES];
-
-/* the copy adopts what a script set in the game state since */
-static struct sound_class_gain *sound_class_copy(
-	short class_index)
-{
-	struct sound_class_gain const *state = &sound_class_data[class_index];
-
-	if (!sound_class_copies[class_index].valid ||
-		state->desired_gain != sound_class_copies[class_index].seen.desired_gain ||
-		state->ticks != sound_class_copies[class_index].seen.ticks ||
-		state->gain != sound_class_copies[class_index].seen.gain)
-	{
-		sound_class_copies[class_index].seen = *state;
-		sound_class_copies[class_index].gain.desired_gain = state->desired_gain;
-		sound_class_copies[class_index].gain.ticks = state->ticks;
-		if (!sound_class_copies[class_index].valid || !state->ticks)
-			sound_class_copies[class_index].gain.gain = state->ticks ? state->gain : state->desired_gain;
-		sound_class_copies[class_index].valid = TRUE;
-	}
-
-	return &sound_class_copies[class_index].gain;
-}
-
-void __wrap_sound_classes_update(
-	long ticks)
-{
-	short class_index;
-
-	if (!sound_hooks_presentation() || !sound_class_data)
-	{
-		__real_sound_classes_update(ticks);
-		return;
-	}
-	/* sound_classes_update's interpolation, on the copies */
-	for (class_index = 0; ticks > 0 && class_index < SOUND_HOOK_SOUND_CLASSES; class_index++)
-	{
-		struct sound_class_gain *copy = sound_class_copy(class_index);
-
-		if (copy->ticks > ticks)
-		{
-			copy->gain = (real)ticks / copy->ticks * (copy->desired_gain - copy->gain) + copy->gain;
-			copy->ticks -= (short)ticks;
-		}
-		else
-		{
-			copy->gain = copy->desired_gain;
-			copy->ticks = 0;
-		}
-	}
-}
-
-real __wrap_sound_class_get_gain(
-	short class_index)
-{
-	if (!sound_hooks_presentation() || !sound_class_data || class_index < 0 ||
-		class_index >= SOUND_HOOK_SOUND_CLASSES)
-	{
-		return __real_sound_class_get_gain(class_index);
-	}
-	return sound_class_copy(class_index)->gain;
 }
 
 /* ---------- stream events */
@@ -829,7 +746,7 @@ void wii_sound_map_run_begin(
 	sound_hooks.notifications_withheld = 0;
 	sound_hooks.mouth_updates_withheld = 0;
 	sound_hooks.indices_withheld = 0;
-	csmemset(sound_class_copies, 0, sizeof(sound_class_copies));
+	sound_tick_report_reset();
 	sound_hooks.events_logged = 0;
 	sound_hooks.log_events = TRUE;
 	csmemset(sound_hooks.classes, 0, sizeof(sound_hooks.classes));
@@ -846,6 +763,7 @@ void wii_sound_map_run_end(
 	struct wii_sound_report report;
 	struct wii_sound_output_report output;
 	struct wii_sound_pack_report pack;
+	struct sound_tick_report ticks;
 	short index;
 	char histogram[WII_SOUND_VOICE_HISTOGRAM * 11 + 1];
 	long used = 0;
@@ -853,6 +771,7 @@ void wii_sound_map_run_end(
 	if (!sound_hooks.active)
 		return;
 	sound_hooks.log_events = FALSE;
+	sound_tick_report_get(&ticks);
 	wii_sound_report_get(&report);
 	wii_sound_pack_report_get(&pack);
 	wii_sound_output_report_get(&output);
@@ -862,7 +781,7 @@ void wii_sound_map_run_end(
 	wii_log("SOUND_RUN map=%s cycle=%d cadence=%s frames=%lu clock_ms=%lu work_calls=%lu frames_mixed=%lu mix_end_frame=%lu "
 		"skipped_frames=%lu voices_max=%lu voice_frames=%lu voices_by_calls=%s sounds_peak=%ld looping_sounds_peak=%ld "
 		"streams=%lu packets_queued=%lu packets_completed=%lu packets_flushed=%lu blocks_decoded=%lu starts=%lu ends=%lu "
-		"stops=%lu obstruction_tests=%lu marks_unrestored=%lu notifications_withheld=%lu mouth_withheld=%lu indices_withheld=%lu clipped=%lu mix_us=%lu mix_peak_us=%lu mix_crc=%08lx events_crc=%08lx pack_reads=%lu pack_bytes=%lu "
+		"stops=%lu obstruction_tests=%lu marks_unrestored=%lu notifications_withheld=%lu mouth_withheld=%lu indices_withheld=%lu fade_ticks=%lu fade_class_steps=%lu clipped=%lu mix_us=%lu mix_peak_us=%lu mix_crc=%08lx events_crc=%08lx pack_reads=%lu pack_bytes=%lu "
 		"pack_pcm=%lu pack_failures=%lu pack_us=%lu decode_checks=%lu\n",
 		map, cycle, cadence, sound_hooks.frames, sound_hooks.run_milliseconds, report.work_calls, report.frames_mixed,
 		report.frames_total,
@@ -870,7 +789,7 @@ void wii_sound_map_run_end(
 		sound_hooks.looping_sounds_peak, report.streams, report.packets_queued, report.packets_completed,
 		report.packets_flushed, report.blocks_decoded, report.starts, report.ends, report.stops, sound_hooks.obstruction_tests,
 		sound_hooks.marks_not_restored, sound_hooks.notifications_withheld, sound_hooks.mouth_updates_withheld,
-		sound_hooks.indices_withheld,
+		sound_hooks.indices_withheld, ticks.fade_ticks, ticks.fade_class_steps,
 		report.clipped_samples,
 		(unsigned long)report.mix_microseconds, (unsigned long)report.mix_microseconds_peak, report.mix_crc,
 		report.events_crc, pack.reads, pack.bytes, pack.pcm_reads, pack.failures, (unsigned long)pack.read_microseconds,

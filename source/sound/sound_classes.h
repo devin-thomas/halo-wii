@@ -82,6 +82,9 @@ void sound_classes_dispose(
 	void);
 void sound_classes_update(
 	long ticks);
+/* port (HWI-078) */
+short sound_classes_moving(
+	void);
 void debug_sound_classes_set_wet(
 	char const *name,
 	real wet);

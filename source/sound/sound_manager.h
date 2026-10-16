@@ -84,6 +84,21 @@ boolean sound_refresh_looping(
 	boolean alternate,
 	real fade_time);
 
+/* port (HWI-078): the sound's part of each game tick (game_time_update): the
+scripted sound class fades move one tick (sound_manager.c) */
+struct sound_tick_report
+{
+	unsigned long fade_ticks;       /* ticks a class's gain moved on */
+	unsigned long fade_class_steps; /* classes' gains moved, over those ticks */
+};
+
+void sound_tick_update(
+	void);
+void sound_tick_report_get(
+	struct sound_tick_report *report);
+void sound_tick_report_reset(
+	void);
+
 /* ---------- globals */
 
 extern boolean debug_sound;

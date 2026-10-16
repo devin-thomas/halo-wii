@@ -77,6 +77,7 @@ symbols in this file:
 #include "networking/network_server_manager.h"
 #include "saved games/game_state.h"
 #include "saved games/game_state_schema.h"
+#include "sound/sound_manager.h"
 /* port/linux/game/network_distributed.c's */
 void network_distributed_tick(void);
 
@@ -550,6 +551,9 @@ void game_time_update(
 						local_random_tick_begin();
 						game_tick();
 						local_random_tick_end();
+						/* port (HWI-078): the sound's part of the tick, which the
+						Xbox's frame after it did (sound_manager.c) */
+						sound_tick_update();
 						render_interpolation_tick();
 						game_time_globals->server_time++;
 						game_time_globals->local_time++;

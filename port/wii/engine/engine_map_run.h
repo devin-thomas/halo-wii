@@ -64,6 +64,8 @@ print the same report lines (through wii_log):
        [couplings=presentation|original]
      (HWI-074) The engine's sound starts here, once, and every line after it
      runs with it (port/wii/sound/README.md); the lines above run without.
+     (HWI-078) With it, scripted sound class fades move the game state's
+     gains a tick at a time, whatever the couplings.
 
    The heap must stay flat across a map's cycles (the driver measures it).
 

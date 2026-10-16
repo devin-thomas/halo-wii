@@ -138,7 +138,8 @@ struct wii_sound_map_options
 	int verify_decode;               /* log each permutation's decoded PCM CRC as it loads */
 	int events;                      /* log each stream event (the first ones of each class) */
 	/* the game's reactions to its sounds playing (sound_hooks.c): 0 (the
-	default) keeps them as with no sound, 1 is the Xbox's */
+	default) keeps them as with no sound, 1 is the Xbox's. (HWI-078) Not the
+	class fades: the engine's ticks move them either way */
 	int game_couplings;
 };
 

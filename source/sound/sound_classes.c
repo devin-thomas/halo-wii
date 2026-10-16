@@ -407,6 +407,27 @@ void sound_classes_update(
 	return;
 }
 
+/* port (HWI-078): the classes whose gain the next sound_classes_update moves
+(a fade in progress, or a gain set at once that has not been taken yet) */
+short sound_classes_moving(
+	void)
+{
+	short class_index;
+	short moving = 0;
+
+	for (class_index = 0; class_index < NUMBER_OF_SOUND_CLASSES; class_index++)
+	{
+		struct sound_class_datum *sound_class = sound_class_datum_get(class_index);
+
+		if (sound_class->ticks > 0 || sound_class->gain != sound_class->desired_gain)
+		{
+			moving++;
+		}
+	}
+
+	return moving;
+}
+
 void debug_sound_classes_set_wet(
 	char const *name,
 	real wet)

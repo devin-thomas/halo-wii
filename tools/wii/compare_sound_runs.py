@@ -38,7 +38,8 @@ import sound_stage as ss  # noqa: E402
 DETERMINISTIC = ("frames", "clock_ms", "work_calls", "frames_mixed", "mix_end_frame", "skipped_frames", "voices_max", "voice_frames",
                  "voices_by_calls", "sounds_peak", "looping_sounds_peak", "streams", "packets_queued",
                  "packets_completed", "packets_flushed", "blocks_decoded", "starts", "ends", "stops",
-                 "obstruction_tests", "marks_unrestored", "notifications_withheld", "mouth_withheld", "indices_withheld", "clipped", "mix_crc", "events_crc", "pack_reads", "pack_bytes", "pack_pcm",
+                 "obstruction_tests", "marks_unrestored", "notifications_withheld", "mouth_withheld", "indices_withheld",
+                 "fade_ticks", "fade_class_steps", "clipped", "mix_crc", "events_crc", "pack_reads", "pack_bytes", "pack_pcm",
                  "pack_failures", "decode_checks")
 TIMINGS = ("mix_us", "mix_peak_us", "pack_us")
 

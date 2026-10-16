@@ -264,10 +264,13 @@ class SoundBuildTests(unittest.TestCase):
         self.assertNotIn(Path("port/wii/sound/sound_out_asnd.c"), engine_build.WII_PLATFORM)
         for name in ("observer_get_camera", "sound_render", "sound_idle", "game_sound_update", "sound_new_impulse",
                      "sound_dispose_from_old_map", "compute_sound_obstruction", "object_type_notify_impulse_sound",
-                     "game_sound_set_mouth_aperture", "sound_classes_update", "sound_class_get_gain",
-                     "sound_refresh_looping", "object_impulse_sound_new"):
+                     "game_sound_set_mouth_aperture", "sound_refresh_looping", "object_impulse_sound_new"):
             self.assertIn(f"-Wl,--wrap={name}", engine_build.LINK_FLAGS)
             self.assertIn(f"__wrap_{name}(", (SOUND / "sound_hooks.c").read_text(encoding="utf-8"), name)
+        # (HWI-078) the class fades are the game state's on every port: no copy of them
+        for name in ("sound_classes_update", "sound_class_get_gain"):
+            self.assertNotIn(f"-Wl,--wrap={name}", engine_build.LINK_FLAGS)
+            self.assertNotIn(f"__wrap_{name}(", (SOUND / "sound_hooks.c").read_text(encoding="utf-8"), name)
         for path in (*engine_build.SOUND_OUTPUT, *(SOUND / name for name in ("wii_sound.h", "xbox_adpcm.h"))):
             self.assertTrue((ROOT / path).is_file(), path)
 
@@ -296,6 +299,105 @@ class SoundBuildTests(unittest.TestCase):
         self.assertIn('!strncmp(line, "sound", 5)', text)
         for option in ('"listener"', '"verify"', '"events"', '"couplings"'):
             self.assertIn(option, text)
+
+
+@unittest.skipUnless(compiler(), "no host C compiler")
+class FadeTickTests(unittest.TestCase):
+    """HWI-078: the scripted sound class fades on the game's ticks (port/wii/sound/fade_check.c, with the
+    engine's own sound_classes.c)"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.temp = tempfile.TemporaryDirectory()
+        root = Path(cls.temp.name)
+        include = root / "include"
+        include.mkdir()
+        # the engine headers sound_classes.c includes: fade_check.c defines what it uses of them
+        for name in ("cseries.h", "errors.h", "game_state.h", "real_math.h", "objects.h"):
+            (include / name).write_text("", encoding="ascii")
+        exe = root / ("fade_check.exe" if sys.platform == "win32" else "fade_check")
+        build = subprocess.run([compiler(), "-std=c11", "-O1", "-Wall", "-Wextra", "-Werror", "-ffp-contract=off",
+                                "-D__USE_MINGW_ANSI_STDIO=1", f"-I{include}", "-o", str(exe),
+                                str(SOUND / "fade_check.c"), "-lm"], capture_output=True, text=True)
+        if build.returncode != 0:
+            raise AssertionError("host build failed:\n" + build.stderr[-4000:])
+        run = subprocess.run([str(exe)], capture_output=True, text=True, timeout=60)
+        cls.exit = run.returncode
+        cls.output = run.stdout
+        cls.lines = {}
+        for line in run.stdout.splitlines():
+            kind, _, rest = line.partition(" ")
+            values = dict(item.split("=", 1) for item in rest.split())
+            cls.lines.setdefault(kind, []).append(values)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.temp.cleanup()
+
+    def test_the_ticks_fades_equal_the_xboxs_at_30hz_on_every_tick(self):
+        self.assertEqual(self.exit, 0, self.output)
+        xbox = self.lines["FADE_XBOX"][0]
+        thirty = next(run for run in self.lines["FADE_TICK"] if run["cadence"] == "30hz")
+        self.assertEqual((thirty["ticks"], thirty["frames"]), ("240", "240"))
+        self.assertEqual(thirty["first_divergent"], "-1")
+        self.assertEqual(thirty["chain"], xbox["chain"])
+
+    def test_the_fades_are_measurably_present(self):
+        for run in self.lines["FADE_TICK"]:
+            self.assertGreater(int(run["fade_ticks"]), 0, run)
+            self.assertGreater(int(run["fade_class_steps"]), int(run["fade_ticks"]), run)
+
+    def test_every_cadence_and_a_revert_follow_the_ticks_alone(self):
+        runs = self.lines["FADE_TICK"]
+        self.assertEqual([run["cadence"] for run in runs], ["30hz", "60hz", "20hz", "144hz", "irregular", "vsync"])
+        self.assertEqual({run["chain"] for run in runs}, {self.lines["FADE_XBOX"][0]["chain"]})
+        self.assertEqual({run["first_divergent"] for run in runs}, {"-1"})
+        self.assertEqual(len({(run["fade_ticks"], run["fade_class_steps"]) for run in runs}), 1)
+        # (frames differ: the cadences are really different)
+        self.assertEqual(len({run["frames"] for run in runs}), 5)
+        self.assertEqual(self.lines["FADE_REVERT"][0]["first_divergent"], "-1")
+        self.assertEqual(self.lines["FADE_RESULT"][0], {"failures": "0", "frame_coupled_differing": "2",
+                                                        "assertions_failed": "0"})
+
+    def test_the_frame_coupling_it_replaces_follows_the_frame_rate(self):
+        """the check can see a frame-rate dependence: HWI-074's per-frame fades diverge at 20 Hz and irregular"""
+        frame = {run["cadence"]: run for run in self.lines["FADE_FRAME"]}
+        self.assertEqual(frame["30hz"]["first_divergent"], "-1")
+        for cadence in ("20hz", "irregular"):
+            self.assertNotEqual(frame[cadence]["first_divergent"], "-1", cadence)
+            self.assertNotEqual(frame[cadence]["chain"], self.lines["FADE_XBOX"][0]["chain"], cadence)
+
+
+class FadeTickPathTests(unittest.TestCase):
+    """HWI-078: where the engine moves the fades (every port's game_time.c and sound_manager.c)"""
+
+    def test_each_tick_moves_the_fades_and_a_frame_does_not(self):
+        game_time = (ROOT / "source/game/game_time.c").read_text(encoding="latin-1")
+        tick = game_time.index("\t\t\t\t\t\tgame_tick();\n")
+        loop = game_time[tick:game_time.index("game_time_globals->server_time++;", tick)]
+        self.assertIn("local_random_tick_end();", loop)
+        self.assertLess(loop.index("local_random_tick_end();"), loop.index("sound_tick_update();"))
+        self.assertEqual(game_time.count("sound_tick_update();"), 1)
+        manager = (ROOT / "source/sound/sound_manager.c").read_text(encoding="latin-1")
+        render = manager[manager.index("\nvoid sound_render(\n"):]
+        render = render[:render.index("\n}\n")]
+        self.assertNotIn("sound_classes_update(", render)
+        self.assertNotIn("leftover_ticks", render)
+        step = manager[manager.index("\nvoid sound_tick_update(\n"):]
+        step = step[:step.index("\n}\n")]
+        self.assertIn("sound_classes_update(1);", step)
+        for gate in ("sound_manager_globals.initialized", "sound_manager_globals.enabled",
+                     "!sound_manager_globals.paused"):
+            self.assertIn(gate, step)
+        self.assertEqual(manager.count("sound_classes_update("), 1)
+
+    def test_the_run_reports_the_fades(self):
+        hooks = (SOUND / "sound_hooks.c").read_text(encoding="utf-8")
+        self.assertIn("fade_ticks=%lu fade_class_steps=%lu", hooks)
+        self.assertIn("sound_tick_report_reset();", hooks)
+        import compare_sound_runs as csr
+        self.assertIn("fade_ticks", csr.DETERMINISTIC)
+        self.assertIn("fade_class_steps", csr.DETERMINISTIC)
 
 
 if __name__ == "__main__":

@@ -15,6 +15,7 @@ Xbox's DirectSound is implemented here.
 | [`sound_hooks.c`](sound_hooks.c) | engine unit | the map run's sound, its listener, its report lines, and the guards that keep the sound out of the game state |
 | [`sound_out_asnd.c`](sound_out_asnd.c) | libogc, engine.dol only | the mix out through one ASND voice |
 | [`sound_check.c`](sound_check.c) | host test program | the pack reader and decoder against the host reference (`tools/wii/test_sound.py`) |
+| [`fade_check.c`](fade_check.c) | host test program | (HWI-078) the engine's class fades on the ticks against the Xbox's frame, at six cadences (`tools/wii/test_sound.py`) |
 
 ## How it runs
 
@@ -70,11 +71,36 @@ without it:
      played out;
    - two callers keep a started sound's index.
 
-   With `presentation`, the game sees what it sees without sound: the sound
-   plays, and the fades move a copy of the gains. `couplings=original` runs
-   the Xbox's behaviour. With it, a10 is no longer cadence-invariant
-   (measured: the mouth). Which behaviour the game should have is HWI-040's
-   decision. With `presentation`, scripted lines' mouths do not move.
+   **Fades (HWI-078, ADR-022): restored, on the ticks.** The engine moves
+   the class gains in the game state one tick after each game tick
+   (`sound_tick_update`, from `game_time_update`), where the Xbox's frame
+   after the tick did, instead of once a render frame on the frame clock.
+   This holds on every port and with either `couplings`. At 30 Hz, one
+   tick a frame, the gains equal the Xbox's on every tick; at any cadence
+   they follow the ticks alone. Without the sound manager (sound off) they
+   do not move, as before. `SOUND_RUN` counts `fade_ticks` (ticks a gain
+   moved on) and `fade_class_steps`. A run with a scripted fade therefore
+   has new digests: the gains are game state (`sound classes`).
+   [`fade_check.c`](fade_check.c) checks the engine's `sound_classes.c` at
+   the six cadences against the Xbox's frame (`tools/wii/test_sound.py`).
+   Measured on the i686 host (2026-10-16), Prisoner, 300 ticks, a script at
+   tick 60 fading `ambient` to 0 over 90 ticks and `weapon` to 0.2 over 45:
+   `fade_ticks=90 fade_class_steps=585` and simulation `e5a2822b` (chain
+   `0b48c174`) at all six cadences. HWI-074's `presentation` left the game
+   state's gains unmoved: `dd5856ee`, the same as without sound. At 30 Hz,
+   `couplings=original` before this change (fades once a frame) and after
+   it are equal on every tick: whole state chain `c87fd4a2`, simulation
+   chain `0b48c174`, and the same `mix_crc` and `events_crc`. Without sound,
+   and with sound but no fade, nothing changed (Prisoner `127656ef` /
+   `961a5ec5`). a10's own script changes a class gain (`fade_ticks=2` in
+   9000 ticks): its simulation chain at 30, 60 and 20 Hz is now `d82e5da9`
+   (was `3d27851e`); the final state `d509456c` is unchanged.
+
+   For the other four, `presentation` means the game sees what it sees
+   without sound. `couplings=original` runs the Xbox's behaviour. With it,
+   a10 is no longer cadence-invariant (measured: the mouth). Moving them to
+   the ticks is the rest of HWI-078. With `presentation`, scripted lines'
+   mouths do not move.
 
 The game's own sound bookkeeping (`game_sound_update`: the background sound
 and environment of the camera's cluster, which looping sounds can be heard)
