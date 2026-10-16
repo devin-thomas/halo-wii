@@ -789,6 +789,16 @@ static void input_get_device_states(
 						input_globals.gamepad_handles[gamepad_index]);
 					XInputClose(input_globals.gamepad_handles[gamepad_index]);
 					input_globals.gamepad_handles[gamepad_index] = NULL;
+					/* port: what it held is let go of, so a controller put
+					back presses afresh rather than resuming a hold (HWI-039) */
+					csmemset(
+						&input_globals.gamepad_states[gamepad_index],
+						0,
+						sizeof(input_globals.gamepad_states[gamepad_index]));
+					csmemset(
+						&input_globals.raw_gamepad_states[gamepad_index],
+						0,
+						sizeof(input_globals.raw_gamepad_states[gamepad_index]));
 				}
 
 				if (TEST_FLAG(insertions, gamepad_index))

@@ -595,3 +595,24 @@ and only on drawn frames) and the build's lists.
 ```powershell
 python -B -m unittest test_first_person_render
 ```
+
+## GameCube pad as the player's controller (HWI-039)
+
+`test_gamecube_input.py` builds `gamecube_input_check.c` with the host
+compiler: the Wii's XInput (`port/wii/engine/wii_xinput.c`, whole, with
+`WII_XINPUT_STANDALONE`) under the engine's own gamepad read, taken verbatim
+from `source/input/input_xbox.c` into a generated header, with the profile's
+default button layout from `source/input/input_abstraction.c`. It presses
+each of the twelve game controls from its GameCube input and checks the
+press, the hold and the release (and that nothing else is pressed); both
+layers' mappings; the triggers' press and release points under noise, at
+30, 60 and 144 frames a second; held counts across those rates; the sticks'
+dead zone, direction and saturation; inputs held over a layer switch; and
+an unplugged port, which holds nothing, is taken by no other port, and
+presses afresh once back. Static checks tie the game controls to
+`player_control.c`'s buttons and the unit's control bits, the look
+inversion, and the menus' signal that picks the layer.
+
+```powershell
+python -B -m unittest test_gamecube_input
+```
