@@ -37,6 +37,17 @@ struct breakable_surface_globals
 	struct breakable_surface_datum breakable_surfaces[MAXIMUM_STRUCTURE_BSPS_PER_SCENARIO][MAXIMUM_BREAKABLE_SURFACES_PER_MAP];
 };
 
+/* port (HWI-085): game_state_schema_classes.c's "breakable surface globals"
+schema (a bsp's flags: 8 longs) */
+typedef char breakable_surface_globals_schema_check[
+	sizeof(struct breakable_surface_globals) == 0x4204 &&
+	MAXIMUM_STRUCTURE_BSPS_PER_SCENARIO == 16 && MAXIMUM_BREAKABLE_SURFACES_PER_MAP == 256 &&
+	offsetof(struct breakable_surface_globals, enabled) == 0x0 &&
+	offsetof(struct breakable_surface_globals, breakable_surface_flags) == 0x1 &&
+	sizeof(((struct breakable_surface_globals *)0)->breakable_surface_flags[0]) == 8 * sizeof(long) &&
+	offsetof(struct breakable_surface_globals, breakable_surfaces) == 0x204 &&
+	sizeof(struct breakable_surface_datum) == 0x4 ? 1 : -1];
+
 /* ---------- prototypes */
 
 /* port: cache_files.c's */

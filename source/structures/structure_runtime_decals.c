@@ -51,6 +51,12 @@ struct structure_decals_globals
 	byte pad[3];
 };
 
+/* port (HWI-085): game_state_schema_classes.c's "structure decals" schema */
+typedef char structure_decals_globals_schema_check[
+	sizeof(struct structure_decals_globals) == 0x4 &&
+	offsetof(struct structure_decals_globals, reconnect_to_structure_bsp) == 0x0 &&
+	offsetof(struct structure_decals_globals, pad) == 0x1 ? 1 : -1];
+
 /* ---------- prototypes */
 
 static void structure_decals_report_malformed(

@@ -378,6 +378,11 @@ struct lights_globals
 
 typedef char verify_lights_game_globals_size[
 	sizeof(struct lights_game_globals) == 0x4 ? 1 : -1];
+/* port (HWI-085): game_state_schema_classes.c's "lights globals" schema */
+typedef char verify_lights_game_globals_schema[
+	offsetof(struct lights_game_globals, render_lights) == 0x0 &&
+	offsetof(struct lights_game_globals, reserved01) == 0x1 &&
+	sizeof(((struct lights_game_globals *)0)->reserved01) == 3 ? 1 : -1];
 typedef char verify_light_datum_flags_offset[
 	offsetof(struct light_datum, flags) == 0x2 ? 1 : -1];
 typedef char verify_light_datum_cluster_reference_offset[

@@ -13,6 +13,12 @@ bytes written out by hand below, not made by the codec:
 - the completeness gate counts typed, unresolved (HS cells) and unclaimed
   (no schema, a memory pool's blocks, the GPU part) bytes exactly, and a
   partial schema set neither writes nor reads a stream;
+- the engine's globals of scalars (director scripting, HUD switches, the
+  ambient reflection tint, lights, structure decals, decals, breakable
+  surfaces) are found by their whole allocation name, kind and size only,
+  type every byte, encode to the same specified wire bytes from either byte
+  order (a breakable surface bsp's flags as 8 longs), drop and zero only
+  their pad bytes, and leave the gate shut beside one global without one;
 - a whole typed stream of the engine's own classes (the game state header,
   a data array with free elements, an lruv cache) is the same from either
   byte order, is checked without being taken, is taken at another base, and
@@ -662,6 +668,353 @@ static void check_gate(void)
 		"more regions than the gate walks");
 }
 
+/* ---------- the engine's globals of scalars (game_state_schema_classes.c):
+found by their whole allocation name, every byte typed, the same wire bytes
+from either byte order, padding not written and taken as zero */
+
+struct named_global
+{
+	char const *name;
+	long size;
+	long wire_size;
+};
+
+static struct named_global const named_globals[] =
+{
+	{ "director scripting", 0x4, 1 },
+	{ "hud scripted globals", 0x4, 2 },
+	{ "rasterizer model ambient reflection tint", 0x10, 16 },
+	{ "lights globals", 0x4, 1 },
+	{ "structure decals", 0x4, 1 },
+	{ "decal globals", 0x280C, 0x280C },
+	/* enabled, 16 bsps' 8 longs of flags, 16 x 256 vitalities (not the 3 pad bytes) */
+	{ "breakable surface globals", 0x4204, 1 + 16 * 32 + 16 * 256 * 4 },
+};
+
+enum
+{
+	DECAL_GLOBALS_BYTES = 0x280C,
+	BREAKABLE_BYTES = 0x4204,
+	BREAKABLE_FLAGS_AT = 0x1,
+	BREAKABLE_VITALITY_AT = 0x204,
+	BREAKABLE_WIRE_VITALITY_AT = 1 + 16 * 32,
+};
+
+/* an instance of the named global from the native bytes of either byte
+order: the same wire bytes, checked against what is given, and taken back
+into either order as the native bytes given there */
+static void check_named_round_trip(char const *name, long size, byte const *little, byte const *big,
+	byte const *expected_wire, byte const *taken_big, byte *wire_scratch, byte *wire_other, byte *native_scratch)
+{
+	struct game_state_schema const *schema = game_state_schema_class_find(name, _game_state_schema_region_global, size);
+	struct game_state_schema_state little_state = make_state(native_scratch, size, BASE, TAGS, FALSE);
+	struct game_state_schema_state big_state = make_state(native_scratch, size, OTHER_BASE, OTHER_TAGS, TRUE);
+	long wire_size = schema ? game_state_schema_wire_size(schema) : NONE;
+	short error;
+
+	CHECK(schema && wire_size > 0, "%s: found, valid", name);
+	if (!schema || wire_size <= 0)
+		return;
+	error = game_state_schema_encode(schema, &little_state, little, BASE, wire_scratch, wire_size);
+	CHECK(error == _game_state_schema_stream_ok, "%s: little-endian encodes (%s)", name, game_state_schema_stream_error_name(error));
+	error = game_state_schema_encode(schema, &big_state, big, OTHER_BASE, wire_other, wire_size);
+	CHECK(error == _game_state_schema_stream_ok, "%s: big-endian encodes (%s)", name, game_state_schema_stream_error_name(error));
+	CHECK(!memcmp(wire_scratch, wire_other, (size_t)wire_size), "%s: the same wire from either byte order", name);
+	dump_difference(name, wire_other, wire_scratch, wire_size);
+	CHECK(!memcmp(wire_scratch, expected_wire, (size_t)wire_size), "%s: the wire bytes as specified", name);
+	dump_difference(name, wire_scratch, expected_wire, wire_size);
+	memset(native_scratch, 0xCC, (size_t)size);
+	error = game_state_schema_decode(schema, &big_state, wire_scratch, wire_size, NULL, OTHER_BASE);
+	CHECK(error == _game_state_schema_stream_ok, "%s: the wire checks (%s)", name, game_state_schema_stream_error_name(error));
+	CHECK(native_scratch[0] == 0xCC && native_scratch[size - 1] == 0xCC, "%s: a check takes nothing", name);
+	error = game_state_schema_decode(schema, &big_state, wire_scratch, wire_size, native_scratch, OTHER_BASE);
+	CHECK(error == _game_state_schema_stream_ok && !memcmp(native_scratch, taken_big, (size_t)size),
+		"%s: taken big-endian, as specified (%s)", name, game_state_schema_stream_error_name(error));
+	dump_difference(name, native_scratch, taken_big, size);
+	memset(native_scratch, 0xCC, (size_t)size);
+	little_state.big_endian = FALSE;
+	error = game_state_schema_decode(schema, &little_state, wire_scratch, wire_size, native_scratch, BASE);
+	CHECK(error == _game_state_schema_stream_ok, "%s: taken little-endian (%s)", name, game_state_schema_stream_error_name(error));
+	error = game_state_schema_encode(schema, &little_state, native_scratch, BASE, wire_other, wire_size);
+	CHECK(error == _game_state_schema_stream_ok && !memcmp(wire_other, expected_wire, (size_t)wire_size),
+		"%s: what little-endian took encodes as it was", name);
+	CHECK(game_state_schema_decode(schema, &big_state, wire_scratch, wire_size - 1, NULL, OTHER_BASE) ==
+		_game_state_schema_stream_layout, "%s: a wire of another size is refused", name);
+}
+
+/* (bad: the flags' longs as fields of the globals' own schema, 1 byte in) */
+static struct game_state_schema_field const breakable_flags_unaligned_fields[] =
+{
+	GAME_STATE_SCHEMA_FIELD("enabled", _game_state_schema_boolean, 0x0, 1),
+	GAME_STATE_SCHEMA_FIELD("breakable_surface_flags", _game_state_schema_u32, 0x1, 16 * 8),
+	GAME_STATE_SCHEMA_FIELD("(alignment)", _game_state_schema_padding, 0x201, 3),
+	GAME_STATE_SCHEMA_FIELD("breakable_surfaces", _game_state_schema_real, 0x204, 16 * 256),
+};
+/* (wrong: the flags as the bytes they are declared as; valid, but their
+meaning, bits of longs, is not the same bytes on either byte order) */
+static struct game_state_schema_field const breakable_flags_as_bytes_fields[] =
+{
+	GAME_STATE_SCHEMA_FIELD("enabled", _game_state_schema_boolean, 0x0, 1),
+	GAME_STATE_SCHEMA_FIELD("breakable_surface_flags", _game_state_schema_bytes, 0x1, 16 * 32),
+	GAME_STATE_SCHEMA_FIELD("(alignment)", _game_state_schema_padding, 0x201, 3),
+	GAME_STATE_SCHEMA_FIELD("breakable_surfaces", _game_state_schema_real, 0x204, 16 * 256),
+};
+
+static void check_named_globals(void)
+{
+	static byte little[BREAKABLE_BYTES];
+	static byte big[BREAKABLE_BYTES];
+	static byte taken_big[BREAKABLE_BYTES];
+	static byte native[BREAKABLE_BYTES];
+	static byte wire[BREAKABLE_BYTES];
+	static byte other[BREAKABLE_BYTES];
+	static byte expected[BREAKABLE_BYTES];
+	long index;
+
+	/* each: found by its whole name, kind and size; valid; every byte typed */
+	for (index = 0; index < (long)NUMBEROF(named_globals); index++)
+	{
+		struct named_global const *entry = &named_globals[index];
+		struct game_state_schema const *schema =
+			game_state_schema_class_find(entry->name, _game_state_schema_region_global, entry->size);
+		struct game_state_schema_region region;
+		struct game_state_schema_state state = make_state(native, entry->size, BASE, TAGS, TRUE);
+		struct game_state_schema_coverage coverage;
+		short field_index;
+
+		CHECK(schema && !game_state_schema_validate(schema, &field_index) && schema->size == entry->size,
+			"%s: found by name, kind and size, and valid", entry->name);
+		if (!schema)
+			continue;
+		CHECK(game_state_schema_wire_size(schema) == entry->wire_size, "%s: %ld wire bytes (%ld)", entry->name,
+			entry->wire_size, game_state_schema_wire_size(schema));
+		CHECK(!game_state_schema_class_find(entry->name, _game_state_schema_region_global, entry->size + 4) &&
+			!game_state_schema_class_find(entry->name, _game_state_schema_region_data_array, entry->size),
+			"%s: not found at another size or kind", entry->name);
+		memset(&region, 0, sizeof(region));
+		region.name = entry->name;
+		region.kind = _game_state_schema_region_global;
+		region.size = entry->size;
+		region.schema = schema;
+		state.region_count = 1;
+		state.regions = &region;
+		game_state_schema_coverage(&state, &coverage);
+		CHECK(coverage.complete && coverage.typed_bytes == (unsigned long)entry->size && !coverage.unresolved_bytes &&
+			!coverage.gap_count && coverage.typed_regions == 1, "%s: every byte typed (%lu typed, %lu unresolved, %ld gaps)",
+			entry->name, coverage.typed_bytes, coverage.unresolved_bytes, coverage.gap_count);
+	}
+	/* the name a region keeps is cut to 31 characters: the class is found by
+	the whole one (game_state_region_record), never by the cut one */
+	CHECK(!game_state_schema_class_find("rasterizer model ambient reflec", _game_state_schema_region_global, 0x10) &&
+		!game_state_schema_class_find("rasterizer model ambient reflection tin", _game_state_schema_region_global, 0x10) &&
+		!game_state_schema_class_find("director scripting ", _game_state_schema_region_global, 0x4) &&
+		!game_state_schema_class_find(NULL, _game_state_schema_region_global, 0x4),
+		"a class is not found by a name cut short, lengthened or none");
+
+	/* booleans and their pad bytes: the pad bytes are not written, taken as zero */
+	{
+		static byte const director_native[4] = { 0x01, 0xAA, 0xBB, 0xCC };
+		static byte const director_wire[1] = { 0x01 };
+		static byte const director_taken[4] = { 0x01, 0x00, 0x00, 0x00 };
+		static byte const hud_native[4] = { 0x00, 0x01, 0x55, 0x66 };
+		static byte const hud_wire[2] = { 0x00, 0x01 };
+		static byte const hud_taken[4] = { 0x00, 0x01, 0x00, 0x00 };
+
+		check_named_round_trip("director scripting", 4, director_native, director_native, director_wire, director_taken,
+			wire, other, native);
+		check_named_round_trip("hud scripted globals", 4, hud_native, hud_native, hud_wire, hud_taken, wire, other, native);
+		check_named_round_trip("lights globals", 4, director_native, director_native, director_wire, director_taken,
+			wire, other, native);
+		check_named_round_trip("structure decals", 4, director_native, director_native, director_wire, director_taken,
+			wire, other, native);
+	}
+
+	/* the tint: four reals' bits, a NaN's payload kept */
+	{
+		static byte const tint_little[16] =
+		{
+			0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0xC0, 0x23, 0x01, 0xC0, 0x7F
+		};
+		static byte const tint_big[16] =
+		{
+			0x3F, 0x80, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x00, 0x7F, 0xC0, 0x01, 0x23
+		};
+
+		check_named_round_trip("rasterizer model ambient reflection tint", 16, tint_little, tint_big, tint_little, tint_big,
+			wire, other, native);
+	}
+
+	/* decal globals: datum handles (NONE: none) and counts */
+	{
+		static byte const spots[][5] =
+		{
+			/* wire offset (2 bytes, little-endian), then 3 of the bytes there */
+			{ 0x00, 0x00, 0x03, 0x00, 0x01 }, /* [0][0]: 0xE0010003 */
+			{ 0x04, 0x00, 0xFF, 0xFF, 0xFF }, /* [0][1]: NONE */
+			{ 0xFC, 0x27, 0x05, 0x00, 0x22 }, /* [4][511]: 0xE0220005 */
+			{ 0x00, 0x28, 0x07, 0x00, 0x34 }, /* first disconnected: 0x12340007 */
+			{ 0x04, 0x28, 0xFD, 0xFF, 0xFF }, /* locked: -3 */
+			{ 0x08, 0x28, 0x02, 0x01, 0x00 }, /* permanent: 0x102 */
+		};
+
+		for (index = 0; index < 5 * 512 + 1; index++)
+		{
+			put32(little + index * 4, 0xFFFFFFFFUL, FALSE);
+			put32(big + index * 4, 0xFFFFFFFFUL, TRUE);
+		}
+		put32(little + 0x0, 0xE0010003UL, FALSE);
+		put32(big + 0x0, 0xE0010003UL, TRUE);
+		put32(little + 0x27FC, 0xE0220005UL, FALSE);
+		put32(big + 0x27FC, 0xE0220005UL, TRUE);
+		put32(little + 0x2800, 0x12340007UL, FALSE);
+		put32(big + 0x2800, 0x12340007UL, TRUE);
+		put32(little + 0x2804, 0xFFFFFFFDUL, FALSE);
+		put32(big + 0x2804, 0xFFFFFFFDUL, TRUE);
+		put32(little + 0x2808, 0x102UL, FALSE);
+		put32(big + 0x2808, 0x102UL, TRUE);
+		/* (every field a word: the wire is the little-endian layout) */
+		check_named_round_trip("decal globals", DECAL_GLOBALS_BYTES, little, big, little, big, wire, other, native);
+		for (index = 0; index < (long)NUMBEROF(spots); index++)
+		{
+			long at = spots[index][0] | (spots[index][1] << 8);
+
+			CHECK(wire[at] == spots[index][2] && wire[at + 1] == spots[index][3] && wire[at + 2] == spots[index][4],
+				"decal globals: the wire at 0x%lx, as specified", at);
+		}
+	}
+
+	/* breakable surface globals: surface n of a bsp is bit n % 32 of its
+	flags' long n / 32, on either byte order */
+	{
+		struct game_state_schema const unaligned =
+			GAME_STATE_SCHEMA_DEFINE("breakable_surface_globals", BREAKABLE_BYTES, breakable_flags_unaligned_fields);
+		struct game_state_schema const as_bytes =
+			GAME_STATE_SCHEMA_DEFINE("breakable_surface_globals", BREAKABLE_BYTES, breakable_flags_as_bytes_fields);
+		struct game_state_schema_state little_state = make_state(native, BREAKABLE_BYTES, BASE, TAGS, FALSE);
+		struct game_state_schema_state big_state = make_state(native, BREAKABLE_BYTES, BASE, TAGS, TRUE);
+		short field_index;
+		long bsp;
+		long word;
+
+		memset(little, 0, sizeof(little));
+		memset(big, 0, sizeof(big));
+		memset(expected, 0, sizeof(expected));
+		little[0] = big[0] = expected[0] = 0x01;
+		for (bsp = 0; bsp < 16; bsp++)
+		{
+			for (word = 0; word < 8; word++)
+			{
+				/* bsp 0: surfaces 0, 2 and 255 there; bsp 15: all; the others: surface 32 * word + bsp */
+				unsigned long value = bsp == 15 ? 0xFFFFFFFFUL : bsp ? 1UL << bsp : 0;
+
+				if (!bsp && word == 0)
+					value = 0x5;
+				if (!bsp && word == 7)
+					value = 0x80000000UL;
+				put32(little + BREAKABLE_FLAGS_AT + bsp * 32 + word * 4, value, FALSE);
+				put32(big + BREAKABLE_FLAGS_AT + bsp * 32 + word * 4, value, TRUE);
+			}
+		}
+		/* (the 3 pad bytes: whatever was there) */
+		little[0x201] = big[0x201] = 0xEE;
+		little[0x203] = big[0x203] = 0x11;
+		for (index = 0; index < 16 * 256; index++)
+		{
+			unsigned long value = index == 0 ? 0x3F800000UL : index == 16 * 256 - 1 ? 0x3E800000UL : 0x3F000000UL;
+
+			put32(little + BREAKABLE_VITALITY_AT + index * 4, value, FALSE);
+			put32(big + BREAKABLE_VITALITY_AT + index * 4, value, TRUE);
+			put32(expected + BREAKABLE_WIRE_VITALITY_AT + index * 4, value, FALSE);
+		}
+		for (index = 0; index < 16 * 32; index++)
+			expected[1 + index] = little[BREAKABLE_FLAGS_AT + index];
+		memcpy(taken_big, big, sizeof(taken_big));
+		taken_big[0x201] = taken_big[0x203] = 0x00;
+		check_named_round_trip("breakable surface globals", BREAKABLE_BYTES, little, big, expected, taken_big, wire, other,
+			native);
+		{
+			/* by hand: bsp 0's first long (surfaces 0 and 2), its last (surface
+			255), bsp 1's first (surface 1), the first and last vitality */
+			static byte const first[5] = { 0x01, 0x05, 0x00, 0x00, 0x00 };
+			static byte const last_word[4] = { 0x00, 0x00, 0x00, 0x80 };
+			static byte const bsp1[4] = { 0x02, 0x00, 0x00, 0x00 };
+			static byte const vitality_first[4] = { 0x00, 0x00, 0x80, 0x3F };
+			static byte const vitality_last[4] = { 0x00, 0x00, 0x80, 0x3E };
+
+			CHECK(!memcmp(wire, first, 5) && !memcmp(wire + 1 + 28, last_word, 4) && !memcmp(wire + 1 + 32, bsp1, 4),
+				"breakable surface globals: the flags' longs on the wire, as specified");
+			CHECK(!memcmp(wire + BREAKABLE_WIRE_VITALITY_AT, vitality_first, 4) &&
+				!memcmp(wire + BREAKABLE_WIRE_VITALITY_AT + (16 * 256 - 1) * 4, vitality_last, 4),
+				"breakable surface globals: the vitalities on the wire, as specified");
+			CHECK(big[BREAKABLE_FLAGS_AT + 28] == 0x80 && little[BREAKABLE_FLAGS_AT + 31] == 0x80,
+				"surface 255's bit lies in another byte on either byte order");
+		}
+		CHECK(game_state_schema_validate(&unaligned, &field_index) == _game_state_schema_error_alignment && field_index == 1,
+			"the flags' longs 1 byte into the globals' own schema are refused (alignment)");
+		{
+			long size = game_state_schema_wire_size(&as_bytes);
+
+			CHECK(size == 1 + 16 * 32 + 16 * 256 * 4 &&
+				game_state_schema_encode(&as_bytes, &little_state, little, BASE, wire, size) == _game_state_schema_stream_ok &&
+				game_state_schema_encode(&as_bytes, &big_state, big, BASE, other, size) == _game_state_schema_stream_ok &&
+				memcmp(wire, other, (size_t)size), "the flags as bytes are another wire on either byte order (why they are longs)");
+		}
+	}
+
+	/* the named globals pass the gate together, and one global without a
+	schema keeps it from passing: nothing written, nothing taken */
+	{
+		static byte memory[0x8000];
+		struct game_state_schema_region regions[NUMBEROF(named_globals) + 1];
+		struct game_state_schema_state state = make_state(memory, sizeof(memory), BASE, TAGS, FALSE);
+		struct game_state_schema_coverage coverage;
+		struct game_state_schema_stream stream;
+		byte scratch[0x100];
+		long at = 0;
+
+		memset(regions, 0, sizeof(regions));
+		for (index = 0; index < (long)NUMBEROF(named_globals); index++)
+		{
+			regions[index].name = named_globals[index].name;
+			regions[index].kind = _game_state_schema_region_global;
+			regions[index].offset = at;
+			regions[index].size = named_globals[index].size;
+			regions[index].schema = game_state_schema_class_find(named_globals[index].name, _game_state_schema_region_global,
+				named_globals[index].size);
+			at += named_globals[index].size;
+		}
+		state.cpu_used = at;
+		state.region_count = NUMBEROF(named_globals);
+		state.regions = regions;
+		game_state_schema_coverage(&state, &coverage);
+		CHECK(coverage.complete && coverage.typed_bytes == (unsigned long)at && coverage.typed_regions == (long)NUMBEROF(named_globals),
+			"the named globals together pass the gate (%lu of %lu typed)", coverage.typed_bytes, coverage.state_bytes);
+		CHECK(game_state_schema_stream_scratch_bytes(&state) == ((BREAKABLE_WIRE_VITALITY_AT + 16 * 256 * 4 + 3) & ~3L),
+			"their scratch: the widest one's wire bytes, in words (%ld)", game_state_schema_stream_scratch_bytes(&state));
+		regions[index].name = "player control globals";
+		regions[index].kind = _game_state_schema_region_global;
+		regions[index].offset = at;
+		regions[index].size = 0x40;
+		state.cpu_used = at + 0x40;
+		state.region_count = NUMBEROF(named_globals) + 1;
+		game_state_schema_coverage(&state, &coverage);
+		CHECK(!coverage.complete && coverage.typed_bytes == (unsigned long)(state.cpu_used - 0x40) &&
+			coverage.unclaimed_bytes == 0x40 && coverage.gap_count == 1 &&
+			coverage.gaps[0].reason == _game_state_schema_gap_unclaimed && coverage.gaps[0].offset == at &&
+			!strcmp(coverage.gaps[0].owner, "player control globals"), "one global without a schema: the gate's one gap");
+		memset(&stream, 0, sizeof(stream));
+		stream.scratch = scratch;
+		stream.scratch_size = sizeof(scratch);
+		memset(memory, 0x5A, sizeof(memory));
+		CHECK(game_state_schema_stream_write(&state, &stream) == _game_state_schema_stream_incomplete &&
+			game_state_schema_stream_read(&state, &stream, TRUE, NULL) == _game_state_schema_stream_incomplete,
+			"then the stream is neither written nor read");
+		for (index = 0; index < (long)sizeof(memory) && memory[index] == 0x5A; index++)
+			;
+		CHECK(index == (long)sizeof(memory), "nothing of the state taken");
+	}
+}
+
 /* ---------- a whole stream */
 
 enum
@@ -1023,6 +1376,7 @@ int main(void)
 	check_malformed();
 	check_identity();
 	check_gate();
+	check_named_globals();
 	check_stream();
 	if (failures)
 	{
