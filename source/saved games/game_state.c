@@ -316,12 +316,18 @@ void game_state_dispose_from_old_map(
 void game_state_save(
 	void)
 {
+	boolean saved;
+
 	game_state_call_before_save_procs();
 
 	main_stop_time();
-	game_state_globals.saved_game_valid = (game_state_write_to_file()!=FALSE);
+	saved = game_state_write_to_file();
+	/* A failed generation write keeps the last checkpoint available. A new
+	map clears saved_game_valid before it can reach this path. */
+	if (saved)
+		game_state_globals.saved_game_valid = TRUE;
 	main_start_time();
-	game_state_note_event("checkpoint saved");
+	game_state_note_event(saved ? "checkpoint saved" : "checkpoint save failed; previous checkpoint retained");
 
 	return;
 }

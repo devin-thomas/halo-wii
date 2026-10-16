@@ -7,8 +7,8 @@ not finish, or one written wrong, leaves the one before it to load.
 A saved game's file (the primary, savegame.bin) has two siblings: the
 candidate (savegame.new), which a save writes and checks whole before
 anything else is touched, and the previous (savegame.bak), the last primary
-that checked whole. A save that stops anywhere leaves a primary, a candidate
-or a previous that checks whole, unless none did before it. A load tries
+that checked whole and was compatible with this game. A save that stops
+anywhere leaves a primary, a candidate or a previous that checks whole, unless none did before it. A load tries
 them newest first and takes the first that is not refused.
 
 The files are the caller's (game_state_xbox.c); this is only the order of

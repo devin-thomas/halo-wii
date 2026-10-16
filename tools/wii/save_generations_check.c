@@ -22,6 +22,7 @@ struct model_file
 	char name[NAME_BYTES];
 	boolean present;
 	boolean complete; /* an image that checks whole */
+	boolean incompatible;
 	int id;           /* which save wrote it */
 };
 
@@ -127,10 +128,9 @@ static boolean model_check(void *context, char const *path, boolean compatible)
 	struct model_file *file = model_find(path);
 
 	(void)context;
-	(void)compatible;
 	if (!model_operation())
 		return FALSE;
-	return file && file->complete;
+	return file && file->complete && (!compatible || !file->incompatible);
 }
 
 static short model_attempt(void *context, char const *path)
@@ -141,7 +141,7 @@ static short model_attempt(void *context, char const *path)
 	model.attempts++;
 	if (model.fail_while_taking_current && !strcmp(path, PRIMARY))
 		return _game_state_generation_failed;
-	return file && file->complete ? _game_state_generation_taken : _game_state_generation_refused;
+	return file && file->complete && !file->incompatible ? _game_state_generation_taken : _game_state_generation_refused;
 }
 
 static struct game_state_generation_files const model_files =
@@ -332,6 +332,43 @@ static void test_failed_while_taking(void)
 	expect(model.attempts == 1, "and tries no other generation", "failed while taking", 0);
 }
 
+static void test_incompatible_primary_keeps_compatible_backup(void)
+{
+	int at;
+	int operations;
+
+	model_prepare(2);
+	model_find(PRIMARY)->incompatible = TRUE;
+	model_save(3);
+	operations = model.operations;
+	for (at = 1; at <= operations; at++)
+	{
+		int mode;
+
+		for (mode = 0; mode < 2; mode++)
+		{
+			int loaded;
+
+			cases++;
+			model_prepare(2);
+			model_find(PRIMARY)->incompatible = TRUE;
+			if (mode == 0)
+				model_save_interrupted(3, at);
+			else
+			{
+				model.fail_at = at;
+				model_save(3);
+				model.fail_at = 0;
+			}
+			loaded = model_load(NULL);
+			expect(loaded == 1 || loaded == 3,
+				"failed/interrupted save preserves a compatible image", "incompatible primary", at);
+			expect(model_find(PREVIOUS) && model_find(PREVIOUS)->id == 1,
+				"incompatible primary never replaces compatible backup", "incompatible primary", at);
+		}
+	}
+}
+
 static void test_nothing_saved(void)
 {
 	short generation = 0;
@@ -351,6 +388,7 @@ int main(void)
 	test_corrupt_write();
 	test_newly_corrupt_primary();
 	test_failed_while_taking();
+	test_incompatible_primary_keeps_compatible_backup();
 	test_nothing_saved();
 	if (failures)
 	{

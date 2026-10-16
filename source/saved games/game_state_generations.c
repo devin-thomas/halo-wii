@@ -18,8 +18,8 @@ finds a checked image in, or stops there:
 	  remove primary              candidate (checked), or previous
 	candidate -> primary          primary (checked), or previous
 
-A primary that does not check whole is not made the previous: the previous
-that did is kept.
+A primary that does not check whole or is incompatible with this game is
+not made the previous: the compatible previous is kept.
 */
 
 /* ---------- headers */
@@ -115,7 +115,7 @@ boolean game_state_generations_save(
 
 	if (files->exists(files->context, current))
 	{
-		if (files->check(files->context, current, FALSE))
+		if (files->check(files->context, current, TRUE))
 		{
 			if (files->exists(files->context, previous) && !files->remove(files->context, previous))
 				return game_state_generations_abandon(files, candidate);

@@ -98,6 +98,7 @@ symbols in this file:
 #include "cseries/cseries.h"
 #include "cseries/errors.h"
 #include "interface/player_ui.h"
+#include "main/main.h"
 #include "memory/crc.h"
 #include "saved games/game_state.h"
 #include "saved games/game_state_generations.h"
@@ -150,6 +151,7 @@ struct game_state_generation_io
 	/* game_state_generation_attempt_header's */
 	void *header;
 	boolean damaged;
+	boolean check_difficulty;
 };
 
 /* ---------- prototypes */
@@ -181,7 +183,8 @@ static short game_state_generation_attempt_header(
 static boolean game_state_generations_take(
 	char const *primary,
 	DWORD flags,
-	char const *what);
+	char const *what,
+	boolean check_difficulty);
 
 /* ---------- globals */
 
@@ -342,8 +345,8 @@ boolean game_state_write_to_file(
 
 	/* port (HWI-076): the canonical image, in chunks. port (HWI-080): as a
 	new generation, checked whole before it replaces the last checkpoint;
-	one not written leaves the last as it was (game_state_generations.h).
-	(game_state_save still counts the checkpoint as lost: game_state.c) */
+	one not written leaves the last as it was (game_state_generations.h),
+	and game_state_save keeps the previous checkpoint available */
 	csmemset(&io, 0, sizeof(io));
 	io.flags = FILE_FLAG_NO_BUFFERING|FILE_FLAG_SEQUENTIAL_SCAN;
 	game_state_generation_files_new(&files, &io);
@@ -388,7 +391,7 @@ boolean game_state_read_from_file(
 	port (HWI-080): the newest generation that is taken; one that failed
 	while being taken ends the attempt (game_state_generations_take) */
 	result = game_state_generations_take(GAME_STATE_CHECKPOINT_PATH,
-		FILE_FLAG_NO_BUFFERING|FILE_FLAG_SEQUENTIAL_SCAN, "saved game file");
+		FILE_FLAG_NO_BUFFERING|FILE_FLAG_SEQUENTIAL_SCAN, "saved game file", FALSE);
 
 	return result;
 }
@@ -666,7 +669,7 @@ boolean game_state_read_from_persistent_storage(
 	(void)buffer;
 	(void)buffer_size;
 	if (game_state_get_persistent_storage_primary(primary))
-		result = game_state_generations_take(primary, 0, "persistent storage");
+		result = game_state_generations_take(primary, 0, "persistent storage", TRUE);
 
 	return result;
 }
@@ -759,11 +762,10 @@ static short game_state_image_file_take_result(
 		error(_error_silent, "couldn't read %s: %s", what,
 			game_state_image_refusal_name(game_state_image_last_report()->refusal));
 	}
-	match_vassert(
-		"c:\\halo\\SOURCE\\saved games\\game_state_xbox.c",
-		156,
-		result != _game_state_image_failed_while_taking,
-		"game state has been corrupted (thank you, come again)");
+	/* Assertions only log in release builds. Once taking has changed the
+	state, an ordinary refusal/reset or another generation is unsafe. */
+	if (result == _game_state_image_failed_while_taking)
+		vhalt("game state has been corrupted while loading a saved image");
 
 	return result;
 }
@@ -904,6 +906,20 @@ static short game_state_generation_attempt_take(
 	file = CreateFileA(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, io->flags, NULL);
 	if (file != INVALID_HANDLE_VALUE)
 	{
+		/* The menu checked one generation's difficulty, but fallback may
+		select another. Check the actual candidate before any state is taken. */
+		if (io->check_difficulty)
+		{
+			struct game_state_image_file image;
+			struct game_state_header header;
+
+			game_state_image_file_new(&image, &file);
+			if (!game_state_image_read_header(&image, &header) || header.difficulty != main_get_difficulty())
+			{
+				CloseHandle(file);
+				return _game_state_generation_refused;
+			}
+		}
 		switch (game_state_image_file_take_result(file, TRUE, io->what))
 		{
 		case _game_state_image_taken:
@@ -926,7 +942,8 @@ one before it (it is not pretended to be) */
 static boolean game_state_generations_take(
 	char const *primary,
 	DWORD flags,
-	char const *what)
+	char const *what,
+	boolean check_difficulty)
 {
 	struct game_state_generation_io io;
 	struct game_state_generation_files files;
@@ -936,6 +953,7 @@ static boolean game_state_generations_take(
 	csmemset(&io, 0, sizeof(io));
 	io.flags = flags;
 	io.what = what;
+	io.check_difficulty = check_difficulty;
 	game_state_generation_files_new(&files, &io);
 	result = game_state_generations_load(&files, primary, game_state_generation_attempt_take, &generation);
 	if (result == _game_state_generation_taken && generation != _game_state_generation_current)
