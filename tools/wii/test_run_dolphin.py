@@ -3,6 +3,7 @@ import hashlib
 import json
 from pathlib import Path
 import struct
+import tempfile
 import unittest
 
 import run_dolphin as rd
@@ -213,6 +214,27 @@ class FatTests(unittest.TestCase):
 
 
 class StagingTests(unittest.TestCase):
+    def test_existing_identical_file_needs_no_mcopy(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "data.bin"
+            source.write_bytes(b"same")
+            self.assertEqual(rd.staging_inputs([(source, "sd:/data.bin")], lambda _: b"same"), [])
+
+    def test_existing_different_file_is_refused_before_staging(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "data.bin"
+            source.write_bytes(b"new")
+            with self.assertRaisesRegex(ValueError, "already exists with different contents"):
+                rd.staging_inputs([(source, "sd:/data.bin")], lambda _: b"old")
+
+    def test_conflicting_case_insensitive_destinations_are_refused(self):
+        with tempfile.TemporaryDirectory() as directory:
+            first, second = Path(directory) / "a", Path(directory) / "b"
+            first.write_bytes(b"a")
+            second.write_bytes(b"b")
+            with self.assertRaisesRegex(ValueError, "conflicting --stage inputs"):
+                rd.staging_inputs([(first, "sd:/Data.bin"), (second, "sd:/data.bin")], lambda _: None)
+
     def test_wsl_paths(self):
         self.assertEqual(rd.wsl_path(r"C:\work dir\sd.raw"), "/mnt/c/work dir/sd.raw")
         for bad in (r"\\server\share\x", "relative\\x"):

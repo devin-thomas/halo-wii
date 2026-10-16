@@ -488,6 +488,27 @@ def staging_argv(argv, host, wsl_distro="Debian"):
     return [str(a) for a in argv]
 
 
+def staging_inputs(staged, read):
+    """Skip identical SD files and refuse conflicts before invoking mtools."""
+    pending, seen = [], {}
+    for source, destination in staged:
+        target = sd_relative(destination)
+        digest = sha256(source)
+        key = target.lower()
+        if key in seen:
+            if seen[key] != digest:
+                raise ValueError(f"conflicting --stage inputs for {destination}")
+            continue
+        seen[key] = digest
+        existing = read(target)
+        if existing is not None:
+            if hashlib.sha256(existing).hexdigest() != digest:
+                raise ValueError(f"{destination} already exists with different contents; use a fresh SD image")
+            continue
+        pending.append((source, destination))
+    return pending
+
+
 def parse_stage(value):
     if "=" not in value:
         raise argparse.ArgumentTypeError("--stage needs LOCAL=sd:/path")
@@ -1968,8 +1989,18 @@ def main(argv=None):
             fat = Fat32(sd.read_bytes())
             dirs = {name.lower() for name, attr, _, _ in fat.entries(fat.root) if attr & 0x10}
             host_path = wsl_path if host == "windows" else str
-            for argv in staging_commands(sd, args.stage, dirs, host_path):
-                result = subprocess.run(staging_argv(argv, host, args.wsl_distro), capture_output=True, text=True)
+            try:
+                pending = staging_inputs(args.stage, fat.read)
+            except ValueError as error:
+                print(f"staging refused: {error}", file=sys.stderr)
+                return 2
+            for argv in staging_commands(sd, pending, dirs, host_path):
+                try:
+                    result = subprocess.run(staging_argv(argv, host, args.wsl_distro),
+                                            stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=60)
+                except (OSError, subprocess.TimeoutExpired) as error:
+                    print(f"staging failed: {argv[0]} {argv[-1]}: {error}", file=sys.stderr)
+                    return 2
                 staging["commands"].append({"tool": argv[0], "target": argv[-1], "exit_code": result.returncode})
                 if result.returncode != 0:
                     print(f"staging failed: {argv[0]} {argv[-1]}: {result.stderr.strip()}", file=sys.stderr)
