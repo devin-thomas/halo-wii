@@ -22,7 +22,6 @@ header cannot be compiled without SDL).
 #include "p2p.h"
 #include "text_hires.h"
 #include "halo_menus.h"
-#include "halo_ui_pointer.h"
 #include "halo_keyboard.h"
 
 #include <string.h>
@@ -213,11 +212,8 @@ int halo_linux_mouse_look(short gamepad_index, float *yaw, float *pitch)
 	return 0;
 }
 
-int halo_ui_pointer_update(int menus_active, struct halo_ui_pointer *pointer)
-{
-	wii_unsupported("input", "halo_ui_pointer_update");
-	return 0;
-}
+/* (halo_ui_pointer_update, which says whether the menus are up, picks the
+pad's layer: wii_xinput.c, HWI-039) */
 
 void test_input_hold_action(int hold)
 {
