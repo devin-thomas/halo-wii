@@ -6,13 +6,16 @@ classes whose definitions are public: the containers every data array,
 memory pool and lruv cache of the game state has, and the globals and
 elements game_state.c finds by the name they were allocated under. A class
 whose definition is its unit's own declares its schema there
-(game_state_port_schema: game_time.c, hs_runtime.c).
+(game_state_port_schema: game_time.c, hs_runtime.c), or (a structure of
+scalars only, its unit's definition checked against the schema there) here.
 
 Each schema follows its structure's definition, checked against it here
 field by field (offsetof) where the engine is built. Nothing here gives a
 field a meaning its definition and its users do not: a field no code reads
 or writes beyond datum_initialize's clearing (lightning.h's __unknown2, an
-lruv block's user_data) keeps the type it is declared with.
+lruv block's user_data) keeps the type it is declared with, and only bytes
+no code reads or writes at all (an allocation's or a structure's pad bytes)
+are padding.
 */
 
 /* ---------- headers */
@@ -26,6 +29,8 @@ lruv block's user_data) keeps the type it is declared with.
 #include "scenario/scenario.h"
 #include "objects/widgets/lightning.h"
 #include "objects/widgets/light_volumes.h"
+#include "math/real_math.h"
+#include "interface/hud.h"
 #endif
 #include "saved games/game_state_schema.h"
 
@@ -235,6 +240,126 @@ SCHEMA_CHECK(light_volume_schema_size, sizeof(struct light_volume_datum) == 0x8)
 SCHEMA_CHECK(light_volume_schema_unknown2, offsetof(struct light_volume_datum, __unknown2) == 0x2);
 SCHEMA_CHECK(light_volume_schema_definition, offsetof(struct light_volume_datum, definition_index) == 0x4);
 
+/* ---------- director.c: whether the camera is scripted ("director
+scripting"): a boolean, in an allocation of 4 bytes whose other 3 no code
+reads or writes (director_camera_scripted is a boolean *) */
+
+static struct game_state_schema_field const director_scripting_fields[] =
+{
+	SCHEMA_FIELD("camera_scripted", _game_state_schema_boolean, 0x0, 1),
+	SCHEMA_FIELD("(allocation)", _game_state_schema_padding, 0x1, 3),
+};
+static struct game_state_schema const director_scripting_schema =
+	SCHEMA("director_scripting", 0x4, director_scripting_fields);
+
+SCHEMA_CHECK(director_scripting_schema_boolean, sizeof(boolean) == 1);
+
+/* ---------- hud.h: the HUD's scripted switches ("hud scripted globals") */
+
+static struct game_state_schema_field const hud_scripted_globals_fields[] =
+{
+	SCHEMA_FIELD("show_hud", _game_state_schema_boolean, 0x0, 1),
+	SCHEMA_FIELD("show_hud_help_text", _game_state_schema_boolean, 0x1, 1),
+	SCHEMA_FIELD("pad", _game_state_schema_padding, 0x2, 2),
+};
+static struct game_state_schema const hud_scripted_globals_schema =
+	SCHEMA("hud_scripted_globals", 0x4, hud_scripted_globals_fields);
+
+SCHEMA_CHECK(hud_scripted_globals_schema_size, sizeof(struct hud_scripted_globals_definition) == 0x4);
+SCHEMA_CHECK(hud_scripted_globals_schema_show_hud, offsetof(struct hud_scripted_globals_definition, show_hud) == 0x0);
+SCHEMA_CHECK(hud_scripted_globals_schema_help_text, offsetof(struct hud_scripted_globals_definition, show_hud_help_text) == 0x1);
+SCHEMA_CHECK(hud_scripted_globals_schema_pad, offsetof(struct hud_scripted_globals_definition, pad) == 0x2);
+
+/* ---------- rasterizer.c: the scripted ambient reflection tint of models
+("rasterizer model ambient reflection tint"): real_math.h's real_argb_color */
+
+static struct game_state_schema_field const real_argb_color_fields[] =
+{
+	SCHEMA_FIELD("alpha", _game_state_schema_real, 0x0, 1),
+	SCHEMA_FIELD("red", _game_state_schema_real, 0x4, 1),
+	SCHEMA_FIELD("green", _game_state_schema_real, 0x8, 1),
+	SCHEMA_FIELD("blue", _game_state_schema_real, 0xC, 1),
+};
+static struct game_state_schema const real_argb_color_schema =
+	SCHEMA("real_argb_color", 0x10, real_argb_color_fields);
+
+SCHEMA_CHECK(real_argb_color_schema_size, sizeof(real_argb_color) == 0x10);
+SCHEMA_CHECK(real_argb_color_schema_alpha, offsetof(real_argb_color, alpha) == 0x0);
+SCHEMA_CHECK(real_argb_color_schema_red, offsetof(real_argb_color, red) == 0x4);
+SCHEMA_CHECK(real_argb_color_schema_green, offsetof(real_argb_color, green) == 0x8);
+SCHEMA_CHECK(real_argb_color_schema_blue, offsetof(real_argb_color, blue) == 0xC);
+
+/* ---------- object_lights.c: whether dynamic lights are drawn ("lights
+globals"; its definition checked against this there) */
+
+static struct game_state_schema_field const lights_game_globals_fields[] =
+{
+	SCHEMA_FIELD("render_lights", _game_state_schema_boolean, 0x0, 1),
+	SCHEMA_FIELD("reserved01", _game_state_schema_padding, 0x1, 3),
+};
+static struct game_state_schema const lights_game_globals_schema =
+	SCHEMA("lights_game_globals", 0x4, lights_game_globals_fields);
+
+/* ---------- structure_runtime_decals.c: whether the structure's decals are
+to be connected again ("structure decals"; checked there) */
+
+static struct game_state_schema_field const structure_decals_globals_fields[] =
+{
+	SCHEMA_FIELD("reconnect_to_structure_bsp", _game_state_schema_boolean, 0x0, 1),
+	SCHEMA_FIELD("pad", _game_state_schema_padding, 0x1, 3),
+};
+static struct game_state_schema const structure_decals_globals_schema =
+	SCHEMA("structure_decals_globals", 0x4, structure_decals_globals_fields);
+
+/* ---------- decals.c: each layer's and cluster's first decal, the first
+disconnected one (decal datum handles, NONE none) and the counts ("decal
+globals"; checked there) */
+
+static struct game_state_schema_field const decal_globals_fields[] =
+{
+	/* [NUMBER_OF_DECAL_LAYERS 5][MAXIMUM_CLUSTERS_PER_STRUCTURE 512] */
+	SCHEMA_FIELD("first_decal_indices", _game_state_schema_datum_index, 0x0, 5 * 512),
+	SCHEMA_FIELD("first_disconnected_decal_index", _game_state_schema_datum_index, 0x2800, 1),
+	SCHEMA_FIELD("locked_count", _game_state_schema_s32, 0x2804, 1),
+	SCHEMA_FIELD("permanent_count", _game_state_schema_s32, 0x2808, 1),
+};
+static struct game_state_schema const decal_globals_schema =
+	SCHEMA("decal_globals", 0x280C, decal_globals_fields);
+
+/* ---------- breakable_surfaces.c: the breakable surfaces of each structure
+bsp ("breakable surface globals"; checked there). A bsp's flags are 32 bytes
+every user reads and writes as 8 longs (cseries.h's BIT_VECTOR_TEST_FLAG and
+BIT_VECTOR_SET_FLAG through a long *: surface n is bit n % 32 of long n / 32),
+so their value is those longs. The structure lays them out 1 byte in, so
+they are a schema of their own here, its longs aligned in its instance (the
+codec reads a field byte by byte, at any address) */
+
+static struct game_state_schema_field const breakable_surface_flags_fields[] =
+{
+	SCHEMA_FIELD("bit_vector", _game_state_schema_u32, 0x0, 8),
+};
+static struct game_state_schema const breakable_surface_flags_schema =
+	SCHEMA("breakable_surface_flags", 0x20, breakable_surface_flags_fields);
+
+static struct game_state_schema_field const breakable_surface_datum_fields[] =
+{
+	SCHEMA_FIELD("vitality", _game_state_schema_real, 0x0, 1),
+};
+static struct game_state_schema const breakable_surface_datum_schema =
+	SCHEMA("breakable_surface_datum", 0x4, breakable_surface_datum_fields);
+
+static struct game_state_schema_field const breakable_surface_globals_fields[] =
+{
+	SCHEMA_FIELD("enabled", _game_state_schema_boolean, 0x0, 1),
+	/* [MAXIMUM_STRUCTURE_BSPS_PER_SCENARIO 16] */
+	GAME_STATE_SCHEMA_STRUCT("breakable_surface_flags", &breakable_surface_flags_schema, 0x1, 16),
+	SCHEMA_FIELD("(alignment)", _game_state_schema_padding, 0x201, 3),
+	/* [16][MAXIMUM_BREAKABLE_SURFACES_PER_MAP 256] */
+	GAME_STATE_SCHEMA_STRUCT("breakable_surfaces", &breakable_surface_datum_schema, 0x204, 16 * 256),
+};
+static struct game_state_schema const breakable_surface_globals_schema =
+	SCHEMA("breakable_surface_globals", 0x4204, breakable_surface_globals_fields);
+
 /* ---------- the classes by name */
 
 struct schema_class
@@ -250,6 +375,13 @@ static struct schema_class const schema_classes[] =
 	{ "object name list", _game_state_schema_region_global, &object_name_list_schema },
 	{ "lightnings", _game_state_schema_region_data_array, &lightning_schema },
 	{ "light volumes", _game_state_schema_region_data_array, &light_volume_schema },
+	{ "director scripting", _game_state_schema_region_global, &director_scripting_schema },
+	{ "hud scripted globals", _game_state_schema_region_global, &hud_scripted_globals_schema },
+	{ "rasterizer model ambient reflection tint", _game_state_schema_region_global, &real_argb_color_schema },
+	{ "lights globals", _game_state_schema_region_global, &lights_game_globals_schema },
+	{ "structure decals", _game_state_schema_region_global, &structure_decals_globals_schema },
+	{ "decal globals", _game_state_schema_region_global, &decal_globals_schema },
+	{ "breakable surface globals", _game_state_schema_region_global, &breakable_surface_globals_schema },
 };
 
 static boolean schema_names_equal(

@@ -699,7 +699,8 @@ static void game_state_region_record(
 	region->gpu = gpu;
 	region->offset = (long)((byte const *)address - (byte const *)game_state_globals.base_address);
 	region->size = size;
-	region->schema = game_state_schema_class_find(region->name, _game_state_schema_region_global, size);
+	/* (by the whole name: the one kept may be cut short) */
+	region->schema = game_state_schema_class_find(name, _game_state_schema_region_global, size);
 	game_state_region_count++;
 }
 
@@ -1026,7 +1027,7 @@ struct data_array *game_state_data_new(
 			region->kind = _game_state_schema_region_data_array;
 			region->maximum_count = maximum_count;
 			region->element_size = size;
-			region->schema = game_state_schema_class_find(region->name, _game_state_schema_region_data_array, size);
+			region->schema = game_state_schema_class_find(name, _game_state_schema_region_data_array, size);
 		}
 	}
 	allocation = game_state_allocation_new(_game_state_allocation_data, data);

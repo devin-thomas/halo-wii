@@ -415,6 +415,15 @@ struct decal_globals
 	long permanent_count;
 };
 
+/* port (HWI-085): game_state_schema_classes.c's "decal globals" schema */
+typedef char decal_globals_schema_check[
+	sizeof(struct decal_globals) == 0x280C &&
+	NUMBER_OF_DECAL_LAYERS * MAXIMUM_CLUSTERS_PER_STRUCTURE == 5 * 512 &&
+	sizeof(((struct decal_globals *)0)->first_decal_indices) == 5 * 512 * 4 &&
+	offsetof(struct decal_globals, first_disconnected_decal_index) == 0x2800 &&
+	offsetof(struct decal_globals, locked_count) == 0x2804 &&
+	offsetof(struct decal_globals, permanent_count) == 0x2808 ? 1 : -1];
+
 /* ---------- prototypes */
 
 static void decal_check(

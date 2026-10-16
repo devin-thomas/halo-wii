@@ -51,7 +51,8 @@ class CodecFixtureTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr[-4000:])
             match = re.fullmatch(r"ok (\d+) cases\s*", result.stdout)
             self.assertIsNotNone(match, result.stdout)
-            self.assertGreaterEqual(int(match.group(1)), 120)
+            # (127 before the globals of scalars: game_state_schema_check.c's check_named_globals)
+            self.assertGreaterEqual(int(match.group(1)), 240)
 
 
 class DispatchTests(unittest.TestCase):
@@ -141,6 +142,87 @@ class SchemaSourceTests(unittest.TestCase):
         self.assertRegex(hs, r'"value", _game_state_schema_hs_cell')
         self.assertRegex(hs, r'"result", _game_state_schema_hs_cell')
         self.assertRegex(hs, r'"stack_data", _game_state_schema_unresolved')
+
+    def test_classes_are_found_by_the_whole_allocation_name(self):
+        """a region keeps its name cut to 31 characters: its class is looked up by the name it was allocated
+        under (one longer: "rasterizer model ambient reflection tint")"""
+        text = GAME_STATE.read_text(encoding="utf-8")
+        # (the definition, not the declaration before it)
+        start = text.index("static void game_state_region_record(\n\tconst char *name,\n\tvoid const *address,\n"
+                           "\tlong size,\n\tboolean gpu)\n{")
+        record = text[start:text.index("\n}\n", start)]
+        self.assertIn("game_state_schema_class_find(name, _game_state_schema_region_global, size)", record)
+        self.assertIn("game_state_schema_class_find(name, _game_state_schema_region_data_array, size)",
+                      function_body(text, "game_state_data_new"))
+        self.assertNotIn("game_state_schema_class_find(region->name", text)
+
+    def test_globals_of_scalars_are_the_engines_allocations(self):
+        """each global class's name is an allocation's (game_state_malloc's first argument) and the census's"""
+        classes = CLASSES.read_text(encoding="utf-8")
+        named = re.findall(r'\{ "([^"]+)", _game_state_schema_region_global, &\w+ \}', classes)
+        for name in ("director scripting", "hud scripted globals", "rasterizer model ambient reflection tint",
+                     "lights globals", "structure decals", "decal globals", "breakable surface globals"):
+            self.assertIn(name, named)
+        allocated = set()
+        for path in (ROOT / "source").rglob("*.c"):
+            allocated.update(re.findall(r'game_state_malloc\(\s*"([^"]+)"',
+                                        path.read_text(encoding="utf-8", errors="replace")))
+        census = (ROOT / "tools/wii/game_state_census.py").read_text(encoding="utf-8")
+        for name in named:
+            if name == "header":
+                continue
+            self.assertIn(name, allocated)
+            self.assertIn('("' + name + '", ', census)
+
+    def test_private_definitions_are_checked_against_their_schemas(self):
+        checks = {
+            "source/effects/decals.c": ["sizeof(struct decal_globals) == 0x280C",
+                                        "offsetof(struct decal_globals, first_disconnected_decal_index) == 0x2800"],
+            "source/physics/breakable_surfaces.c": [
+                "sizeof(struct breakable_surface_globals) == 0x4204",
+                "offsetof(struct breakable_surface_globals, breakable_surface_flags) == 0x1",
+                "breakable_surface_flags[0]) == 8 * sizeof(long)",
+                "offsetof(struct breakable_surface_globals, breakable_surfaces) == 0x204"],
+            "source/objects/object_lights.c": ["offsetof(struct lights_game_globals, reserved01) == 0x1"],
+            "source/structures/structure_runtime_decals.c": [
+                "sizeof(struct structure_decals_globals) == 0x4",
+                "offsetof(struct structure_decals_globals, pad) == 0x1"],
+        }
+        for path, needles in checks.items():
+            text = (ROOT / path).read_text(encoding="utf-8")
+            self.assertIn("game_state_schema_classes.c's", text, path)
+            for needle in needles:
+                self.assertIn(needle, text, path)
+
+    def test_padding_is_bytes_no_code_reads(self):
+        """the pad bytes the new schemas drop are never named by code, and the director's allocation is only
+        ever its first byte"""
+        sources = {path: path.read_text(encoding="utf-8", errors="replace")
+                   for path in (ROOT / "source").rglob("*.[ch]")}
+        for pattern in (r"structure_decals_globals->pad\b", r"hud_scripted_globals->pad\b",
+                        r"lights_game_globals->reserved01\b", r"director_camera_scripted\s*\[",
+                        r"director_camera_scripted\s*\+"):
+            hits = [str(path) for path, text in sources.items() if re.search(pattern, text)]
+            self.assertEqual(hits, [], pattern)
+
+    def test_breakable_surface_flags_are_read_as_longs(self):
+        """the flags are typed as 8 longs a bsp: nothing indexes their bytes, and every bit test or set of them is
+        through a long pointer"""
+        for path in (ROOT / "source").rglob("*.[ch]"):
+            text = path.read_text(encoding="utf-8", errors="replace")
+            # (but the member's declaration: byte breakable_surface_flags[...][32])
+            for match in re.finditer(r"(?<!byte )breakable_surface_flags(?:_scratch)?\s*\[(\w*)\](\s*\[)?", text):
+                self.assertEqual(path.name, "breakable_surfaces.c", match.group(0))
+                self.assertIn(match.group(1), ("bsp_index", "global_structure_bsp_index", "0"), match.group(0))
+                self.assertIsNone(match.group(2), match.group(0))
+            for match in re.finditer(r"BIT_VECTOR_\w+\(\s*([^,]+),", text):
+                argument = " ".join(match.group(1).split())
+                if "breakable_surface_flags" not in argument:
+                    continue
+                if argument.startswith(("(long *)", "(long const *)")):
+                    continue
+                # (a variable already a long pointer)
+                self.assertRegex(text, r"long const \*" + re.escape(argument) + r"\s*=", f"{path.name}: {argument}")
 
     def test_every_allocation_is_a_region(self):
         text = GAME_STATE.read_text(encoding="utf-8")
