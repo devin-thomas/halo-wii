@@ -20,6 +20,7 @@
  *                                before the engine starts (BOOT_UI_SELFTEST lines)
  *      tick_digests=<n>          HWI-033: the game state's digest after each of the first n
  *                                ticks of the map the menus load (BOOT_TICK; default 0)
+ *      hud=0                     HWI-087: the gameplay HUD is not drawn (default 1: drawn)
  *      expect=refusal            a load-failure test: max_frames passes when a map
  *                                was refused and the menus' map is loaded again
  * 2. manifest.txt (written by tools/wii/boot_stage.py on the host): the
@@ -92,6 +93,7 @@ static struct {
     long tick_digests;
     long tick_allocations;
     int selftest;
+    int hud;
     /* manifest.txt */
     char source[40], generation[40], stager[40];
     struct boot_manifest_file files[BOOT_MAX_MANIFEST_FILES];
@@ -130,6 +132,7 @@ static void read_config(void)
     boot.texture_budget = WII_UI_DEFAULT_TEXTURE_BUDGET;
     boot.frame_clock = 1;
     boot.dump_allocation = -1;
+    boot.hud = 1;
     if (!file)
         return;
     size_t used = fread(text, 1, sizeof(text) - 1, file);
@@ -156,6 +159,8 @@ static void read_config(void)
             boot.tick_allocations = strtol(line + 17, NULL, 10);
         else if (!strncmp(line, "tick_digests=", 13))
             boot.tick_digests = strtol(line + 13, NULL, 10);
+        else if (!strncmp(line, "hud=", 4))
+            boot.hud = strtol(line + 4, NULL, 10) != 0;
         else if (!strcmp(line, "expect=refusal"))
             boot.expect_refusal = 1;
         else if (!strcmp(line, "clock=real"))
@@ -633,6 +638,7 @@ int wii_boot_run(const struct wii_boot_driver *driver)
     config.tick_digests = boot.tick_digests;
     config.tick_allocations = boot.tick_allocations;
     config.overlay = boot.overlay;
+    config.hud = boot.hud;
     config.finish = engine_finish;
     config.map_check = map_check;
     wii_render_ui_register(&config);

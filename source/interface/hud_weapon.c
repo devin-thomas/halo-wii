@@ -415,6 +415,24 @@ static struct weapon_hud_globals *weapon_hud_globals = NULL;
 /* port: a crosshair's bad sequence or bitmap was reported (once) */
 static boolean crosshair_bad_bitmap_reported = FALSE;
 
+/* port (HWI-087): the weapon HUD drawn for presentation only
+(hud_render_weapon_interface_presentation). hud_render_weapon_interface
+writes, besides drawing, the game state's weapon HUD state: the weapon and
+grenade panels' flash start times, the weapon it drew, and (crosshairs_draw)
+a latched crosshair state's reference once its flash has run. The
+presentation draw runs it on a copy of the game state's weapon HUD globals,
+with the flash start times as this presentation last left them, kept here;
+the crosshair states and the weapon index are the tick's, read each frame
+(what the copy's draw clears is let go with the copy). Owned by this file;
+holds no pointer (game times); reset by hud_weapon_presentation_reset. */
+static struct
+{
+	boolean active;
+	boolean kept[MAXIMUM_NUMBER_OF_LOCAL_PLAYERS];
+	long last_weapon_flash_time[MAXIMUM_NUMBER_OF_LOCAL_PLAYERS][NUMBER_OF_WEAPON_HUD_FLASH_REFERENCES];
+	long last_grenade_flash_time[MAXIMUM_NUMBER_OF_LOCAL_PLAYERS];
+} weapon_hud_presentation;
+
 /* ---------- public code */
 
 void hud_initialize_weapon_interface(
@@ -2099,4 +2117,59 @@ char *strip_path_name(
 		return name + 1;
 
 	return path;
+}
+
+/* ---------- port (HWI-087): presentation only */
+
+void hud_weapon_presentation_reset(
+	void)
+{
+	match_assert(
+		"c:\\halo\\SOURCE\\interface\\hud_weapon.c",
+		__LINE__,
+		!weapon_hud_presentation.active);
+	csmemset(&weapon_hud_presentation, 0, sizeof(weapon_hud_presentation));
+}
+
+/* hud_render_weapon_interface on a copy of the game state's weapon HUD
+globals (see weapon_hud_presentation): the game state is not written */
+void hud_render_weapon_interface_presentation(
+	struct player_datum *player)
+{
+	struct weapon_hud_globals *authoritative = weapon_hud_globals;
+	struct weapon_hud_globals scratch;
+	short local_player_index = player->local_player_index;
+	struct weapon_hud_state *state;
+
+	match_assert(
+		"c:\\halo\\SOURCE\\interface\\hud_weapon.c",
+		__LINE__,
+		authoritative && !weapon_hud_presentation.active &&
+			local_player_index >= 0 && local_player_index < MAXIMUM_NUMBER_OF_LOCAL_PLAYERS);
+
+	scratch = *authoritative;
+	state = &scratch.hud_states[local_player_index];
+	if (weapon_hud_presentation.kept[local_player_index])
+	{
+		csmemcpy(state->last_weapon_flash_time, weapon_hud_presentation.last_weapon_flash_time[local_player_index],
+			sizeof(state->last_weapon_flash_time));
+		state->last_grenade_flash_time = weapon_hud_presentation.last_grenade_flash_time[local_player_index];
+	}
+	else
+	{
+		/* (as hud_initialize_weapon_interface_for_new_map leaves them) */
+		csmemset(state->last_weapon_flash_time, NONE, sizeof(state->last_weapon_flash_time));
+		state->last_grenade_flash_time = NONE;
+	}
+
+	weapon_hud_globals = &scratch;
+	weapon_hud_presentation.active = TRUE;
+	hud_render_weapon_interface(player);
+	weapon_hud_presentation.active = FALSE;
+	weapon_hud_globals = authoritative;
+
+	csmemcpy(weapon_hud_presentation.last_weapon_flash_time[local_player_index], state->last_weapon_flash_time,
+		sizeof(state->last_weapon_flash_time));
+	weapon_hud_presentation.last_grenade_flash_time[local_player_index] = state->last_grenade_flash_time;
+	weapon_hud_presentation.kept[local_player_index] = TRUE;
 }

@@ -9,6 +9,12 @@ pipeline's outputs (tools/wii/content_convert.py, one generation):
     sd:/halo-wii-engine/data/render/<name>/lightmaps/<bsp tag:05>.hwl
     sd:/halo-wii-engine/data/render/<name>/textures/<bitmap tag:05>-<bitmap:03>.hwt
 
+HWI-087: and the map's HUD bitmaps, which the boot mode's gameplay HUD draws
+from the same directory: every bitmap of each bitmap tag named ui\\hud\\...
+(the HUD's meters, panels, digits, reticles and overlays). A HUD bitmap the
+generation lacks is counted (hud_missing), not staged; the guest counts what
+it cannot draw.
+
 This tool chooses exactly the files the guest asks for, from the owner's map
 (the tags the engine reads: each BSP material's shader, its type and base
 map, the base map's bitmap count) and the generation's manifest, checks each
@@ -103,6 +109,24 @@ def select(name, bsp_tag, lightmap_datum, pages, materials, shader_info, bitmap_
                   key=lambda item: (order[item[1]], -item[2], item[0]))
 
 
+HUD_TAG_PREFIX = "ui\\hud\\"
+
+
+def select_hud(name, bitmap_tags):
+    """HWI-087: the HUD's textures, as (relative path, "hud", 0) in tag and bitmap order. bitmap_tags:
+    (tag ordinal, tag name, bitmap count) of the map's bitmap tags; those named ui\\hud\\... are the HUD's."""
+    files = []
+    for ordinal, tag_name, count in sorted(bitmap_tags):
+        if tag_name.lower().startswith(HUD_TAG_PREFIX):
+            files += [(texture_path(name, ordinal, index), "hud", 0) for index in range(max(count, 0))]
+    return files
+
+
+def hud_bitmap_tags(cache):
+    return [(instance["ordinal"], cache.name(instance), bitmap_count(cache, instance["ordinal"]))
+            for instance in cache.by_group("bitm")]
+
+
 def shader_facts(cache, datum):
     instance = cache.instances[datum & 0xFFFF]
     if instance["datum"] != datum:
@@ -146,7 +170,7 @@ def sha256_file(path):
     return digest.hexdigest()
 
 
-def stage(generation, map_path, name, out):
+def stage(generation, map_path, name, out, hud=True):
     outputs = manifest_index(generation)
     cache = hc.open_map(map_path)
     selected = []
@@ -161,6 +185,16 @@ def stage(generation, map_path, name, out):
         counts = {base & 0xFFFF: bitmap_count(cache, base & 0xFFFF)
                   for shader_type, base in shaders.values() if shader_type == SHADER_ENVIRONMENT and base != NONE}
         selected += select(name, ordinal, lightmap_datum, pages, materials, shaders, counts)
+    hud_missing = 0
+    if hud:
+        chosen = {relative for relative, _, _ in selected}
+        for relative, kind, surfaces in select_hud(name, hud_bitmap_tags(cache)):
+            if relative in chosen:
+                continue
+            if outputs.get(source_path(relative)) is None:
+                hud_missing += 1
+                continue
+            selected.append((relative, kind, surfaces))
     out.mkdir(parents=True, exist_ok=False)
     files = []
     for relative, kind, surfaces in selected:
@@ -179,7 +213,8 @@ def stage(generation, map_path, name, out):
     for item in files:
         totals[item["kind"]] = totals.get(item["kind"], 0) + item["bytes"]
     record = {"schema": "halo-wii-render-stage-1", "name": name, "generation": generation.name,
-              "map_sha256": cache.facts.get("source_sha256"), "files": files, "totals": totals}
+              "map_sha256": cache.facts.get("source_sha256"), "files": files, "totals": totals,
+              "hud_missing": hud_missing}
     (out / "render-stage.json").write_text(json.dumps(record, indent=1, sort_keys=True) + "\n", encoding="utf-8",
                                            newline="\n")
     return record
@@ -196,8 +231,9 @@ def main(argv=None):
     parser.add_argument("--name", required=True)
     parser.add_argument("--out", type=Path, required=True, help="a new private directory")
     parser.add_argument("--stage-args", action="store_true", help="print run_dolphin.py --stage arguments")
+    parser.add_argument("--no-hud", action="store_true", help="HWI-087: leave out the map's HUD bitmaps")
     args = parser.parse_args(argv)
-    record = stage(args.generation, args.map, args.name, args.out)
+    record = stage(args.generation, args.map, args.name, args.out, hud=not args.no_hud)
     if args.stage_args:
         for argument in stage_arguments(args.out, record):
             print(f"--stage={argument}")

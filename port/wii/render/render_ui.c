@@ -36,6 +36,14 @@ ask for. main_loop draws through the rasterizer; the boot hooks
   and each character is a quad from it;
 - the frame's end (render_frame_present): the diagnostic line (the
   manifests, the map's label), the screen checks, the copy to the screen.
+- HWI-087, the gameplay HUD: where render_window draws interface_draw_screen
+  (after the 3D view, before the widgets), the unit's and the weapon's HUD as
+  hud_draw_screen draws them for the window's local player, through
+  presentation-only seams of hud_unit.c and hud_weapon.c (they read the game
+  state and write none of it). hud_draw_screen itself is not called: it ticks
+  the motion sensor and plays the HUD's sounds and messages as it draws. Its
+  meters are drawn by the Xbox's meter combiner program in the TEV; the rest
+  of what it draws is refused and counted (BOOT_UI_HUD_TOTALS).
 
 Every screen the interface shows is logged (BOOT_SCREEN): its widget tag,
 when it changed, and, once it has stood for the configured frames, a CRC of
@@ -46,6 +54,7 @@ the EFB on a 32x24 grid and the game state's digest.
 #include "math/real_math.h"
 #include "bitmaps/bitmap_group.h"
 #include "bitmaps/bitmaps.h"
+#include "bitmaps/bitmap_color_conversion.h"
 #include "cache/cache_files.h"
 #include "rasterizer/rasterizer.h"
 #include "rasterizer/rasterizer_text.h"
@@ -54,6 +63,11 @@ the EFB on a 32x24 grid and the game state's digest.
 #include "render/render_cameras.h"
 #include "interface/ui_widget.h"
 #include "interface/progress_bar.h"
+#include "interface/hud.h"
+#include "interface/hud_unit.h"
+#include "interface/hud_weapon.h"
+#include "camera/director.h"
+#include "game/players.h"
 #include "bink/bink_playback.h"
 #include "game/game.h"
 #include "scenario/scenario.h"
@@ -97,6 +111,42 @@ enum
 typedef char boot_ui_blend_alpha_is_zero[WII_UI_BLEND_ALPHA == 0 ? 1 : -1];
 
 /* ---------- structures */
+
+/* the meter's parameters as hud_draw.c hands them to the rasterizer (its
+TU-local copy; identical copies in hud_messaging.c, hud_nav_points.c,
+hud_weapon.c and rasterizer_xbox_dynavobgeom.c) */
+struct boot_ui_meter_parameters
+{
+	pixel32 gradient_min_color;
+	pixel32 gradient_max_color;
+	pixel32 background_color;
+	pixel32 flash_color;
+	boolean flash_color_is_negative;
+	boolean tint_mode_2;
+	byte pad12[2];
+	pixel32 tint_color;
+	real gradient;
+};
+
+typedef char boot_ui_meter_parameters_size_assert[sizeof(struct boot_ui_meter_parameters) == 0x1C ? 1 : -1];
+
+/* HWI-087: the gameplay HUD's counts. A frame's HUD is drawn, or refused
+for one reason; within a drawn HUD each quad is drawn, or refused */
+struct boot_ui_hud_counts
+{
+	unsigned long windows;              /* player windows of a game map */
+	unsigned long drawn;                /* the unit's and weapon's HUD drawn */
+	unsigned long refused_off;          /* boot.txt hud=0 */
+	unsigned long refused_no_player;    /* the window's local player has no player */
+	unsigned long refused_show_hud;     /* the scripts hide it (show_hud) */
+	unsigned long refused_perspective;  /* the director's neutral or scripted view (cinematics) */
+	unsigned long refused_no_unit;      /* the player has no unit (dead) */
+	unsigned long quads, meters;        /* drawn */
+	unsigned long missing_bitmaps;      /* a bitmap the card does not hold (not drawn) */
+	unsigned long multitexture_refused; /* multitexture overlays: not composited, not drawn */
+	unsigned long meter_unsupported;    /* a meter not as hud_draw_meter makes it (not drawn) */
+	unsigned long resets;               /* the presentation's state let go */
+};
 
 struct boot_ui_dynamic_bitmap
 {
@@ -163,7 +213,16 @@ struct boot_ui_globals
 	unsigned long state_digests[BOOT_UI_MAXIMUM_STATE_ALLOCATIONS];
 	boolean finished;
 	long screen_samples;
+	/* HWI-087: inside the gameplay HUD's draw (its bitmaps answered, its quads
+	counted); the game time it last drew at (a revert goes back) */
+	boolean hud_pass;
+	long hud_game_time;
+	struct boot_ui_hud_counts hud;
 };
+
+/* ---------- prototypes */
+
+static void boot_ui_hud_reset(void);
 
 /* ---------- globals */
 
@@ -200,6 +259,8 @@ static void boot_ui_map_current(
 		boot_ui.map_changes++;
 	}
 	boot_ui.scenario_index = global_scenario_index;
+	/* HWI-087: the HUD's presentation state is the old map's */
+	boot_ui_hud_reset();
 	boot_ui.map_name[0] = 0;
 	boot_ui.campaign = FALSE;
 	boot_ui.pending_logged = FALSE;
@@ -223,6 +284,17 @@ static boolean boot_ui_in_menu_map(
 	void)
 {
 	return !csstrcmp(boot_ui.map_name, "ui");
+}
+
+/* HWI-087: the HUD's presentation state (hud_unit.c, hud_weapon.c: flash start
+times) let go */
+static void boot_ui_hud_reset(
+	void)
+{
+	hud_unit_presentation_reset();
+	hud_weapon_presentation_reset();
+	boot_ui.hud_game_time = NONE;
+	boot_ui.hud.resets++;
 }
 
 static struct boot_ui_dynamic_bitmap *boot_ui_dynamic_find(
@@ -369,6 +441,14 @@ static void *boot_ui_bitmap_hardware_format(
 	tag 1642 bitmap 1) was looked for among the menus' textures and reported
 	missing */
 	boot_ui_map_current();
+	if (boot_ui.hud_pass)
+	{
+		/* HWI-087: the HUD's bitmaps, while it draws, when the card holds them */
+		if (boot_ui_texture(bitmap) >= 0)
+			return (void *)bitmap;
+		boot_ui.hud.missing_bitmaps++;
+		return NULL;
+	}
 	if (!boot_ui_in_menu_map())
 		return NULL;
 	return boot_ui_texture(bitmap) >= 0 ? (void *)bitmap : NULL;
@@ -495,7 +575,9 @@ static void boot_ui_overlay(
 		/* HWI-033: the campaign, loaded from the menus: its environment (the
 		structure BSP, HWI-030) is drawn; objects, the sky, effects and the
 		HUD are not yet, and the line says so */
-		_snprintf(line, sizeof(line) - 1, "MAP %s: CAMPAIGN - ENVIRONMENT ONLY (NO OBJECTS, SKY, EFFECTS, HUD YET)",
+		_snprintf(line, sizeof(line) - 1, boot_ui.config.hud ?
+			"MAP %s: CAMPAIGN - ENVIRONMENT, HUD SUBSET (NO OBJECTS, SKY, EFFECTS YET)" :
+			"MAP %s: CAMPAIGN - ENVIRONMENT ONLY (NO OBJECTS, SKY, EFFECTS, HUD YET)",
 			boot_ui.map_name);
 		wii_ui_gx_fill(0, 0, BOOT_UI_SCREEN_WIDTH, 14, 0xA0000000u);
 		wii_ui_gx_text(4, 3, 1, 0xFFFFD040u, line);
@@ -557,7 +639,10 @@ static int boot_ui_rasterizer_initialize(
 		"framerate_throttle=%d frame_rate_throttle=%d\n", BOOT_UI_SCREEN_WIDTH, BOOT_UI_SCREEN_HEIGHT,
 		BOOT_UI_FRAME_X0, BOOT_UI_FRAME_Y0, BOOT_UI_FRAME_X1, BOOT_UI_FRAME_Y1, text,
 		rasterizer_globals.framerate_throttle, global_frame_rate_throttle);
-	wii_unsupported("render", "console window, HUD and game engine overlays (boot mode)");
+	wii_unsupported("render", "console window and game engine overlays (boot mode)");
+	/* HWI-087: what hud_draw_screen draws besides the unit's and the weapon's HUD */
+	wii_unsupported("render", "HUD motion sensor, nav points, damage indicators, messages, player indicators "
+		"and weapon screen effects (boot mode)");
 
 	return text;
 }
@@ -585,10 +670,71 @@ static void boot_ui_window_end(
 	return;
 }
 
+/* HWI-087: the gameplay HUD of a game map's player window, where
+render_window draws interface_draw_screen: hud_draw_screen's own conditions
+for the window's local player (a player; the scripts' show_hud; a unit, seen
+neither from the neutral nor a scripted view), then what it draws of the
+weapon's and the unit's HUD, in its order, through the presentation-only
+seams (hud_weapon.c, hud_unit.c). Not called: hud_draw_screen, whose
+motion_sensor_tick, hud_play_unit_sounds, hud_show_action_response and
+hud_messaging_update change the game state and play sounds as it draws. The
+director's perspective is the director's (not game state; main_loop asks it
+every frame too). */
+static void boot_ui_hud(
+	short local_player_index)
+{
+	long player_index;
+	struct player_datum *player;
+	director_perspective perspective;
+
+	if (!game_in_progress() || !boot_ui.map_name[0] || boot_ui_in_menu_map() || local_player_index == NONE)
+		return;
+	boot_ui.hud.windows++;
+	if (!boot_ui.config.hud)
+	{
+		boot_ui.hud.refused_off++;
+		return;
+	}
+	/* a revert (or a new game on the same map) takes game time back: the
+	flash start times are of a time that has not happened */
+	if (boot_ui.hud_game_time != NONE && game_time_get() < boot_ui.hud_game_time)
+		boot_ui_hud_reset();
+	boot_ui.hud_game_time = game_time_get();
+	player_index = local_player_get_player_index(local_player_index);
+	if (player_index == NONE)
+	{
+		boot_ui.hud.refused_no_player++;
+		return;
+	}
+	player = player_get(player_index);
+	if (!hud_scripted_globals->show_hud)
+	{
+		boot_ui.hud.refused_show_hud++;
+		return;
+	}
+	perspective = director_get_perspective(local_player_index);
+	if (perspective == _director_perspective_neutral || perspective == _director_perspective_scripted)
+	{
+		boot_ui.hud.refused_perspective++;
+		return;
+	}
+	if (player->unit_index == NONE)
+	{
+		boot_ui.hud.refused_no_unit++;
+		return;
+	}
+	boot_ui.hud_pass = TRUE;
+	hud_render_weapon_interface_presentation(player);
+	hud_render_unit_interface_presentation(player);
+	boot_ui.hud_pass = FALSE;
+	boot_ui.hud.drawn++;
+}
+
 static void boot_ui_interface(
 	struct render_window const *window,
 	short local_player_index,
-	short window_index)
+	short window_index,
+	boolean hud)
 {
 	struct rasterizer_window_begin_parameters parameters;
 
@@ -600,6 +746,8 @@ static void boot_ui_interface(
 	parameters.rasterizer_target = 0;
 	parameters.window_index = window_index;
 	rasterizer_window_begin(&parameters);
+	if (hud)
+		boot_ui_hud(local_player_index);
 	halo_screen_ui_offset(TRUE);
 	render_ui_widgets(local_player_index, &window->rasterizer_camera.viewport_bounds);
 	halo_screen_ui_offset(FALSE);
@@ -658,7 +806,7 @@ static void boot_ui_frame(
 			boot_ui.environment_pending = TRUE;
 		}
 		render.local_player_index = window->local_player_index;
-		boot_ui_interface(window, window->local_player_index, window_index);
+		boot_ui_interface(window, window->local_player_index, window_index, TRUE);
 	}
 	halo_screen_ui_offset(TRUE);
 	progress_bar_eachframe();
@@ -674,7 +822,7 @@ static void boot_ui_frame_pregame(
 	render.frame_index++;
 	boot_ui.pregame_frames++;
 	boot_ui_map_current();
-	boot_ui_interface(pregame, 0, 0);
+	boot_ui_interface(pregame, 0, 0, FALSE);
 	if (game_map_loading_in_progress(&progress))
 		progress_bar_display(progress);
 }
@@ -820,6 +968,57 @@ static void boot_ui_plasma_quad(
 	boot_ui.screen_quads++;
 }
 
+/* HWI-087: a HUD meter (hud_draw_meter) as the Xbox draws it: the meter
+combiner program of rasterizer_xbox_dynavobgeom.c (wii_ui_gx_meter, modelled
+in tools/wii/ui_combiners.py), its alpha kill and its constant-colour blend.
+hud_draw_meter makes every meter with tint_mode_2 and a gradient of 1, which
+that program asserts; any other is refused, counted */
+static void boot_ui_meter_quad(
+	struct rasterizer_dynamic_screen_geometry_parameters const *parameters,
+	struct dynamic_screen_vertex const *vertices)
+{
+	struct boot_ui_meter_parameters const *meter = parameters->meter_parameters;
+	struct wii_ui_meter draw;
+	struct wii_ui_vertex quad[4];
+	real offset_x = parameters->offset ? parameters->offset->i : 0.0f;
+	real offset_y = parameters->offset ? parameters->offset->j : 0.0f;
+	short vertex_index;
+
+	if (!meter->tint_mode_2 || meter->gradient != 1.0f || parameters->map[1] || !parameters->map[0])
+	{
+		boot_ui.hud.meter_unsupported++;
+		return;
+	}
+	csmemset(&draw, 0, sizeof(draw));
+	draw.texture = boot_ui_texture(parameters->map[0]);
+	if (draw.texture < 0)
+	{
+		boot_ui.hud.missing_bitmaps++;
+		return;
+	}
+	draw.wrap = parameters->map_wrapped[0];
+	draw.point_sampled = parameters->point_sampled;
+	draw.gradient_min = (uint32_t)meter->gradient_min_color;
+	draw.gradient_max = (uint32_t)meter->gradient_max_color;
+	draw.flash = (uint32_t)meter->flash_color;
+	draw.background = (uint32_t)meter->background_color;
+	draw.tint = (uint32_t)meter->tint_color;
+	draw.flash_negative = meter->flash_color_is_negative ? 1 : 0;
+	/* the first stage's constant alpha, as the rasterizer packs it */
+	draw.gain = (uint8_t)(real_alpha_to_pixel32(1.0f / MAX(meter->gradient * 8.0f, 1.0f)) >> 24);
+	for (vertex_index = 0; vertex_index < 4; vertex_index++)
+	{
+		quad[vertex_index].x = vertices[vertex_index].position.x + offset_x;
+		quad[vertex_index].y = vertices[vertex_index].position.y + offset_y;
+		boot_ui_map_coordinates(parameters, &vertices[vertex_index], 0, &quad[vertex_index].u,
+			&quad[vertex_index].v);
+		quad[vertex_index].argb = 0xFFFFFFFFu;
+	}
+	wii_ui_gx_meter(&draw, quad, 1);
+	boot_ui.hud.meters++;
+	boot_ui.screen_quads++;
+}
+
 static void boot_ui_screen_quad(
 	void *parameters_pointer,
 	void *vertices_pointer)
@@ -845,6 +1044,19 @@ static void boot_ui_screen_quad(
 		boot_ui_plasma_quad(parameters, vertices);
 		return;
 	}
+	if (boot_ui.hud_pass && parameters->meter_parameters)
+	{
+		boot_ui_meter_quad(parameters, vertices);
+		return;
+	}
+	if (boot_ui.hud_pass && parameters->map[1])
+	{
+		/* HWI-087: a HUD multitexture overlay (hud_draw_multitexture_overlay)
+		is not composited; its first map alone would not be the HUD's, so it is
+		not drawn */
+		boot_ui.hud.multitexture_refused++;
+		return;
+	}
 	if (parameters->map[1])
 	{
 		/* another combination of maps (none in the menus): the first map's
@@ -859,6 +1071,8 @@ static void boot_ui_screen_quad(
 	if (parameters->map[map_index] && draw.texture < 0)
 	{
 		/* a bitmap not on the card is not drawn (reported by the GX side) */
+		if (boot_ui.hud_pass)
+			boot_ui.hud.missing_bitmaps++;
 		return;
 	}
 	if (draw.texture < 0)
@@ -880,6 +1094,8 @@ static void boot_ui_screen_quad(
 	}
 	wii_ui_gx_quads(&draw, quad, 1);
 	boot_ui.screen_quads++;
+	if (boot_ui.hud_pass)
+		boot_ui.hud.quads++;
 }
 
 static void boot_ui_text_flush(
@@ -1086,6 +1302,15 @@ void wii_render_ui_report(
 		boot_ui.plasma_missing, boot_ui.plasma_approximated,
 		boot_ui.meter_approximated, boot_ui.missing_bitmaps, boot_ui.map_changes, boot_ui.environment_frames,
 		boot_ui.screen_count, boot_ui.lookup_count);
+	wii_log("BOOT_UI_HUD_TOTALS enabled=%d windows=%lu drawn=%lu refused_off=%lu refused_no_player=%lu "
+		"refused_show_hud=%lu refused_perspective=%lu refused_no_unit=%lu quads=%lu meters=%lu missing_bitmaps=%lu "
+		"multitexture_refused=%lu meter_unsupported=%lu motion_sensor_refused=%lu resets=%lu "
+		"not_drawn=motion_sensor,nav_points,damage_indicators,messages,player_indicators,screen_effects\n",
+		boot_ui.config.hud, boot_ui.hud.windows, boot_ui.hud.drawn, boot_ui.hud.refused_off,
+		boot_ui.hud.refused_no_player, boot_ui.hud.refused_show_hud, boot_ui.hud.refused_perspective,
+		boot_ui.hud.refused_no_unit, boot_ui.hud.quads, boot_ui.hud.meters, boot_ui.hud.missing_bitmaps,
+		boot_ui.hud.multitexture_refused, boot_ui.hud.meter_unsupported,
+		hud_unit_presentation_motion_sensor_refusals(), boot_ui.hud.resets);
 	for (index = 0; index < BOOT_UI_MAXIMUM_DYNAMIC_BITMAPS; index++)
 	{
 		if (boot_ui.dynamic[index].bitmap)

@@ -244,6 +244,90 @@ def plasma_case(t0, t1, t2, v0, map_colours, plasma_fade, quantize=False):
     return reference, tev
 
 
+# ---------------------------------------------------------------- HUD meters (HWI-087)
+
+
+def meter_words(flash_negative=False):
+    """the meter program's stages (rasterizer_xbox_dynavobgeom.c, meter_parameters), as
+    (rgb_in, rgb_out, alpha_in, alpha_out, (c0, c1)) a stage, and the final combiner's words"""
+    stages = [
+        (0x1120E820, 0x00020C00, 0x12081208, 0x00020C00, ("gradient_min", "gain_max")),
+        (0x3C011C02, 0x00000C00, 0x6C200000, 0x000000C0, ("gradient_min", "gradient_max")),
+        (0x0C201C00 | (0xE2 if flash_negative else 0x02), 0x00000C00, 0x0820B220, 0x00000C00,
+         ("gradient_min", "flash")),
+        (0x0C200120, 0x00004C00, 0x12201120, 0x00004C00, ("background", "tint")),
+    ]
+    return stages, 0x0C180000, 0x00001C00
+
+
+def _argb_floats(word):
+    """a pixel32 (ARGB) as (r, g, b, a) in [0, 1]"""
+    return tuple(((word >> shift) & 0xFF) / 255.0 for shift in (16, 8, 0, 24))
+
+
+def _argb_bytes(word):
+    return tuple((word >> shift) & 0xFF for shift in (16, 8, 0, 24))
+
+
+def gx_blend_one_srcalpha(source, alpha, destination):
+    """GX_BM_BLEND (one, source alpha), one 8-bit channel"""
+    return max(0, min(255, source + (destination * (alpha + (alpha >> 7)) >> 8)))
+
+
+def nv2a_meter(texel, meter, destination):
+    """the Xbox's meter for one texel (r, g, b, a bytes) over a destination (r, g, b bytes): the combiner
+    stages, the final combiner (r0.rgb t0.a, r0.a), the alpha kill and the blend of the tint (constant
+    colour) and the source alpha; meter: gradient_min, gradient_max, flash, background, tint (pixel32),
+    gain (the first stage's constant alpha byte), flash_negative. Returns the destination's bytes."""
+    t0 = tuple(x / 255.0 for x in texel)
+    if texel[3] == 0:
+        return tuple(destination)
+    constants = {name: _argb_floats(meter[name]) for name in ("gradient_min", "gradient_max", "flash", "background",
+                                                             "tint")}
+    constants["gain_max"] = constants["gradient_max"][:3] + (meter["gain"] / 255.0,)
+    registers = {"t0": t0, "r0": (0.0, 0.0, 0.0, t0[3]), "r1": (0.0,) * 4, "v0": (1.0,) * 4, "v1": (0.0,) * 4,
+                 "fog": (0.0, 0.0, 0.0, 1.0)}
+    stages, final_abcd, final_efg = meter_words(meter.get("flash_negative", False))
+    for rgb_in, rgb_out, alpha_in, alpha_out, (k0, k1) in stages:
+        combiner_stage(registers, rgb_in, rgb_out, alpha_in, alpha_out, {"c0": constants[k0], "c1": constants[k1]})
+    assert final_abcd == 0x0C180000 and final_efg == 0x00001C00
+    r0 = registers["r0"]
+    rgb = [_clamp(x, 0.0, 1.0) * t0[3] for x in r0[:3]]
+    alpha = to_byte(_clamp(r0[3], 0.0, 1.0))
+    tint = constants["tint"]
+    return tuple(gx_blend_one_srcalpha(to_byte(rgb[i] * tint[i]), alpha, destination[i]) for i in range(3))
+
+
+def tev_meter(texel, meter, destination):
+    """the Wii's TEV program for the meter (render_ui_gx.c wii_ui_gx_meter), 8-bit throughout, and its
+    blend (one, source alpha); the same arguments as nv2a_meter"""
+    u, coverage = texel[2], texel[3]
+    mn, mx, fl, bg, tint = (_argb_bytes(meter[name]) for name in ("gradient_min", "gradient_max", "flash",
+                                                                  "background", "tint"))
+    k, negative = meter["gain"], meter.get("flash_negative", False)
+    # S0 (texture swap b, b, b, b; raster k, k, k, 1): 4 u k; 4 (m - u)
+    c0 = tev_regular(0, u, k, 0, scale=4)
+    a0 = tev_regular(u, 0, 0, mn[3], sub=True, scale=4)
+    # S1: g = 2 C0; w = 2 (1/2 - A0)
+    c0 = tev_regular(0, 0, 0, c0, scale=2)
+    a1 = tev_regular(a0, 0, 0, 0, sub=True, bias=128, scale=2)
+    # S2: lerp(mn, mx, g); S3: +- fl w
+    colour = [tev_regular(mn[i], mx[i], c0, 0) for i in range(3)]
+    colour = [tev_regular(0, fl[i], a1, colour[i], sub=negative) for i in range(3)]
+    # S4: M > u (colour and alpha)
+    mask = tev_compare_gt(fl[3], u, 255, 0)
+    mask_alpha = tev_compare_gt(fl[3], u, 255, 0)
+    # S5: the background where u >= M
+    colour = [tev_regular(bg[i], colour[i], mask, 0) for i in range(3)]
+    alpha = tev_regular(bg[3], tint[3], mask_alpha, 0)
+    # S6: times the coverage; a killed texel's alpha is 1 (it keeps the destination)
+    colour = [tev_regular(0, colour[i], coverage, 0) for i in range(3)]
+    alpha = tev_compare_eq(coverage, 0, 255, alpha)
+    # S7: times the tint
+    colour = [tev_regular(0, colour[i], tint[i], 0) for i in range(3)]
+    return tuple(gx_blend_one_srcalpha(colour[i], alpha, destination[i]) for i in range(3))
+
+
 def tev_min_max(source, destination, maximum):
     """the Wii's min/max: three compare stages per channel on the copied destination"""
     result = []

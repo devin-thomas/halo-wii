@@ -50,6 +50,15 @@ SHADERS = {0xE0000010: (3, 0xA000001E), 0xE0000011: (3, 0xA000001E), 0xE0000012:
 
 
 class SelectionTests(unittest.TestCase):
+    def test_hud_bitmaps_are_the_ui_hud_tags(self):
+        """HWI-087: every bitmap of each tag named ui\\hud\\..., any case, in tag and bitmap order"""
+        tags = [(7, r"ui\hud\bitmaps\combined\hud_reticles", 2), (2, r"levels\a10\bitmaps\x", 2),
+                (5, r"UI\HUD\bitmaps\hud_digits", 1), (9, r"ui\shell\bitmaps\x", 1), (11, r"ui\hud\empty", 0)]
+        self.assertEqual(rs.select_hud("a10", tags), [
+            ("render/a10/textures/00005-000.hwt", "hud", 0),
+            ("render/a10/textures/00007-000.hwt", "hud", 0),
+            ("render/a10/textures/00007-001.hwt", "hud", 0)])
+
     def test_hwl_records_round_trip(self):
         datum, pages, materials = rs.hwl_records(hwl_blob(0xB0000042, PAGES, MATERIALS))
         self.assertEqual(datum, 0xB0000042)

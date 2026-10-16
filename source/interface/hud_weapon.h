@@ -31,4 +31,12 @@ void hud_update_weapon(
 void hud_render_weapon_interface(
 	struct player_datum *player);
 
+/* port (HWI-087): the weapon HUD drawn for presentation only (hud_weapon.c):
+the game state is read, not written; the flash start times are kept in
+hud_weapon.c until reset */
+void hud_render_weapon_interface_presentation(
+	struct player_datum *player);
+void hud_weapon_presentation_reset(
+	void);
+
 #endif // __HUD_WEAPON_H

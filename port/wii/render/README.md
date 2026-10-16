@@ -59,9 +59,75 @@ HWI-033 completes the interface's drawing:
   log) and the game runs on.
 
 Still approximated, counted: other map combinations (none in the menus) and
-meters. The console window, the HUD and the game engine's overlays are not
-drawn in the boot mode. Textures are read from
+meters outside the HUD (the HUD's: HWI-087, below). The console window and
+the game engine's overlays are not drawn in the boot mode; the HUD's subset
+is (below). Textures are read from
 `data/render/<map>/textures/<tag>-<bitmap>.hwt` (`tools/wii/boot_stage.py`).
+
+## The gameplay HUD (HWI-087)
+
+In the boot mode, each player window of a game map draws the unit's and the
+weapon's HUD where `render_window` draws `interface_draw_screen` (after the
+3D view, before the widgets), from the map's own HUD tags and bitmaps.
+
+**What is drawn.** What `hud_draw_screen` draws through
+`hud_render_weapon_interface` and `hud_render_unit_interface`, by those
+functions, for the window's local player, under its own conditions: a
+player; the scripts' `show_hud`; a unit (not dead), seen neither from the
+director's neutral nor a scripted view (cinematics). That is the weapon's
+crosshairs (aim, zoom levels and the flash states the tick works out), its
+panels, meters, ammunition counters and overlays, with their parent HUDs;
+the grenade panel and count; the unit's panel, shield meter (with its fade
+and overcharge meters) and health meter, its auxiliary meters (the
+flashlight). Anchoring, scale, colours, flashing and disabled colours,
+clip rectangles and the zoomed layout are the original routines'. Numbers
+are the digits tag's sprites.
+
+**Meters** are drawn by the Xbox's meter program
+(`rasterizer_xbox_dynavobgeom.c`) in the TEV, `wii_ui_gx_meter`: eight
+stages for its four combiner stages and final combiner, the alpha kill as an
+alpha of 1 (the destination kept), the constant-colour blend folded into the
+last stage. `tools/wii/ui_combiners.py` holds the combiners' program (the
+rasterizer's register words) and the TEV form as models;
+`test_hud_presentation.py` bounds them within 2/255 (99% within 1) and checks
+the kill and the threshold exactly.
+
+**Not changing the game.** `hud_draw_screen` is not called: as it draws it
+ticks the motion sensor, plays the HUD's sounds, shows action responses and
+updates the messages. The two renderers write the game state's HUD state
+too (flash start times, the unit and weapon they drew, a latched crosshair
+state's reference once its flash has run, the auxiliary meters' flash) and,
+for a team overlay, a colour into its tag. They are reached through
+presentation entry points (`hud_render_unit_interface_presentation`,
+`hud_render_weapon_interface_presentation`), which run them on a copy of
+their module's game-state globals: what they read is the game state as it
+stands, what they write goes to the copy. Their own flash start times are
+kept in `hud_unit.c` and `hud_weapon.c` (no pointer; reset when the map
+changes, when game time goes back, a revert); the team colour is put on a
+copy of the element. The director's perspective is asked as `main_loop` asks
+it every frame (the director is not game state).
+
+**Bitmaps.** While the HUD draws (and only then), the texture cache's
+question is answered for a bitmap the card holds; the HUD's bitmaps are
+staged with the map's environment (`render_stage.py`: every bitmap of the
+map's bitmap tags named `ui\hud\...`; `--no-hud` leaves them out), in the
+interface's HWT1 cache and budget, released with the map.
+
+**Refused, counted** (`BOOT_UI_HUD_TOTALS`): the motion sensor (its samples
+are `motion_sensor_tick`'s), nav points, damage indicators (drawing them
+clears the player effects'), the messages and the HUD's help text, player
+indicators and names, the weapon's screen effects, multitexture overlays (not
+composited, not drawn), a meter not made as `hud_draw_meter` makes it, a
+bitmap the card does not hold. `boot.txt` `hud=0` turns the HUD off (counted
+as refused). `BOOT_UI_GX_TOTALS` counts the meter quads.
+
+**Not the original's.** The original renderer clears a latched crosshair
+state (fired or thrown with none, battery depleted) in the game state once
+its flash has run, and the tick holds the state until then; the boot mode
+has never drawn the HUD, so nothing clears it, and the presentation reads it
+as the game state holds it (it draws while the trigger is held, from the
+first reference). Whether the game should clear it is a gameplay question,
+not the renderer's.
 
 ## What is drawn
 

@@ -176,6 +176,38 @@ static void hud_update_unit_local_player(
 
 static struct unit_hud_globals *unit_hud_globals = NULL;
 
+/* port (HWI-087): the unit HUD drawn for presentation only
+(hud_render_unit_interface_presentation). hud_render_unit_interface writes,
+besides drawing, its own fields of the game state's unit HUD state (the
+flash start times, the unit it last drew, the auxiliary meters' flash state)
+and the team colour into the auxiliary overlay's tag; hud_draw_screen calls it
+with motion_sensor_tick, the unit HUD's sounds and hud_messaging_update. The
+presentation draw runs it on a copy of the game state's unit HUD globals,
+with the renderer's own fields as this presentation last left them, and keeps
+those fields here, never in the game state. Owned by this file; holds no
+pointer (game times, an object index and flags); reset by
+hud_unit_presentation_reset (the Wii's HUD calls it when the map changes and
+when game time goes back, a revert). */
+static struct
+{
+	boolean active;
+	boolean kept[MAXIMUM_NUMBER_OF_LOCAL_PLAYERS];
+	struct unit_hud_state states[MAXIMUM_NUMBER_OF_LOCAL_PLAYERS];
+	unsigned long motion_sensor_refused;
+} unit_hud_presentation;
+
+/* the motion sensor is drawn from motion_sensor_tick's samples, which
+hud_draw_screen updates as it draws: the presentation draw does not tick it,
+and refuses it whole (its panel, its blips), counted */
+static boolean unit_hud_presentation_draws_motion_sensor(
+	void)
+{
+	if (!unit_hud_presentation.active)
+		return TRUE;
+	unit_hud_presentation.motion_sensor_refused++;
+	return FALSE;
+}
+
 /* ---------- private code */
 
 static void unit_hud_outline_mapper_tick(
@@ -1108,7 +1140,8 @@ void hud_render_unit_interface(
 					!TEST_FLAG(
 						unit_hud_globals->script_flags,
 						_hud_panel_motion_sensor_dont_show_bit) &&
-					game_engine_hud_draw_motion_sensor(player_index))
+					game_engine_hud_draw_motion_sensor(player_index) &&
+					unit_hud_presentation_draws_motion_sensor())
 				{
 					struct hud_absolute_placement_definition absolute_placement;
 					short draw_flags = 0;
@@ -1190,20 +1223,35 @@ void hud_render_unit_interface(
 
 						if (TEST_FLAG(overlay_type_flags, overlay->type))
 						{
+							/* port (HWI-087): the presentation draw colours a copy of the
+							element; the original writes the team colour into the tag */
+							struct static_hud_element_definition team_element;
+							struct static_hud_element_definition const *element = &overlay->static_element;
+
 							if (TEST_FLAG(
 								overlay->flags,
 								_auxilary_overlay_use_team_color_bit))
 							{
-								overlay->static_element.colors.color =
-									real_rgb_color_to_pixel32(
+								pixel32 team_color = real_rgb_color_to_pixel32(
 										&hud_unit->object.base_change_colors[0]) |
 									0xFF000000;
+
+								if (unit_hud_presentation.active)
+								{
+									team_element = overlay->static_element;
+									team_element.colors.color = team_color;
+									element = &team_element;
+								}
+								else
+								{
+									overlay->static_element.colors.color = team_color;
+								}
 							}
 
 							hud_draw_static_element(
 								local_player_index,
 								&auxilary_panel->absolute_placement,
-								&overlay->static_element,
+								element,
 								draw_flags,
 								NONE);
 						}
@@ -1348,4 +1396,70 @@ void hud_render_unit_interface(
 	match_assert_stack_frame("c:\\halo\\SOURCE\\interface\\hud_unit.c", 0x3C9);
 
 	return;
+}
+
+/* ---------- port (HWI-087): presentation only */
+
+void hud_unit_presentation_reset(
+	void)
+{
+	match_assert(
+		"c:\\halo\\SOURCE\\interface\\hud_unit.c",
+		__LINE__,
+		!unit_hud_presentation.active);
+	csmemset(&unit_hud_presentation, 0, sizeof(unit_hud_presentation));
+}
+
+unsigned long hud_unit_presentation_motion_sensor_refusals(
+	void)
+{
+	return unit_hud_presentation.motion_sensor_refused;
+}
+
+/* hud_render_unit_interface on a copy of the game state's unit HUD globals:
+what it reads (the tick's shield fade, the script flags, the unit) is the game
+state's as it stands; what it writes stays in the copy, but for its own
+presentation fields, kept here for the next frame. The game state is not
+written. */
+void hud_render_unit_interface_presentation(
+	struct player_datum *player)
+{
+	struct unit_hud_globals *authoritative = unit_hud_globals;
+	struct unit_hud_globals scratch;
+	short local_player_index = player->local_player_index;
+	struct unit_hud_state *state;
+
+	match_assert(
+		"c:\\halo\\SOURCE\\interface\\hud_unit.c",
+		__LINE__,
+		authoritative && !unit_hud_presentation.active &&
+			local_player_index >= 0 && local_player_index < MAXIMUM_NUMBER_OF_LOCAL_PLAYERS);
+
+	scratch = *authoritative;
+	state = &scratch.hud_states[local_player_index];
+	if (unit_hud_presentation.kept[local_player_index])
+	{
+		struct unit_hud_state const *kept = &unit_hud_presentation.states[local_player_index];
+
+		state->last_unit_index = kept->last_unit_index;
+		state->last_shield_flash_time = kept->last_shield_flash_time;
+		state->last_health_flash_time = kept->last_health_flash_time;
+		state->last_motion_sensor_flash_time = kept->last_motion_sensor_flash_time;
+		state->auxilary_active_type_flags = kept->auxilary_active_type_flags;
+		csmemcpy(state->auxilary_flash_time, kept->auxilary_flash_time, sizeof(state->auxilary_flash_time));
+	}
+	else
+	{
+		/* (the renderer's first draw for this player initialises its fields) */
+		state->last_unit_index = NONE;
+	}
+
+	unit_hud_globals = &scratch;
+	unit_hud_presentation.active = TRUE;
+	hud_render_unit_interface(player);
+	unit_hud_presentation.active = FALSE;
+	unit_hud_globals = authoritative;
+
+	unit_hud_presentation.states[local_player_index] = *state;
+	unit_hud_presentation.kept[local_player_index] = TRUE;
 }

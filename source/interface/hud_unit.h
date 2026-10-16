@@ -31,6 +31,16 @@ void hud_tick_shield(
 	long player_index,
 	real amount);
 
+/* port (HWI-087): the unit HUD drawn for presentation only (hud_unit.c): the
+game state is read, not written; the renderer's own flash state is kept in
+hud_unit.c until reset; the motion sensor is refused (counted) */
+void hud_render_unit_interface_presentation(
+	struct player_datum *player);
+void hud_unit_presentation_reset(
+	void);
+unsigned long hud_unit_presentation_motion_sensor_refusals(
+	void);
+
 /* port: network co-op (port/linux/game/network_coop.c) */
 long hud_unit_port_script_flags(
 	void);

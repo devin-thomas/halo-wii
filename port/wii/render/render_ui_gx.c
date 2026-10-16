@@ -70,6 +70,8 @@ static struct {
     unsigned long loads, load_failures, evictions, quads, text_quads, failed_draws;
     /* HWI-033 */
     unsigned long plasma_quads, plasma_stages, minmax_quads, minmax_tiles, minmax_no_memory;
+    /* HWI-087 */
+    unsigned long meter_quads, meter_planes;
     unsigned long long load_us;
 } ui;
 
@@ -855,6 +857,135 @@ void wii_ui_gx_plasma(const struct wii_ui_plasma *plasma, const struct wii_ui_pl
     GX_SetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
 }
 
+/* ---------- HUD meters (HWI-087)
+
+hud_draw_meter's quads, as the Xbox's meter program draws them
+(rasterizer_xbox_dynavobgeom.c, meter_parameters: four general combiner
+stages, the final combiner, the texture stage's alpha kill and a blend of
+constant colour and source alpha). As the NV2A combiners run it
+(tools/wii/ui_combiners.py nv2a_meter), with u the meter texel's blue, A its
+alpha, mn and mx the gradient's colours, m = mn.a (the value's alpha), M =
+fl.a (the maximum value's), k the first stage's constant alpha:
+  g = clamp(8 k u), t = clamp(4 (m - u)), w = max(0, 1 - 2 t),
+  c = lerp(mn, mx, g) +- w fl,
+  u >= M: (bg.rgb, bg.a), else (c, tint.a)   (the mux on u + 1/2 - M),
+  out = (c A, a), killed where A = 0; dst' = out.rgb tint.rgb + dst out.a.
+Its TEV form, 8-bit (tev_meter, 8 stages):
+  S0 [texture swap (b, b, b, b), raster (k, k, k, 1)]: C0 = 4 u k, A0 = 4 (m - u)
+  S1: C0 = 2 C0 (g), A1 = 2 (1/2 - A0) (w)
+  S2: C0 = lerp(K0 mn, C2 mx, C0)
+  S3: C0 = C0 +- K1 fl A1
+  S4 [swap (b, b, b, b)]: C1 = (M > u) 1, A1 = (M > u) 1
+  S5: C0 = lerp(K2 bg, C0, C1), A0 = lerp(K2 bg.a, A2 tint.a, A1)
+  S6 [the texture's alpha, or its alpha plane]: C0 = C0 A, PREV.a = A0 + (A == 0) 1
+  S7: PREV.rgb = C0 K3 tint
+blended one, source alpha: a killed texel adds nothing and keeps the
+destination (its alpha is 1). Registers: K0 mn (m), K1 fl (M), K2 bg, K3
+tint, REG2 (mx, tint.a). */
+
+#define METER_SWAP GX_TEV_SWAP3
+
+void wii_ui_gx_meter(const struct wii_ui_meter *meter, const struct wii_ui_vertex *vertices, int quad_count)
+{
+    struct ui_texture *t = drawable_texture(meter->texture);
+    if (quad_count <= 0)
+        return;
+    if (!t) {
+        ui.failed_draws++;
+        return;
+    }
+    uint32_t mn = meter->gradient_min, mx = meter->gradient_max, fl = meter->flash, bg = meter->background,
+             tint = meter->tint;
+    state_2d();
+    GX_SetBlendMode(GX_BM_BLEND, GX_BL_ONE, GX_BL_SRCALPHA, GX_LO_CLEAR);
+    int plane = bind_texture(t, GX_TEXMAP0, GX_TEXMAP1, meter->wrap, meter->point_sampled);
+    GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+    GX_SetNumTexGens(1);
+    GX_SetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
+    GX_SetTevSwapModeTable(METER_SWAP, GX_CH_BLUE, GX_CH_BLUE, GX_CH_BLUE, GX_CH_BLUE);
+    GX_SetTevKColor(GX_KCOLOR0, (GXColor){(u8)(mn >> 16), (u8)(mn >> 8), (u8)mn, (u8)(mn >> 24)});
+    GX_SetTevKColor(GX_KCOLOR1, (GXColor){(u8)(fl >> 16), (u8)(fl >> 8), (u8)fl, (u8)(fl >> 24)});
+    GX_SetTevKColor(GX_KCOLOR2, (GXColor){(u8)(bg >> 16), (u8)(bg >> 8), (u8)bg, (u8)(bg >> 24)});
+    GX_SetTevKColor(GX_KCOLOR3, (GXColor){(u8)(tint >> 16), (u8)(tint >> 8), (u8)tint, (u8)(tint >> 24)});
+    GX_SetTevColor(GX_TEVREG2, (GXColor){(u8)(mx >> 16), (u8)(mx >> 8), (u8)mx, (u8)(tint >> 24)});
+    /* S0 */
+    GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+    GX_SetTevSwapMode(GX_TEVSTAGE0, GX_TEV_SWAP0, METER_SWAP);
+    GX_SetTevKAlphaSel(GX_TEVSTAGE0, GX_TEV_KASEL_K0_A);
+    tev_colour(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_4,
+               GX_TEVREG0);
+    tev_alpha(GX_TEVSTAGE0, GX_CA_TEXA, GX_CA_ZERO, GX_CA_ZERO, GX_CA_KONST, GX_TEV_SUB, GX_TB_ZERO, GX_CS_SCALE_4,
+              GX_TEVREG0);
+    /* S1 */
+    GX_SetTevOrder(GX_TEVSTAGE1, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLORNULL);
+    tev_colour(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_C0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_2,
+               GX_TEVREG0);
+    tev_alpha(GX_TEVSTAGE1, GX_CA_A0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_TEV_SUB, GX_TB_ADDHALF, GX_CS_SCALE_2,
+              GX_TEVREG1);
+    /* S2 */
+    GX_SetTevOrder(GX_TEVSTAGE2, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLORNULL);
+    GX_SetTevKColorSel(GX_TEVSTAGE2, GX_TEV_KCSEL_K0);
+    tev_colour(GX_TEVSTAGE2, GX_CC_KONST, GX_CC_C2, GX_CC_C0, GX_CC_ZERO, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1,
+               GX_TEVREG0);
+    tev_alpha_keep(GX_TEVSTAGE2);
+    /* S3 */
+    GX_SetTevOrder(GX_TEVSTAGE3, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLORNULL);
+    GX_SetTevKColorSel(GX_TEVSTAGE3, GX_TEV_KCSEL_K1);
+    tev_colour(GX_TEVSTAGE3, GX_CC_ZERO, GX_CC_KONST, GX_CC_A1, GX_CC_C0,
+               meter->flash_negative ? GX_TEV_SUB : GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TEVREG0);
+    tev_alpha_keep(GX_TEVSTAGE3);
+    /* S4 */
+    GX_SetTevOrder(GX_TEVSTAGE4, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+    GX_SetTevSwapMode(GX_TEVSTAGE4, GX_TEV_SWAP0, METER_SWAP);
+    GX_SetTevKColorSel(GX_TEVSTAGE4, GX_TEV_KCSEL_K1_A);
+    GX_SetTevKAlphaSel(GX_TEVSTAGE4, GX_TEV_KASEL_K1_A);
+    tev_colour(GX_TEVSTAGE4, GX_CC_KONST, GX_CC_TEXC, GX_CC_ONE, GX_CC_ZERO, GX_TEV_COMP_R8_GT, GX_TB_ZERO,
+               GX_CS_SCALE_1, GX_TEVREG1);
+    tev_alpha(GX_TEVSTAGE4, GX_CA_KONST, GX_CA_TEXA, GX_CA_RASA, GX_CA_ZERO, GX_TEV_COMP_A8_GT, GX_TB_ZERO,
+              GX_CS_SCALE_1, GX_TEVREG1);
+    /* S5 */
+    GX_SetTevOrder(GX_TEVSTAGE5, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLORNULL);
+    GX_SetTevKColorSel(GX_TEVSTAGE5, GX_TEV_KCSEL_K2);
+    GX_SetTevKAlphaSel(GX_TEVSTAGE5, GX_TEV_KASEL_K2_A);
+    tev_colour(GX_TEVSTAGE5, GX_CC_KONST, GX_CC_C0, GX_CC_C1, GX_CC_ZERO, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1,
+               GX_TEVREG0);
+    tev_alpha(GX_TEVSTAGE5, GX_CA_KONST, GX_CA_A2, GX_CA_A1, GX_CA_ZERO, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1,
+              GX_TEVREG0);
+    /* S6: the coverage, from the texture's alpha or its plane */
+    GX_SetTevOrder(GX_TEVSTAGE6, GX_TEXCOORD0, plane ? GX_TEXMAP1 : GX_TEXMAP0, GX_COLOR0A0);
+    GX_SetTevSwapMode(GX_TEVSTAGE6, GX_TEV_SWAP0, GX_TEV_SWAP0);
+    tev_colour(GX_TEVSTAGE6, GX_CC_ZERO, GX_CC_C0, GX_CC_TEXA, GX_CC_ZERO, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1,
+               GX_TEVREG0);
+    tev_alpha(GX_TEVSTAGE6, GX_CA_TEXA, GX_CA_ZERO, GX_CA_RASA, GX_CA_A0, GX_TEV_COMP_A8_EQ, GX_TB_ZERO,
+              GX_CS_SCALE_1, GX_TEVPREV);
+    /* S7 */
+    GX_SetTevOrder(GX_TEVSTAGE7, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLORNULL);
+    GX_SetTevKColorSel(GX_TEVSTAGE7, GX_TEV_KCSEL_K3);
+    tev_colour(GX_TEVSTAGE7, GX_CC_ZERO, GX_CC_C0, GX_CC_KONST, GX_CC_ZERO, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1,
+               GX_TEVPREV);
+    tev_alpha_keep(GX_TEVSTAGE7);
+    GX_SetNumTevStages(8);
+    for (int done = 0; done < quad_count;) {
+        int batch = quad_count - done > 4096 ? 4096 : quad_count - done;
+        GX_Begin(GX_QUADS, GX_VTXFMT2, (u16)(batch * 4));
+        for (int q = 0; q < batch; ++q)
+            for (int k = 0; k < 4; ++k) {
+                const struct wii_ui_vertex *v = &vertices[(done + q) * 4 + k];
+                GX_Position2f32(v->x, v->y);
+                GX_Color4u8(meter->gain, meter->gain, meter->gain, 255);
+                GX_TexCoord2f32(v->u, v->v);
+            }
+        GX_End();
+        done += batch;
+    }
+    /* the state other draws assume: identity swaps, the swap table's default, no blend */
+    tev_swaps_reset(8);
+    GX_SetTevSwapModeTable(METER_SWAP, GX_CH_BLUE, GX_CH_BLUE, GX_CH_BLUE, GX_CH_ALPHA);
+    GX_SetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
+    ui.meter_quads += (unsigned long)quad_count;
+    ui.meter_planes += plane ? 1ul : 0ul;
+}
+
 void wii_ui_gx_fill(int x0, int y0, int x1, int y1, uint32_t argb)
 {
     struct wii_ui_vertex v[4] = {
@@ -1150,8 +1281,8 @@ void wii_ui_gx_report(void)
     wii_log("BOOT_UI_GX_TOTALS frames=%lu quads=%lu text_quads=%lu loads=%lu load_failures=%lu evictions=%lu "
             "resident=%lu resident_peak=%lu budget=%lu tag_textures_now=%d alpha_planes=%lu load_ms=%llu "
             "plasma_quads=%lu plasma_stages=%lu minmax_quads=%lu minmax_tiles=%lu minmax_no_memory=%lu "
-            "failed_draws=%lu\n",
+            "failed_draws=%lu meter_quads=%lu meter_planes=%lu\n",
             ui.frame, ui.quads, ui.text_quads, ui.loads, ui.load_failures, ui.evictions, ui.resident, ui.resident_peak,
             ui.budget, tags, ui.alpha_planes, ui.load_us / 1000ull, ui.plasma_quads, ui.plasma_stages, ui.minmax_quads,
-            ui.minmax_tiles, ui.minmax_no_memory, ui.failed_draws);
+            ui.minmax_tiles, ui.minmax_no_memory, ui.failed_draws, ui.meter_quads, ui.meter_planes);
 }

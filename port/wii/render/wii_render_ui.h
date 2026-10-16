@@ -47,6 +47,7 @@ struct wii_boot_ui_config
 	int expect_refusal;         /* a load-failure test: max_frames passes if a map was refused and the
 	                               menus' map is loaded again (the menus recovered) */
 	const char *overlay;        /* the manifest line drawn at the bottom of every frame */
+	int hud;                    /* HWI-087: the gameplay HUD drawn (boot.txt hud=0 turns it off) */
 	/* the driver ends the launch: result 1 pass, 0 fail, with the reason */
 	void (*finish)(int result, const char *reason);
 	/* the map a load asks for: 0 if it may load, else the reason it may not
@@ -141,6 +142,26 @@ struct wii_ui_plasma_vertex
 
 void wii_ui_gx_plasma(const struct wii_ui_plasma *plasma, const struct wii_ui_plasma_vertex *vertices,
 	int quad_count);
+
+/* HWI-087: a HUD meter (hud_draw_meter) as the Xbox's meter combiner program
+draws it (rasterizer_xbox_dynavobgeom.c; tools/wii/ui_combiners.py holds it and
+the TEV form as models). The meter bitmap's blue is each texel's place in the
+meter, its alpha the coverage (0 is killed); the colours are the rasterizer
+meter parameters' (pixel32 ARGB) as hud_draw_meter makes them:
+gradient_min (rgb, a = the value's alpha), gradient_max (rgb), flash (rgb, a =
+the maximum value's alpha), background (rgba), tint (the blend constant). The
+vertices' colours are not used. */
+struct wii_ui_meter
+{
+	long texture;
+	int wrap;
+	int point_sampled;
+	uint32_t gradient_min, gradient_max, flash, background, tint;
+	int flash_negative;
+	uint8_t gain;               /* the first stage's constant alpha (1/8 as the rasterizer packs it) */
+};
+
+void wii_ui_gx_meter(const struct wii_ui_meter *meter, const struct wii_ui_vertex *vertices, int quad_count);
 
 /* HWI-033: draws authored cases of the plasma program and of min and max
 blends through GX before the engine starts, peeks the EFB and logs each
