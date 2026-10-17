@@ -137,7 +137,14 @@ class SourceTests(unittest.TestCase):
     def test_reserve_is_bounded_separate_and_released_after_gx(self):
         self.assertNotIn("gx.cache", function_body(self.gx, "void wii_gx_model_textures_bind("))
         begin = function_body(self.render_gx, "int wii_gx_map_begin(")
-        self.assertLess(begin.index("wii_gx_models_bind(gx.model_skin"), begin.index("wii_gx_model_textures_bytes()"))
+        self.assertIn("wii_gx_models_bind(gx.model_skin", begin)
+        self.assertNotIn("wii_gx_model_textures_bytes()", begin)
+        # taken after the skinning buffer and the lightmap pages, before the base maps
+        take = function_body(self.render_gx, "static void model_textures_take(void)")
+        self.assertIn("if (!gx.model_skin || gx.model_textures || !wii_gx_model_textures_bytes())", take)
+        load = function_body(self.render_gx, "int wii_gx_textures_load(")
+        self.assertLess(load.index("kind=lightmap error=missing"), load.index("model_textures_take();"))
+        self.assertLess(load.index("model_textures_take();"), load.index("stream_begin()"))
         end = function_body(self.render_gx, "void wii_gx_map_end(void)")
         self.assertLess(end.index("wii_gx_models_unbind();"),
                         end.index("store_give(gx.model_textures, gx.model_textures_taken);"))

@@ -188,7 +188,8 @@ static struct {
     void *model_skin;
     uint32_t model_skin_taken;
     /* HWI-086: the bitmap reserve of the models, from the same store after
-    the skinning buffer (render_models_gx.c manages it) */
+    the skinning buffer and the BSP's lightmap pages (render_models_gx.c
+    manages it) */
     void *model_textures;
     uint32_t model_textures_taken;
     long run_pose_ticks[MAX_POSE_TICKS];
@@ -932,22 +933,8 @@ int wii_gx_map_begin(unsigned long bsp_tag_index, long material_count, long surf
         }
         wii_gx_models_bind(gx.model_skin, gx.model_skin_taken);
     }
-    /* HWI-086: the bitmap reserve of the models, a bounded block of the same
-    store, before the textures of the environment fill it (without it every
-    model part draws the diagnostic material, and that is logged) */
-    if (gx.model_skin && wii_gx_model_textures_bytes()) {
-        char directory[160];
-        gx.model_textures_taken = (uint32_t)wii_gx_model_textures_bytes();
-        gx.model_textures = store_take(gx.model_textures_taken);
-        if (!gx.model_textures) {
-            wii_log("RENDER_MODEL_TEXTURES_NOT_RESIDENT bsp_tag=%lu bytes=%lu pool=%lu used=%lu (diagnostic material)\n",
-                    bsp_tag_index, (unsigned long)gx.model_textures_taken, (unsigned long)pool_bytes(),
-                    (unsigned long)pool_used());
-            gx.model_textures_taken = 0;
-        }
-        snprintf(directory, sizeof(directory), RENDER_ROOT "/%s/textures", gx.map);
-        wii_gx_model_textures_bind(gx.model_textures, gx.model_textures_taken, directory);
-    }
+    /* HWI-086: the models' bitmap reserve is taken by wii_gx_textures_load,
+    after the lightmap pages (model_textures_take) */
     gx.material_count = material_count;
     gx.surface_count = surface_count;
     gx.surfaces = surfaces;
@@ -1640,6 +1627,29 @@ static void stream_update(const unsigned long *flags, const unsigned char *drawn
         gx.stream_us_max = us;
 }
 
+/* HWI-086: the bitmap reserve of the models, a bounded block of the BSP's
+store taken after its lightmap pages and before its base maps, so a reserve
+that does not fit costs the models their bitmaps and never the environment
+its lightmaps (without it every model part draws the diagnostic material,
+and that is logged) */
+static void model_textures_take(void)
+{
+    char directory[160];
+
+    if (!gx.model_skin || gx.model_textures || !wii_gx_model_textures_bytes())
+        return;
+    gx.model_textures_taken = (uint32_t)wii_gx_model_textures_bytes();
+    gx.model_textures = store_take(gx.model_textures_taken);
+    if (!gx.model_textures) {
+        wii_log("RENDER_MODEL_TEXTURES_NOT_RESIDENT bsp_tag=%lu bytes=%lu pool=%lu used=%lu (diagnostic material)\n",
+                gx.bsp_tag, (unsigned long)gx.model_textures_taken, (unsigned long)pool_bytes(),
+                (unsigned long)pool_used());
+        gx.model_textures_taken = 0;
+    }
+    snprintf(directory, sizeof(directory), RENDER_ROOT "/%s/textures", gx.map);
+    wii_gx_model_textures_bind(gx.model_textures, gx.model_textures_taken, directory);
+}
+
 int wii_gx_textures_load(long lightmap_tag_index)
 {
     unsigned long lightmap_bytes = 0, base_bytes = 0, missing_bytes = 0, pool_short_bytes = 0;
@@ -1720,6 +1730,7 @@ int wii_gx_textures_load(long lightmap_tag_index)
             lightmap_failed++;
         }
     }
+    model_textures_take();
     /* HWI-083: with texture_stream=1, the base maps' arena (stream_begin)
     filled in coverage order as below, without evicting; the frames stream
     the rest as they become visible */

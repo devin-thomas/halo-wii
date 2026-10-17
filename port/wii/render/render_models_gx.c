@@ -51,7 +51,8 @@
  * faces (GX_CULL_NONE).
  *
  * The bitmap reserve (render.txt model_texture_bytes, from the same store,
- * after the skinning buffer): a texture cache of its own
+ * after the skinning buffer and the BSP's lightmap pages, before its base
+ * maps, so it never costs the environment a lightmap): a texture cache of its own
  * (render_model_material.c over render_texture_cache.c), so no model bitmap
  * shares an entry, a key or bytes with the lightmap pages or base maps of
  * the environment. A draw wants the bitmap of each part; before the next
